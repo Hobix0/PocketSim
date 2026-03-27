@@ -1,0 +1,14 @@
+C:\Users\ltheis\Documents\GitHub\PocketSim\bin\Debug\net9.0\PocketSim.exe
+C:\Users\ltheis\Documents\GitHub\PocketSim\bin\Debug\net9.0\PocketSim.deps.json
+C:\Users\ltheis\Documents\GitHub\PocketSim\bin\Debug\net9.0\PocketSim.runtimeconfig.json
+C:\Users\ltheis\Documents\GitHub\PocketSim\bin\Debug\net9.0\PocketSim.dll
+C:\Users\ltheis\Documents\GitHub\PocketSim\bin\Debug\net9.0\PocketSim.pdb
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.AssemblyInfoInputs.cache
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.AssemblyInfo.cs
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.csproj.CoreCompileInputs.cache
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.dll
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\refint\PocketSim.dll
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.pdb
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\PocketSim.genruntimeconfig.cache
+C:\Users\ltheis\Documents\GitHub\PocketSim\obj\Debug\net9.0\ref\PocketSim.dll
