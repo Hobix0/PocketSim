@@ -2,18 +2,8 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="PocketSim" />
-    <meta name="theme-color" content="#080910" />
-    <meta name="description" content="Baue dein Produktionsimperium in Remscheid auf." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PocketSim</title>
-    <link rel="manifest" href="manifest.json" />
-    <link rel="apple-touch-icon" href="icons/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
@@ -28,7 +18,7 @@
       <div class="header-right">
         <span id="geld-anzeige">100.000 €</span>
         <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
-        <button id="cloud-sync-badge" onclick="loginModalOeffnen()" title="Cloud-Sync" style="width:auto;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:14px;cursor:pointer;letter-spacing:0;text-transform:none">☁️</button>
+        <button id="cloud-badge" onclick="loginModalOeffnen()" class="cloud-badge-btn">☁️</button>
         <button id="btn-einstellungen">⚙️</button>
       </div>
     </header>
@@ -438,117 +428,20 @@
     <script src="js/statistik.js"></script>
     <script src="js/hallen_upgrades.js"></script>
     <!-- 9. Start -->
+
+  <!-- ══ LOGIN MODAL ══ -->
+  <div id="modal-login" style="display:none" onclick="if(event.target===this)loginModalSchliessen()">
+    <div class="auth-modal">
+      <div class="auth-modal-header">
+        <span class="auth-modal-titel">☁️ Cloud-Sync</span>
+        <button class="auth-close-btn" onclick="loginModalSchliessen()">✕</button>
+      </div>
+      <div id="login-inhalt"></div>
+    </div>
+  </div>
+
     <script src="js/supabase.js"></script>
     <script src="js/main.js"></script>
 
-    <!-- Login Modal -->
-  <div id="modal-login" style="display:none">
-    <div id="modal-login-inhalt">
-      <div id="modal-login-header">
-        <h2>☁️ Cloud-Sync</h2>
-        <button onclick="loginModalSchliessen()" style="width:auto;padding:4px 10px;
-          background:var(--surface2);border:1px solid var(--border);border-radius:6px;
-          font-size:13px;color:var(--text2);letter-spacing:0;text-transform:none">✕</button>
-      </div>
-      <div id="login-status-bereich">
-        Lädt...
-      </div>
-    </div>
-  </div>
-
-  <!-- Service Worker Registration -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", function() {
-        navigator.serviceWorker.register("/sw.js")
-          .then(function(reg) {
-            console.log("[PWA] Service Worker registriert:", reg.scope);
-
-            // Update verfügbar?
-            reg.addEventListener("updatefound", function() {
-              let newWorker = reg.installing;
-              newWorker.addEventListener("statechange", function() {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  // Neues Update — Benachrichtigung zeigen
-                  if (typeof zeigeNotification === "function") {
-                    zeigeNotification("🔄 Update verfügbar! Seite neu laden.", "accent");
-                  }
-                }
-              });
-            });
-          })
-          .catch(function(err) {
-            console.log("[PWA] Service Worker Fehler:", err);
-          });
-      });
-    }
-  </script>
-
-  <!-- PWA Install Prompt -->
-  <div id="pwa-install-banner" style="display:none">
-    <div id="pwa-install-inhalt">
-      <span id="pwa-install-icon">🏭</span>
-      <div id="pwa-install-text">
-        <div id="pwa-install-titel">PocketSim installieren</div>
-        <div id="pwa-install-sub">Als App auf dem Homescreen speichern</div>
-      </div>
-      <button id="pwa-install-btn">Installieren</button>
-      <button id="pwa-install-close">✕</button>
-    </div>
-  </div>
-
-  <script>
-    // Install Prompt abfangen
-    let pwaInstallPrompt = null;
-
-    window.addEventListener("beforeinstallprompt", function(e) {
-      e.preventDefault();
-      pwaInstallPrompt = e;
-
-      // Banner erst nach kurzer Spielzeit zeigen (nicht sofort beim Laden)
-      setTimeout(function() {
-        let banner = document.getElementById("pwa-install-banner");
-        if (banner && !localStorage.getItem("pwa-installiert")) {
-          banner.style.display = "flex";
-        }
-      }, 30000); // nach 30 Sekunden
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-      let btn   = document.getElementById("pwa-install-btn");
-      let close = document.getElementById("pwa-install-close");
-
-      if (btn) {
-        btn.addEventListener("click", function() {
-          if (!pwaInstallPrompt) return;
-          pwaInstallPrompt.prompt();
-          pwaInstallPrompt.userChoice.then(function(result) {
-            if (result.outcome === "accepted") {
-              localStorage.setItem("pwa-installiert", "1");
-              if (typeof zeigeNotification === "function") {
-                zeigeNotification("✅ PocketSim installiert!", "green");
-              }
-            }
-            document.getElementById("pwa-install-banner").style.display = "none";
-            pwaInstallPrompt = null;
-          });
-        });
-      }
-
-      if (close) {
-        close.addEventListener("click", function() {
-          document.getElementById("pwa-install-banner").style.display = "none";
-          localStorage.setItem("pwa-install-dismissed", "1");
-        });
-      }
-    });
-
-    // Erkennen ob bereits als PWA gestartet
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      console.log("[PWA] Läuft als installierte App");
-      document.documentElement.classList.add("pwa-mode");
-    }
-  </script>
-
-</body>
+  </body>
 </html>
