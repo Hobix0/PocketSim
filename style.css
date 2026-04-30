@@ -4643,3 +4643,15 @@ body {
   color: var(--green);
   margin-top: 2px;
 }
+
+#auth-anmeldung {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#auth-profil-bereich {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
