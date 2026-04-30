@@ -93,6 +93,9 @@ document.getElementById("shop-suche").addEventListener("input", function() {
 
 async function spielStarten() {
 
+  // Supabase initialisieren für Cloud-Login / Sync
+  if (typeof supabaseInit === "function") supabaseInit();
+
   // 1. Alle Daten laden (JSON, API, etc.)
   await alleDatenLaden();
 
