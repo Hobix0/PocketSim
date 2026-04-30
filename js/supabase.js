@@ -2,20 +2,20 @@
 // SUPABASE — Cloud Sync
 // ══════════════════════════════════
 
-const SUPABASE_URL = "https://supabase.com/dashboard/project/buythdkjxqxnxhhmqijp";
+const SUPABASE_URL = "https://buythdkjxqxnxhhmqijp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eXRoZGtqeHF4bnhoaG1xaWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM4NDEsImV4cCI6MjA5MzExOTg0MX0.KdSc6aT-Yt3VupZGpgmXPA7lqCSee6JVZ93oaKYpK-o";
 
 let supabaseClient = null;
 let aktuellerUser  = null;
 let syncAktiv      = false;
- 
+
 function supabaseInit() {
   if (typeof window.supabase === "undefined") {
     console.warn("[Cloud] Supabase Library fehlt");
     return;
   }
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
- 
+
   supabaseClient.auth.getSession().then(function(res) {
     if (res.data && res.data.session) {
       aktuellerUser = res.data.session.user;
@@ -24,7 +24,7 @@ function supabaseInit() {
       cloudBadgeAktualisieren();
     }
   });
- 
+
   supabaseClient.auth.onAuthStateChange(function(event, session) {
     if (event === "SIGNED_IN" && session) {
       aktuellerUser = session.user;
@@ -42,18 +42,18 @@ function supabaseInit() {
     }
   });
 }
- 
+
 // ── Login/Logout anzeigen ──
 function authAnzeige() {
   let anmeldung = document.getElementById("auth-anmeldung");
   let profil    = document.getElementById("auth-profil-bereich");
   let email     = document.getElementById("auth-profil-email");
- 
+
   if (anmeldung) anmeldung.style.display = aktuellerUser ? "none"  : "flex";
   if (profil)    profil.style.display    = aktuellerUser ? "flex"  : "none";
   if (email && aktuellerUser) email.textContent = aktuellerUser.email;
 }
- 
+
 // ── Modal ──
 function loginModalOeffnen() {
   let modal = document.getElementById("modal-login");
@@ -62,12 +62,12 @@ function loginModalOeffnen() {
     authAnzeige();
   }
 }
- 
+
 function loginModalSchliessen() {
   let modal = document.getElementById("modal-login");
   if (modal) modal.style.display = "none";
 }
- 
+
 // ── Auth ──
 function authEinloggen() {
   let email = (document.getElementById("auth-email") || {}).value || "";
@@ -78,7 +78,7 @@ function authEinloggen() {
   supabaseClient.auth.signInWithPassword({ email: email.trim(), password: pw })
     .then(function(r) { if (r.error) authInfo(r.error.message, "red"); });
 }
- 
+
 function authRegistrieren() {
   let email = (document.getElementById("auth-email") || {}).value || "";
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
@@ -92,7 +92,7 @@ function authRegistrieren() {
       else         authInfo("✅ Bestätigungsmail gesendet! E-Mail prüfen.", "green");
     });
 }
- 
+
 function authGoogle() {
   if (!supabaseClient) return;
   supabaseClient.auth.signInWithOAuth({
@@ -100,19 +100,19 @@ function authGoogle() {
     options:  { redirectTo: window.location.href }
   });
 }
- 
+
 function authAusloggen() {
   if (supabaseClient) supabaseClient.auth.signOut();
   loginModalSchliessen();
 }
- 
+
 function authInfo(text, typ) {
   let el = document.getElementById("auth-info");
   if (!el) return;
   el.textContent = text;
   el.style.color = typ === "green" ? "var(--green)" : typ === "red" ? "var(--red)" : "var(--text3)";
 }
- 
+
 // ── Cloud ──
 function cloudSpeichern() {
   if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
@@ -124,7 +124,7 @@ function cloudSpeichern() {
     if (!r.error) localStorage.setItem("pocketsim_ts", Date.now().toString());
   });
 }
- 
+
 function cloudLaden() {
   if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
   supabaseClient.from("spielstaende")
@@ -140,22 +140,22 @@ function cloudLaden() {
       }
     });
 }
- 
+
 let _syncTimer = null;
 function cloudSyncDebounced() {
   if (!syncAktiv) return;
   clearTimeout(_syncTimer);
   _syncTimer = setTimeout(cloudSpeichern, 4000);
 }
- 
+
 function cloudBadgeAktualisieren() {
   let b = document.getElementById("cloud-badge");
   if (!b) return;
   b.textContent = aktuellerUser ? "☁️✅" : "☁️";
   b.style.color = aktuellerUser ? "var(--green)" : "var(--text3)";
 }
- 
- 
+
+
 // Wrapper für HTML onclick (kein &quot; nötig)
 function cloudSpeichernUndBestaetigen() {
   cloudSpeichern();
