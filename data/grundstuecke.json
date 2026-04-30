@@ -1,0 +1,44 @@
+[
+  {
+    "id": "grundstueck_remscheid",
+    "name": "Grundstück Remscheid",
+    "emoji": "🏡",
+    "bild": "assets/grundstueck.jpg",
+    "beschreibung": "Industriegelände am Stadtrand. Solide Basis für dein Imperium.",
+    "standort": "Remscheid",
+    "kosten": 10000,
+    "groesse": { "l": 50, "b": 50 },
+    "maxGebaeude": 10,
+    "kostenProRunde": 10,
+    "kategorie": "grundstuecke",
+    "bedingung": null
+  },
+  {
+    "id": "grundstueck_solingen",
+    "name": "Grundstück Solingen",
+    "emoji": "🏡",
+    "bild": "assets/grundstueck.jpg",
+    "beschreibung": "Größeres Industriegelände. Platz für mehr Gebäude und Expansion.",
+    "standort": "Solingen",
+    "kosten": 50000,
+    "groesse": { "l": 100, "b": 80 },
+    "maxGebaeude": 20,
+    "kostenProRunde": 30,
+    "kategorie": "grundstuecke",
+    "bedingung": "hatGrundstueck"
+  },
+  {
+  "id": "grundstueck_wuppertal",
+  "name": "Grundstück Wuppertal",
+  "emoji": "🏡",
+  "bild": "assets/grundstueck.jpg",
+  "beschreibung": "Großes Industrieareal an der Wupper.",
+  "standort": "Wuppertal",
+  "kosten": 120000,
+  "groesse": { "l": 150, "b": 120 },
+  "maxGebaeude": 8,
+  "kostenProRunde": 60,
+  "kategorie": "grundstuecke",
+  "bedingung": "hatGrundstueck"
+}
+]

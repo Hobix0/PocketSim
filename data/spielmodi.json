@@ -1,0 +1,58 @@
+[
+  {
+    "id": "startup",
+    "name": "Startup-Modus",
+    "emoji": "🚀",
+    "beschreibung": "Der Stadtrat Remscheid gewährt dir einen Steueraufschub. Starte ohne Druck und baue dein Imperium auf.",
+    "freieRunden": 5,
+    "rabattRunden": 10,
+    "rabattProzent": 50,
+    "verkaufsBonus": 1.0,
+    "preisschwankung": 0.15,
+    "maschinenausfaelle": false,
+    "startkapital": 100000,
+    "farbe": "#10b981"
+  },
+  {
+    "id": "normal",
+    "name": "Normalbetrieb",
+    "emoji": "🏭",
+    "beschreibung": "Volle Kosten von Anfang an — aber der Markt honoriert Effizienz mit besseren Preisen.",
+    "freieRunden": 0,
+    "rabattRunden": 0,
+    "rabattProzent": 0,
+    "verkaufsBonus": 1.2,
+    "preisschwankung": 0.15,
+    "maschinenausfaelle": false,
+    "startkapital": 100000,
+    "farbe": "#f59e0b"
+  },
+  {
+    "id": "hardcore",
+    "name": "Hardcore",
+    "emoji": "💀",
+    "beschreibung": "Keine Gnade. Volle Kosten, starke Preisschwankungen, Maschinen können ausfallen.",
+    "freieRunden": 0,
+    "rabattRunden": 0,
+    "rabattProzent": 0,
+    "verkaufsBonus": 1.0,
+    "preisschwankung": 0.30,
+    "maschinenausfaelle": true,
+    "startkapital": 75000,
+    "farbe": "#ef4444"
+  },
+  {
+    "id": "sandbox",
+    "name": "Sandbox",
+    "emoji": "🎨",
+    "beschreibung": "Teste deine Strategien in einer sicheren Umgebung ohne Druck.",
+    "freieRunden": 500,
+    "rabattRunden": 0,
+    "rabattProzent": 0,
+    "verkaufsBonus": 1.0,
+    "preisschwankung": 0.25,
+    "maschinenausfaelle": false,
+    "startkapital": 10000000,
+    "farbe": "#F9B92A"
+  }
+]

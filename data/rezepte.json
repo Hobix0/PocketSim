@@ -1,0 +1,752 @@
+[
+  {
+    "id": "bretter_saegen",
+    "name": "Bretter sägen",
+    "emoji": "🪚",
+    "beschreibung": "1 Baumstamm → 10 Bretter + Sägespäne.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "stammsaege",
+    "dauer": 5000,
+    "energie": 2,
+    "xp": 10,
+    "inputs": [
+      {
+        "material": "baumstaemme",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "bretter",
+        "menge": 10
+      },
+      {
+        "material": "saegespaene",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "balken_saegen",
+    "name": "Balken sägen",
+    "emoji": "🪚",
+    "beschreibung": "2 Baumstämme → 1 Balken.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "stammsaege",
+    "dauer": 8000,
+    "energie": 3,
+    "xp": 20,
+    "inputs": [
+      {
+        "material": "baumstaemme",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "balken",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "dielen_hobeln",
+    "name": "Dielen hobeln",
+    "emoji": "✂️",
+    "beschreibung": "5 Bretter → 3 Dielen.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "hobelmaschine",
+    "dauer": 6000,
+    "energie": 2,
+    "xp": 15,
+    "inputs": [
+      {
+        "material": "bretter",
+        "menge": 5
+      }
+    ],
+    "outputs": [
+      {
+        "material": "dielen",
+        "menge": 3
+      }
+    ]
+  },
+  {
+    "id": "furnier_schneiden",
+    "name": "Furnier schneiden",
+    "emoji": "🔪",
+    "beschreibung": "2 Dielen → 1 Furnier.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "feinschneider",
+    "dauer": 9000,
+    "energie": 4,
+    "xp": 30,
+    "inputs": [
+      {
+        "material": "dielen",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "furnier",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "eisen_verhuetten",
+    "name": "Eisen verhütten",
+    "emoji": "🔥",
+    "beschreibung": "2 Eisenerz + 1 Kohle → 1 Roheisen + Schlacke.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "schmelzofen",
+    "dauer": 7000,
+    "energie": 3,
+    "xp": 15,
+    "inputs": [
+      {
+        "material": "eisenerz",
+        "menge": 2
+      },
+      {
+        "material": "kohle",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "roheisen",
+        "menge": 1
+      },
+      {
+        "material": "schlacke",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "barren_giessen",
+    "name": "Barren gießen",
+    "emoji": "🥈",
+    "beschreibung": "2 Roheisen → 1 Eisenbarren.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "giesserei",
+    "dauer": 6000,
+    "energie": 2,
+    "xp": 25,
+    "inputs": [
+      {
+        "material": "roheisen",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "eisenbarren",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "stahl_herstellen",
+    "name": "Stahl herstellen",
+    "emoji": "🔧",
+    "beschreibung": "2 Eisenbarren + 1 Kohle → 1 Stahlbarren.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "hochofen",
+    "dauer": 9000,
+    "energie": 4,
+    "xp": 40,
+    "inputs": [
+      {
+        "material": "eisenbarren",
+        "menge": 2
+      },
+      {
+        "material": "kohle",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "stahlbarren",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "traeger_schmieden",
+    "name": "Träger schmieden",
+    "emoji": "🏗️",
+    "beschreibung": "2 Stahlbarren → 1 Stahlträger.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "schmiede",
+    "dauer": 10000,
+    "energie": 5,
+    "xp": 60,
+    "inputs": [
+      {
+        "material": "stahlbarren",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "stahltraeger",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "holzpellets_pressen",
+    "name": "Holzpellets pressen",
+    "emoji": "🔥",
+    "beschreibung": "5 Sägespäne → 2 Holzpellets.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "pelletpresse",
+    "dauer": 4000,
+    "energie": 2,
+    "xp": 12,
+    "inputs": [
+      {
+        "material": "saegespaene",
+        "menge": 5
+      }
+    ],
+    "outputs": [
+      {
+        "material": "holzpellets",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "holzplatten_pressen",
+    "name": "Holzplatten pressen",
+    "emoji": "🪟",
+    "beschreibung": "6 Bretter + Holzleim → 1 Holzplatte.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "plattenpresse",
+    "dauer": 7000,
+    "energie": 3,
+    "xp": 20,
+    "inputs": [
+      {
+        "material": "bretter",
+        "menge": 6
+      },
+      {
+        "material": "leim",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "holzplatten",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "moebelholz_sortieren",
+    "name": "Möbelholz sortieren",
+    "emoji": "🪑",
+    "beschreibung": "4 Dielen → 1 Möbelholz.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "sortieranlage",
+    "dauer": 8000,
+    "energie": 2,
+    "xp": 25,
+    "inputs": [
+      {
+        "material": "dielen",
+        "menge": 4
+      }
+    ],
+    "outputs": [
+      {
+        "material": "moebelholz",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "kupfer_verhuetten",
+    "name": "Kupfer verhütten",
+    "emoji": "🔥",
+    "beschreibung": "2 Kupfererz + 1 Kohle → 1 Kupferbarren.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "schmelzofen",
+    "dauer": 6500,
+    "energie": 3,
+    "xp": 18,
+    "inputs": [
+      {
+        "material": "kupfererz",
+        "menge": 2
+      },
+      {
+        "material": "kohle",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "kupferbarren",
+        "menge": 1
+      },
+      {
+        "material": "schlacke",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "draht_ziehen",
+    "name": "Draht ziehen",
+    "emoji": "🧵",
+    "beschreibung": "1 Eisenbarren → 3 Metalldrähte.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "drahtziehbank",
+    "dauer": 5000,
+    "energie": 2,
+    "xp": 18,
+    "inputs": [
+      {
+        "material": "eisenbarren",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "draht",
+        "menge": 3
+      }
+    ]
+  },
+  {
+    "id": "stahlblech_walzen",
+    "name": "Stahlblech walzen",
+    "emoji": "📄",
+    "beschreibung": "1 Stahlbarren → 2 Stahlbleche.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "walzwerk",
+    "dauer": 7000,
+    "energie": 3,
+    "xp": 30,
+    "inputs": [
+      {
+        "material": "stahlbarren",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "stahlblech",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "schrauben_fertigen",
+    "name": "Schrauben fertigen",
+    "emoji": "🔩",
+    "beschreibung": "1 Stahlbarren → 10 Schrauben.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "schraubenpresse",
+    "dauer": 6000,
+    "energie": 2,
+    "xp": 20,
+    "inputs": [
+      {
+        "material": "stahlbarren",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "schrauben",
+        "menge": 10
+      }
+    ]
+  },
+  {
+    "id": "maschinenrahmen_bauen",
+    "name": "Maschinenrahmen bauen",
+    "emoji": "🏭",
+    "beschreibung": "3 Stahlträger + 5 Schrauben → 1 Maschinenrahmen.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "maschine": "montagehalle",
+    "dauer": 15000,
+    "energie": 6,
+    "xp": 90,
+    "inputs": [
+      {
+        "material": "stahltraeger",
+        "menge": 3
+      },
+      {
+        "material": "schrauben",
+        "menge": 5
+      }
+    ],
+    "outputs": [
+      {
+        "material": "maschinenrahmen",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "moebel_bauen",
+    "name": "Möbel bauen",
+    "emoji": "🪑",
+    "beschreibung": "2 Möbelholz + Schrauben → 1 Holzmöbel.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "holz",
+    "maschine": "schreinerei",
+    "dauer": 12000,
+    "energie": 4,
+    "xp": 80,
+    "inputs": [
+      {
+        "material": "moebelholz",
+        "menge": 2
+      },
+      {
+        "material": "schrauben",
+        "menge": 4
+      }
+    ],
+    "outputs": [
+      {
+        "material": "moebel",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "kabelbaum_fertigen",
+    "name": "Kabelbaum fertigen",
+    "emoji": "🔌",
+    "beschreibung": "3 Metalldraht + 1 Kupferbarren → 1 Kabelbaum.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "kabelwerk",
+    "dauer": 8000,
+    "energie": 3,
+    "xp": 35,
+    "inputs": [
+      {
+        "material": "draht",
+        "menge": 3
+      },
+      {
+        "material": "kupferbarren",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "kabelbaum",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "karosserie_rohling_bauen",
+    "name": "Karosserie-Rohling formen",
+    "emoji": "🚘",
+    "beschreibung": "3 Stahlblech + 5 Schrauben + 2 Nieten → 1 Karosserie-Rohling.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "karosseriebau",
+    "dauer": 12000,
+    "energie": 6,
+    "xp": 60,
+    "inputs": [
+      {
+        "material": "stahlblech",
+        "menge": 3
+      },
+      {
+        "material": "schrauben",
+        "menge": 5
+      },
+      {
+        "material": "nieten",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "karosserie_rohling",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "fahrgestell_bauen",
+    "name": "Fahrgestell schweißen",
+    "emoji": "🔧",
+    "beschreibung": "2 Stahlträger + 1 Maschinenrahmen + 8 Schrauben → 1 Fahrgestell.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "karosseriebau",
+    "dauer": 15000,
+    "energie": 8,
+    "xp": 70,
+    "inputs": [
+      {
+        "material": "stahltraeger",
+        "menge": 2
+      },
+      {
+        "material": "maschinenrahmen",
+        "menge": 1
+      },
+      {
+        "material": "schrauben",
+        "menge": 8
+      }
+    ],
+    "outputs": [
+      {
+        "material": "fahrgestell",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "innenausstattung_fertigen",
+    "name": "Innenausstattung fertigen",
+    "emoji": "💺",
+    "beschreibung": "1 Furnier + 1 Möbelholz + 2 Schrauben → 1 Innenausstattung.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "innenausbau",
+    "dauer": 10000,
+    "energie": 4,
+    "xp": 80,
+    "inputs": [
+      {
+        "material": "furnier",
+        "menge": 1
+      },
+      {
+        "material": "moebelholz",
+        "menge": 1
+      },
+      {
+        "material": "schrauben",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "innenausstattung",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "karosserie_fertigstellen",
+    "name": "Karosserie fertigstellen",
+    "emoji": "🚗",
+    "beschreibung": "2 Karosserie-Rohling + 1 Stahlblech → 1 Karosserie.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "karosseriebau",
+    "dauer": 14000,
+    "energie": 7,
+    "xp": 120,
+    "inputs": [
+      {
+        "material": "karosserie_rohling",
+        "menge": 2
+      },
+      {
+        "material": "stahlblech",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "karosserie",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "achsmodul_bauen",
+    "name": "Achsmodul montieren",
+    "emoji": "⚙️",
+    "beschreibung": "1 Fahrgestell + 10 Schrauben → 1 Achsmodul.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugmontage",
+    "dauer": 13000,
+    "energie": 6,
+    "xp": 100,
+    "inputs": [
+      {
+        "material": "fahrgestell",
+        "menge": 1
+      },
+      {
+        "material": "schrauben",
+        "menge": 10
+      }
+    ],
+    "outputs": [
+      {
+        "material": "achsmodul",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "pkw_montieren",
+    "name": "PKW montieren",
+    "emoji": "🚗",
+    "beschreibung": "Karosserie + Achsmodul + Innenausstattung + Kabelbaum → 1 PKW.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugmontage",
+    "dauer": 25000,
+    "energie": 10,
+    "xp": 500,
+    "inputs": [
+      {
+        "material": "karosserie",
+        "menge": 1
+      },
+      {
+        "material": "achsmodul",
+        "menge": 1
+      },
+      {
+        "material": "innenausstattung",
+        "menge": 1
+      },
+      {
+        "material": "kabelbaum",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "pkw",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "transporter_montieren",
+    "name": "Transporter montieren",
+    "emoji": "🚐",
+    "beschreibung": "Karosserie + 2 Achsmodul + Kabelbaum → 1 Transporter.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugmontage",
+    "dauer": 22000,
+    "energie": 9,
+    "xp": 400,
+    "inputs": [
+      {
+        "material": "karosserie",
+        "menge": 1
+      },
+      {
+        "material": "achsmodul",
+        "menge": 2
+      },
+      {
+        "material": "kabelbaum",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "transporter",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "lkw_montieren",
+    "name": "LKW montieren",
+    "emoji": "🚛",
+    "beschreibung": "2 Fahrgestell + 2 Karosserie-Rohling + 2 Kabelbaum → 1 LKW.",
+    "manuell": false,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugmontage",
+    "dauer": 30000,
+    "energie": 14,
+    "xp": 700,
+    "inputs": [
+      {
+        "material": "fahrgestell",
+        "menge": 2
+      },
+      {
+        "material": "karosserie_rohling",
+        "menge": 2
+      },
+      {
+        "material": "kabelbaum",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "lkw",
+        "menge": 1
+      }
+    ]
+  }
+]

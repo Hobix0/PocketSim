@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PocketSim" />
+    <meta name="theme-color" content="#080910" />
+    <meta name="description" content="Baue dein Produktionsimperium in Remscheid auf." />
+    <title>PocketSim</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+
+```
+<header id="header">
+  <div class="header-left">
+    <h1>Pocket<span>Sim</span></h1>
+    <div class="subtitle">Produktionsimperium</div>
+  </div>
+  <div class="header-right">
+    <span id="geld-anzeige">100.000 €</span>
+    <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
+    <button id="btn-einstellungen">⚙️</button>
+  </div>
+</header>
+
+<!-- Spielmodus Banner (unter Header) -->
+```
+
+<div id="spielmodus-banner" style="display:none"></div>
+
+<!-- Intro Modal -->
+
+<div id="modal-intro" style="display:none">
+  <div id="modal-intro-inhalt">
+    <div id="intro-body"></div>
+  </div>
+</div>
+
+<!-- Story Modal -->
+
+<div id="modal-story" style="display:none">
+  <div id="story-border">
+    <div id="story-icon">📜</div>
+    <h3 id="story-titel"></h3>
+    <p id="story-text"></p>
+    <button onclick="storyModalSchliessen()">Verstanden</button>
+  </div>
+</div>
+
+```
+<div id="betrieb-status" style="display:none"></div>
+
+<!-- Sidebar Navigation (nur Desktop sichtbar) -->
+<nav id="sidebar">
+  <span class="sidebar-label">Navigation</span>
+  <button class="sidebar-btn aktiv" data-screen="uebersicht">
+    <span class="sidebar-icon">🏠</span>
+    Übersicht
+  </button>
+  <button class="sidebar-btn" data-screen="lager">
+    <span class="sidebar-icon">📦</span>
+    Lager
+  </button>
+  <button class="sidebar-btn" data-screen="personal">
+    <span class="sidebar-icon">👷</span>
+    Personal
+  </button>
+  <button class="sidebar-btn" data-screen="shop">
+    <span class="sidebar-icon">🛒</span>
+    Shop
+  </button>
+  <button class="sidebar-btn" data-screen="markt">
+    <span class="sidebar-icon">📈</span>
+    Markt
+  </button>
+  <button class="sidebar-btn" data-screen="auftraege">
+    <span class="sidebar-icon">📋</span>
+    Aufträge
+  </button>
+  <!-- Sidebar -->
+  <button class="sidebar-btn" data-screen="statistik">
+    <span class="sidebar-icon">📊</span>
+    Statistik
+  </button>
+  <div class="sidebar-trennlinie"></div>
+  <span class="sidebar-label">System</span>
+  <button class="sidebar-btn" onclick="einstellungenOeffnen()">
+    <span class="sidebar-icon">⚙️</span>
+    Einstellungen
+  </button>
+</nav>
+
+<div id="breadcrumb" style="display:none">
+  <button id="btn-zurueck">← Zurück</button>
+  <span id="breadcrumb-pfad"></span>
+</div>
+
+<main id="inhalt">
+
+  <!-- Screen 0: Übersicht -->
+  <div id="screen-uebersicht" class="screen aktiv">
+    <div id="grundstueck-bereich">
+      <p id="leer-hinweis">Noch kein Grundstück gekauft.</p>
+    </div>
+  </div>
+
+  <!-- Screen 1: Gebäude -->
+  <div id="screen-gebaeude" class="screen">
+    <div class="screen-titel">🏡 Grundstück</div>
+    <div id="gebaeude-bereich">
+      <p class="screen-hinweis" id="hinweis-gebaeude">Noch kein Gebäude gebaut.</p>
+    </div>
+  </div>
+
+  <!-- Screen 2: Maschinen -->
+  <div id="screen-maschinen" class="screen">
+    <div class="screen-titel">🏭 Halle</div>
+    <div id="hallenplan-bereich"></div>
+
+    <!-- NEU: Upgrade Tab -->
+    <div class="halle-tabs">
+      <button class="halle-tab aktiv" onclick="halleTabWechseln('maschinen', this)">
+        ⚙️ Maschinen
+      </button>
+      <button class="halle-tab" onclick="halleTabWechseln('upgrades', this)">
+        🔧 Upgrades
+      </button>
+    </div>
+
+    <!-- Maschinen Inhalt -->
+    <div id="halle-tab-maschinen">
+      <div class="maschinen-section-titel">Installierte Maschinen</div>
+      <p class="screen-hinweis" id="hinweis-maschinen">Noch keine Maschinen.</p>
+      <div id="info-maschinen-liste"></div>
+    </div>
+
+    <!-- Upgrades Inhalt -->
+    <div id="halle-tab-upgrades" style="display:none">
+      <div id="hallen-upgrade-bereich">
+        <p class="screen-hinweis">Wähle eine Halle aus.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Screen 3: Labor -->
+  <div id="screen-labor" class="screen">
+    <div class="screen-titel">🔬 Forschungslabor</div>
+    <div id="labor-bereich">
+      <p class="screen-hinweis">Labor wird geladen...</p>
+    </div>
+  </div>
+
+  <!-- Screen 4: Mine -->
+  <div id="screen-mine" class="screen">
+    <div class="screen-titel">⛏️ Eisenmine</div>
+    <div id="mine-bereich">
+      <p class="screen-hinweis">Mine wird geladen...</p>
+    </div>
+  </div>
+
+  <!-- Screen 5: Lagerhalle Gebäude -->
+  <div id="screen-lager-gebaeude" class="screen">
+    <div class="screen-titel">📦 Lagerhalle</div>
+    <div id="lager-gebaeude-bereich"></div>
+  </div>
+
+  <!-- Screen 6: Markt -->
+  <div id="screen-markt" class="screen">
+    <div class="screen-titel">📈 Markt</div>
+    <div id="markt-bereich"></div>
+  </div>
+
+  <!-- Screen 7: Aufträge -->
+  <div id="screen-auftraege" class="screen">
+    <div class="screen-titel">📋 Aufträge</div>
+    <div id="auftraege-bereich"></div>
+  </div>
+
+  <!-- Screen 8: Lager -->
+  <div id="screen-lager" class="screen">
+    <h2>Lager</h2>
+    <div class="lager-reihe" id="lager-reihe"></div>
+    <h2 style="margin-top:20px">Statistik</h2>
+    <div class="stat-karte">
+      <span class="stat-label">Produktion / Runde</span>
+      <span class="stat-wert" id="stat-bretter-runde">0</span>
+    </div>
+    <div class="stat-karte">
+      <span class="stat-label">Einnahmen / Runde</span>
+      <span class="stat-wert" id="stat-einnahmen-runde">0 €</span>
+    </div>
+    <div class="stat-karte">
+      <span class="stat-label">Aktive Maschinen</span>
+      <span class="stat-wert" id="stat-maschinen">0</span>
+    </div>
+    <div class="stat-karte">
+      <span class="stat-label">Kosten / Runde</span>
+      <span class="stat-wert" id="stat-kosten-runde" style="color:var(--red)">0 €</span>
+    </div>
+  </div>
+
+  <!-- Screen 9: Personal -->
+  <div id="screen-personal" class="screen">
+    <h2>Personal</h2>
+    <div class="stat-karte">
+      <span class="stat-label">👷 Angestellte</span>
+      <span class="stat-wert" id="anzeige-mitarbeiter">0</span>
+    </div>
+    <div class="stat-karte">
+      <span class="stat-label">🏭 Benötigt</span>
+      <span class="stat-wert" id="anzeige-benoetigt">0</span>
+    </div>
+    <div class="stat-karte">
+      <span class="stat-label">💸 Lohnkosten / Runde</span>
+      <span class="stat-wert" id="anzeige-lohnkosten" style="color:var(--red)">0 €</span>
+    </div>
+    <div id="personal-status" style="margin-top:14px"></div>
+    <div style="margin-top:14px; display:flex; flex-direction:column; gap:8px">
+      <button id="btn-einstellen">👷 Mitarbeiter einstellen (30 € / Runde)</button>
+      <button id="btn-entlassen">❌ Mitarbeiter entlassen</button>
+    </div>
+  </div>
+
+  <!-- Screen 10: Shop -->
+  <div id="screen-shop" class="screen">
+    <div id="shop-suche-container">
+      <input type="text" id="shop-suche" placeholder="🔍 Shop durchsuchen..." />
+    </div>
+    <div id="shop-filter"></div>
+    <div id="shop-inhalt"></div>
+  </div>
+
+  <!-- Statistik Screen -->
+```
+
+<div id="screen-statistik" class="screen">
+  <div class="screen-titel">📊 Statistik</div>
+  <div id="statistik-bereich">
+    <p class="screen-hinweis">Lass einige Runden laufen...</p>
+  </div>
+</div>
+
+```
+</main>
+
+<!-- Bottom Navigation (nur Mobile) -->
+<nav id="bottom-nav">
+  <button class="nav-btn aktiv" data-screen="uebersicht">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Übersicht</span>
+  </button>
+  <button class="nav-btn" data-screen="lager">
+    <span class="nav-icon">📦</span>
+    <span class="nav-label">Lager</span>
+  </button>
+  <button class="nav-btn" data-screen="personal">
+    <span class="nav-icon">👷‍♂️</span>
+    <span class="nav-label">Personal</span>
+  </button>
+  <button class="nav-btn" data-screen="markt">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Markt</span>
+  </button>
+  <button class="nav-btn" data-screen="auftraege">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Aufträge</span>
+  </button>
+  <button class="nav-btn" data-screen="shop">
+    <span class="nav-icon">🛒</span>
+    <span class="nav-label">Shop</span>
+  </button>
+  <!-- Bottom Nav (ersetze einen weniger wichtigen Button) -->
+  <button class="nav-btn" data-screen="statistik">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Statistik</span>
+  </button>
+</nav>
+
+<!-- Einstellungen Modal -->
+<div id="modal-einstellungen" style="display:none">
+  <div id="modal-inhalt">
+    <div id="modal-header">
+      <h2>⚙️ Einstellungen</h2>
+      <button id="btn-modal-schliessen">✕</button>
+    </div>
+    <div class="einstellung-gruppe">
+      <h3>Spielstand</h3>
+      <div class="einstellung-info">
+        <span>💰 Geld</span>
+        <span id="info-geld-stand">0 €</span>
+      </div>
+      <div class="einstellung-info">
+        <span>⚙️ Maschinen</span>
+        <span id="info-maschinen-stand">0</span>
+      </div>
+      <div class="einstellung-info">
+        <span>👷 Mitarbeiter</span>
+        <span id="info-mitarbeiter-stand">0</span>
+      </div>
+    </div>
+    <div class="einstellung-gruppe">
+      <h3>Aktionen</h3>
+      <button id="btn-reset" class="btn-gefahr">🗑️ Spielstand zurücksetzen</button>
+    </div>
+    <div class="einstellung-gruppe">
+      <h3>Spielstand-Slots</h3>
+      <div id="save-slots-container"></div>
+      <p class="einstellung-text">Speichere bis zu 3 Slots in JSON-Dateien im Ordner <code>saves/</code>.</p>
+    </div>
+    <div class="einstellung-gruppe">
+      <h3>🔊 Audio</h3>
+      <button id="btn-debug-sound" onclick="soundsToggle()">
+        🔊 Sounds: AN
+      </button>
+    </div>
+    <div class="einstellung-gruppe" id="debug-gruppe">
+      <h3>🛠️ Debug</h3>
+      <p class="einstellung-text" style="margin-bottom:10px">
+        Nur zum Testen — wird nicht gespeichert.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <button id="btn-debug-geld" onclick="debugGeldToggle()">
+          💰 Unendlich Geld: AUS
+        </button>
+        <button id="btn-debug-kosten" onclick="debugKostenToggle()">
+          ⚡ Laufende Kosten: AN
+        </button>
+        <button id="btn-debug-alle-freischalten" onclick="debugAllesFreischalten()">
+          🔓 Alles freischalten
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Verwalten Modal -->
+<div id="modal-verwalten" style="display:none">
+  <div id="modal-verwalten-inhalt">
+    <div id="modal-verwalten-header">
+      <h2 id="modal-verwalten-titel">Verwalten</h2>
+      <button id="btn-verwalten-schliessen">✕</button>
+    </div>
+    <div id="modal-verwalten-body"></div>
+  </div>
+</div>
+
+<!-- Zielauswahl Modal -->
+<div id="modal-zielauswahl" style="display:none">
+  <div id="modal-zielauswahl-inhalt">
+    <div id="modal-zielauswahl-header">
+      <h2 id="zielauswahl-titel">Ziel auswählen</h2>
+      <button id="btn-zielauswahl-schliessen">✕</button>
+    </div>
+    <div id="zielauswahl-body"></div>
+  </div>
+</div>
+
+
+<!-- Runden Timer (nach betrieb-status) -->
+<div id="runden-timer">
+  <div id="runden-timer-balken"></div>
+  <div id="runden-timer-info">
+    <span id="runden-timer-text">Bereit</span>
+    <span id="runden-nummer">Runde 0</span>
+  </div>
+</div>
+
+<!-- Aktive Ereignisse Banner -->
+<div id="aktive-ereignisse-banner" style="display:none"></div>
+
+<!-- Ereignis Modal -->
+<div id="modal-ereignis" style="display:none">
+  <div id="ereignis-modal-inhalt">
+    <div id="ereignis-modal-header">
+      <div style="display:flex; align-items:center; gap:10px">
+        <span id="ereignis-emoji" style="font-size:32px"></span>
+        <div>
+          <div id="ereignis-titel" style="font-family:var(--font-head); font-size:18px; font-weight:700; color:var(--text)"></div>
+          <span id="ereignis-typ-badge"></span>
+        </div>
+      </div>
+      <button onclick="ereignisModalSchliessen()" style="width:auto; padding:4px 10px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; font-size:13px; color:var(--text2); letter-spacing:0; text-transform:none">✕</button>
+    </div>
+    <p id="ereignis-beschreibung"></p>
+    <div id="ereignis-effekt-box">
+      <div id="ereignis-effekt-text"></div>
+      <div id="ereignis-runden-info"></div>
+    </div>
+    <button onclick="ereignisModalSchliessen()" style="margin-top:12px">Verstanden</button>
+  </div>
+</div>
+
+<!-- Script -->
+
+<!-- 1. Basis: Audio -->
+<script src="js/sounds.js"></script>
+
+<!-- 2. Daten laden + State -->
+<script src="js/laden.js"></script>
+<script src="js/state.js"></script>
+
+<!-- 3. Berechnungen -->
+<script src="js/kosten.js"></script>
+<script src="js/personal.js"></script>
+
+<!-- 4. UI Grundlagen -->
+<script src="js/ui.js"></script>
+<script src="js/tabs.js"></script>
+
+<!-- 5. Spielobjekte -->
+<script src="js/produktionslinien.js"></script>
+<script src="js/grundstueck.js"></script>
+<script src="js/gebaeude.js"></script>
+<script src="js/lagerhalle.js"></script>
+<script src="js/hallenplan.js"></script>
+<script src="js/mine.js"></script>
+<script src="js/mine_screen.js"></script>
+<script src="js/labor.js"></script>
+
+<!-- 6. Produktion -->
+<script src="js/produktion.js"></script>
+
+<!-- 7. Wirtschaft + Aufträge -->
+<script src="js/wirtschaft.js"></script>
+<script src="js/auftraege.js"></script>
+
+<!-- 8. Shop + Modals -->
+<script src="js/shop.js"></script>
+<script src="js/verwalten.js"></script>
+<script src="js/zielauswahl.js"></script>
+<script src="js/einstellungen.js"></script>
+
+<script src="js/spielmodus.js"></script>
+<script src="js/ereignisse.js"></script>
+<script src="js/statistik.js"></script>
+<script src="js/hallen_upgrades.js"></script>
+<!-- 9. Start -->
+<script src="js/main.js"></script>
+
+<!-- Service Worker Registration -->
+```
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/sw.js")
+          .then(function(reg) {
+            console.log("[PWA] Service Worker registriert:", reg.scope);
+
+            // Update verfügbar?
+            reg.addEventListener("updatefound", function() {
+              let newWorker = reg.installing;
+              newWorker.addEventListener("statechange", function() {
+                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                  // Neues Update — Benachrichtigung zeigen
+                  if (typeof zeigeNotification === "function") {
+                    zeigeNotification("🔄 Update verfügbar! Seite neu laden.", "accent");
+                  }
+                }
+              });
+            });
+          })
+          .catch(function(err) {
+            console.log("[PWA] Service Worker Fehler:", err);
+          });
+      });
+    }
+  </script>
+
+  <!-- PWA Install Prompt -->
+
+  <div id="pwa-install-banner" style="display:none">
+    <div id="pwa-install-inhalt">
+      <span id="pwa-install-icon">🏭</span>
+      <div id="pwa-install-text">
+        <div id="pwa-install-titel">PocketSim installieren</div>
+        <div id="pwa-install-sub">Als App auf dem Homescreen speichern</div>
+      </div>
+      <button id="pwa-install-btn">Installieren</button>
+      <button id="pwa-install-close">✕</button>
+    </div>
+  </div>
+
+  <script>
+    // Install Prompt abfangen
+    let pwaInstallPrompt = null;
+
+    window.addEventListener("beforeinstallprompt", function(e) {
+      e.preventDefault();
+      pwaInstallPrompt = e;
+
+      // Banner erst nach kurzer Spielzeit zeigen (nicht sofort beim Laden)
+      setTimeout(function() {
+        let banner = document.getElementById("pwa-install-banner");
+        if (banner && !localStorage.getItem("pwa-installiert")) {
+          banner.style.display = "flex";
+        }
+      }, 30000); // nach 30 Sekunden
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      let btn   = document.getElementById("pwa-install-btn");
+      let close = document.getElementById("pwa-install-close");
+
+      if (btn) {
+        btn.addEventListener("click", function() {
+          if (!pwaInstallPrompt) return;
+          pwaInstallPrompt.prompt();
+          pwaInstallPrompt.userChoice.then(function(result) {
+            if (result.outcome === "accepted") {
+              localStorage.setItem("pwa-installiert", "1");
+              if (typeof zeigeNotification === "function") {
+                zeigeNotification("✅ PocketSim installiert!", "green");
+              }
+            }
+            document.getElementById("pwa-install-banner").style.display = "none";
+            pwaInstallPrompt = null;
+          });
+        });
+      }
+
+      if (close) {
+        close.addEventListener("click", function() {
+          document.getElementById("pwa-install-banner").style.display = "none";
+          localStorage.setItem("pwa-install-dismissed", "1");
+        });
+      }
+    });
+
+    // Erkennen ob bereits als PWA gestartet
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      console.log("[PWA] Läuft als installierte App");
+      document.documentElement.classList.add("pwa-mode");
+    }
+  </script>
+
+</body>
+</html>
