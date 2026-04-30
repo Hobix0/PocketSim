@@ -432,12 +432,12 @@
     <!-- 9. Start -->
 
   <!-- ══ LOGIN MODAL ══ -->
-  <div id="modal-login" style="display:none" onclick="if(event.target===this)loginModalSchliessen()">
+  <div id="modal-login" style="display:none" onclick="if(event.target===this) loginModalSchliessen()">
     <div class="auth-modal">
 
       <div class="auth-modal-header">
         <span class="auth-modal-titel">☁️ Cloud-Sync</span>
-        <button class="auth-close-btn" onclick="loginModalSchliessen()">✕</button>
+        <button id="auth-close-btn" type="button" class="auth-close-btn" onclick="loginModalSchliessen()" aria-label="Schließen">✕</button>
       </div>
 
       <!-- Nicht eingeloggt -->
@@ -446,10 +446,10 @@
         <input type="email" id="auth-email" placeholder="E-Mail" class="auth-input" />
         <input type="password" id="auth-pw" placeholder="Passwort (mind. 6 Zeichen)" class="auth-input" />
         <div id="auth-info" style="min-height:18px; font-size:12px; text-align:center; padding:2px 0"></div>
-        <button class="auth-btn-primary" onclick="authEinloggen()">Einloggen</button>
-        <button class="auth-btn-sekundaer" onclick="authRegistrieren()">Neu registrieren</button>
+        <button type="button" class="auth-btn-primary" onclick="authEinloggen()">Einloggen</button>
+        <button type="button" class="auth-btn-sekundaer" onclick="authRegistrieren()">Neu registrieren</button>
         <div class="auth-trenner"><span>oder</span></div>
-        <button class="auth-btn-google" onclick="authGoogle()">🔑 Mit Google einloggen</button>
+        <button type="button" class="auth-btn-google" onclick="authGoogle()">🔑 Mit Google einloggen</button>
       </div>
 
       <!-- Eingeloggt -->

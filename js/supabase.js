@@ -29,6 +29,7 @@ function supabaseInit() {
       syncAktiv     = true;
       authAnzeige();
       cloudBadgeAktualisieren();
+      cloudAutoSaveStart();
     }
   }).catch(function(err) {
     console.error("[Cloud] getSession fehlgeschlagen", err);
@@ -42,6 +43,7 @@ function supabaseInit() {
       authAnzeige();
       cloudBadgeAktualisieren();
       cloudLaden();
+      cloudAutoSaveStart();
       zeigeNotification("☁️ Eingeloggt!", "green");
     }
     if (event === "SIGNED_OUT") {
@@ -49,6 +51,7 @@ function supabaseInit() {
       syncAktiv     = false;
       authAnzeige();
       cloudBadgeAktualisieren();
+      cloudAutoSaveStop();
     }
   });
 }
@@ -68,17 +71,38 @@ function authAnzeige() {
 function loginModalOeffnen() {
   let modal = document.getElementById("modal-login");
   if (modal) {
-    modal.style.display = "flex";
+    modal.style.setProperty("display", "flex", "important");
+    authInfo("");
     authAnzeige();
+    setupLoginModalEvents();
   }
 }
 
 function loginModalSchliessen() {
   let modal = document.getElementById("modal-login");
-  if (modal) modal.style.display = "none";
+  if (modal) modal.style.setProperty("display", "none", "important");
 }
 
-// ── Auth ──
+function setupLoginModalEvents() {
+  let modalLoginElement = document.getElementById("modal-login");
+  let closeModalButton = document.getElementById("auth-close-btn");
+
+  if (modalLoginElement && !modalLoginElement.dataset.loginEventsAttached) {
+    modalLoginElement.addEventListener("click", function(e) {
+      if (e.target === modalLoginElement) loginModalSchliessen();
+    });
+    modalLoginElement.dataset.loginEventsAttached = "1";
+  }
+
+  if (closeModalButton && !closeModalButton.dataset.loginEventsAttached) {
+    closeModalButton.addEventListener("click", function(e) {
+      e.stopPropagation();
+      loginModalSchliessen();
+    });
+    closeModalButton.dataset.loginEventsAttached = "1";
+  }
+}
+
 function authEinloggen() {
   let email = (document.getElementById("auth-email") || {}).value || "";
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
@@ -123,6 +147,7 @@ function authGoogle() {
 
 function authAusloggen() {
   if (supabaseClient) supabaseClient.auth.signOut();
+  cloudAutoSaveStop();
   loginModalSchliessen();
 }
 
@@ -162,10 +187,26 @@ function cloudLaden() {
 }
 
 let _syncTimer = null;
+let _cloudAutoSaveInterval = null;
+
 function cloudSyncDebounced() {
   if (!syncAktiv) return;
   clearTimeout(_syncTimer);
   _syncTimer = setTimeout(cloudSpeichern, 4000);
+}
+
+function cloudAutoSaveStart() {
+  cloudAutoSaveStop();
+  _cloudAutoSaveInterval = setInterval(function() {
+    cloudSpeichern();
+  }, 10000);
+}
+
+function cloudAutoSaveStop() {
+  if (_cloudAutoSaveInterval) {
+    clearInterval(_cloudAutoSaveInterval);
+    _cloudAutoSaveInterval = null;
+  }
 }
 
 function cloudBadgeAktualisieren() {

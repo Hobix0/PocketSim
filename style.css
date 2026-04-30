@@ -4480,6 +4480,7 @@ body {
   justify-content: center !important;
   padding: 20px !important;
   box-sizing: border-box !important;
+  pointer-events: auto !important;
 }
 
 .auth-modal {
@@ -4494,6 +4495,13 @@ body {
   gap: 10px;
   box-shadow: 0 24px 60px rgba(0,0,0,0.6);
   animation: authEin 0.2s ease;
+  pointer-events: auto;
+  position: relative;
+  z-index: 10000;
+}
+
+.auth-modal, .auth-modal * {
+  pointer-events: auto !important;
 }
 
 @keyframes authEin {
@@ -4526,6 +4534,10 @@ body {
   color: var(--text3) !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
+  position: relative !important;
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 #login-inhalt {

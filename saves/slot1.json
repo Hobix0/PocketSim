@@ -1,17 +1,10 @@
 {
-  "geld": 12906,
-  "gekaufte_grundstuecke": [
-    "grundstueck_remscheid"
-  ],
-  "gekaufte_gebaeude": {
-    "grundstueck_remscheid": [
-      "leichtbauhalle",
-      "labor"
-    ]
-  },
+  "geld": 100000,
+  "gekaufte_grundstuecke": [],
+  "gekaufte_gebaeude": {},
   "lager": {
     "baumstaemme": 0,
-    "bretter": 30,
+    "bretter": 0,
     "balken": 0,
     "dielen": 0,
     "furnier": 0,
@@ -20,7 +13,7 @@
     "roheisen": 0,
     "eisenbarren": 0,
     "stahltraeger": 0,
-    "saegespaene": 12,
+    "saegespaene": 0,
     "stahlbarren": 0,
     "schlacke": 0,
     "moebel": 0,
@@ -44,11 +37,9 @@
     "innenausstattung": 0,
     "karosserie": 0,
     "achsmodul": 0,
-    "pkw": 0,
-    "transporter": 0,
-    "lkw": 0
+    "pkw": 0
   },
-  "mitarbeiter": 2,
+  "mitarbeiter": 0,
   "erforschte_technologien": [],
   "aktive_forschung": null,
   "forschungsBonus": {
@@ -60,77 +51,49 @@
   },
   "autoVerkauf": {
     "bretter": false,
-    "balken": true,
+    "balken": false,
     "dielen": false,
     "furnier": false,
     "eisenbarren": false,
     "stahltraeger": false,
     "saegespaene": false,
-    "stahlbarren": false,
-    "moebel": false,
-    "holzpellets": false,
-    "holzplatten": false,
-    "moebelholz": false,
-    "kupferbarren": false,
-    "draht": false,
-    "schrauben": false,
-    "stahlblech": false,
-    "maschinenrahmen": false,
-    "nieten": false,
-    "kabelbaum": false,
-    "pkw": false,
-    "transporter": false,
-    "lkw": false
+    "stahlbarren": false
   },
   "marktpreise": {
-    "bretter": 47,
-    "balken": 565,
-    "dielen": 153,
-    "furnier": 618,
-    "eisenbarren": 363,
-    "stahltraeger": 1206,
-    "saegespaene": 22,
-    "stahlbarren": 795,
-    "moebel": 1989,
-    "holzpellets": 122,
-    "holzplatten": 283,
-    "moebelholz": 617,
-    "kupferbarren": 294,
-    "draht": 246,
-    "schrauben": 174,
-    "stahlblech": 529,
-    "maschinenrahmen": 1564,
-    "nieten": 122,
-    "kabelbaum": 907,
-    "pkw": 35913,
-    "transporter": 28276,
-    "lkw": 44920
+    "bretter": 50,
+    "balken": 500,
+    "dielen": 180,
+    "furnier": 700,
+    "eisenbarren": 400,
+    "stahltraeger": 1200,
+    "saegespaene": 20,
+    "stahlbarren": 800
   },
   "aktive_auftraege": [
     {
-      "id": "a_1777023172901_70rju",
-      "vorlageId": "auftrag_bretter_gross",
-      "rundenVerbleibend": 10,
+      "id": "a_1776893677542_oloc0",
+      "vorlageId": "auftrag_balken_dringend",
+      "rundenVerbleibend": 4,
       "geliefert": 0,
-      "bonus": 13281
+      "bonus": 4999
     },
     {
-      "id": "a_1777023278895_750cg",
-      "vorlageId": "auftrag_bretter_klein",
-      "rundenVerbleibend": 6,
-      "geliefert": 0,
-      "bonus": 832
-    },
-    {
-      "id": "a_1777023338602_53fg8",
+      "id": "a_1776893677542_1n798",
       "vorlageId": "auftrag_balken_normal",
       "rundenVerbleibend": 10,
       "geliefert": 0,
-      "bonus": 2734
+      "bonus": 2701
+    },
+    {
+      "id": "a_1776893677542_gwy38",
+      "vorlageId": "auftrag_bretter_gross",
+      "rundenVerbleibend": 15,
+      "geliefert": 0,
+      "bonus": 3417
     }
   ],
-  "abgeschlossene_auftraege": 2,
-  "verfallene_auftraege": 8,
+  "abgeschlossene_auftraege": 0,
+  "verfallene_auftraege": 0,
   "aktiverSpielModus": {
     "id": "startup",
     "name": "Startup-Modus",
@@ -145,252 +108,15 @@
     "startkapital": 100000,
     "farbe": "#10b981"
   },
-  "spielRundeGesamt": 24,
-  "aktiveEreignisse": [
-    {
-      "id": "holzboom",
-      "name": "Holzboom!",
-      "rundenVerbleibend": 1,
-      "effekt": {
-        "typ": "preisBonus",
-        "material": "holz",
-        "faktor": 1.8,
-        "runden": 3
-      }
-    },
-    {
-      "id": "energiekrise",
-      "name": "Energiekrise",
-      "rundenVerbleibend": 3,
-      "effekt": {
-        "typ": "kostenErhoehung",
-        "kategorie": "alle",
-        "faktor": 1.3,
-        "runden": 3
-      }
-    }
-  ],
-  "ereignisGeschichte": [
-    {
-      "name": "Energiekrise",
-      "emoji": "⚡",
-      "typ": "negativ",
-      "runde": 24
-    },
-    {
-      "name": "Holzboom!",
-      "emoji": "📈",
-      "typ": "positiv",
-      "runde": 22
-    },
-    {
-      "name": "Energiekrise",
-      "emoji": "⚡",
-      "typ": "negativ",
-      "runde": 13
-    },
-    {
-      "name": "Holzboom!",
-      "emoji": "📈",
-      "typ": "positiv",
-      "runde": 12
-    },
-    {
-      "name": "Maschinenpanne",
-      "emoji": "🔧",
-      "typ": "negativ",
-      "runde": 9
-    }
-  ],
-  "statistikHistorie": [
-    {
-      "runde": 5,
-      "einnahmen": 407,
-      "kosten": 123,
-      "gewinn": 284,
-      "geld": 17977,
-      "lagerWert": null
-    },
-    {
-      "runde": 6,
-      "einnahmen": 469,
-      "kosten": 123,
-      "gewinn": 346,
-      "geld": 17854,
-      "lagerWert": null
-    },
-    {
-      "runde": 7,
-      "einnahmen": 516,
-      "kosten": 123,
-      "gewinn": 393,
-      "geld": 20545,
-      "lagerWert": null
-    },
-    {
-      "runde": 8,
-      "einnahmen": 567,
-      "kosten": 123,
-      "gewinn": 444,
-      "geld": 20422,
-      "lagerWert": null
-    },
-    {
-      "runde": 9,
-      "einnahmen": 482,
-      "kosten": 135,
-      "gewinn": 347,
-      "geld": 12287,
-      "lagerWert": null
-    },
-    {
-      "runde": 10,
-      "einnahmen": 542,
-      "kosten": 165,
-      "gewinn": 377,
-      "geld": 12122,
-      "lagerWert": null
-    },
-    {
-      "runde": 11,
-      "einnahmen": 1089,
-      "kosten": 135,
-      "gewinn": 954,
-      "geld": 11987,
-      "lagerWert": null
-    },
-    {
-      "runde": 12,
-      "einnahmen": 1063,
-      "kosten": 135,
-      "gewinn": 928,
-      "geld": 11352,
-      "lagerWert": null
-    },
-    {
-      "runde": 13,
-      "einnahmen": 980,
-      "kosten": 135,
-      "gewinn": 845,
-      "geld": 11217,
-      "lagerWert": null
-    },
-    {
-      "runde": 14,
-      "einnahmen": 959,
-      "kosten": 176,
-      "gewinn": 783,
-      "geld": 8041,
-      "lagerWert": null
-    },
-    {
-      "runde": 15,
-      "einnahmen": 1090,
-      "kosten": 351,
-      "gewinn": 739,
-      "geld": 8529,
-      "lagerWert": null
-    },
-    {
-      "runde": 16,
-      "einnahmen": 1026,
-      "kosten": 351,
-      "gewinn": 675,
-      "geld": 12821,
-      "lagerWert": null
-    },
-    {
-      "runde": 17,
-      "einnahmen": 1097,
-      "kosten": 270,
-      "gewinn": 827,
-      "geld": 14270,
-      "lagerWert": null
-    },
-    {
-      "runde": 18,
-      "einnahmen": 1037,
-      "kosten": 270,
-      "gewinn": 767,
-      "geld": 14499,
-      "lagerWert": null
-    },
-    {
-      "runde": 19,
-      "einnahmen": 1127,
-      "kosten": 270,
-      "gewinn": 857,
-      "geld": 14296,
-      "lagerWert": null
-    },
-    {
-      "runde": 20,
-      "einnahmen": 950,
-      "kosten": 270,
-      "gewinn": 680,
-      "geld": 14486,
-      "lagerWert": null
-    },
-    {
-      "runde": 21,
-      "einnahmen": 983,
-      "kosten": 270,
-      "gewinn": 713,
-      "geld": 14216,
-      "lagerWert": null
-    },
-    {
-      "runde": 22,
-      "einnahmen": 1009,
-      "kosten": 270,
-      "gewinn": 739,
-      "geld": 13946,
-      "lagerWert": null
-    },
-    {
-      "runde": 23,
-      "einnahmen": 1100,
-      "kosten": 270,
-      "gewinn": 830,
-      "geld": 13676,
-      "lagerWert": null
-    },
-    {
-      "runde": 24,
-      "einnahmen": 1079,
-      "kosten": 270,
-      "gewinn": 809,
-      "geld": 12906,
-      "lagerWert": null
-    }
-  ],
+  "spielRundeGesamt": 0,
+  "aktiveEreignisse": [],
+  "ereignisGeschichte": [],
+  "statistikHistorie": [],
   "gekaufte_hallen_upgrades": {},
   "foerderband_verbindungen": {},
-  "spielPausiert": true,
-  "maschinenPositionen": {
-    "leichtbauhalle_0": {
-      "x": 1,
-      "y": 1
-    },
-    "leichtbauhalle_1": {
-      "x": 3,
-      "y": 1
-    }
-  },
-  "maschinen": [
-    {
-      "id": "stammsaege",
-      "gebaeudeId": "leichtbauhalle",
-      "aktivesRezept": "balken_saegen",
-      "laeuft": true
-    },
-    {
-      "id": "stammsaege",
-      "gebaeudeId": "leichtbauhalle",
-      "aktivesRezept": "bretter_saegen",
-      "laeuft": true
-    }
-  ],
+  "spielPausiert": false,
+  "maschinenPositionen": {},
+  "maschinen": [],
   "name": "Lucas MainGame",
-  "date": "24.04.2026, 11:40"
+  "date": "30.04.2026, 17:39"
 }
