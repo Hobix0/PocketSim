@@ -10,22 +10,32 @@ let aktuellerUser  = null;
 let syncAktiv      = false;
 
 function supabaseInit() {
+  console.log("[Cloud] supabaseInit() gestartet", {
+    supabaseGlobal: typeof window.supabase !== "undefined" ? window.supabase : null,
+    supabaseUrl: SUPABASE_URL
+  });
+
   if (typeof window.supabase === "undefined") {
     console.warn("[Cloud] Supabase Library fehlt");
     return;
   }
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log("[Cloud] supabaseClient erstellt", supabaseClient);
 
   supabaseClient.auth.getSession().then(function(res) {
+    console.log("[Cloud] getSession result", res);
     if (res.data && res.data.session) {
       aktuellerUser = res.data.session.user;
       syncAktiv     = true;
       authAnzeige();
       cloudBadgeAktualisieren();
     }
+  }).catch(function(err) {
+    console.error("[Cloud] getSession fehlgeschlagen", err);
   });
 
   supabaseClient.auth.onAuthStateChange(function(event, session) {
+    console.log("[Cloud] onAuthStateChange", event, session);
     if (event === "SIGNED_IN" && session) {
       aktuellerUser = session.user;
       syncAktiv     = true;
@@ -73,10 +83,15 @@ function authEinloggen() {
   let email = (document.getElementById("auth-email") || {}).value || "";
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
   if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
-  if (!supabaseClient)      { authInfo("Keine Verbindung", "red");             return; }
+  if (!supabaseClient) {
+    console.error("[Cloud] authEinloggen() fehlgeschlagen: supabaseClient ist null");
+    authInfo("Keine Verbindung", "red");
+    return;
+  }
   authInfo("Einloggen...", "grau");
   supabaseClient.auth.signInWithPassword({ email: email.trim(), password: pw })
-    .then(function(r) { if (r.error) authInfo(r.error.message, "red"); });
+    .then(function(r) { if (r.error) authInfo(r.error.message, "red"); })
+    .catch(function(err) { console.error("[Cloud] signInWithPassword error", err); authInfo("Login fehlgeschlagen", "red"); });
 }
 
 function authRegistrieren() {
@@ -84,13 +99,18 @@ function authRegistrieren() {
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
   if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
   if (pw.length < 6)        { authInfo("Passwort mind. 6 Zeichen",     "red"); return; }
-  if (!supabaseClient)      { authInfo("Keine Verbindung",              "red"); return; }
+  if (!supabaseClient) {
+    console.error("[Cloud] authRegistrieren() fehlgeschlagen: supabaseClient ist null");
+    authInfo("Keine Verbindung", "red");
+    return;
+  }
   authInfo("Registrierung...", "grau");
   supabaseClient.auth.signUp({ email: email.trim(), password: pw })
     .then(function(r) {
       if (r.error) authInfo(r.error.message, "red");
       else         authInfo("✅ Bestätigungsmail gesendet! E-Mail prüfen.", "green");
-    });
+    })
+    .catch(function(err) { console.error("[Cloud] signUp error", err); authInfo("Registrierung fehlgeschlagen", "red"); });
 }
 
 function authGoogle() {
