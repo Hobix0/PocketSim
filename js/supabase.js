@@ -7,256 +7,215 @@
 const SUPABASE_URL  = "https://supabase.com/dashboard/project/buythdkjxqxnxhhmqijp";
 const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eXRoZGtqeHF4bnhoaG1xaWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM4NDEsImV4cCI6MjA5MzExOTg0MX0.KdSc6aT-Yt3VupZGpgmXPA7lqCSee6JVZ93oaKYpK-o";
 
-// Supabase Client initialisieren
 let supabaseClient = null;
 let aktuellerUser  = null;
 let syncAktiv      = false;
-
-async function supabaseInit() {
-  try {
-    // Supabase über CDN laden
-    const { createClient } = await import(
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-    );
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Aktuellen User prüfen
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
+ 
+// ── Init ──
+function supabaseInit() {
+  // Supabase Library muss als Script-Tag geladen sein (in index.html)
+  if (typeof window.supabase === "undefined") {
+    console.warn("[Cloud] Supabase Library nicht gefunden");
+    return;
+  }
+ 
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+ 
+  // Eingeloggten User prüfen
+  supabaseClient.auth.getSession().then(function(result) {
+    if (result.data && result.data.session) {
+      aktuellerUser = result.data.session.user;
+      syncAktiv     = true;
+      cloudBadgeAktualisieren();
+    }
+    // Modal-Inhalt aktualisieren falls offen
+    loginModalInhaltAktualisieren();
+  });
+ 
+  // Login/Logout beobachten
+  supabaseClient.auth.onAuthStateChange(function(event, session) {
+    if (event === "SIGNED_IN" && session) {
       aktuellerUser = session.user;
-      console.log("[Supabase] Eingeloggt als:", aktuellerUser.email);
-      syncAktiv = true;
-      loginStatusAktualisieren();
+      syncAktiv     = true;
+      cloudBadgeAktualisieren();
+      loginModalInhaltAktualisieren();
+      cloudLaden();
+      zeigeNotification("☁️ Eingeloggt — Spielstand wird geladen...", "green");
     }
-
-    // Auth-Änderungen beobachten (Login/Logout)
-    supabaseClient.auth.onAuthStateChange(function(event, session) {
-      if (event === "SIGNED_IN") {
-        aktuellerUser = session.user;
-        syncAktiv     = true;
-        loginStatusAktualisieren();
-        cloudSpielstandLaden();
-        zeigeNotification("☁️ Eingeloggt! Spielstand wird geladen...", "green");
-      }
-      if (event === "SIGNED_OUT") {
-        aktuellerUser = null;
-        syncAktiv     = false;
-        loginStatusAktualisieren();
-        zeigeNotification("👋 Ausgeloggt", "red");
-      }
-    });
-
-  } catch(err) {
-    console.warn("[Supabase] Initialisierung fehlgeschlagen:", err);
-    syncAktiv = false;
-  }
-}
-
-// ══════════════════════════════════
-// AUTH — Login / Logout
-// ══════════════════════════════════
-
-async function mitEmailRegistrieren(email, passwort) {
-  if (!supabaseClient) return;
-  let { error } = await supabaseClient.auth.signUp({
-    email:    email,
-    password: passwort
+    if (event === "SIGNED_OUT") {
+      aktuellerUser = null;
+      syncAktiv     = false;
+      cloudBadgeAktualisieren();
+      loginModalInhaltAktualisieren();
+      zeigeNotification("👋 Ausgeloggt", "red");
+    }
   });
-  if (error) {
-    zeigeNotification("❌ " + error.message, "red");
-  } else {
-    zeigeNotification("✅ Bestätigungsmail gesendet! E-Mail prüfen.", "green");
-  }
 }
-
-async function mitEmailEinloggen(email, passwort) {
-  if (!supabaseClient) return;
-  let { error } = await supabaseClient.auth.signInWithPassword({
-    email:    email,
-    password: passwort
+ 
+// ══════════════════════════════════
+// AUTH
+// ══════════════════════════════════
+ 
+function authRegistrieren() {
+  let email = document.getElementById("auth-email").value.trim();
+  let pw    = document.getElementById("auth-pw").value;
+ 
+  if (!email || !pw) { authInfo("E-Mail und Passwort eingeben", "red");    return; }
+  if (pw.length < 6) { authInfo("Passwort mind. 6 Zeichen",    "red");    return; }
+  if (!supabaseClient) { authInfo("Verbindung nicht möglich",  "red");    return; }
+ 
+  authInfo("Registrierung läuft...", "grau");
+ 
+  supabaseClient.auth.signUp({ email: email, password: pw }).then(function(result) {
+    if (result.error) {
+      authInfo(result.error.message, "red");
+    } else {
+      authInfo("✅ Bestätigungsmail gesendet! Bitte E-Mail prüfen.", "green");
+    }
   });
-  if (error) {
-    zeigeNotification("❌ " + error.message, "red");
-  }
 }
-
-async function mitGoogleEinloggen() {
-  if (!supabaseClient) return;
-  await supabaseClient.auth.signInWithOAuth({
+ 
+function authEinloggen() {
+  let email = document.getElementById("auth-email").value.trim();
+  let pw    = document.getElementById("auth-pw").value;
+ 
+  if (!email || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
+  if (!supabaseClient) { authInfo("Verbindung nicht möglich",   "red"); return; }
+ 
+  authInfo("Einloggen...", "grau");
+ 
+  supabaseClient.auth.signInWithPassword({ email: email, password: pw }).then(function(result) {
+    if (result.error) authInfo(result.error.message, "red");
+  });
+}
+ 
+function authGoogle() {
+  if (!supabaseClient) { zeigeNotification("❌ Verbindung nicht möglich", "red"); return; }
+  supabaseClient.auth.signInWithOAuth({
     provider: "google",
-    options: {
-      redirectTo: window.location.href
+    options: { redirectTo: window.location.href }
+  });
+}
+ 
+function authAusloggen() {
+  if (!supabaseClient) return;
+  supabaseClient.auth.signOut();
+}
+ 
+function authInfo(text, typ) {
+  let el = document.getElementById("auth-info");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color =
+    typ === "green" ? "var(--green)" :
+    typ === "red"   ? "var(--red)"   : "var(--text3)";
+}
+ 
+// ══════════════════════════════════
+// CLOUD SYNC
+// ══════════════════════════════════
+ 
+function cloudSpeichern() {
+  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
+ 
+  let daten = spielstandDatenErstellen();
+ 
+  supabaseClient.from("spielstaende").upsert({
+    user_id:         aktuellerUser.id,
+    slot:            1,
+    daten:           daten,
+    aktualisiert_am: new Date().toISOString()
+  }, { onConflict: "user_id,slot" }).then(function(result) {
+    if (!result.error) {
+      localStorage.setItem("pocketsim_ts", Date.now().toString());
     }
   });
 }
-
-async function ausloggen() {
-  if (!supabaseClient) return;
-  await supabaseClient.auth.signOut();
-}
-
-// ══════════════════════════════════
-// CLOUD SYNC — Speichern & Laden
-// ══════════════════════════════════
-
-async function cloudSpielstandSpeichern(slot) {
+ 
+function cloudLaden() {
   if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
-
-  slot = slot || 1;
-
-  let daten = spielstandDatenErstellen(); // aus state.js
-
-  let { error } = await supabaseClient
-    .from("spielstaende")
-    .upsert({
-      user_id:          aktuellerUser.id,
-      slot:             slot,
-      daten:            daten,
-      aktualisiert_am:  new Date().toISOString()
-    }, {
-      onConflict: "user_id,slot"
-    });
-
-  if (error) {
-    console.error("[Supabase] Speichern fehlgeschlagen:", error);
-  } else {
-    console.log("[Supabase] Spielstand gespeichert (Slot " + slot + ")");
-    cloudSyncBadgeAktualisieren(true);
-  }
-}
-
-async function cloudSpielstandLaden(slot) {
-  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
-
-  slot = slot || 1;
-
-  let { data, error } = await supabaseClient
+ 
+  supabaseClient
     .from("spielstaende")
     .select("daten, aktualisiert_am")
     .eq("user_id", aktuellerUser.id)
-    .eq("slot", slot)
-    .single();
-
-  if (error || !data) {
-    console.log("[Supabase] Kein Cloud-Spielstand gefunden — starte neu");
-    return;
-  }
-
-  // Cloud vs. lokal vergleichen — neuerer Stand gewinnt
-  let cloudZeit = new Date(data.aktualisiert_am).getTime();
-  let lokalZeit = parseInt(localStorage.getItem("pocketsim_timestamp") || "0");
-
-  if (cloudZeit > lokalZeit) {
-    console.log("[Supabase] Cloud-Stand ist neuer — lade Cloud");
-    spielstandLadenAusStand(data.daten);
-    zeigeNotification("☁️ Spielstand aus Cloud geladen!", "green");
-  } else {
-    console.log("[Supabase] Lokaler Stand ist neuer — behalte lokal");
-  }
-
-  cloudSyncBadgeAktualisieren(true);
+    .eq("slot", 1)
+    .single()
+    .then(function(result) {
+      if (result.error || !result.data) return;
+      let cloudTs = new Date(result.data.aktualisiert_am).getTime();
+      let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
+      if (cloudTs > lokalTs) {
+        spielstandLadenAusSlot(result.data.daten);
+        uebersichtAktualisieren();
+        geldAnzeigenAktualisieren();
+        zeigeNotification("☁️ Cloud-Spielstand geladen!", "green");
+      }
+    });
 }
-
-// ── Alle Spielstände eines Users abrufen ──
-async function cloudAlleSpielstaendeLaden() {
-  if (!syncAktiv || !aktuellerUser || !supabaseClient) return [];
-
-  let { data, error } = await supabaseClient
-    .from("spielstaende")
-    .select("slot, daten, aktualisiert_am")
-    .eq("user_id", aktuellerUser.id)
-    .order("slot");
-
-  if (error) return [];
-  return data || [];
+ 
+let cloudSyncTimer = null;
+function cloudSyncDebounced() {
+  if (!syncAktiv) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(cloudSpeichern, 4000);
 }
-
+ 
 // ══════════════════════════════════
-// UI — Login Modal & Status
+// UI
 // ══════════════════════════════════
-
+ 
 function loginModalOeffnen() {
   let modal = document.getElementById("modal-login");
-  if (modal) modal.style.display = "flex";
-  loginStatusAktualisieren();
+  if (!modal) return;
+  modal.style.display = "flex";
+  loginModalInhaltAktualisieren();
 }
-
+ 
 function loginModalSchliessen() {
   let modal = document.getElementById("modal-login");
   if (modal) modal.style.display = "none";
 }
-
-function loginStatusAktualisieren() {
-  let bereich = document.getElementById("login-status-bereich");
+ 
+function loginModalInhaltAktualisieren() {
+  let bereich = document.getElementById("login-inhalt");
   if (!bereich) return;
-
+ 
   if (aktuellerUser) {
     bereich.innerHTML =
-      "<div class='login-eingeloggt'>" +
-        "<div class='login-avatar'>👤</div>" +
-        "<div class='login-info'>" +
-          "<div class='login-email'>" + aktuellerUser.email + "</div>" +
-          "<div class='login-sub'>☁️ Cloud-Sync aktiv</div>" +
+      "<div class='auth-profil'>" +
+        "<div class='auth-profil-icon'>👤</div>" +
+        "<div>" +
+          "<div class='auth-profil-email'>" + aktuellerUser.email + "</div>" +
+          "<div class='auth-profil-status'>☁️ Cloud-Sync aktiv</div>" +
         "</div>" +
-        "<button class='login-logout-btn' onclick='ausloggen()'>Ausloggen</button>" +
       "</div>" +
-      "<button class='login-sync-btn' onclick='cloudSpielstandSpeichern(1)'>" +
+      "<button class='auth-btn-primary' onclick='cloudSpeichern(); zeigeNotification(\"☁️ Gespeichert!\",\"green\")'>" +
         "☁️ Jetzt synchronisieren" +
+      "</button>" +
+      "<button class='auth-btn-sekundaer' onclick='authAusloggen()'>" +
+        "Ausloggen" +
       "</button>";
   } else {
     bereich.innerHTML =
-      "<div class='login-form'>" +
-        "<input type='email' id='login-email' placeholder='E-Mail' />" +
-        "<input type='password' id='login-pw' placeholder='Passwort' />" +
-        "<button class='login-btn-primary' onclick='loginFormAbsenden()'>Einloggen</button>" +
-        "<button class='login-btn-secondary' onclick='registrierenFormAbsenden()'>Neu registrieren</button>" +
-        "<div class='login-trenner'><span>oder</span></div>" +
-        "<button class='login-btn-google' onclick='mitGoogleEinloggen()'>🔑 Mit Google einloggen</button>" +
-      "</div>" +
-      "<p class='login-hinweis'>☁️ Dein Spielstand wird zwischen PC und Handy synchronisiert.</p>";
+      "<p class='auth-hinweis'>Spielstand zwischen PC und Handy synchronisieren.</p>" +
+      "<input type='email' id='auth-email' placeholder='E-Mail' class='auth-input' />" +
+      "<input type='password' id='auth-pw' placeholder='Passwort (mind. 6 Zeichen)' class='auth-input' />" +
+      "<div id='auth-info' style='min-height:16px;font-size:12px;text-align:center;padding:2px 0'></div>" +
+      "<button class='auth-btn-primary' onclick='authEinloggen()'>Einloggen</button>" +
+      "<button class='auth-btn-sekundaer' onclick='authRegistrieren()'>Neu registrieren</button>" +
+      "<div class='auth-trenner'><span>oder</span></div>" +
+      "<button class='auth-btn-google' onclick='authGoogle()'>🔑 Mit Google einloggen</button>";
   }
 }
-
-function loginFormAbsenden() {
-  let email  = document.getElementById("login-email").value.trim();
-  let pw     = document.getElementById("login-pw").value;
-  if (!email || !pw) {
-    zeigeNotification("❌ E-Mail und Passwort eingeben", "red");
-    return;
-  }
-  mitEmailEinloggen(email, pw);
-}
-
-function registrierenFormAbsenden() {
-  let email = document.getElementById("login-email").value.trim();
-  let pw    = document.getElementById("login-pw").value;
-  if (!email || !pw) {
-    zeigeNotification("❌ E-Mail und Passwort eingeben", "red");
-    return;
-  }
-  if (pw.length < 6) {
-    zeigeNotification("❌ Passwort muss mind. 6 Zeichen haben", "red");
-    return;
-  }
-  mitEmailRegistrieren(email, pw);
-}
-
-// ── Cloud-Sync Badge im Header ──
-function cloudSyncBadgeAktualisieren(ok) {
-  let badge = document.getElementById("cloud-sync-badge");
+ 
+function cloudBadgeAktualisieren() {
+  let badge = document.getElementById("cloud-badge");
   if (!badge) return;
-
-  if (!aktuellerUser) {
-    badge.textContent = "☁️";
-    badge.title       = "Cloud-Sync: Nicht eingeloggt";
-    badge.style.color = "var(--text3)";
-  } else if (ok) {
-    badge.textContent = "☁️✅";
-    badge.title       = "Cloud-Sync: Synchronisiert";
-    badge.style.color = "var(--green)";
-  } else {
-    badge.textContent = "☁️⏳";
-    badge.title       = "Cloud-Sync: Speichert...";
-    badge.style.color = "var(--accent)";
-  }
+  badge.textContent = aktuellerUser ? "☁️✅" : "☁️";
+  badge.style.color = aktuellerUser ? "var(--green)" : "var(--text3)";
+  badge.title = aktuellerUser
+    ? "Eingeloggt: " + aktuellerUser.email
+    : "Cloud-Sync — Einloggen";
 }
+ 
