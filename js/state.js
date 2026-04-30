@@ -98,28 +98,19 @@ function maschinenVonGebaeude(gebId) {
 
 function spielPauseUmschalten() {
   spielPausiert = !spielPausiert;
-
-  // Button-Text aktualisieren
-  let btn = document.getElementById("btn-pause");
-  if (btn) {
-    btn.textContent = spielPausiert ? "▶️ Weiter" : "⏸️ Pause";
-    btn.style.background = spielPausiert ? "var(--accent)" : "";
-    btn.style.color      = spielPausiert ? "#000" : "";
-  }
-
   if (spielPausiert) {
-    window.produktionsPauseStart = Date.now();
-    if (typeof zeigeNotification === "function")
-      zeigeNotification("⏸️ Spiel pausiert", "accent");
+    if (typeof window.produktionsPauseStart === "undefined") window.produktionsPauseStart = null;
+    if (window.produktionsPauseStart === null) window.produktionsPauseStart = Date.now();
+    if (typeof zeigeNotification === "function") zeigeNotification("⏸️ Spiel pausiert", "accent");
   } else {
-    if (window.produktionsPauseStart !== null) {
-      window.rundenStart += Date.now() - window.produktionsPauseStart;
+    if (typeof window.produktionsPauseStart !== "undefined" && window.produktionsPauseStart !== null) {
+      if (typeof window.rundenStart !== "undefined") {
+        window.rundenStart += Date.now() - window.produktionsPauseStart;
+      }
       window.produktionsPauseStart = null;
     }
-    if (typeof zeigeNotification === "function")
-      zeigeNotification("▶️ Spiel fortgesetzt", "green");
+    if (typeof zeigeNotification === "function") zeigeNotification("▶️ Spiel fortgesetzt", "green");
   }
-
   if (typeof hallenplanAktualisieren === "function" && window.aktivesGebaeudeId) {
     hallenplanAktualisieren(window.aktivesGebaeudeId);
   }
@@ -170,7 +161,19 @@ function spielstandDatenErstellen() {
 }
 
 function spielstandSpeichern() {
-  localStorage.setItem("pocketsim", JSON.stringify(spielstandDatenErstellen()));
+  let daten = spielstandDatenErstellen();
+  localStorage.setItem("pocketsim", JSON.stringify(daten));
+  // Timestamp für Cloud-Sync Vergleich
+  localStorage.setItem("pocketsim_timestamp", Date.now().toString());
+  // Cloud-Sync (falls eingeloggt)
+  if (typeof syncAktiv !== "undefined" && syncAktiv) {
+    cloudSyncBadgeAktualisieren(false);
+    // Debounce: nicht bei jedem Runden-Tick sofort speichern
+    clearTimeout(window.cloudSyncTimer);
+    window.cloudSyncTimer = setTimeout(function() {
+      cloudSpielstandSpeichern(1);
+    }, 3000); // 3 Sekunden nach letzter Änderung
+  }
 }
 
 // ── Laden ──
