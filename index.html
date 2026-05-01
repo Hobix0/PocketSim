@@ -7,88 +7,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
-    <!-- Supabase Library -->
+    <link rel="stylesheet" href="mobile.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   </head>
   <body>
-
-  <!-- ══════════════════════════════════
-       LOGIN SCREEN
-       Wird gezeigt bis User eingeloggt ist
-       ══════════════════════════════════ -->
-  <div id="login-screen">
-
-    <!-- Hintergrund -->
-    <div class="login-bg">
-      <div class="login-bg-overlay"></div>
-    </div>
-
-    <!-- Lade-Animation (während Cloud-Sync) -->
-    <div id="login-lade-bereich" style="display:none">
-      <div class="login-logo-gross">
-        <span class="login-logo-pocket">Pocket</span><span class="login-logo-sim">Sim</span>
-      </div>
-      <div class="login-spinner"></div>
-      <div id="login-lade-text" class="login-lade-text">Lädt...</div>
-    </div>
-
-    <!-- Login Formular -->
-    <div id="login-form-bereich" class="login-card">
-
-      <!-- Logo -->
-      <div class="login-logo">
-        <span class="login-logo-pocket">Pocket</span><span class="login-logo-sim">Sim</span>
-        <div class="login-logo-sub">Produktionsimperium</div>
-      </div>
-
-      <!-- Titel (ändert sich je nach Modus) -->
-      <h2 id="login-titel" class="login-titel">Willkommen zurück</h2>
-
-      <!-- Fehlermeldung -->
-      <div id="login-info" class="login-info-text"></div>
-
-      <!-- Felder -->
-      <input type="email" id="login-email"
-        placeholder="E-Mail" class="login-input"
-        onkeydown="loginKeyDown(event)" />
-
-      <input type="password" id="login-pw"
-        placeholder="Passwort" class="login-input"
-        onkeydown="loginKeyDown(event)" />
-
-      <!-- Nur bei Registrierung sichtbar -->
-      <div id="login-pw2-container" style="display:none">
-        <input type="password" id="login-pw2"
-          placeholder="Passwort wiederholen" class="login-input"
-          onkeydown="loginKeyDown(event)" />
-      </div>
-
-      <!-- Buttons -->
-      <button id="login-btn-ein" class="login-btn-primary" onclick="loginEinloggen()">
-        Einloggen
-      </button>
-      <button id="login-btn-reg" class="login-btn-primary" style="display:none" onclick="loginRegistrieren()">
-        Konto erstellen
-      </button>
-
-      <div class="login-trenner"><span>oder</span></div>
-
-      <button id="login-btn-google" class="login-btn-google" onclick="loginGoogle()">
-        🔑 Mit Google einloggen
-      </button>
-
-      <!-- Wechsel Login ↔ Registrierung -->
-      <div id="login-wechsel" class="login-wechsel">
-        Noch kein Konto? <a href="#" onclick="loginFormWechseln('register')">Registrieren</a>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       GAME WRAPPER — alles Spiel-bezogene
-       ══════════════════════════════════ -->
-  <div id="game-wrapper" style="display:none">
 
     <header id="header">
       <div class="header-left">
@@ -98,7 +20,6 @@
       <div class="header-right">
         <span id="geld-anzeige">100.000 €</span>
         <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
-        <button id="cloud-badge" onclick="ausloggen()" class="cloud-badge-btn" title="Ausloggen">👤</button>
         <button id="btn-einstellungen">⚙️</button>
       </div>
     </header>
@@ -508,10 +429,7 @@
     <script src="js/statistik.js"></script>
     <script src="js/hallen_upgrades.js"></script>
     <!-- 9. Start -->
-    <script src="js/supabase.js"></script>
     <script src="js/main.js"></script>
-
-  </div><!-- /game-wrapper -->
 
   </body>
 </html>

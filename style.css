@@ -4928,3 +4928,504 @@ body {
   font-size: 11px;
   color: var(--text3);
 }
+
+/* ══════════════════════════════════
+   MOBILE-FIRST FIXES
+   Überschreibt problematische Stellen
+   ══════════════════════════════════ */
+
+/* ── Touch-Targets ── */
+button, .nav-btn, .sidebar-btn, .shop-filter-btn {
+  min-height: 44px;  /* Apple HIG: mind. 44px */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Header ── */
+#header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#geld-anzeige {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: clamp(13px, 3vw, 16px); /* skaliert mit Bildschirm */
+  white-space: nowrap;
+}
+
+/* ── Shop — komplett neu ── */
+#screen-shop {
+  padding-bottom: 80px; /* Platz für Bottom-Nav */
+}
+
+#shop-suche-container {
+  padding: 10px 12px 6px;
+  position: sticky;
+  top: calc(var(--header-h) + 28px);
+  background: var(--bg1);
+  z-index: 10;
+}
+
+#shop-suche {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font-body);
+}
+
+#shop-filter {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 12px 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: sticky;
+  top: calc(var(--header-h) + 78px);
+  background: var(--bg1);
+  z-index: 9;
+}
+
+#shop-filter::-webkit-scrollbar { display: none; }
+
+.shop-filter-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  min-height: 36px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text2);
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shop-filter-btn.aktiv {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.shop-filter-count {
+  display: inline-block;
+  margin-left: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 0 5px;
+  font-size: 10px;
+}
+
+.shop-filter-btn.aktiv .shop-filter-count {
+  background: rgba(0,0,0,0.15);
+}
+
+#shop-inhalt {
+  padding: 8px 12px 16px;
+}
+
+/* Shop Items — Mobile: vertikal gestapelt */
+.shop-items-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shop-sublinie-header {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-left: 2px solid;
+  border-radius: 0 4px 4px 0;
+  background: var(--surface2);
+  margin: 10px 0 6px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 10px;
+  padding: 10px;
+  transition: border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shop-item-inaktiv { opacity: 0.5; }
+
+.shop-item-bild {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-item-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-item-emoji {
+  font-size: 26px;
+}
+
+.shop-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-item-kopf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.shop-item-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.shop-linie-badge {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.shop-item-beschreibung {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+  margin: 2px 0 6px;
+  /* Auf Mobile: max 2 Zeilen */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shop-item-status-zeile {
+  margin-bottom: 6px;
+}
+
+.shop-status-badge {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.shop-status-owned {
+  background: rgba(16,185,129,0.1);
+  color: var(--green);
+  border: 1px solid rgba(16,185,129,0.3);
+}
+
+.shop-status-locked {
+  background: rgba(255,255,255,0.04);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+.shop-item-fuss {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shop-item-preis {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Mengen-Steuerung */
+.shop-mengen {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.mengen-btn {
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: var(--text2) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+.mengen-btn:hover { background: var(--border) !important; }
+
+.shop-mengen input {
+  width: 36px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+}
+
+/* Shop Buttons */
+.shop-btn-kaufen {
+  width: auto !important;
+  padding: 7px 14px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.shop-btn-owned {
+  width: auto !important;
+  padding: 7px 14px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  background: rgba(16,185,129,0.1) !important;
+  color: var(--green) !important;
+  border: 1px solid rgba(16,185,129,0.3) !important;
+  border-radius: 8px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.shop-btn-locked {
+  width: auto !important;
+  padding: 7px 14px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  cursor: not-allowed !important;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* ── Desktop: 2 Spalten Shop ── */
+@media (min-width: 768px) {
+  .shop-items-liste {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .shop-item-beschreibung {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+    display: block;
+  }
+}
+
+@media (min-width: 1200px) {
+  .shop-items-liste {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Bottom Nav ── */
+#bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 10px;
+  font-family: var(--font-head);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  padding: 6px 2px;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn.aktiv { color: var(--accent); }
+
+.nav-icon { font-size: 20px; line-height: 1; }
+.nav-label { font-size: 9px; }
+
+/* Desktop: Bottom-Nav verstecken */
+@media (min-width: 768px) {
+  #bottom-nav { display: none; }
+}
+
+/* ── Sidebar Desktop ── */
+@media (min-width: 768px) {
+  #sidebar { display: flex; }
+  #inhalt  { margin-left: var(--sidebar-w); }
+}
+
+/* ── Main Content Padding ── */
+#inhalt {
+  padding-top: calc(var(--header-h) + 28px + 8px);
+  padding-bottom: 70px;
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  #inhalt {
+    padding-bottom: 16px;
+  }
+}
+
+/* ── Screens ── */
+.screen {
+  padding: 12px;
+}
+
+/* ── Touch-freundliche Liste ── */
+.lager-reihe {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 480px) {
+  .lager-reihe { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .lager-reihe { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ── Tile-Grid Container Scroll ── */
+.tile-grid-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  padding-bottom: 8px;
+}
+
+/* ── Modals Mobile ── */
+#modal-verwalten-inhalt,
+#modal-zielauswahl-inhalt {
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Karten in Stats/ROI ── */
+.stat-kpis {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.roi-stats {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 480px) {
+  .roi-stats { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ── Hallen-Plan ── */
+.halle-stats {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* ── Input focus: zoom verhindern auf iOS ── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px !important; /* verhindert Auto-Zoom auf iOS */
+}
+
+/* Ausnahme: Kleine Inputs wo 16px zu groß wäre */
+.mengen-btn, .shop-mengen input {
+  font-size: 14px !important;
+}
