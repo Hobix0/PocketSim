@@ -162,9 +162,10 @@ function spielstandDatenErstellen() {
 
 function spielstandSpeichern() {
   let daten = spielstandDatenErstellen();
-  // Lokal speichern (immer, auch offline)
+  // Lokal (immer, auch offline)
   localStorage.setItem("pocketsim", JSON.stringify(daten));
-  // Cloud-Sync (falls eingeloggt, debounced)
+  localStorage.setItem("pocketsim_ts", Date.now().toString());
+  // Cloud-Sync (debounced, nur wenn eingeloggt)
   if (typeof cloudSyncDebounced === "function") cloudSyncDebounced();
 }
 
