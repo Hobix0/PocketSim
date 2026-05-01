@@ -1,26 +1,12 @@
 // ══════════════════════════════════
-// SUPABASE — Cloud Sync
-//
-// Prinzip (wie Leitstellenspiel & Co):
-//   - 1 Account = 1 Spielstand
-//   - localStorage = schneller lokaler Cache
-//   - Supabase = zentraler Speicher
-//   - Beim Start: Cloud vs. lokal → neuerer gewinnt
-//   - Während Spielen: alle 5s debounced → Cloud
-//   - Beim Schließen: sofort speichern
-//
-// Debug-Account:
-//   - Emails in DEBUG_EMAILS → automatisch Debug-Modus
-//   - Oder URL-Parameter ?debug=1 (nur lokal)
+// SUPABASE — Login + Cloud Sync
 // ══════════════════════════════════
 
 const SUPABASE_URL = "https://buythdkjxqxnxhhmqijp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eXRoZGtqeHF4bnhoaG1xaWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM4NDEsImV4cCI6MjA5MzExOTg0MX0.KdSc6aT-Yt3VupZGpgmXPA7lqCSee6JVZ93oaKYpK-o";
 
-// !! Debug-E-Mails hier eintragen !!
 const DEBUG_EMAILS = [
-  "luca@pocketsim.dev",  // Deine Test-E-Mail hier
-  "test@pocketsim.dev"
+  "deine-test@email.de"
 ];
 
 let supabaseClient  = null;
@@ -30,163 +16,261 @@ let istDebugAccount = false;
 let _syncTimer      = null;
 
 // ══════════════════════════════════
-// INIT — gibt Promise zurück damit
-// main.js warten kann
+// INIT — Zeigt Login oder startet Spiel
 // ══════════════════════════════════
 
-function supabaseInit() {
-  return new Promise(function(resolve) {
+async function supabaseInit() {
+  if (typeof window.supabase === "undefined") {
+    console.warn("[Cloud] Supabase fehlt — starte ohne Login");
+    loginScreenVerstecken();
+    return;
+  }
 
-    // URL-Parameter Debug-Modus (nur lokal nutzbar)
-    if (window.location.search.includes("debug=1")) {
-      istDebugAccount = true;
-      debugModusAktivieren();
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Gespeicherte Session prüfen (Cache)
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data.session) {
+    // Bereits eingeloggt → direkt Spiel starten
+    aktuellerUser = data.session.user;
+    syncAktiv     = true;
+    debugPruefen();
+    ladebildschirmZeigen("Spielstand wird geladen...");
+    await cloudPruefeUndLade();
+    spielStarten();
+  } else {
+    // Nicht eingeloggt → Login-Screen zeigen
+    loginScreenZeigen();
+  }
+
+  // Auth-Änderungen beobachten
+  supabaseClient.auth.onAuthStateChange(function(event, session) {
+    if (event === "SIGNED_IN" && session) {
+      aktuellerUser = session.user;
+      syncAktiv     = true;
+      debugPruefen();
+      cloudBadgeAktualisieren();
+      loginInfo("", "");
     }
-
-    if (typeof window.supabase === "undefined") {
-      console.warn("[Cloud] Supabase Library fehlt");
-      resolve();
-      return;
+    if (event === "SIGNED_OUT") {
+      aktuellerUser   = null;
+      syncAktiv       = false;
+      istDebugAccount = false;
+      debugModusDeaktivieren();
+      cloudBadgeAktualisieren();
+      // Zurück zum Login-Screen
+      spielBeenden();
+      loginScreenZeigen();
     }
+  });
 
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Session prüfen
-    supabaseClient.auth.getSession().then(function(res) {
-      if (res.data && res.data.session) {
-        aktuellerUser = res.data.session.user;
-        syncAktiv     = true;
-        debugPruefen();
-        cloudBadgeAktualisieren();
-        authAnzeige();
-
-        // Cloud laden und auf Ergebnis warten
-        cloudPruefeUndLade().then(function() {
-          resolve(); // main.js kann weitermachen
-        });
-      } else {
-        authAnzeige();
-        resolve(); // nicht eingeloggt → sofort weiter
-      }
-    }).catch(function() {
-      resolve();
-    });
-
-    // Auth-Änderungen nach dem Start
-    supabaseClient.auth.onAuthStateChange(function(event, session) {
-      if (event === "SIGNED_IN" && session) {
-        aktuellerUser = session.user;
-        syncAktiv     = true;
-        debugPruefen();
-        cloudBadgeAktualisieren();
-        authAnzeige();
-        // Nach Login: Cloud laden (KEIN Intro mehr triggern)
-        cloudPruefeUndLade();
-        zeigeNotification("☁️ Eingeloggt — " + aktuellerUser.email, "green");
-      }
-      if (event === "SIGNED_OUT") {
-        aktuellerUser   = null;
-        syncAktiv       = false;
-        istDebugAccount = false;
-        debugModusDeaktivieren();
-        cloudBadgeAktualisieren();
-        authAnzeige();
-        zeigeNotification("👋 Ausgeloggt", "red");
-      }
-    });
-
-    // Beim Schließen sofort speichern
-    window.addEventListener("beforeunload", function() {
-      if (syncAktiv) cloudSpeichernSofort();
-    });
+  window.addEventListener("beforeunload", function() {
+    if (syncAktiv) cloudSpeichernSofort();
   });
 }
 
 // ══════════════════════════════════
-// DEBUG-MODUS
+// LOGIN SCREEN
 // ══════════════════════════════════
 
-function debugPruefen() {
-  if (!aktuellerUser) return;
-  istDebugAccount = DEBUG_EMAILS.includes(aktuellerUser.email.toLowerCase());
-  if (istDebugAccount) debugModusAktivieren();
+function loginScreenZeigen() {
+  let screen = document.getElementById("login-screen");
+  let game   = document.getElementById("game-wrapper");
+  if (screen) screen.style.display = "flex";
+  if (game)   game.style.display   = "none";
+  // Formular leeren
+  let emailEl = document.getElementById("login-email");
+  let pwEl    = document.getElementById("login-pw");
+  if (emailEl) emailEl.value = "";
+  if (pwEl)    pwEl.value    = "";
+  loginInfo("", "");
 }
 
-function debugModusAktivieren() {
-  // Globale Debug-Variablen setzen
-  window.debugUnendlichGeld = false; // wird manuell aktiviert
-  window.debugKeineKosten   = false;
-
-  // Debug-Gruppe in Einstellungen sichtbar
-  let dbg = document.getElementById("debug-gruppe");
-  if (dbg) dbg.style.display = "block";
-
-  // Badge zeigen
-  cloudBadgeAktualisieren();
-  console.log("[Debug] Debug-Account aktiv:", aktuellerUser ? aktuellerUser.email : "URL-Param");
+function loginScreenVerstecken() {
+  let screen = document.getElementById("login-screen");
+  let game   = document.getElementById("game-wrapper");
+  if (screen) screen.style.display = "none";
+  if (game)   game.style.display   = "block";
 }
 
-function debugModusDeaktivieren() {
-  let dbg = document.getElementById("debug-gruppe");
-  if (dbg) dbg.style.display = "none";
+function ladebildschirmZeigen(text) {
+  let screen = document.getElementById("login-screen");
+  let game   = document.getElementById("game-wrapper");
+  if (screen) {
+    screen.style.display = "flex";
+    // Formular ausblenden, Lade-Animation zeigen
+    let form = document.getElementById("login-form-bereich");
+    let lade = document.getElementById("login-lade-bereich");
+    if (form) form.style.display = "none";
+    if (lade) {
+      lade.style.display = "flex";
+      let ladeText = document.getElementById("login-lade-text");
+      if (ladeText) ladeText.textContent = text || "Lädt...";
+    }
+  }
+  if (game) game.style.display = "none";
+}
+
+function spielBeenden() {
+  // Produktion stoppen wenn nötig
+  // (vereinfacht — bei Logout einfach neu laden)
+  window.location.reload();
+}
+
+// ══════════════════════════════════
+// AUTH AKTIONEN
+// ══════════════════════════════════
+
+async function loginEinloggen() {
+  let email = (document.getElementById("login-email") || {}).value || "";
+  let pw    = (document.getElementById("login-pw")    || {}).value || "";
+
+  if (!email.trim() || !pw) { loginInfo("E-Mail und Passwort eingeben", "red"); return; }
+  if (!supabaseClient)      { loginInfo("Keine Verbindung",              "red"); return; }
+
+  loginInfo("Einloggen...", "grau");
+  loginButtonsDeaktivieren(true);
+
+  let { error } = await supabaseClient.auth.signInWithPassword({
+    email: email.trim(),
+    password: pw
+  });
+
+  if (error) {
+    loginInfo(fehlerUebersetzen(error.message), "red");
+    loginButtonsDeaktivieren(false);
+    return;
+  }
+
+  // Eingeloggt → Spiel laden
+  ladebildschirmZeigen("Spielstand wird geladen...");
+  await cloudPruefeUndLade();
+  spielStarten();
+}
+
+async function loginRegistrieren() {
+  let email = (document.getElementById("login-email") || {}).value || "";
+  let pw    = (document.getElementById("login-pw")    || {}).value || "";
+  let pw2   = (document.getElementById("login-pw2")   || {}).value || "";
+
+  if (!email.trim() || !pw) { loginInfo("E-Mail und Passwort eingeben", "red"); return; }
+  if (pw.length < 6)        { loginInfo("Passwort mind. 6 Zeichen",     "red"); return; }
+  if (pw !== pw2)           { loginInfo("Passwörter stimmen nicht überein", "red"); return; }
+  if (!supabaseClient)      { loginInfo("Keine Verbindung",              "red"); return; }
+
+  loginInfo("Registrierung läuft...", "grau");
+  loginButtonsDeaktivieren(true);
+
+  let { error } = await supabaseClient.auth.signUp({
+    email: email.trim(),
+    password: pw
+  });
+
+  if (error) {
+    loginInfo(fehlerUebersetzen(error.message), "red");
+    loginButtonsDeaktivieren(false);
+  } else {
+    loginInfo("✅ Bestätigungsmail gesendet! Bitte E-Mail bestätigen, dann einloggen.", "green");
+    loginButtonsDeaktivieren(false);
+  }
+}
+
+async function loginGoogle() {
+  if (!supabaseClient) return;
+  loginInfo("Weiterleitung zu Google...", "grau");
+  await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options:  { redirectTo: window.location.href }
+  });
+}
+
+function loginFormWechseln(modus) {
+  // modus: "login" oder "register"
+  let pw2Container = document.getElementById("login-pw2-container");
+  let titelEl      = document.getElementById("login-titel");
+  let loginBtn     = document.getElementById("login-btn-ein");
+  let regBtn       = document.getElementById("login-btn-reg");
+  let wechselEl    = document.getElementById("login-wechsel");
+
+  if (modus === "register") {
+    if (pw2Container) pw2Container.style.display = "block";
+    if (titelEl)      titelEl.textContent         = "Konto erstellen";
+    if (loginBtn)     loginBtn.style.display       = "none";
+    if (regBtn)       regBtn.style.display         = "block";
+    if (wechselEl)    wechselEl.innerHTML =
+      "Bereits registriert? <a href='#' onclick='loginFormWechseln(\"login\")'>Einloggen</a>";
+  } else {
+    if (pw2Container) pw2Container.style.display = "none";
+    if (titelEl)      titelEl.textContent         = "Willkommen zurück";
+    if (loginBtn)     loginBtn.style.display       = "block";
+    if (regBtn)       regBtn.style.display         = "none";
+    if (wechselEl)    wechselEl.innerHTML =
+      "Noch kein Konto? <a href='#' onclick='loginFormWechseln(\"register\")'>Registrieren</a>";
+  }
+  loginInfo("", "");
+}
+
+// Enter-Taste im Formular
+function loginKeyDown(event) {
+  if (event.key === "Enter") loginEinloggen();
+}
+
+// ── Hilfsfunktionen ──
+function loginInfo(text, typ) {
+  let el = document.getElementById("login-info");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color =
+    typ === "green" ? "var(--green)" :
+    typ === "red"   ? "var(--red)"   : "var(--text3)";
+}
+
+function loginButtonsDeaktivieren(aktiv) {
+  ["login-btn-ein", "login-btn-reg", "login-btn-google"].forEach(function(id) {
+    let el = document.getElementById(id);
+    if (el) el.disabled = aktiv;
+  });
+}
+
+function fehlerUebersetzen(msg) {
+  if (msg.includes("Invalid login credentials")) return "❌ E-Mail oder Passwort falsch";
+  if (msg.includes("Email not confirmed"))        return "📧 E-Mail noch nicht bestätigt";
+  if (msg.includes("User already registered"))    return "⚠️ E-Mail bereits registriert";
+  if (msg.includes("Password should be"))         return "❌ Passwort zu schwach";
+  if (msg.includes("Unable to validate"))         return "❌ Ungültige E-Mail";
+  return "❌ " + msg;
 }
 
 // ══════════════════════════════════
 // CLOUD SYNC
 // ══════════════════════════════════
 
-function cloudPruefeUndLade() {
-  return new Promise(function(resolve) {
-    if (!syncAktiv || !aktuellerUser || !supabaseClient) {
-      resolve();
-      return;
-    }
+async function cloudPruefeUndLade() {
+  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
 
-    supabaseClient
-      .from("spielstand")
-      .select("daten, gespeichert_am, runde, geld")
-      .eq("user_id", aktuellerUser.id)
-      .single()
-      .then(function(res) {
-        if (res.error || !res.data) {
-          // Kein Cloud-Stand → aktuellen Stand hochladen
-          cloudSpeichernSofort();
-          resolve();
-          return;
-        }
+  let { data, error } = await supabaseClient
+    .from("spielstand")
+    .select("daten, gespeichert_am, runde, geld")
+    .eq("user_id", aktuellerUser.id)
+    .single();
 
-        let cloudTs = new Date(res.data.gespeichert_am).getTime();
-        let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
+  if (error || !data) {
+    cloudSpeichernSofort();
+    return;
+  }
 
-        if (cloudTs > lokalTs) {
-          // Cloud neuer → laden (kein Intro triggern!)
-          spielstandLadenAusSlot(res.data.daten);
-          localStorage.setItem("pocketsim_ts", cloudTs.toString());
-          // UI aktualisieren
-          if (typeof geldAnzeigenAktualisieren === "function") geldAnzeigenAktualisieren();
-          if (typeof lagerAnzeigenAktualisieren === "function") lagerAnzeigenAktualisieren();
-          if (typeof uebersichtAktualisieren    === "function") uebersichtAktualisieren();
-          if (typeof shopGenerieren             === "function") shopGenerieren();
-          if (installierte_maschinen.length > 0 && !produktionLaeuft) {
-            produktionStarten();
-            produktionLaeuft = true;
-          }
-          zeigeNotification("☁️ Spielstand aus Cloud geladen (Runde " + res.data.runde + ")", "green");
-        } else {
-          // Lokal neuer → hochladen
-          cloudSpeichernSofort();
-        }
+  let cloudTs = new Date(data.gespeichert_am).getTime();
+  let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
 
-        cloudBadgeAktualisieren();
-        resolve();
-      })
-      .catch(function() {
-        resolve();
-      });
-  });
+  if (cloudTs > lokalTs) {
+    spielstandLadenAusSlot(data.daten);
+    localStorage.setItem("pocketsim_ts", cloudTs.toString());
+  } else {
+    cloudSpeichernSofort();
+  }
 }
 
-// Debounced — wird von spielstandSpeichern() aufgerufen
 function cloudSyncDebounced() {
   if (!syncAktiv) return;
   clearTimeout(_syncTimer);
@@ -195,124 +279,58 @@ function cloudSyncDebounced() {
 
 function cloudSpeichernSofort() {
   if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
-
-  let daten = spielstandDatenErstellen();
-  let jetzt = new Date().toISOString();
-
   supabaseClient.from("spielstand").upsert({
     user_id:        aktuellerUser.id,
-    daten:          daten,
-    gespeichert_am: jetzt,
+    daten:          spielstandDatenErstellen(),
+    gespeichert_am: new Date().toISOString(),
     runde:          spielRundeGesamt || 0,
     geld:           geld || 0
   }, { onConflict: "user_id" }).then(function(res) {
-    if (!res.error) {
-      localStorage.setItem("pocketsim_ts", Date.now().toString());
-    }
+    if (!res.error) localStorage.setItem("pocketsim_ts", Date.now().toString());
   });
 }
 
 // ══════════════════════════════════
-// AUTH
+// DEBUG
 // ══════════════════════════════════
 
-function authEinloggen() {
-  let email = (document.getElementById("auth-email") || {}).value || "";
-  let pw    = (document.getElementById("auth-pw")    || {}).value || "";
-  if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
-  if (!supabaseClient)      { authInfo("Keine Verbindung",              "red"); return; }
-  authInfo("Einloggen...", "grau");
-  supabaseClient.auth.signInWithPassword({ email: email.trim(), password: pw })
-    .then(function(r) { if (r.error) authInfo(r.error.message, "red"); });
-}
-
-function authRegistrieren() {
-  let email = (document.getElementById("auth-email") || {}).value || "";
-  let pw    = (document.getElementById("auth-pw")    || {}).value || "";
-  if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
-  if (pw.length < 6)        { authInfo("Passwort mind. 6 Zeichen",     "red"); return; }
-  if (!supabaseClient)      { authInfo("Keine Verbindung",              "red"); return; }
-  authInfo("Registrierung läuft...", "grau");
-  supabaseClient.auth.signUp({ email: email.trim(), password: pw })
-    .then(function(r) {
-      if (r.error) authInfo(r.error.message, "red");
-      else         authInfo("✅ Bestätigungsmail gesendet — E-Mail prüfen!", "green");
-    });
-}
-
-function authGoogle() {
-  if (!supabaseClient) return;
-  supabaseClient.auth.signInWithOAuth({
-    provider: "google",
-    options:  { redirectTo: window.location.href }
-  });
-}
-
-function authAusloggen() {
-  if (!supabaseClient) return;
-  supabaseClient.auth.signOut();
-  loginModalSchliessen();
-}
-
-function authInfo(text, typ) {
-  let el = document.getElementById("auth-info");
-  if (!el) return;
-  el.textContent = text;
-  el.style.color =
-    typ === "green" ? "var(--green)" :
-    typ === "red"   ? "var(--red)"   : "var(--text3)";
-}
-
-// ══════════════════════════════════
-// UI
-// ══════════════════════════════════
-
-function loginModalOeffnen() {
-  let modal = document.getElementById("modal-login");
-  if (modal) {
-    modal.style.display = "flex";
-    authAnzeige();
+function debugPruefen() {
+  if (!aktuellerUser) return;
+  if (window.location.search.includes("debug=1") ||
+      DEBUG_EMAILS.includes(aktuellerUser.email.toLowerCase())) {
+    istDebugAccount = true;
+    let dbg = document.getElementById("debug-gruppe");
+    if (dbg) dbg.style.display = "block";
   }
 }
 
-function loginModalSchliessen() {
-  let modal = document.getElementById("modal-login");
-  if (modal) modal.style.display = "none";
+function debugModusDeaktivieren() {
+  istDebugAccount = false;
+  let dbg = document.getElementById("debug-gruppe");
+  if (dbg) dbg.style.display = "none";
 }
 
-function authAnzeige() {
-  let anmeldung = document.getElementById("auth-anmeldung");
-  let profil    = document.getElementById("auth-profil-bereich");
-  let emailEl   = document.getElementById("auth-profil-email");
-  let debugEl   = document.getElementById("auth-debug-badge");
-
-  if (anmeldung) anmeldung.style.display = aktuellerUser ? "none" : "flex";
-  if (profil)    profil.style.display    = aktuellerUser ? "flex" : "none";
-  if (emailEl && aktuellerUser) emailEl.textContent = aktuellerUser.email;
-
-  // Debug-Badge im Modal
-  if (debugEl) debugEl.style.display = istDebugAccount ? "block" : "none";
-}
+// ══════════════════════════════════
+// HEADER BADGE + AUSLOGGEN
+// ══════════════════════════════════
 
 function cloudBadgeAktualisieren() {
   let badge = document.getElementById("cloud-badge");
   if (!badge) return;
-  if (!aktuellerUser) {
-    badge.textContent = "☁️";
-    badge.style.color = "var(--text3)";
-    badge.title       = "Cloud-Sync — Einloggen";
-  } else if (istDebugAccount) {
+  if (istDebugAccount) {
     badge.textContent = "🛠️";
+    badge.title       = "Debug: " + (aktuellerUser ? aktuellerUser.email : "");
     badge.style.color = "var(--accent)";
-    badge.title       = "Debug-Account: " + aktuellerUser.email;
-  } else {
-    badge.textContent = "☁️✅";
+  } else if (aktuellerUser) {
+    badge.textContent = "👤";
+    badge.title       = aktuellerUser.email;
     badge.style.color = "var(--green)";
-    badge.title       = aktuellerUser.email + " — Sync aktiv";
   }
 }
 
-function cloudSpeichernUndBestaetigen() {
-  cloudSpeichernSofort();
-  zeigeNotification("☁️ Spielstand gespeichert!", "green");
+function ausloggen() {
+  if (!supabaseClient) return;
+  if (confirm("Wirklich ausloggen?")) {
+    supabaseClient.auth.signOut();
+  }
 }

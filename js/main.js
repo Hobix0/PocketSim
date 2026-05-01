@@ -1,10 +1,10 @@
 // ══════════════════════════════════
-// MAIN — Spielstart
+// MAIN
 // ══════════════════════════════════
 
 let gebaeude = new building();
 
-// ── Navigation ──
+// Navigation
 document.querySelectorAll(".nav-btn, .sidebar-btn[data-screen]").forEach(function(btn) {
   btn.addEventListener("click", function() {
     screenVerlauf = [];
@@ -24,11 +24,9 @@ document.getElementById("btn-zurueck").addEventListener("click", zurueck);
 document.getElementById("btn-einstellungen").addEventListener("click", einstellungenOeffnen);
 document.getElementById("btn-modal-schliessen").addEventListener("click", einstellungenSchliessen);
 document.getElementById("btn-reset").addEventListener("click", spielstandZuruecksetzen);
-
 document.getElementById("modal-einstellungen").addEventListener("click", function(e) {
   if (e.target === this) einstellungenSchliessen();
 });
-
 document.getElementById("btn-einstellen").addEventListener("click", mitarbeiterEinstellen);
 document.getElementById("btn-entlassen").addEventListener("click", mitarbeiterEntlassen);
 
@@ -47,22 +45,22 @@ document.getElementById("shop-suche").addEventListener("input", function() {
 });
 
 // ══════════════════════════════════
-// SPIELSTART
-// Reihenfolge ist entscheidend:
-// 1. Daten laden
-// 2. Lokalen Spielstand laden
-// 3. Cloud-Sync abwarten (falls eingeloggt)
-// 4. DANN Intro prüfen
+// SPIELSTART — wird von supabase.js
+// nach erfolgreichem Login aufgerufen
 // ══════════════════════════════════
 
 async function spielStarten() {
+  // Login-Screen verstecken, Spiel zeigen
+  loginScreenVerstecken();
+
+  // Daten laden
   await alleDatenLaden();
 
   marktpreiseInitialisieren();
-  spielstandLaden();          // Lokaler Stand
+  spielstandLaden();
   auftraegeAuffuellen();
 
-  // UI initialisieren
+  // UI
   geldAnzeigenAktualisieren();
   lagerAnzeigenAktualisieren();
   statistikAktualisieren();
@@ -70,6 +68,7 @@ async function spielStarten() {
   personalAnzeigenAktualisieren();
   uebersichtGrundstueckeAktualisieren();
   rundenStatusAktualisieren();
+  cloudBadgeAktualisieren();
 
   if (hatGrundstueck()) {
     let erstesGs = erstesGrundstueck();
@@ -92,16 +91,11 @@ async function spielStarten() {
   marktScreenAktualisieren();
   auftraegeScreenAktualisieren();
 
-  // Cloud-Sync initialisieren — wartet auf Ergebnis bevor Intro entschieden wird
-  if (typeof supabaseInit === "function") {
-    await supabaseInit();
-  }
-
-  // Intro NUR zeigen wenn wirklich kein Spielstand vorhanden
-  // (kein lokaler UND kein Cloud-Stand)
+  // Intro NUR bei echtem Neustart
   if (!aktiverSpielModus) {
-    setTimeout(introModalZeigen, 300);
+    setTimeout(introModalZeigen, 400);
   }
 }
 
-spielStarten();
+// Start — supabase übernimmt die Kontrolle
+supabaseInit();
