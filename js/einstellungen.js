@@ -10,7 +10,7 @@ function einstellungenOeffnen() {
     mitarbeiter;
 
   debugAnzeigenAktualisieren();
-  initSaveSlotUI();
+  cloudSyncInfoAktualisieren();
   document.getElementById("modal-einstellungen").style.display = "flex";
 }
 
@@ -141,67 +141,35 @@ window.aktivesGebaeudeId = ersteFabrik ? ersteFabrik.id : null;
   alert("🛠️ Debug: Alles freigeschaltet!");
 }
 
-function initSaveSlotUI() {
+function cloudSyncInfoAktualisieren() {
   let container = document.getElementById("save-slots-container");
   if (!container) return;
-  container.innerHTML = "<p>Lade Slots…</p>";
 
-  fetch("/save-slots")
-    .then(function(response) {
-      if (!response.ok) throw new Error("Fehler beim Lesen der Slots");
-      return response.json();
-    })
-    .then(function(data) {
-      container.innerHTML = "";
-      data.slots.forEach(function(slotInfo) {
-        let row = document.createElement("div");
-        row.className = "save-slot-row";
-
-        let title = document.createElement("div");
-        title.className = "save-slot-row-header";
-        title.innerHTML = "<span>Slot " + slotInfo.slot + "</span>" + (slotInfo.exists ? "<span class='save-slot-status'>" + (slotInfo.name || "Gespeichert") + "</span>" : "<span class='save-slot-status'>(leer)</span>");
-
-        let meta = document.createElement("div");
-        meta.className = "save-slot-meta";
-        meta.textContent = slotInfo.exists ? (slotInfo.date ? "Zuletzt gespeichert: " + slotInfo.date : "Bereits gespeichert") : "Kein Speicherstand vorhanden.";
-
-        let controls = document.createElement("div");
-        controls.className = "save-slot-controls";
-
-        let nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.placeholder = "Slot-Name";
-        nameInput.value = slotInfo.name && slotInfo.exists ? slotInfo.name : "";
-
-        let saveBtn = document.createElement("button");
-        saveBtn.textContent = "Speichern";
-        saveBtn.addEventListener("click", function() {
-          saveSlot(slotInfo.slot, nameInput.value || "Slot " + slotInfo.slot);
-        });
-
-        let loadBtn = document.createElement("button");
-        loadBtn.textContent = "Laden";
-        loadBtn.disabled = !slotInfo.exists;
-        loadBtn.addEventListener("click", function() {
-          if (!slotInfo.exists) return;
-          if (!confirm("Slot " + slotInfo.slot + " laden? Der aktuelle Fortschritt wird überschrieben.")) return;
-          loadSlot(slotInfo.slot);
-        });
-
-        controls.appendChild(nameInput);
-        controls.appendChild(saveBtn);
-        controls.appendChild(loadBtn);
-        row.appendChild(title);
-        row.appendChild(meta);
-        row.appendChild(controls);
-        container.appendChild(row);
-      });
-    })
-    .catch(function(error) {
-      container.innerHTML = "<p>Fehler beim Laden der Speicherplätze.</p>";
-      console.error(error);
-    });
+  if (typeof aktuellerUser !== "undefined" && aktuellerUser) {
+    let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
+    let zeitText = lokalTs ? new Date(lokalTs).toLocaleString("de-DE") : "—";
+    container.innerHTML =
+      "<div class='cloud-sync-info'>" +
+        "<div class='cloud-sync-status'>☁️✅ Cloud-Sync aktiv</div>" +
+        "<div class='cloud-sync-email'>" + aktuellerUser.email + "</div>" +
+        "<div class='cloud-sync-zeit'>Zuletzt gespeichert: " + zeitText + "</div>" +
+        "<button onclick='cloudSpeichernUndBestaetigen()' style='margin-top:10px;width:100%'>☁️ Jetzt synchronisieren</button>" +
+        "<button onclick='ausloggen()' style='margin-top:8px;width:100%;background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.3)'>Ausloggen</button>" +
+      "</div>";
+  } else {
+    container.innerHTML =
+      "<div class='cloud-sync-info'>" +
+        "<div class='cloud-sync-status'>☁️ Nicht eingeloggt</div>" +
+        "<div style='font-size:12px;color:var(--text3);margin-top:4px'>Spielstand wird nur lokal gespeichert.</div>" +
+      "</div>";
+  }
 }
+
+function cloudSpeichernUndBestaetigen() {
+  if (typeof cloudSpeichernSofort === "function") cloudSpeichernSofort();
+  if (typeof zeigeNotification    === "function") zeigeNotification("☁️ Spielstand gespeichert!", "green");
+}
+
 
 function saveSlot(slot, name) {
   let data = spielstandDatenErstellen();
@@ -223,7 +191,7 @@ function saveSlot(slot, name) {
       } else {
         alert("Spielstand gespeichert in Slot " + slot);
       }
-      initSaveSlotUI();
+      cloudSyncInfoAktualisieren();
     })
     .catch(function(error) {
       console.error(error);
