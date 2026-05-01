@@ -35,7 +35,7 @@ function introModalGenerieren() {
 
   for (let modus of SPIELMODI) {
     html +=
-      "<div class='intro-modus-karte' data-modus-id='" + modus.id + "' " +
+      "<div class='intro-modus-karte' onclick='spielmodusWaehlen(\"" + modus.id + "\")' " +
         "style='border-color:" + modus.farbe + "'>" +
         "<div class='intro-modus-header'>" +
           "<span class='intro-modus-emoji'>" + modus.emoji + "</span>" +
@@ -71,13 +71,6 @@ function introModalGenerieren() {
 
   html += "</div>";
   body.innerHTML = html;
-
-  // Event-Listener für Spielmodus-Karten hinzufügen
-  body.querySelectorAll(".intro-modus-karte[data-modus-id]").forEach(function(karte) {
-    karte.addEventListener("click", function() {
-      spielmodusWaehlen(karte.getAttribute("data-modus-id"));
-    });
-  });
 }
 
 function spielmodusWaehlen(modusId) {
@@ -124,7 +117,7 @@ function spielmodusWaehlen(modusId) {
   }
 
   geldAnzeigenAktualisieren();
-  spielstandSpeichern();
+  spielstandSpeichernSofort();
 }
 
 // ── Story-Nachrichten ──

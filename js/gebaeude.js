@@ -34,7 +34,7 @@ class building {
     geldAnzeigenAktualisieren();
     uebersichtGebaeudeAktualisieren(gsId);
     shopGenerieren();
-    spielstandSpeichern();
+    spielstandSpeichernSofort();
     if (typeof soundKaufen === "function") soundKaufen();
   }
 

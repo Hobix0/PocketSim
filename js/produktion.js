@@ -119,7 +119,7 @@ function maschineKaufen(maschineId) {
 
   geldAnzeigenAktualisieren();
   uebersichtAktualisieren();
-  spielstandSpeichern();
+  spielstandSpeichernSofort();  // Kauf sofort in Cloud
   shopGenerieren();
 }
 

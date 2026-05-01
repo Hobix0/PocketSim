@@ -20,7 +20,7 @@ function grundstueckKaufen(grundstueckId) {
   geldAnzeigenAktualisieren();
   uebersichtGrundstueckeAktualisieren();
   shopGenerieren();
-  spielstandSpeichern();
+  spielstandSpeichernSofort();
   if (typeof soundKaufen === "function") soundKaufen();
 }
 
@@ -46,7 +46,7 @@ function uebersichtGrundstueckeAktualisieren() {
                           gebAnzahl > 0 ? "var(--accent)" : "var(--text3)";
 
     bereich.innerHTML +=
-      "<div class='objekt-karte klickbar' data-gs-id='" + gsId + "'>" +
+      "<div class='objekt-karte klickbar' onclick='grundstueckAnklicken(\"" + gsId + "\")'>" +
         "<div class='objekt-karte-bild'>" + bildHTML + "</div>" +
         "<div class='objekt-karte-body'>" +
           "<div class='objekt-karte-header'>" + data.name + "</div>" +
@@ -59,13 +59,6 @@ function uebersichtGrundstueckeAktualisieren() {
         "<div class='objekt-karte-arrow'>›</div>" +
       "</div>";
   }
-
-  // Event-Listener für Grundstück-Karten hinzufügen
-  bereich.querySelectorAll(".objekt-karte[data-gs-id]").forEach(function(karte) {
-    karte.addEventListener("click", function() {
-      grundstueckAnklicken(karte.getAttribute("data-gs-id"));
-    });
-  });
 }
 
 function grundstueckAnklicken(grundstueckId) {

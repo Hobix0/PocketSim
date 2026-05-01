@@ -167,6 +167,15 @@ function spielstandSpeichern() {
   if (typeof cloudSyncDebounced === "function") cloudSyncDebounced();
 }
 
+// Für wichtige Aktionen (Kauf, Spielmodus-Start etc.) sofort in Cloud
+function spielstandSpeichernSofort() {
+  let daten = spielstandDatenErstellen();
+  localStorage.setItem("pocketsim", JSON.stringify(daten));
+  localStorage.setItem("pocketsim_ts", Date.now().toString());
+  if (typeof cloudSpeichernWichtig === "function") cloudSpeichernWichtig();
+  else if (typeof cloudSyncDebounced === "function") cloudSyncDebounced();
+}
+
 // ── Laden ──
 
 function spielstandLaden() {

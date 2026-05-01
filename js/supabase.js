@@ -65,7 +65,20 @@ async function supabaseInit() {
     }
   });
 
+  // Beim Schließen / Tab-Wechsel / App minimieren sofort speichern
   window.addEventListener("beforeunload", function() {
+    if (syncAktiv) cloudSpeichernSofort();
+  });
+
+  document.addEventListener("visibilitychange", function() {
+    if (document.visibilityState === "hidden" && syncAktiv) {
+      console.log("[Cloud] Seite versteckt → sofort speichern");
+      cloudSpeichernSofort();
+    }
+  });
+
+  // Auf Mobile: pagehide ist zuverlässiger als beforeunload
+  window.addEventListener("pagehide", function() {
     if (syncAktiv) cloudSpeichernSofort();
   });
 }
@@ -274,20 +287,50 @@ async function cloudPruefeUndLade() {
 function cloudSyncDebounced() {
   if (!syncAktiv) return;
   clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(cloudSpeichernSofort, 5000);
+  // 2 Sekunden nach letzter Änderung speichern
+  _syncTimer = setTimeout(cloudSpeichernSofort, 2000);
+}
+
+// Sofort speichern — für wichtige Aktionen
+function cloudSpeichernWichtig() {
+  if (!syncAktiv) return;
+  clearTimeout(_syncTimer);
+  cloudSpeichernSofort();
 }
 
 function cloudSpeichernSofort() {
   if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
+
+  let jetzt = new Date().toISOString();
+
   supabaseClient.from("spielstand").upsert({
     user_id:        aktuellerUser.id,
     daten:          spielstandDatenErstellen(),
-    gespeichert_am: new Date().toISOString(),
+    gespeichert_am: jetzt,
     runde:          spielRundeGesamt || 0,
     geld:           geld || 0
   }, { onConflict: "user_id" }).then(function(res) {
-    if (!res.error) localStorage.setItem("pocketsim_ts", Date.now().toString());
+    if (res.error) {
+      console.error("[Cloud] Speichern fehlgeschlagen:", res.error.message);
+      cloudStatusZeigen("❌ Sync fehlgeschlagen", "red");
+    } else {
+      let ts = Date.now();
+      localStorage.setItem("pocketsim_ts", ts.toString());
+      console.log("[Cloud] ✅ Gespeichert:", new Date(ts).toLocaleTimeString("de-DE"));
+      cloudStatusZeigen("☁️✅ Gespeichert", "green");
+    }
   });
+}
+
+function cloudStatusZeigen(text, typ) {
+  let badge = document.getElementById("cloud-badge");
+  if (!badge) return;
+  let farbe = typ === "green" ? "var(--green)" : "var(--red)";
+  badge.textContent = text === "☁️✅ Gespeichert" ? "☁️✅" : "☁️❌";
+  badge.style.color = farbe;
+  // Nach 3s zurück zum normalen Badge
+  clearTimeout(badge._statusTimer);
+  badge._statusTimer = setTimeout(cloudBadgeAktualisieren, 3000);
 }
 
 // ══════════════════════════════════
