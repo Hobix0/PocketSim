@@ -14,7 +14,7 @@
 //   - Oder URL-Parameter ?debug=1 (nur lokal)
 // ══════════════════════════════════
 
-const SUPABASE_URL = "https://supabase.com/dashboard/project/buythdkjxqxnxhhmqijp";
+const SUPABASE_URL = "https://buythdkjxqxnxhhmqijp.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eXRoZGtqeHF4bnhoaG1xaWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM4NDEsImV4cCI6MjA5MzExOTg0MX0.KdSc6aT-Yt3VupZGpgmXPA7lqCSee6JVZ93oaKYpK-o";
 
 // !! Debug-E-Mails hier eintragen !!
