@@ -1,140 +1,175 @@
 // ══════════════════════════════════
 // SUPABASE — Cloud Sync
+// Prinzip: localStorage = primär, Cloud = Backup/Sync
+// 1 Spielstand pro Account, kein Slot-System
 // ══════════════════════════════════
 
-const SUPABASE_URL = "https://buythdkjxqxnxhhmqijp.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1eXRoZGtqeHF4bnhoaG1xaWpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDM4NDEsImV4cCI6MjA5MzExOTg0MX0.KdSc6aT-Yt3VupZGpgmXPA7lqCSee6JVZ93oaKYpK-o";
+// !! DEINE WERTE HIER EINTRAGEN !!
+const SUPABASE_URL = "https://DEINE-ID.supabase.co";
+const SUPABASE_KEY = "DEIN-ANON-KEY";
 
 let supabaseClient = null;
 let aktuellerUser  = null;
 let syncAktiv      = false;
+let _syncTimer     = null;
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
 
 function supabaseInit() {
-  console.log("[Cloud] supabaseInit() gestartet", {
-    supabaseGlobal: typeof window.supabase !== "undefined" ? window.supabase : null,
-    supabaseUrl: SUPABASE_URL
-  });
-
   if (typeof window.supabase === "undefined") {
-    console.warn("[Cloud] Supabase Library fehlt");
+    console.warn("[Cloud] Supabase Library nicht geladen");
     return;
   }
-  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log("[Cloud] supabaseClient erstellt", supabaseClient);
 
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Bereits eingeloggt?
   supabaseClient.auth.getSession().then(function(res) {
-    console.log("[Cloud] getSession result", res);
     if (res.data && res.data.session) {
       aktuellerUser = res.data.session.user;
       syncAktiv     = true;
-      authAnzeige();
       cloudBadgeAktualisieren();
-      cloudAutoSaveStart();
+      authAnzeige();
+      // Beim Start: Cloud prüfen ob neuer als lokal
+      cloudPruefeUndLade();
+    } else {
+      authAnzeige();
     }
-  }).catch(function(err) {
-    console.error("[Cloud] getSession fehlgeschlagen", err);
   });
 
+  // Login/Logout beobachten
   supabaseClient.auth.onAuthStateChange(function(event, session) {
-    console.log("[Cloud] onAuthStateChange", event, session);
     if (event === "SIGNED_IN" && session) {
       aktuellerUser = session.user;
       syncAktiv     = true;
-      authAnzeige();
       cloudBadgeAktualisieren();
-      cloudLaden();
-      cloudAutoSaveStart();
+      authAnzeige();
+      cloudPruefeUndLade();
       zeigeNotification("☁️ Eingeloggt!", "green");
     }
     if (event === "SIGNED_OUT") {
       aktuellerUser = null;
       syncAktiv     = false;
-      authAnzeige();
       cloudBadgeAktualisieren();
-      cloudAutoSaveStop();
+      authAnzeige();
+      zeigeNotification("👋 Ausgeloggt", "red");
+    }
+  });
+
+  // Beim Schließen sofort speichern
+  window.addEventListener("beforeunload", function() {
+    if (syncAktiv) cloudSpeichernSofort();
+  });
+}
+
+// ══════════════════════════════════
+// SPEICHERN
+// ══════════════════════════════════
+
+// Wird von spielstandSpeichern() aufgerufen — debounced
+function cloudSyncDebounced() {
+  if (!syncAktiv) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(cloudSpeichernSofort, 5000);
+}
+
+function cloudSpeichernSofort() {
+  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
+
+  let daten = spielstandDatenErstellen();
+  let jetzt = new Date().toISOString();
+
+  supabaseClient.from("spielstand").upsert({
+    user_id:         aktuellerUser.id,
+    daten:           daten,
+    gespeichert_am:  jetzt,
+    runde:           spielRundeGesamt || 0,
+    geld:            geld || 0
+  }, { onConflict: "user_id" }).then(function(res) {
+    if (res.error) {
+      console.error("[Cloud] Speichern fehlgeschlagen:", res.error.message);
+    } else {
+      localStorage.setItem("pocketsim_cloud_ts", Date.now().toString());
+      cloudBadgeAktualisieren();
     }
   });
 }
 
-// ── Login/Logout anzeigen ──
-function authAnzeige() {
-  let anmeldung = document.getElementById("auth-anmeldung");
-  let profil    = document.getElementById("auth-profil-bereich");
-  let email     = document.getElementById("auth-profil-email");
+// ══════════════════════════════════
+// LADEN
+// ══════════════════════════════════
 
-  if (anmeldung) anmeldung.style.display = aktuellerUser ? "none"  : "flex";
-  if (profil)    profil.style.display    = aktuellerUser ? "flex"  : "none";
-  if (email && aktuellerUser) email.textContent = aktuellerUser.email;
-}
+function cloudPruefeUndLade() {
+  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
 
-// ── Modal ──
-function loginModalOeffnen() {
-  let modal = document.getElementById("modal-login");
-  if (modal) {
-    modal.style.setProperty("display", "flex", "important");
-    authInfo("");
-    authAnzeige();
-    setupLoginModalEvents();
-  }
-}
+  supabaseClient
+    .from("spielstand")
+    .select("daten, gespeichert_am, runde, geld")
+    .eq("user_id", aktuellerUser.id)
+    .single()
+    .then(function(res) {
+      if (res.error || !res.data) {
+        // Kein Cloud-Stand → aktuellen lokal hochladen
+        console.log("[Cloud] Kein Cloud-Stand — lade lokalen Stand hoch");
+        cloudSpeichernSofort();
+        return;
+      }
 
-function loginModalSchliessen() {
-  let modal = document.getElementById("modal-login");
-  if (modal) modal.style.setProperty("display", "none", "important");
-}
+      let cloudTs = new Date(res.data.gespeichert_am).getTime();
+      let lokalTs = parseInt(localStorage.getItem("pocketsim_cloud_ts") || "0");
 
-function setupLoginModalEvents() {
-  let modalLoginElement = document.getElementById("modal-login");
-  let closeModalButton = document.getElementById("auth-close-btn");
+      if (cloudTs > lokalTs) {
+        // Cloud ist neuer → laden
+        console.log("[Cloud] Cloud-Stand ist neuer (R" + res.data.runde + ") → lade");
+        spielstandLadenAusSlot(res.data.daten);
+        localStorage.setItem("pocketsim_cloud_ts", cloudTs.toString());
+        if (typeof uebersichtAktualisieren === "function") uebersichtAktualisieren();
+        if (typeof geldAnzeigenAktualisieren === "function") geldAnzeigenAktualisieren();
+        zeigeNotification("☁️ Spielstand aus Cloud geladen (Runde " + res.data.runde + ")", "green");
+      } else {
+        // Lokal ist neuer → hochladen
+        console.log("[Cloud] Lokaler Stand ist neuer → lade hoch");
+        cloudSpeichernSofort();
+      }
 
-  if (modalLoginElement && !modalLoginElement.dataset.loginEventsAttached) {
-    modalLoginElement.addEventListener("click", function(e) {
-      if (e.target === modalLoginElement) loginModalSchliessen();
+      cloudBadgeAktualisieren();
     });
-    modalLoginElement.dataset.loginEventsAttached = "1";
-  }
-
-  if (closeModalButton && !closeModalButton.dataset.loginEventsAttached) {
-    closeModalButton.addEventListener("click", function(e) {
-      e.stopPropagation();
-      loginModalSchliessen();
-    });
-    closeModalButton.dataset.loginEventsAttached = "1";
-  }
 }
+
+// ══════════════════════════════════
+// AUTH
+// ══════════════════════════════════
 
 function authEinloggen() {
   let email = (document.getElementById("auth-email") || {}).value || "";
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
+
   if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
-  if (!supabaseClient) {
-    console.error("[Cloud] authEinloggen() fehlgeschlagen: supabaseClient ist null");
-    authInfo("Keine Verbindung", "red");
-    return;
-  }
+  if (!supabaseClient)      { authInfo("Keine Verbindung",              "red"); return; }
+
   authInfo("Einloggen...", "grau");
   supabaseClient.auth.signInWithPassword({ email: email.trim(), password: pw })
-    .then(function(r) { if (r.error) authInfo(r.error.message, "red"); })
-    .catch(function(err) { console.error("[Cloud] signInWithPassword error", err); authInfo("Login fehlgeschlagen", "red"); });
+    .then(function(r) {
+      if (r.error) authInfo(r.error.message, "red");
+    });
 }
 
 function authRegistrieren() {
   let email = (document.getElementById("auth-email") || {}).value || "";
   let pw    = (document.getElementById("auth-pw")    || {}).value || "";
+
   if (!email.trim() || !pw) { authInfo("E-Mail und Passwort eingeben", "red"); return; }
   if (pw.length < 6)        { authInfo("Passwort mind. 6 Zeichen",     "red"); return; }
-  if (!supabaseClient) {
-    console.error("[Cloud] authRegistrieren() fehlgeschlagen: supabaseClient ist null");
-    authInfo("Keine Verbindung", "red");
-    return;
-  }
-  authInfo("Registrierung...", "grau");
+  if (!supabaseClient)      { authInfo("Keine Verbindung",              "red"); return; }
+
+  authInfo("Registrierung läuft...", "grau");
   supabaseClient.auth.signUp({ email: email.trim(), password: pw })
     .then(function(r) {
       if (r.error) authInfo(r.error.message, "red");
-      else         authInfo("✅ Bestätigungsmail gesendet! E-Mail prüfen.", "green");
-    })
-    .catch(function(err) { console.error("[Cloud] signUp error", err); authInfo("Registrierung fehlgeschlagen", "red"); });
+      else         authInfo("✅ Bestätigungsmail gesendet! Bitte E-Mail bestätigen.", "green");
+    });
 }
 
 function authGoogle() {
@@ -146,8 +181,8 @@ function authGoogle() {
 }
 
 function authAusloggen() {
-  if (supabaseClient) supabaseClient.auth.signOut();
-  cloudAutoSaveStop();
+  if (!supabaseClient) return;
+  supabaseClient.auth.signOut();
   loginModalSchliessen();
 }
 
@@ -155,70 +190,53 @@ function authInfo(text, typ) {
   let el = document.getElementById("auth-info");
   if (!el) return;
   el.textContent = text;
-  el.style.color = typ === "green" ? "var(--green)" : typ === "red" ? "var(--red)" : "var(--text3)";
+  el.style.color =
+    typ === "green" ? "var(--green)" :
+    typ === "red"   ? "var(--red)"   : "var(--text3)";
 }
 
-// ── Cloud ──
-function cloudSpeichern() {
-  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
-  supabaseClient.from("spielstaende").upsert({
-    user_id: aktuellerUser.id, slot: 1,
-    daten: spielstandDatenErstellen(),
-    aktualisiert_am: new Date().toISOString()
-  }, { onConflict: "user_id,slot" }).then(function(r) {
-    if (!r.error) localStorage.setItem("pocketsim_ts", Date.now().toString());
-  });
-}
+// ══════════════════════════════════
+// UI
+// ══════════════════════════════════
 
-function cloudLaden() {
-  if (!syncAktiv || !aktuellerUser || !supabaseClient) return;
-  supabaseClient.from("spielstaende")
-    .select("daten,aktualisiert_am")
-    .eq("user_id", aktuellerUser.id).eq("slot", 1).single()
-    .then(function(r) {
-      if (r.error || !r.data) return;
-      if (new Date(r.data.aktualisiert_am).getTime() > parseInt(localStorage.getItem("pocketsim_ts") || "0")) {
-        spielstandLadenAusSlot(r.data.daten);
-        uebersichtAktualisieren();
-        geldAnzeigenAktualisieren();
-        zeigeNotification("☁️ Spielstand aus Cloud geladen!", "green");
-      }
-    });
-}
-
-let _syncTimer = null;
-let _cloudAutoSaveInterval = null;
-
-function cloudSyncDebounced() {
-  if (!syncAktiv) return;
-  clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(cloudSpeichern, 4000);
-}
-
-function cloudAutoSaveStart() {
-  cloudAutoSaveStop();
-  _cloudAutoSaveInterval = setInterval(function() {
-    cloudSpeichern();
-  }, 10000);
-}
-
-function cloudAutoSaveStop() {
-  if (_cloudAutoSaveInterval) {
-    clearInterval(_cloudAutoSaveInterval);
-    _cloudAutoSaveInterval = null;
+function loginModalOeffnen() {
+  let modal = document.getElementById("modal-login");
+  if (modal) {
+    modal.style.display = "flex";
+    authAnzeige();
   }
 }
 
-function cloudBadgeAktualisieren() {
-  let b = document.getElementById("cloud-badge");
-  if (!b) return;
-  b.textContent = aktuellerUser ? "☁️✅" : "☁️";
-  b.style.color = aktuellerUser ? "var(--green)" : "var(--text3)";
+function loginModalSchliessen() {
+  let modal = document.getElementById("modal-login");
+  if (modal) modal.style.display = "none";
 }
 
+function authAnzeige() {
+  let anmeldung = document.getElementById("auth-anmeldung");
+  let profil    = document.getElementById("auth-profil-bereich");
+  let email     = document.getElementById("auth-profil-email");
 
-// Wrapper für HTML onclick (kein &quot; nötig)
+  if (anmeldung) anmeldung.style.display = aktuellerUser ? "none" : "flex";
+  if (profil)    profil.style.display    = aktuellerUser ? "flex" : "none";
+  if (email && aktuellerUser) email.textContent = aktuellerUser.email;
+}
+
+function cloudBadgeAktualisieren() {
+  let badge = document.getElementById("cloud-badge");
+  if (!badge) return;
+  if (!aktuellerUser) {
+    badge.textContent = "☁️";
+    badge.style.color = "var(--text3)";
+    badge.title       = "Cloud-Sync — Einloggen";
+  } else {
+    badge.textContent = "☁️✅";
+    badge.style.color = "var(--green)";
+    badge.title       = aktuellerUser.email + " — Cloud-Sync aktiv";
+  }
+}
+
 function cloudSpeichernUndBestaetigen() {
-  cloudSpeichern();
-  zeigeNotification("☁️ Gespeichert!", "green");
+  cloudSpeichernSofort();
+  zeigeNotification("☁️ Spielstand gespeichert!", "green");
 }

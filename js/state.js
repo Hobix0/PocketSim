@@ -162,18 +162,10 @@ function spielstandDatenErstellen() {
 
 function spielstandSpeichern() {
   let daten = spielstandDatenErstellen();
+  // Lokal speichern (immer, auch offline)
   localStorage.setItem("pocketsim", JSON.stringify(daten));
-  // Timestamp für Cloud-Sync Vergleich
-  localStorage.setItem("pocketsim_timestamp", Date.now().toString());
-  // Cloud-Sync (falls eingeloggt)
-  if (typeof syncAktiv !== "undefined" && syncAktiv) {
-    cloudSyncBadgeAktualisieren(false);
-    // Debounce: nicht bei jedem Runden-Tick sofort speichern
-    clearTimeout(window.cloudSyncTimer);
-    window.cloudSyncTimer = setTimeout(function() {
-      cloudSpielstandSpeichern(1);
-    }, 3000); // 3 Sekunden nach letzter Änderung
-  }
+  // Cloud-Sync (falls eingeloggt, debounced)
+  if (typeof cloudSyncDebounced === "function") cloudSyncDebounced();
 }
 
 // ── Laden ──
