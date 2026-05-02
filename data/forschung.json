@@ -615,26 +615,7 @@
       "spalte": 2
     }
   },
-  {
-    "id": "grundlagenforschung",
-    "name": "Grundlagenforschung",
-    "emoji": "🔬",
-    "beschreibung": "Legt das Fundament für wissenschaftliche Forschung — schaltet das Forschungslabor frei.",
-    "kategorie": "gebaeude",
-    "kosten": 15000,
-    "forschungszeit": 5,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "labor"
-      ]
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 2,
-      "spalte": 0
-    }
-  },
+
   {
     "id": "industrialisierung",
     "name": "Industrialisierung",
