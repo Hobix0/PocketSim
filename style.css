@@ -3754,3 +3754,328 @@ select {
 body.login-aktiv {
   overflow: hidden;
 }
+
+
+/* ══════════════════════════════════
+   BUTTON OVERRIDE FIXES
+   Alle spezifischen Buttons müssen 
+   globale button{} Stile überschreiben
+   ══════════════════════════════════ */
+
+/* ── Header kompakter auf Mobile ── */
+#geld-anzeige {
+  font-size: clamp(11px, 2.5vw, 15px) !important;
+  padding: 4px 8px !important;
+  letter-spacing: 0.5px !important;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#btn-pause, #btn-einstellungen, #btn-bauen {
+  padding: 5px 8px !important;
+  font-size: 14px !important;
+  width: auto !important;
+}
+
+.cloud-badge-btn {
+  padding: 5px 7px !important;
+  font-size: 14px !important;
+}
+
+.header-right {
+  gap: 4px !important;
+  flex-shrink: 0;
+}
+
+/* ── Markt Buttons ── */
+.markt-btn-sell {
+  width: auto !important;
+  padding: 6px 12px !important;
+  min-height: 34px !important;
+  font-size: 11px !important;
+  background: var(--green) !important;
+  color: #000 !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  flex-shrink: 0;
+}
+
+.markt-btn-sell:hover { background: #059669 !important; }
+
+.markt-btn-auto {
+  width: auto !important;
+  padding: 6px 10px !important;
+  min-height: 34px !important;
+  font-size: 11px !important;
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  flex-shrink: 0;
+}
+
+.markt-btn-auto.aktiv {
+  background: rgba(16,185,129,0.15) !important;
+  color: var(--green) !important;
+  border-color: rgba(16,185,129,0.4) !important;
+}
+
+/* ── Auftrags-Buttons ── */
+.auftrag-btn {
+  width: 100% !important;
+  padding: 10px !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.3px !important;
+  text-transform: none !important;
+}
+
+.auftrag-btn-bereit {
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+}
+
+.auftrag-btn-warten {
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  cursor: not-allowed !important;
+}
+
+/* ── Lager Buttons ── */
+.btn-verkaufen-lager,
+.lager-geb-sell-btn {
+  width: auto !important;
+  padding: 5px 10px !important;
+  min-height: 32px !important;
+  font-size: 11px !important;
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 5px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.btn-verkaufen-lager:hover,
+.lager-geb-sell-btn:hover { background: #059669 !important; }
+
+/* ── Hallen-Tabs ── */
+.halle-tab {
+  width: auto !important;
+  padding: 8px 16px !important;
+  min-height: 36px !important;
+  background: transparent !important;
+  color: var(--text3) !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  font-family: var(--font-head) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: none !important;
+  cursor: pointer !important;
+  margin-bottom: -1px;
+}
+
+.halle-tab:hover  { color: var(--text2) !important; background: transparent !important; }
+.halle-tab.aktiv  { color: var(--accent) !important; border-bottom-color: var(--accent) !important; background: transparent !important; }
+
+/* ── Upgrade Buttons ── */
+.upgrade-btn-kaufen {
+  width: 100% !important;
+  padding: 9px !important;
+  font-size: 13px !important;
+  border-radius: 7px !important;
+  letter-spacing: 0.3px !important;
+  text-transform: none !important;
+  background: var(--accent) !important;
+  color: #000 !important;
+}
+
+.upgrade-btn-gesperrt {
+  width: 100% !important;
+  padding: 9px !important;
+  font-size: 12px !important;
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 7px !important;
+  cursor: not-allowed !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* ── Forschungs-Button ── */
+.btn-erforschen {
+  width: auto !important;
+  padding: 6px 14px !important;
+  min-height: 34px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.5px !important;
+  border-radius: 6px !important;
+}
+
+/* ── Modal Buttons (Schließen etc.) ── */
+#btn-modal-schliessen,
+#btn-verwalten-schliessen,
+#btn-zielauswahl-schliessen {
+  width: auto !important;
+  padding: 4px 10px !important;
+  min-height: 32px !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text2) !important;
+  font-size: 14px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  border-radius: 6px !important;
+}
+
+/* ── Zurück Button ── */
+#btn-zurueck {
+  width: auto !important;
+  min-height: 36px !important;
+  background: var(--surface2) !important;
+  color: var(--text2) !important;
+  border: 1px solid var(--border) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* ── Förderbänder ── */
+.foerderband-loeschen-btn {
+  width: auto !important;
+  padding: 2px 7px !important;
+  min-height: 28px !important;
+  background: rgba(239,68,68,0.1) !important;
+  color: var(--red) !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* ── Objekt-Karte Stats (Grundstück-Ansicht) ── */
+.objekt-karte-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.objekt-karte-stats span {
+  display: inline-flex !important;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 3px 7px;
+  border-radius: 4px;
+  width: auto !important;
+  min-height: auto !important;
+}
+
+/* ── Einstellungen Slots (Cloud Sync) ── */
+.cloud-sync-info button {
+  width: 100% !important;
+  margin-top: 8px;
+}
+
+/* ── Debug Buttons ── */
+#btn-debug-geld,
+#btn-debug-kosten,
+#btn-debug-alle-freischalten,
+#btn-debug-sound {
+  background: var(--surface2) !important;
+  color: var(--text2) !important;
+  border: 1px solid var(--border2) !important;
+  font-size: 13px !important;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── Story Modal Button ── */
+#modal-story button {
+  width: auto !important;
+  padding: 5px 14px !important;
+  font-size: 11px !important;
+  background: var(--surface2) !important;
+  color: var(--text2) !important;
+  border: 1px solid var(--border) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  min-height: 30px !important;
+}
+
+/* ── Ereignis Modal Button ── */
+#ereignis-modal-inhalt button {
+  letter-spacing: 0.3px;
+  text-transform: none;
+}
+
+/* ── Verwalten Modal ── */
+.mkv2-btn-verwalten,
+.mkv2-btn-toggle,
+.btn-verwalten {
+  width: auto !important;
+  min-height: 36px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: none !important;
+}
+
+.mkv2-btn-verwalten {
+  flex: 1 !important;
+  padding: 8px !important;
+  background: transparent !important;
+  color: var(--text2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+}
+
+.mkv2-btn-toggle {
+  flex: 1 !important;
+  padding: 8px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  border: 1px solid transparent !important;
+}
+
+/* ── Maschinen-Karte Footer ── */
+.maschinen-karte-footer .btn-verwalten,
+.maschinen-karte-footer .btn-toggle {
+  flex: 1 !important;
+  padding: 7px !important;
+  font-size: 12px !important;
+  width: auto !important;
+  min-height: 36px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  border-radius: 6px !important;
+}
+
+/* Mobile Header: alles passt in eine Zeile */
+@media (max-width: 480px) {
+  #geld-anzeige {
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+    max-width: 110px;
+  }
+  #btn-pause {
+    font-size: 13px !important;
+    padding: 4px 7px !important;
+  }
+  .cloud-badge-btn {
+    font-size: 13px !important;
+    padding: 4px 6px !important;
+  }
+}
