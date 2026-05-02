@@ -3589,8 +3589,7 @@ body {
   font-weight: 600;
 }
 
-/* Game-Wrapper */
-#game-wrapper { width: 100%; height: 100%; }
+/* Login-Screen ist ein position:fixed Overlay — kein game-wrapper nötig */
 
 /* Cloud-Badge im Header */
 .cloud-badge-btn {
@@ -3704,3 +3703,8 @@ select {
   #sidebar     { display: flex; }
 }
 
+
+/* Scroll sperren wenn Login-Screen aktiv */
+body.login-aktiv {
+  overflow: hidden;
+}

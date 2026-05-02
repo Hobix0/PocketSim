@@ -89,40 +89,37 @@ async function supabaseInit() {
 
 function loginScreenZeigen() {
   let screen = document.getElementById("login-screen");
-  let game   = document.getElementById("game-wrapper");
   if (screen) screen.style.display = "flex";
-  if (game)   game.style.display   = "none";
-  // Formular leeren
+  document.body.classList.add("login-aktiv");
   let emailEl = document.getElementById("login-email");
   let pwEl    = document.getElementById("login-pw");
   if (emailEl) emailEl.value = "";
   if (pwEl)    pwEl.value    = "";
+  // Formular zeigen, Lade-Animation verstecken
+  let form = document.getElementById("login-form-bereich");
+  let lade = document.getElementById("login-lade-bereich");
+  if (form) form.style.display = "flex";
+  if (lade) lade.style.display = "none";
   loginInfo("", "");
 }
 
 function loginScreenVerstecken() {
   let screen = document.getElementById("login-screen");
-  let game   = document.getElementById("game-wrapper");
   if (screen) screen.style.display = "none";
-  if (game)   game.style.display   = "block";
+  document.body.classList.remove("login-aktiv");
 }
 
 function ladebildschirmZeigen(text) {
   let screen = document.getElementById("login-screen");
-  let game   = document.getElementById("game-wrapper");
-  if (screen) {
-    screen.style.display = "flex";
-    // Formular ausblenden, Lade-Animation zeigen
-    let form = document.getElementById("login-form-bereich");
-    let lade = document.getElementById("login-lade-bereich");
-    if (form) form.style.display = "none";
-    if (lade) {
-      lade.style.display = "flex";
-      let ladeText = document.getElementById("login-lade-text");
-      if (ladeText) ladeText.textContent = text || "Lädt...";
-    }
+  let form   = document.getElementById("login-form-bereich");
+  let lade   = document.getElementById("login-lade-bereich");
+  if (screen) screen.style.display = "flex";
+  if (form)   form.style.display   = "none";
+  if (lade) {
+    lade.style.display = "flex";
+    let ladeText = document.getElementById("login-lade-text");
+    if (ladeText) ladeText.textContent = text || "Lädt...";
   }
-  if (game) game.style.display = "none";
 }
 
 function spielBeenden() {
@@ -277,9 +274,13 @@ async function cloudPruefeUndLade() {
   let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
 
   if (cloudTs > lokalTs) {
-    spielstandLadenAusSlot(data.daten);
+    // Cloud ist neuer → in localStorage schreiben damit spielstandLaden() es aufgreift
+    localStorage.setItem("pocketsim", JSON.stringify(data.daten));
     localStorage.setItem("pocketsim_ts", cloudTs.toString());
+    console.log("[Cloud] ☁️ Cloud-Stand geladen (Runde " + (data.runde || 0) + ")");
   } else {
+    // Lokal ist neuer → in Cloud hochladen
+    console.log("[Cloud] 💾 Lokaler Stand ist aktueller → upload");
     cloudSpeichernSofort();
   }
 }
