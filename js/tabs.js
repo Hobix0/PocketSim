@@ -13,9 +13,24 @@ function screenZeigen(screenName) {
 
   aktiverScreen = screenName;
 
-  // Statistik beim Öffnen aktualisieren
+  // Screen-spezifische Aktualisierungen beim Öffnen
   if (screenName === "statistik" && typeof statistikScreenAktualisieren === "function") {
     statistikScreenAktualisieren();
+  }
+  if (screenName === "lager" && typeof lagerAnzeigenAktualisieren === "function") {
+    lagerAnzeigenAktualisieren();
+  }
+  if (screenName === "shop" && typeof shopGenerieren === "function") {
+    shopGenerieren();
+  }
+  if (screenName === "markt" && typeof marktScreenAktualisieren === "function") {
+    marktScreenAktualisieren();
+  }
+  if (screenName === "auftraege" && typeof auftraegeScreenAktualisieren === "function") {
+    auftraegeScreenAktualisieren();
+  }
+  if (screenName === "personal" && typeof personalAnzeigenAktualisieren === "function") {
+    personalAnzeigenAktualisieren();
   }
 }
 

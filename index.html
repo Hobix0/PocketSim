@@ -7,7 +7,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="mobile.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   </head>
   <body>
@@ -20,6 +19,7 @@
       <div class="header-right">
         <span id="geld-anzeige">100.000 €</span>
         <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
+        <button id="cloud-badge" class="cloud-badge-btn" onclick="loginModalOeffnen()">☁️</button>
         <button id="btn-einstellungen">⚙️</button>
       </div>
     </header>
@@ -270,6 +270,41 @@
       </button>
     </nav>
 
+    <div id="modal-login" style="display:none" onclick="if(event.target===this)loginModalSchliessen()">
+      <div class="auth-modal">
+        <div class="auth-modal-header">
+          <span class="auth-modal-titel">☁️ Cloud-Sync</span>
+          <button class="auth-close-btn" onclick="loginModalSchliessen()">✕</button>
+        </div>
+
+        <div id="auth-anmeldung" style="display:flex;flex-direction:column;gap:8px">
+          <p class="auth-hinweis">Spielstand zwischen PC und Handy synchronisieren.</p>
+          <form id="auth-form" onsubmit="authEinloggen(); return false;">
+            <input type="email" id="auth-email" placeholder="E-Mail" class="auth-input" />
+            <input type="password" id="auth-pw" placeholder="Passwort (mind. 6 Zeichen)" class="auth-input" />
+            <div id="auth-info" style="min-height:18px; font-size:12px; text-align:center; padding:2px 0"></div>
+            <button type="submit" class="auth-btn-primary">Einloggen</button>
+          </form>
+          <button class="auth-btn-sekundaer" onclick="authRegistrieren()">Neu registrieren</button>
+          <div class="auth-trenner"><span>oder</span></div>
+          <button class="auth-btn-google" onclick="authGoogle()">🔑 Mit Google einloggen</button>
+        </div>
+
+        <div id="auth-profil-bereich" style="display:none">
+          <div class="auth-profil">
+            <div class="auth-profil-icon">👤</div>
+            <div>
+              <div class="auth-profil-email" id="auth-profil-email">—</div>
+              <div class="auth-profil-status">☁️ Cloud-Sync aktiv</div>
+              <div id="auth-debug-badge" style="display:none;margin-top:3px;font-size:11px;color:var(--accent);font-family:var(--font-head);font-weight:700">🛠️ DEBUG-ACCOUNT</div>
+            </div>
+          </div>
+          <button class="auth-btn-primary" onclick="cloudSpeichernUndBestaetigen()">☁️ Jetzt synchronisieren</button>
+          <button class="auth-btn-sekundaer" onclick="authAusloggen()">Ausloggen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Einstellungen Modal -->
     <div id="modal-einstellungen" style="display:none">
       <div id="modal-inhalt">
@@ -429,6 +464,7 @@
     <script src="js/statistik.js"></script>
     <script src="js/hallen_upgrades.js"></script>
     <!-- 9. Start -->
+    <script src="js/supabase.js"></script>
     <script src="js/main.js"></script>
 
   </body>

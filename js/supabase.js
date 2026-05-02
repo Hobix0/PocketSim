@@ -373,7 +373,26 @@ function cloudBadgeAktualisieren() {
 
 function ausloggen() {
   if (!supabaseClient) return;
-  if (confirm("Wirklich ausloggen?")) {
-    supabaseClient.auth.signOut();
+  supabaseClient.auth.signOut();
+}
+
+// ══════════════════════════════════
+// LOGIN MODAL
+// ══════════════════════════════════
+
+function loginModalOeffnen() {
+  let modal = document.getElementById("modal-login");
+  if (modal) {
+    modal.style.display = "flex";
+    // Fokus auf E-Mail Feld setzen
+    let emailField = document.getElementById("auth-email");
+    if (emailField) emailField.focus();
+  }
+}
+
+function loginModalSchliessen() {
+  let modal = document.getElementById("modal-login");
+  if (modal) {
+    modal.style.display = "none";
   }
 }

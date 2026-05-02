@@ -53,7 +53,8 @@ body {
   align-items: center;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 0 16px;
+  padding: 0 12px;
+  gap: 8px;
   z-index: 100;
 }
 
@@ -89,19 +90,21 @@ body {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 #geld-anzeige {
   font-family: var(--font-head);
-  font-size: 17px;
   font-weight: 700;
+  font-size: clamp(13px, 3vw, 16px);
   color: var(--accent);
   background: rgba(245,158,11,0.08);
   border: 1px solid rgba(245,158,11,0.2);
   padding: 5px 12px;
   border-radius: 8px;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 #btn-einstellungen,
@@ -192,10 +195,12 @@ body {
    ══════════════════════════════════ */
 .screen {
   display: none;
+  padding: 12px;
 }
 
 .screen.aktiv {
   display: block;
+  animation: fadeIn 0.2s ease;
 }
 
 .screen-titel {
@@ -538,61 +543,15 @@ body {
 .status-warnung { color: var(--red);   font-size: 13px; }
 
 /* ══════════════════════════════════
-   BOTTOM NAVIGATION (Mobile)
+   NAV BUTTON ADJUSTMENTS
    ══════════════════════════════════ */
-#bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: var(--nav-h);
-  display: flex;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  z-index: 100;
-}
-
-.nav-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  color: var(--text3);
-  cursor: pointer;
-  padding: 8px 0;
-  letter-spacing: 0;
-  text-transform: none;
-  transition: color 0.2s;
-}
-
 .nav-btn:hover {
   background: var(--surface2);
   color: var(--text2);
 }
 
-.nav-btn.aktiv {
-  color: var(--accent);
-  background: transparent;
-}
-
 .nav-btn.aktiv .nav-icon {
   transform: translateY(-2px);
-}
-
-.nav-icon {
-  font-size: 20px;
-  transition: transform 0.2s;
-}
-
-.nav-label {
-  font-family: var(--font-head);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 /* ══════════════════════════════════
@@ -680,9 +639,6 @@ button:hover {
   scrollbar-width: none;
 }
 
-#shop-filter::-webkit-scrollbar {
-  display: none;
-}
 
 .mengen-steuer {
   display: flex;
@@ -2215,7 +2171,6 @@ button:hover {
   scrollbar-width: none;
 }
 
-#shop-filter::-webkit-scrollbar { display: none; }
 
 .shop-filter-btn {
   display: flex;
@@ -2243,11 +2198,7 @@ button:hover {
   color: var(--text);
 }
 
-.shop-filter-btn.aktiv {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
-}
+
 
 .shop-filter-count {
   background: rgba(0,0,0,0.2);
@@ -4430,21 +4381,12 @@ body {
   to   { box-shadow: 0 0 0 4px rgba(16,185,129,0.6); }
 }
 
-.foerderband-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
 .foerderband-overlay {
   position: absolute;
   top: 0;
   left: 0;
   pointer-events: auto; /* wichtig für Klick auf das X */
   z-index: 20;
-}
-
-.foerderband-svg {
-  overflow: visible;
 }
 
 /* ══════════════════════════════════
@@ -4941,34 +4883,6 @@ button, .nav-btn, .sidebar-btn, .shop-filter-btn {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── Header ── */
-#header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: var(--header-h);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  gap: 8px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-#geld-anzeige {
-  font-family: var(--font-head);
-  font-weight: 700;
-  font-size: clamp(13px, 3vw, 16px); /* skaliert mit Bildschirm */
-  white-space: nowrap;
-}
 
 /* ── Shop — komplett neu ── */
 #screen-shop {
@@ -5027,11 +4941,6 @@ button, .nav-btn, .sidebar-btn, .shop-filter-btn {
   transition: all 0.15s;
 }
 
-.shop-filter-btn.aktiv {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
-}
 
 .shop-filter-count {
   display: inline-block;
@@ -5099,15 +5008,7 @@ button, .nav-btn, .sidebar-btn, .shop-filter-btn {
   justify-content: center;
 }
 
-.shop-item-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 
-.shop-item-emoji {
-  font-size: 26px;
-}
 
 .shop-item-body {
   flex: 1;
