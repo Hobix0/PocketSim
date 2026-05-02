@@ -76,8 +76,7 @@
     "groesse": { "l": 20, "b": 20, "h": 5 },
     "kostenProRunde": 100,
     "bedingung": "hatGrundstueck",
-    "kategorie": "gebaeude",
-    "benoetigtForschung": "grundlagenforschung"
+    "kategorie": "gebaeude"
   },
   {
     "id": "garage",
