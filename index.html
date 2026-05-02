@@ -11,6 +11,70 @@
   </head>
   <body>
 
+  <!-- ════════════════════════════
+       LOGIN SCREEN
+       Wird von supabase.js gesteuert
+       ════════════════════════════ -->
+  <div id="login-screen" style="display:flex">
+
+    <div class="login-bg"><div class="login-bg-overlay"></div></div>
+
+    <!-- Lade-Animation (beim Cloud-Sync) -->
+    <div id="login-lade-bereich" style="display:none">
+      <div class="login-logo-gross">Pocket<span class="logo-sim">Sim</span></div>
+      <div class="login-spinner"></div>
+      <div id="login-lade-text" class="login-lade-text">Lädt...</div>
+    </div>
+
+    <!-- Login-Formular -->
+    <div id="login-form-bereich" class="login-card">
+
+      <div class="login-logo">
+        <span class="login-logo-pocket">Pocket</span><span class="login-logo-sim">Sim</span>
+        <div class="login-logo-sub">Produktionsimperium</div>
+      </div>
+
+      <h2 id="login-titel" class="login-titel">Willkommen zurück</h2>
+
+      <div id="login-info" class="login-info-text"></div>
+
+      <input type="email" id="login-email" placeholder="E-Mail" class="login-input"
+        onkeydown="if(event.key==='Enter')loginEinloggen()" />
+      <input type="password" id="login-pw" placeholder="Passwort" class="login-input"
+        onkeydown="if(event.key==='Enter')loginEinloggen()" />
+
+      <div id="login-pw2-container" style="display:none">
+        <input type="password" id="login-pw2" placeholder="Passwort wiederholen"
+          class="login-input" />
+      </div>
+
+      <button id="login-btn-ein" class="login-btn-primary" onclick="loginEinloggen()">
+        Einloggen
+      </button>
+      <button id="login-btn-reg" class="login-btn-primary" style="display:none" onclick="loginRegistrieren()">
+        Konto erstellen
+      </button>
+
+      <div class="login-trenner"><span>oder</span></div>
+
+      <button id="login-btn-google" class="login-btn-google" onclick="loginGoogle()">
+        🔑 Mit Google einloggen
+      </button>
+
+      <div id="login-wechsel" class="login-wechsel">
+        Noch kein Konto?
+        <a href="#" onclick="loginFormWechseln('register'); return false">Registrieren</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════
+       GAME WRAPPER
+       ════════════════════════════ -->
+  <div id="game-wrapper" style="display:none">
+
+
     <header id="header">
       <div class="header-left">
         <h1>Pocket<span>Sim</span></h1>
@@ -19,7 +83,7 @@
       <div class="header-right">
         <span id="geld-anzeige">100.000 €</span>
         <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
-        <button id="cloud-badge" class="cloud-badge-btn" onclick="loginModalOeffnen()">☁️</button>
+        <button id="cloud-badge" class="cloud-badge-btn" onclick="ausloggen()" title="Ausloggen">👤</button>
         <button id="btn-einstellungen">⚙️</button>
       </div>
     </header>
@@ -270,41 +334,6 @@
       </button>
     </nav>
 
-    <div id="modal-login" style="display:none" onclick="if(event.target===this)loginModalSchliessen()">
-      <div class="auth-modal">
-        <div class="auth-modal-header">
-          <span class="auth-modal-titel">☁️ Cloud-Sync</span>
-          <button class="auth-close-btn" onclick="loginModalSchliessen()">✕</button>
-        </div>
-
-        <div id="auth-anmeldung" style="display:flex;flex-direction:column;gap:8px">
-          <p class="auth-hinweis">Spielstand zwischen PC und Handy synchronisieren.</p>
-          <form id="auth-form" onsubmit="authEinloggen(); return false;">
-            <input type="email" id="auth-email" placeholder="E-Mail" class="auth-input" />
-            <input type="password" id="auth-pw" placeholder="Passwort (mind. 6 Zeichen)" class="auth-input" />
-            <div id="auth-info" style="min-height:18px; font-size:12px; text-align:center; padding:2px 0"></div>
-            <button type="submit" class="auth-btn-primary">Einloggen</button>
-          </form>
-          <button class="auth-btn-sekundaer" onclick="authRegistrieren()">Neu registrieren</button>
-          <div class="auth-trenner"><span>oder</span></div>
-          <button class="auth-btn-google" onclick="authGoogle()">🔑 Mit Google einloggen</button>
-        </div>
-
-        <div id="auth-profil-bereich" style="display:none">
-          <div class="auth-profil">
-            <div class="auth-profil-icon">👤</div>
-            <div>
-              <div class="auth-profil-email" id="auth-profil-email">—</div>
-              <div class="auth-profil-status">☁️ Cloud-Sync aktiv</div>
-              <div id="auth-debug-badge" style="display:none;margin-top:3px;font-size:11px;color:var(--accent);font-family:var(--font-head);font-weight:700">🛠️ DEBUG-ACCOUNT</div>
-            </div>
-          </div>
-          <button class="auth-btn-primary" onclick="cloudSpeichernUndBestaetigen()">☁️ Jetzt synchronisieren</button>
-          <button class="auth-btn-sekundaer" onclick="authAusloggen()">Ausloggen</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Einstellungen Modal -->
     <div id="modal-einstellungen" style="display:none">
       <div id="modal-inhalt">
@@ -466,6 +495,8 @@
     <!-- 9. Start -->
     <script src="js/supabase.js"></script>
     <script src="js/main.js"></script>
+
+  </div><!-- /game-wrapper -->
 
   </body>
 </html>
