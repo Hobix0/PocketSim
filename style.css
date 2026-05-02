@@ -543,15 +543,63 @@ body {
 .status-warnung { color: var(--red);   font-size: 13px; }
 
 /* ══════════════════════════════════
-   NAV BUTTON ADJUSTMENTS
+   BOTTOM NAVIGATION
    ══════════════════════════════════ */
+#bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* WICHTIG: Alle globalen button-Stile überschreiben */
+.nav-btn {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: var(--text3) !important;
+  font-size: 10px !important;
+  font-family: var(--font-head) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  cursor: pointer !important;
+  padding: 6px 2px !important;
+  width: auto !important;
+  min-height: 44px !important;
+  text-transform: none !important;
+  transition: color 0.15s !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 .nav-btn:hover {
-  background: var(--surface2);
-  color: var(--text2);
+  background: var(--surface2) !important;
+  color: var(--text2) !important;
+}
+
+.nav-btn.aktiv {
+  color: var(--accent) !important;
+  background: transparent !important;
 }
 
 .nav-btn.aktiv .nav-icon {
   transform: translateY(-2px);
+}
+
+.nav-icon  { font-size: 20px; line-height: 1; }
+.nav-label { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+@media (min-width: 768px) {
+  #bottom-nav { display: none; }
 }
 
 /* ══════════════════════════════════
@@ -3668,9 +3716,7 @@ select {
 }
 
 /* Bottom-Nav Safe Area */
-#bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
+
 
 /* Tile-Grid scrollbar touch */
 .tile-grid-container {
