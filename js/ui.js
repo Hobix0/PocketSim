@@ -22,107 +22,111 @@ function geldAnzeigenAktualisieren() {
 
 function lagerAnzeigenAktualisieren() {
   let reihe = document.getElementById("lager-reihe");
-  reihe.innerHTML = "";
+  if (!reihe) return;
 
-  // ── Gesamt-Info ──
   let gesamtMenge = 0;
-  for (let k in lager) gesamtMenge += lager[k] || 0;
+  let gesamtWert  = 0;
+  let typenMitBestand = 0;
 
-  let infoHTML =
+  for (let k in lager) {
+    let m = gesamtMenge;
+    gesamtMenge += lager[k] || 0;
+    if ((lager[k] || 0) > 0) typenMitBestand++;
+  }
+
+  for (let mat of MATERIALIEN) {
+    let menge = lager[mat.id] || 0;
+    let preis = (marktpreise && marktpreise[mat.id]) ? marktpreise[mat.id] : (mat.verkaufpreis || 0);
+    gesamtWert += menge * preis;
+  }
+
+  let html =
     "<div class='lager-info-bar'>" +
       "<div class='lager-info-item'>" +
         "<span class='lager-info-label'>📦 Gesamt</span>" +
-        "<span class='lager-info-wert'>" + gesamtMenge + "</span>" +
+        "<span class='lager-info-wert'>" + gesamtMenge.toLocaleString("de-DE") + "</span>" +
       "</div>" +
       "<div class='lager-info-item'>" +
-        "<span class='lager-info-label'>🗂️ Materialtypen</span>" +
-        "<span class='lager-info-wert'>" + MATERIALIEN.length + "</span>" +
+        "<span class='lager-info-label'>💰 Lagerwert</span>" +
+        "<span class='lager-info-wert'>" + gesamtWert.toLocaleString("de-DE") + " €</span>" +
       "</div>" +
-    "</div>";
+    "</div>" +
+    "<div id='lager-items-grid'>";
 
-  reihe.innerHTML = infoHTML;
-
-  // ── Material-Items ──
-  for (let i = 0; i < MATERIALIEN.length; i++) {
-    let m = MATERIALIEN[i];
-    let menge = lager[m.id] || 0;
+  for (let mat of MATERIALIEN) {
+    let menge  = lager[mat.id] || 0;
+    let leer   = menge === 0;
 
     let verkaufHTML = "";
-    if (m.verkaufbar && menge > 0) {
+    if (mat.verkaufbar && menge > 0) {
       verkaufHTML =
         "<div class='lager-verkauf'>" +
-          "<div class='mengen-steuer'>" +
-            "<button class='mengen-btn' data-id='" + m.id + "' data-aktion='minus'>−</button>" +
-            "<input type='number' id='verkauf-menge-" + m.id + "' value='1' min='1' max='" + menge + "' />" +
-            "<button class='mengen-btn' data-id='" + m.id + "' data-aktion='plus'>+</button>" +
+          "<div class='shop-mengen' style='transform:scale(0.9)'>" +
+            "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='minus'>−</button>" +
+            "<input type='number' id='verkauf-menge-" + mat.id + "' value='1' min='1' max='" + menge + "' />" +
+            "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='plus'>+</button>" +
           "</div>" +
-          "<button class='btn-verkaufen-lager' data-id='" + m.id + "'>" +
-            "💰 Verkaufen (" + m.verkaufpreis + " €/Stk)" +
+          "<button class='btn-verkaufen-lager' data-id='" + mat.id + "'>💰 " +
+            (marktpreise && marktpreise[mat.id] ? marktpreise[mat.id] : mat.verkaufpreis) + " €" +
           "</button>" +
         "</div>";
     }
 
-    reihe.innerHTML +=
-      "<div class='lager-item'>" +
+    html +=
+      "<div class='lager-item" + (leer ? " leer" : "") + "'>" +
         "<div class='lager-item-header'>" +
-          "<span class='lager-item-label'>" + m.emoji + " " + m.name + "</span>" +
-          "<span class='lager-item-wert'>" + menge + "</span>" +
+          "<span class='lager-item-label'>" + mat.emoji + " " + mat.name + "</span>" +
+          "<span class='lager-item-wert" + (menge > 0 ? " hat-bestand" : "") + "'>" + menge + "</span>" +
         "</div>" +
         verkaufHTML +
       "</div>";
   }
 
+  html += "</div>";
+  reihe.innerHTML = html;
+
   reihe.querySelectorAll(".btn-verkaufen-lager").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      materialVerkaufen(btn.getAttribute("data-id"));
-    });
+    btn.addEventListener("click", function() { materialVerkaufen(btn.dataset.id); });
   });
 
   reihe.querySelectorAll(".mengen-btn").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      let id = btn.getAttribute("data-id");
-      let aktion = btn.getAttribute("data-aktion");
-      let input = document.getElementById("verkauf-menge-" + id);
-      let m = MATERIALIEN.find(function(mat) { return mat.id === id; });
-      if (!input || !m) return;
-      
-      let menge = lager[id] || 0;
-      if (aktion === "plus") {
-        input.value = Math.min(menge, parseInt(input.value || 1) + 1);
-      } else {
-        input.value = Math.max(1, parseInt(input.value || 1) - 1);
-      }
+      let id     = btn.dataset.id;
+      let aktion = btn.dataset.aktion;
+      let input  = document.getElementById("verkauf-menge-" + id);
+      let maxMenge = lager[id] || 0;
+      if (!input) return;
+      if (aktion === "plus")  input.value = Math.min(maxMenge, parseInt(input.value || 1) + 1);
+      else                    input.value = Math.max(1, parseInt(input.value || 1) - 1);
     });
   });
 }
 
+// ── PERSONAL ──
+
 function statistikAktualisieren() {
-  let anzahl = installierte_maschinen.length;
   let einnahmenProRunde = 0;
-  let produktionInfo = [];
+  let produktionInfo    = [];
 
-  for (let i = 0; i < installierte_maschinen.length; i++) {
-    let maschine = installierte_maschinen[i];
-    if (!maschine.laeuft) continue;
-
-    let rezept = REZEPTE.find(function(r) { return r.id === maschine.aktivesRezept; });
+  for (let m of installierte_maschinen) {
+    if (!m.laeuft) continue;
+    let rezept = REZEPTE.find(function(r) { return r.id === m.aktivesRezept; });
     if (!rezept) continue;
-
-    for (let j = 0; j < rezept.outputs.length; j++) {
-      let output = rezept.outputs[j];
-      let material = MATERIALIEN.find(function(m) { return m.id === output.material; });
-      if (material && material.verkaufbar) {
-        einnahmenProRunde += output.menge * material.verkaufpreis;
-        produktionInfo.push(output.menge + "× " + material.name);
+    for (let out of rezept.outputs) {
+      let mat = MATERIALIEN.find(function(mat) { return mat.id === out.material; });
+      if (mat && mat.verkaufbar) {
+        einnahmenProRunde += out.menge * mat.verkaufpreis;
+        produktionInfo.push(out.menge + "× " + mat.name);
       }
     }
   }
 
-  document.getElementById("stat-bretter-runde").textContent =
-    produktionInfo.length > 0 ? produktionInfo.join(", ") : "0";
-  document.getElementById("stat-einnahmen-runde").textContent =
-    einnahmenProRunde.toLocaleString("de-DE") + " €";
-  document.getElementById("stat-maschinen").textContent = anzahl;
+  let el1 = document.getElementById("stat-bretter-runde");
+  let el2 = document.getElementById("stat-einnahmen-runde");
+  let el3 = document.getElementById("stat-maschinen");
+  if (el1) el1.textContent = produktionInfo.length > 0 ? produktionInfo.join(", ") : "0";
+  if (el2) el2.textContent = einnahmenProRunde.toLocaleString("de-DE") + " €";
+  if (el3) el3.textContent = installierte_maschinen.length;
 
   kostenAnzeigenAktualisieren();
 }

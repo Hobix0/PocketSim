@@ -435,105 +435,7 @@ body {
   opacity: 0.7;
 }
 
-/* ══════════════════════════════════
-   LAGER
-   ══════════════════════════════════ */
-.lager-reihe {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
-.lager-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-}
-
-.lager-item-left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-
-.lager-item-label {
-  font-size: 13px;
-  color: var(--text2);
-}
-
-.lager-item-wert {
-  font-family: var(--font-head);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
-  letter-spacing: 1px;
-}
-
-.lager-verkauf {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.btn-verkaufen-lager {
-  width: auto !important;
-  padding: 7px 12px !important;
-  background: var(--green) !important;
-  font-size: 12px !important;
-  border-radius: 6px !important;
-  letter-spacing: 0.5px !important;
-}
-
-.btn-verkaufen-lager:hover {
-  background: #059669 !important;
-}
-
-/* ══════════════════════════════════
-   STATISTIK
-   ══════════════════════════════════ */
-.stat-karte {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-wert {
-  font-family: var(--font-head);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--green);
-  letter-spacing: 1px;
-}
-
-#screen-lager h2,
-#screen-shop h2 {
-  font-family: var(--font-head);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text2);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
 
 /* ══════════════════════════════════
    PERSONAL STATUS
@@ -4079,3 +3981,679 @@ body.login-aktiv {
     padding: 4px 6px !important;
   }
 }
+
+/* ══════════════════════════════════
+   SCREEN REDESIGNS
+   Lager · Personal · Shop · Markt
+   Aufträge · Statistik
+   ══════════════════════════════════ */
+
+/* ── Gemeinsame Screen-Grundstruktur ── */
+.screen-titel {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ════════════════════════════════════
+   LAGER
+   ════════════════════════════════════ */
+
+.lager-info-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.lager-info-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lager-info-label {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.lager-info-wert {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Lager-Reihe: kompaktes Grid */
+#lager-reihe {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.lager-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  transition: background 0.15s;
+}
+
+.lager-item:first-of-type { border-radius: 10px 10px 0 0; }
+.lager-item:last-of-type  { border-radius: 0 0 10px 10px; border-bottom: none; }
+.lager-item:only-child    { border-radius: 10px; border-bottom: none; }
+
+.lager-item:hover { background: var(--surface2); }
+
+.lager-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lager-item-label {
+  font-size: 13px;
+  color: var(--text2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lager-item-wert {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 32px;
+  text-align: right;
+}
+
+.lager-item-wert.hat-bestand { color: var(--green); }
+
+.lager-verkauf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Lager-Items ohne Bestand: gedimmt */
+.lager-item.leer { opacity: 0.35; }
+
+/* Desktop: 2-spaltig */
+@media (min-width: 768px) {
+  #lager-reihe {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .lager-item { border-right: 1px solid var(--border); }
+  .lager-item:nth-child(2n) { border-right: none; }
+  .lager-item:first-of-type, .lager-item:last-of-type,
+  .lager-item:only-child { border-radius: 0; }
+}
+
+/* ════════════════════════════════════
+   PERSONAL
+   ════════════════════════════════════ */
+
+.personal-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 480px) {
+  .personal-kpi-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.personal-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.personal-kpi-wert {
+  font-family: var(--font-head);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.personal-kpi-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.personal-status-box {
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.personal-status-ok     { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.3); }
+.personal-status-warn   { background: rgba(239,68,68,0.06);  border-color: rgba(239,68,68,0.3);  }
+.personal-status-icon   { font-size: 28px; }
+.personal-status-titel  { font-family: var(--font-head); font-size: 14px; font-weight: 700; }
+.personal-status-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+.personal-aktionen {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.personal-aktionen button {
+  flex: 1 !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: none !important;
+}
+
+.btn-einstellen  { background: var(--green)   !important; color: #000 !important; }
+.btn-entlassen   { background: var(--surface2) !important; color: var(--red) !important; border: 1px solid rgba(239,68,68,0.3) !important; }
+
+/* ════════════════════════════════════
+   MARKT  
+   ════════════════════════════════════ */
+
+.markt-hinweis {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.markt-gruppe-header {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-left: 2px solid;
+  border-radius: 0 4px 4px 0;
+  background: var(--surface2);
+  margin: 12px 0 8px;
+}
+
+.markt-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.markt-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  transition: border-color 0.2s;
+}
+
+.markt-item:hover { border-color: var(--border2); }
+
+.markt-item-kopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.markt-item-links { display: flex; align-items: center; gap: 10px; }
+.markt-item-emoji { font-size: 22px; }
+
+.markt-item-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.markt-item-bestand { font-size: 11px; color: var(--text3); }
+
+.markt-item-rechts { display: flex; align-items: center; gap: 6px; }
+
+.markt-preis-aktuell { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+.markt-preis-hoch    { color: var(--green); }
+.markt-preis-tief    { color: var(--red); }
+.markt-preis-normal  { color: var(--text); }
+.markt-trend         { font-size: 18px; font-weight: 700; }
+
+.markt-preis-balken {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-bottom: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.markt-preis-balken-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.5s;
+}
+
+.markt-preis-mitte {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border2);
+}
+
+.markt-preis-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.markt-aktionen {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.markt-verkauf-zeile {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+
+.markt-leer { font-size: 11px; color: var(--text3); font-style: italic; }
+
+@media (min-width: 768px) {
+  .markt-liste { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
+/* ════════════════════════════════════
+   AUFTRÄGE
+   ════════════════════════════════════ */
+
+.auftraege-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.auftraege-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.auftraege-stat-wert {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+.auftraege-stat-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.auftrag-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s;
+}
+
+.auftrag-dringend { border-color: rgba(239,68,68,0.4);    background: rgba(239,68,68,0.03); }
+.auftrag-gross    { border-color: rgba(139,92,246,0.4);   background: rgba(139,92,246,0.03); }
+
+.auftrag-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.auftrag-header-links { display: flex; align-items: center; gap: 10px; }
+.auftrag-emoji { font-size: 26px; }
+
+.auftrag-name {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.auftrag-typ-badge {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border: 1px solid;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.auftrag-deadline { text-align: right; flex-shrink: 0; }
+
+.auftrag-deadline-zahl {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+
+.auftrag-deadline-label { font-size: 10px; color: var(--text3); text-transform: uppercase; }
+
+.auftrag-beschreibung { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+
+.auftrag-material {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.auftrag-material-info { display: flex; align-items: center; gap: 10px; }
+.auftrag-material-emoji { font-size: 22px; }
+
+.auftrag-material-name {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.auftrag-material-menge { font-size: 12px; color: var(--text2); }
+
+.auftrag-bonus { text-align: right; }
+
+.auftrag-bonus-zahl {
+  font-family: var(--font-head);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+  display: block;
+}
+
+.auftrag-bonus-label { font-size: 10px; color: var(--text3); text-transform: uppercase; }
+
+.auftrag-fortschritt,
+.auftrag-deadline-balken {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.auftrag-fortschritt-fill,
+.auftrag-deadline-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s;
+}
+
+.auftrag-balken-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.auftrag-btn {
+  width: 100% !important;
+  padding: 11px !important;
+  font-size: 13px !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.3px !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+}
+
+.auftrag-btn-bereit  { background: var(--green)   !important; color: #000 !important; border: none !important; }
+.auftrag-btn-warten  { background: var(--surface2) !important; color: var(--text3) !important; border: 1px solid var(--border) !important; cursor: not-allowed !important; }
+
+/* ════════════════════════════════════
+   STATISTIK
+   ════════════════════════════════════ */
+
+.stat-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 600px) { .stat-kpis { grid-template-columns: repeat(4, 1fr); } }
+
+.stat-kpi-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-kpi-karte::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0.4;
+}
+
+.stat-kpi-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.stat-kpi-wert {
+  font-family: var(--font-head);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-kpi-trend { font-size: 14px; }
+
+.stat-sektion-titel {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin: 18px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Graph */
+.stat-graph-container {
+  background: #070809;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.stat-graph-legende {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-leg-item {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ROI */
+.roi-liste { display: flex; flex-direction: column; gap: 8px; }
+
+.roi-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border2);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.roi-karte-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.roi-emoji { font-size: 24px; flex-shrink: 0; }
+.roi-info  { flex: 1; }
+
+.roi-name { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--text); }
+.roi-rezept { font-size: 11px; color: var(--text3); }
+
+.roi-status {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.roi-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.roi-stat { text-align: center; }
+
+.roi-stat-wert {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  display: block;
+}
+
+.roi-stat-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+@media (min-width: 768px) {
+  .roi-liste { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .auftraege-stats { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Lagerwert */
+.lager-wert-total {
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+.lager-wert-zahl { font-family: var(--font-head); font-size: 28px; font-weight: 700; color: var(--accent); }
+.lager-wert-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+
+.lager-wert-liste { display: flex; flex-direction: column; gap: 6px; }
+
+.lager-wert-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.lager-wert-item-kopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 5px;
+}
+
+@media (min-width: 768px) {
+  .lager-wert-liste { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
