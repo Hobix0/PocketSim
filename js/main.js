@@ -109,7 +109,7 @@ async function spielStarten() {
   if (typeof epocheInit === "function") epocheInit();
 
   // Intro NUR bei echtem Neustart ohne Unternehmen (legacy)
-  // if (!aktiverSpielModus) { setTimeout(introModalZeigen, 400); }
+  // Intro-Modal entfernt — Gründungsscreen übernimmt diese Aufgabe
 }
 
 // Start — supabase übernimmt die Kontrolle

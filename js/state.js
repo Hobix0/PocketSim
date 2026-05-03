@@ -132,6 +132,7 @@ function spielstandDatenErstellen() {
   return {
     geld:                     geld,
     unternehmen:              unternehmen,
+    epoche_state: (typeof epocheZuStand === "function") ? epocheZuStand() : null,
     gekaufte_grundstuecke:    gekaufte_grundstuecke,
     gekaufte_gebaeude:        gekaufte_gebaeude,
     lager:                    lager,

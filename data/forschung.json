@@ -1,659 +1,80 @@
 [
   {
-    "id": "saege_effizienz",
-    "name": "Säge-Effizienz",
-    "emoji": "🪚",
-    "beschreibung": "Sägen arbeiten 10% effizienter.",
-    "kategorie": "produktion",
+    "id": "grundlagen",
+    "name": "Grundlagenforschung",
+    "emoji": "🔬",
+    "beschreibung": "Basis aller weiteren Forschung.",
     "kosten": 5000,
-    "forschungszeit": 3,
-    "effekt": {
-      "typ": "linienBonus",
-      "linie": "holz",
-      "wert": 1.1
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 0,
-      "spalte": 0
-    }
+    "dauer": 10,
+    "kategorie": "basis",
+    "effekte": [],
+    "bedingung": null
   },
   {
-    "id": "erweitere_holzproduktion",
-    "name": "Erweiterte Holzproduktion",
-    "emoji": "🌲",
-    "beschreibung": "Schaltet Pelletpresse und Plattenpresse frei.",
-    "kategorie": "maschinen",
-    "kosten": 18000,
-    "forschungszeit": 5,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "pelletpresse",
-        "plattenpresse"
-      ]
-    },
-    "bedingung": "saege_effizienz",
-    "position": {
-      "reihe": 0,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "holzveredelung",
-    "name": "Holzveredelung",
-    "emoji": "✨",
-    "beschreibung": "Holzmaschinen arbeiten 15% effizienter. Verbessert Plattenqualität.",
-    "kategorie": "produktion",
-    "kosten": 22000,
-    "forschungszeit": 6,
-    "effekt": {
-      "typ": "linienBonus",
-      "linie": "holz",
-      "wert": 1.15
-    },
-    "bedingung": "erweitere_holzproduktion",
-    "position": {
-      "reihe": 2,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "hobelmaschine_freischaltung",
-    "name": "Hobelmaschine",
-    "emoji": "✂️",
-    "beschreibung": "Schaltet die Hobelmaschine frei — produziert hochwertige Dielen.",
-    "kategorie": "maschinen",
-    "kosten": 26000,
-    "forschungszeit": 7,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "hobelmaschine",
-        "holztrockner"
-      ]
-    },
-    "bedingung": "erweitere_holzproduktion",
-    "position": {
-      "reihe": 1,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "qualitaetsholz",
-    "name": "Qualitätsholz",
-    "emoji": "📐",
-    "beschreibung": "Schaltet die Sortieranlage frei — trennt Möbelholz von Standardware.",
-    "kategorie": "maschinen",
-    "kosten": 30000,
-    "forschungszeit": 7,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "sortieranlage"
-      ]
-    },
-    "bedingung": "hobelmaschine_freischaltung",
-    "position": {
-      "reihe": 3,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "furniermaschine_freischaltung",
-    "name": "Furniermaschine",
-    "emoji": "🔪",
-    "beschreibung": "Schaltet die Furniermaschine frei — produziert hochwertiges Furnier.",
-    "kategorie": "maschinen",
-    "kosten": 34000,
-    "forschungszeit": 8,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "furniermaschine"
-      ]
-    },
-    "bedingung": "hobelmaschine_freischaltung",
-    "position": {
-      "reihe": 3,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "moebelbau",
-    "name": "Möbelbau",
-    "emoji": "🪑",
-    "beschreibung": "Schaltet die Möbelwerkbank frei — kombiniert Holz und Metall zu Möbeln.",
-    "kategorie": "maschinen",
-    "kosten": 45000,
-    "forschungszeit": 10,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "moebelwerkbank"
-      ]
-    },
-    "bedingung": [
-      "qualitaetsholz",
-      "furniermaschine_freischaltung"
-    ],
-    "position": {
-      "reihe": 4,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "holz_spezialisierung",
-    "name": "Holzverarbeitung II",
-    "emoji": "🌲",
-    "beschreibung": "Alle Holzmaschinen arbeiten 25% effizienter.",
-    "kategorie": "produktion",
-    "kosten": 55000,
-    "forschungszeit": 10,
-    "effekt": {
-      "typ": "linienBonus",
-      "linie": "holz",
-      "wert": 1.25
-    },
-    "bedingung": "moebelbau",
-    "position": {
-      "reihe": 5,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "kostenreduktion",
-    "name": "Kostenreduktion",
-    "emoji": "💰",
-    "beschreibung": "Alle Produktionskosten sinken um 5%.",
-    "kategorie": "wirtschaft",
+    "id": "metallurgie",
+    "name": "Metallurgie",
+    "emoji": "⚙️",
+    "beschreibung": "Verbesserte Schmelzverfahren. +10% Eisenplatte Ausgabe.",
     "kosten": 8000,
-    "forschungszeit": 4,
-    "effekt": {
-      "typ": "kostenBonus",
-      "wert": 0.95
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 0,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "metall_spezialisierung",
-    "name": "Metallverarbeitung I",
-    "emoji": "⚙️",
-    "beschreibung": "Metallmaschinen arbeiten 15% effizienter.",
+    "dauer": 15,
     "kategorie": "produktion",
-    "kosten": 12000,
-    "forschungszeit": 4,
-    "effekt": {
-      "typ": "linienBonus",
-      "linie": "metall",
-      "wert": 1.15
-    },
-    "bedingung": "kostenreduktion",
-    "position": {
-      "reihe": 1,
-      "spalte": 1
-    }
+    "effekte": [
+      {
+        "typ": "produktionsBonus",
+        "material": "eisenplatte",
+        "wert": 0.1
+      }
+    ],
+    "bedingung": "grundlagen"
   },
   {
-    "id": "metallbearbeitung",
-    "name": "Metallbearbeitung",
-    "emoji": "🔩",
-    "beschreibung": "Schaltet Schraubenpresse und Drahtziehbank frei.",
-    "kategorie": "maschinen",
-    "kosten": 35000,
-    "forschungszeit": 8,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "schraubenpresse",
-        "drahtziehbank"
-      ]
-    },
-    "bedingung": "metall_spezialisierung",
-    "position": {
-      "reihe": 0,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "stahlproduktion",
-    "name": "Stahlproduktion",
-    "emoji": "🏭",
-    "beschreibung": "Schaltet den Hochofen frei — effizientere Stahlherstellung.",
-    "kategorie": "maschinen",
-    "kosten": 50000,
-    "forschungszeit": 10,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "hochofen"
-      ]
-    },
-    "bedingung": "metallbearbeitung",
-    "position": {
-      "reihe": 2,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "metall_spezialisierung_2",
-    "name": "Metallverarbeitung II",
-    "emoji": "⚙️",
-    "beschreibung": "Alle Metallmaschinen arbeiten 30% effizienter.",
+    "id": "chemietechnik",
+    "name": "Chemietechnik",
+    "emoji": "🛢️",
+    "beschreibung": "Verbesserte Raffinierverfahren. +15% Plastik-Ausbeute.",
+    "kosten": 10000,
+    "dauer": 18,
     "kategorie": "produktion",
-    "kosten": 65000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "linienBonus",
-      "linie": "metall",
-      "wert": 1.3
-    },
-    "bedingung": "stahlproduktion",
-    "position": {
-      "reihe": 0,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "lager_optimierung",
-    "name": "Lageroptimierung",
-    "emoji": "📦",
-    "beschreibung": "Lagerkapazität +25%.",
-    "kategorie": "logistik",
-    "kosten": 6000,
-    "forschungszeit": 3,
-    "effekt": {
-      "typ": "lagerKapazitaetBonus",
-      "wert": 1.25
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 0,
-      "spalte": 2
-    }
+    "effekte": [
+      {
+        "typ": "produktionsBonus",
+        "material": "plastik",
+        "wert": 0.15
+      }
+    ],
+    "bedingung": "grundlagen"
   },
   {
     "id": "logistik_1",
-    "name": "Logistik I",
-    "emoji": "🚚",
-    "beschreibung": "Transportgeschwindigkeit +25%.",
-    "kategorie": "logistik",
-    "kosten": 10000,
-    "forschungszeit": 4,
-    "effekt": {
-      "typ": "transportBonus",
-      "wert": 1.25
-    },
-    "bedingung": "lager_optimierung",
-    "position": {
-      "reihe": 1,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "logistik_2",
-    "name": "Logistik II",
-    "emoji": "🚚",
-    "beschreibung": "Transportgeschwindigkeit +50%.",
-    "kategorie": "logistik",
-    "kosten": 25000,
-    "forschungszeit": 7,
-    "effekt": {
-      "typ": "transportBonus",
-      "wert": 1.5
-    },
-    "bedingung": "logistik_1",
-    "position": {
-      "reihe": 2,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "lager_automatisierung",
-    "name": "Smart Storage",
+    "name": "Logistik-Grundlagen",
     "emoji": "📦",
-    "beschreibung": "Lager spart 50% Platz — effiziente Sortierung.",
+    "beschreibung": "Optimierte Lagerhaltung. +200 Lagerkapazität.",
+    "kosten": 6000,
+    "dauer": 12,
     "kategorie": "logistik",
-    "kosten": 22000,
-    "forschungszeit": 7,
-    "effekt": {
-      "typ": "lagerKapazitaetBonus",
-      "wert": 1.5
-    },
-    "bedingung": "lager_optimierung",
-    "position": {
-      "reihe": 2,
-      "spalte": 3
-    }
-  },
-  {
-    "id": "energie_effizienz",
-    "name": "Energieeffizienz",
-    "emoji": "⚡",
-    "beschreibung": "Energieverbrauch sinkt um 10%.",
-    "kategorie": "wirtschaft",
-    "kosten": 10000,
-    "forschungszeit": 4,
-    "effekt": {
-      "typ": "kostenBonus",
-      "wert": 0.9
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 0,
-      "spalte": 3
-    }
-  },
-  {
-    "id": "overclocking",
-    "name": "Overclocking",
-    "emoji": "🔥",
-    "beschreibung": "Maschinen 50% schneller, aber 50% mehr Energie.",
-    "kategorie": "produktion",
-    "kosten": 30000,
-    "forschungszeit": 8,
-    "effekt": {
-      "typ": "overclock",
-      "speed": 1.5,
-      "energie": 1.5
-    },
-    "bedingung": "energie_effizienz",
-    "position": {
-      "reihe": 1,
-      "spalte": 3
-    }
-  },
-  {
-    "id": "energie_netzwerk",
-    "name": "Energienetzwerk",
-    "emoji": "⚡",
-    "beschreibung": "Energie wird effizient zwischen Maschinen verteilt.",
-    "kategorie": "wirtschaft",
-    "kosten": 30000,
-    "forschungszeit": 9,
-    "effekt": {
-      "typ": "energieNetzwerk"
-    },
-    "bedingung": "energie_effizienz",
-    "position": {
-      "reihe": 2,
-      "spalte": 3
-    }
-  },
-  {
-    "id": "automatisierung_1",
-    "name": "Automatisierung I",
-    "emoji": "🤖",
-    "beschreibung": "Maschinen benötigen 10% weniger Personal.",
-    "kategorie": "automation",
-    "kosten": 15000,
-    "forschungszeit": 5,
-    "effekt": {
-      "typ": "personalBonus",
-      "wert": 0.1
-    },
-    "bedingung": null,
-    "position": {
-      "reihe": 0,
-      "spalte": 4
-    }
-  },
-  {
-    "id": "ki_steuerung",
-    "name": "KI-Steuerung",
-    "emoji": "🧠",
-    "beschreibung": "Maschinen wählen automatisch das profitabelste Rezept.",
-    "kategorie": "automation",
-    "kosten": 45000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "autoOptimierung"
-    },
-    "bedingung": "automatisierung_1",
-    "position": {
-      "reihe": 1,
-      "spalte": 4
-    }
-  },
-  {
-    "id": "ueberproduktion",
-    "name": "Überproduktion I",
-    "emoji": "🚀",
-    "beschreibung": "10% Chance auf doppelte Produktion.",
-    "kategorie": "produktion",
-    "kosten": 20000,
-    "forschungszeit": 6,
-    "effekt": {
-      "typ": "kritChance",
-      "chance": 0.1,
-      "multiplikator": 2
-    },
-    "bedingung": "holz_spezialisierung",
-    "position": {
-      "reihe": 6,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "ueberproduktion_2",
-    "name": "Überproduktion II",
-    "emoji": "🚀",
-    "beschreibung": "20% Chance auf doppelte Produktion.",
-    "kategorie": "produktion",
-    "kosten": 40000,
-    "forschungszeit": 10,
-    "effekt": {
-      "typ": "kritChance",
-      "chance": 0.2,
-      "multiplikator": 2
-    },
-    "bedingung": "ueberproduktion",
-    "position": {
-      "reihe": 7,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "recycling",
-    "name": "Recycling",
-    "emoji": "♻️",
-    "beschreibung": "Nebenprodukte können wiederverwertet werden.",
-    "kategorie": "produktion",
-    "kosten": 18000,
-    "forschungszeit": 6,
-    "effekt": {
-      "typ": "recycling"
-    },
-    "bedingung": "kostenreduktion",
-    "position": {
-      "reihe": 2,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "premium_produktion",
-    "name": "Premiumproduktion",
-    "emoji": "💎",
-    "beschreibung": "5% Chance auf hochwertige Produkte mit doppeltem Wert.",
-    "kategorie": "produktion",
-    "kosten": 50000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "premiumChance",
-      "chance": 0.05,
-      "wert": 2
-    },
-    "bedingung": "metall_spezialisierung_2",
-    "position": {
-      "reihe": 5,
-      "spalte": 1
-    }
-  },
-  {
-    "id": "maschinen_upgrade_1",
-    "name": "Maschinenoptimierung I",
-    "emoji": "🛠",
-    "beschreibung": "Produktionsmaschinen arbeiten 20% schneller.",
-    "kategorie": "maschinen",
-    "kosten": 22000,
-    "forschungszeit": 8,
-    "effekt": {
-      "typ": "overclock",
-      "speed": 1.2,
-      "energie": 1.1
-    },
-    "bedingung": "automatisierung_1",
-    "position": {
-      "reihe": 0,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "maschinen_upgrade_2",
-    "name": "Maschinenoptimierung II",
-    "emoji": "🔧",
-    "beschreibung": "Maschinen arbeiten 35% schneller bei 20% mehr Energieverbrauch.",
-    "kategorie": "maschinen",
-    "kosten": 38000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "overclock",
-      "speed": 1.35,
-      "energie": 1.2
-    },
-    "bedingung": "maschinen_upgrade_1",
-    "position": {
-      "reihe": 1,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "gebaeude_erweiterung",
-    "name": "Hallen-Erweiterung",
-    "emoji": "🏗️",
-    "beschreibung": "Erhöht Lager- und Produktionsfläche um 25%.",
-    "kategorie": "gebaeude",
-    "kosten": 25000,
-    "forschungszeit": 10,
-    "effekt": {
-      "typ": "lagerKapazitaetBonus",
-      "wert": 1.25
-    },
-    "bedingung": "lager_optimierung",
-    "position": {
-      "reihe": 0,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "gebaeude_automation",
-    "name": "Gebäudeautomation",
-    "emoji": "🏭",
-    "beschreibung": "Gebäude produzieren effizienter und benötigen weniger Personal.",
-    "kategorie": "gebaeude",
-    "kosten": 34000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "personalBonus",
-      "wert": 0.15
-    },
-    "bedingung": [
-      "automatisierung_1",
-      "lager_optimierung"
+    "effekte": [
+      {
+        "typ": "lagerBonus",
+        "wert": 200
+      }
     ],
-    "position": {
-      "reihe": 1,
-      "spalte": 0
-    }
+    "bedingung": "grundlagen"
   },
   {
-    "id": "fahrzeugbau",
-    "name": "Fahrzeugbau",
-    "emoji": "🚘",
-    "beschreibung": "Grundlagen des Fahrzeugbaus — schaltet Karosseriebau, Innenausbau und Kabelwerk frei.",
-    "kategorie": "maschinen",
-    "kosten": 80000,
-    "forschungszeit": 12,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "karosseriebau",
-        "innenausbau",
-        "kabelwerk"
-      ]
-    },
-    "bedingung": [
-      "metallbearbeitung",
-      "moebelbau"
+    "id": "elektronik_1",
+    "name": "Elektronik-Grundlagen",
+    "emoji": "💾",
+    "beschreibung": "Grundlagen der Schaltkreistechnik. Schaltkreise 20% günstiger.",
+    "kosten": 12000,
+    "dauer": 20,
+    "kategorie": "elektronik",
+    "effekte": [
+      {
+        "typ": "kostenReduzierung",
+        "material": "schaltkreis",
+        "wert": 0.2
+      }
     ],
-    "position": {
-      "reihe": 5,
-      "spalte": 2
-    }
-  },
-  {
-    "id": "fahrzeugmontage_forschung",
-    "name": "Fahrzeugmontage",
-    "emoji": "🏭",
-    "beschreibung": "Endmontage kompletter Fahrzeuge — PKW, Transporter und LKW.",
-    "kategorie": "maschinen",
-    "kosten": 120000,
-    "forschungszeit": 15,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "fahrzeugmontage"
-      ]
-    },
-    "bedingung": "fahrzeugbau",
-    "position": {
-      "reihe": 6,
-      "spalte": 2
-    }
-  },
-
-  {
-    "id": "industrialisierung",
-    "name": "Industrialisierung",
-    "emoji": "🏭",
-    "beschreibung": "Grundlagen der Schwerindustrie — schaltet die Schwerlasthalle frei.",
-    "kategorie": "gebaeude",
-    "kosten": 20000,
-    "forschungszeit": 6,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "schwerlasthalle"
-      ]
-    },
-    "bedingung": "saege_effizienz",
-    "position": {
-      "reihe": 3,
-      "spalte": 0
-    }
-  },
-  {
-    "id": "bergbau",
-    "name": "Bergbau",
-    "emoji": "⛏️",
-    "beschreibung": "Methoden zur Rohstoffgewinnung — schaltet die Eisenmine frei.",
-    "kategorie": "gebaeude",
-    "kosten": 25000,
-    "forschungszeit": 7,
-    "effekt": {
-      "typ": "freischalten",
-      "was": [
-        "mine"
-      ]
-    },
-    "bedingung": "industrialisierung",
-    "position": {
-      "reihe": 4,
-      "spalte": 0
-    }
+    "bedingung": "metallurgie"
   }
 ]
