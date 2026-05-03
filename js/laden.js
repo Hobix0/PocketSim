@@ -24,7 +24,6 @@ async function alleDatenLaden() {
   lagerInitialisieren();
   await ereignisseLaden();
   await hallenUpgradesLaden();
-  if (typeof stadtratLaden === "function") await stadtratLaden();
   console.log("✅ Alles geladen — " + [MATERIALIEN,REZEPTE,MASCHINEN,GEBAEUDE,GRUNDSTUECKE,FORSCHUNG,AUFTRAEGE_VORLAGEN].map(function(a){return a.length}).join("/") + " Einträge");
 }
 
@@ -32,4 +31,8 @@ function lagerInitialisieren() {
   for (let m of MATERIALIEN) {
     if (lager[m.id] === undefined) lager[m.id] = 0;
   }
+}
+
+function maxLagerKapazitaet(matId) {
+  return 200 + (Object.keys(gekaufte_gebaeude||{}).filter(function(id){return id.includes("lagerhalle");}).length * 500);
 }

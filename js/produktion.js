@@ -3,6 +3,18 @@
 // Maschinen, Materialien, Produktionsloop
 // ══════════════════════════════════
 
+// ── Fokus-Bonus: je nach Unternehmensfokus ──
+function fokusBonus(typ) {
+  if (!window.unternehmen || !unternehmen.fokus) return 1.0;
+  let f = unternehmen.fokus;
+  if (typ === "geschwindigkeit" && f === "fertigung")  return 1.15;
+  if (typ === "abbau"          && f === "bergbau")     return 1.25;
+  if (typ === "forschung"      && f === "forschung")   return 1.30;
+  if (typ === "verkauf"        && f === "handel")      return 1.20;
+  return 1.0;
+}
+
+
 function getMaterial(id) {
   return lager[id] || 0;
 }
@@ -358,7 +370,6 @@ function produktionStarten() {
 
     if (typeof marktpreiseAktualisieren === "function") marktpreiseAktualisieren();
     if (typeof autoVerkaufDurchfuehren  === "function") autoVerkaufDurchfuehren();
-    if (typeof stadtratFortschrittPruefen === "function") stadtratFortschrittPruefen();
     if (typeof auftraegeRundeAktualisieren === "function") auftraegeRundeAktualisieren();
 
     // Ereignis prüfen

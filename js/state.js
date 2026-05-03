@@ -3,6 +3,9 @@
 // ══════════════════════════════════
 
 let geld = 100000;
+
+// ── Unternehmen ──
+let unternehmen = null; // null = noch nicht gegründet
 let gekaufte_grundstuecke  = [];
 let gekaufte_gebaeude      = {};
 let installierte_maschinen = [];
@@ -128,6 +131,7 @@ function erstesGrundstueck() {
 function spielstandDatenErstellen() {
   return {
     geld:                     geld,
+    unternehmen:              unternehmen,
     gekaufte_grundstuecke:    gekaufte_grundstuecke,
     gekaufte_gebaeude:        gekaufte_gebaeude,
     lager:                    lager,
@@ -156,8 +160,7 @@ function spielstandDatenErstellen() {
         aktivesRezept: m.aktivesRezept,
         laeuft:        m.laeuft
       };
-    }),
-    stadtrat: (typeof stadtratZuStand === "function") ? stadtratZuStand() : null
+    })
   };
 }
 
@@ -277,12 +280,6 @@ function spielstandLaden() {
 
   if (installierte_maschinen.length > 0) produktionLaeuft = true;
 }
-
-  // Stadtrat-Progression wiederherstellen
-  if (stand.stadtrat && typeof stadtratAusStand === "function") {
-    stadtratAusStand(stand.stadtrat);
-  }
-
 
 function spielstandLadenAusSlot(stand) {
   geld        = stand.geld        || 100000;

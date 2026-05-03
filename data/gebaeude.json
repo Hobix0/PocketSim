@@ -1,96 +1,207 @@
 [
   {
-    "id": "leichtbauhalle",
-    "name": "Leichtbauhalle",
-    "emoji": "🏗️",
-    "bild": "assets/produktionshalle_leicht.jpg",
-    "beschreibung": "Standardhalle für Leichtmaschinen. Normalboden, einfache Lüftung. Geeignet für Holz- und Leichtverarbeitung.",
-    "kosten": 25000,
+    "id": "kleine_fabrik",
+    "name": "Kleine Fabrikhalle",
+    "emoji": "🏭",
+    "bild": null,
+    "beschreibung": "Einfache Fabrikhalle. Platz für 3 Maschinen. Basis jeder Produktion.",
+    "kosten": 8000,
     "typ": "fabrik",
-    "hallenTyp": "leicht",
-    "groesse": { "l": 50, "b": 50, "h": 8 },
-    "kostenProRunde": 50,
-    "bedingung": "hatGrundstueck",
+    "hallenTyp": "fabrik",
+    "groesse": "klein",
+    "kostenProRunde": 100,
+    "bedingung": null,
     "kategorie": "gebaeude",
     "tileBreite": 10,
-    "tileHoehe": 10
+    "tileHoehe": 8,
+    "maxMaschinen": 3,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Haupthalle",
+        "groesse": 8,
+        "typ": "produktion",
+        "slots": 3
+      }
+    ],
+    "epoche": 1
+  },
+  {
+    "id": "fabrik",
+    "name": "Fabrikhalle",
+    "emoji": "🏭",
+    "bild": null,
+    "beschreibung": "Mittlere Fabrikhalle für bis zu 6 Maschinen. Standard der Industrie.",
+    "kosten": 18000,
+    "typ": "fabrik",
+    "hallenTyp": "fabrik",
+    "groesse": "mittel",
+    "kostenProRunde": 200,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 16,
+    "tileHoehe": 12,
+    "maxMaschinen": 6,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Produktionshalle",
+        "groesse": 12,
+        "typ": "produktion",
+        "slots": 4
+      },
+      {
+        "id": "r2",
+        "name": "Nebenraum",
+        "groesse": 4,
+        "typ": "lager",
+        "slots": 1
+      }
+    ],
+    "epoche": 1
+  },
+  {
+    "id": "grossfabrik",
+    "name": "Großfabrik",
+    "emoji": "🏗️",
+    "bild": null,
+    "beschreibung": "Industrieanlage für bis zu 12 Maschinen. Mehrere Produktionslinien möglich.",
+    "kosten": 45000,
+    "typ": "fabrik",
+    "hallenTyp": "fabrik",
+    "groesse": "gross",
+    "kostenProRunde": 450,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 24,
+    "tileHoehe": 18,
+    "maxMaschinen": 12,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Hauptproduktion",
+        "groesse": 16,
+        "typ": "produktion",
+        "slots": 6
+      },
+      {
+        "id": "r2",
+        "name": "Nebenproduktion",
+        "groesse": 8,
+        "typ": "produktion",
+        "slots": 4
+      },
+      {
+        "id": "r3",
+        "name": "Lager",
+        "groesse": 6,
+        "typ": "lager",
+        "slots": 1
+      },
+      {
+        "id": "r4",
+        "name": "Büro",
+        "groesse": 4,
+        "typ": "buero",
+        "slots": 0
+      }
+    ],
+    "epoche": 1
   },
   {
     "id": "lagerhalle",
     "name": "Lagerhalle",
     "emoji": "📦",
-    "bild": "assets/lagerhalle.jpg",
-    "beschreibung": "Großes Warenlager mit Regalsystem. Erhöht Lagerkapazität auf 1000 Einheiten pro Material.",
-    "kosten": 20000,
+    "bild": null,
+    "beschreibung": "Dediziertes Lager. Erhöht Maximalbestand aller Materialien um 500.",
+    "kosten": 6000,
     "typ": "lager",
-    "groesse": { "l": 40, "b": 20, "h": 10 },
-    "kostenProRunde": 35,
-    "kapazitaetProMaterial": 1000,
-    "bedingung": "hatGrundstueck",
-    "kategorie": "gebaeude"
-  },
-  {
-    "id": "schwerlasthalle",
-    "name": "Schwerlasthalle",
-    "emoji": "⚙️",
-    "bild": "assets/produktionshalle_schwer.jpg",
-    "beschreibung": "Verstärkter Boden, Industrielüftung, hitzebeständig. Für schwere Maschinen, Metallverarbeitung und Hochlastbetrieb.",
-    "kosten": 45000,
-    "typ": "fabrik",
-    "hallenTyp": "schwer",
-    "groesse": { "l": 60, "b": 60, "h": 12 },
+    "hallenTyp": "lager",
+    "groesse": "mittel",
     "kostenProRunde": 80,
-    "bedingung": "hatGrundstueck",
+    "bedingung": null,
     "kategorie": "gebaeude",
     "tileBreite": 12,
-    "tileHoehe": 12,
-    "benoetigtForschung": "industrialisierung"
-  },
-  {
-    "id": "mine",
-    "name": "Eisenmine",
-    "emoji": "⛏️",
-    "bild": "assets/mine.jpg",
-    "beschreibung": "Fördert automatisch Eisenerz jede Runde. Keine Inputs benötigt.",
-    "kosten": 35000,
-    "typ": "mine",
-    "produktionslinie": "metall",
-    "groesse": { "l": 30, "b": 30, "h": 15 },
-    "kostenProRunde": 60,
-    "foerderung": [
-      { "material": "eisenerz", "menge": 3 }
+    "tileHoehe": 10,
+    "maxMaschinen": 1,
+    "lagerBonus": 500,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Lagerraum",
+        "groesse": 12,
+        "typ": "lager",
+        "slots": 1
+      }
     ],
-    "mitarbeiterProEinheit": 4,
-    "bedingung": "hatGrundstueck",
-    "kategorie": "gebaeude",
-    "benoetigtForschung": "bergbau"
+    "epoche": 1
   },
   {
     "id": "labor",
     "name": "Forschungslabor",
     "emoji": "🔬",
-    "bild": "assets/labor.jpg",
-    "beschreibung": "Erforsche neue Technologien und verbessere deine Produktion.",
-    "kosten": 50000,
+    "bild": null,
+    "beschreibung": "Ermöglicht Technologieforschung. Jedes Labor erhöht die Forschungsgeschwindigkeit.",
+    "kosten": 22000,
     "typ": "labor",
-    "groesse": { "l": 20, "b": 20, "h": 5 },
-    "kostenProRunde": 100,
-    "bedingung": "hatGrundstueck",
-    "kategorie": "gebaeude"
+    "hallenTyp": "labor",
+    "groesse": "mittel",
+    "kostenProRunde": 250,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 12,
+    "tileHoehe": 10,
+    "maxMaschinen": 2,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Labor",
+        "groesse": 8,
+        "typ": "forschung",
+        "slots": 2
+      },
+      {
+        "id": "r2",
+        "name": "Büro",
+        "groesse": 4,
+        "typ": "buero",
+        "slots": 0
+      }
+    ],
+    "epoche": 1
   },
   {
-    "id": "garage",
-    "name": "Fahrzeuggarage",
-    "emoji": "🏎️",
-    "bild": "assets/garage.jpg",
-    "beschreibung": "Verwalte deinen Fuhrpark. Weise Fahrzeugen Routen zu und profitiere von Lieferboni.",
-    "kosten": 40000,
-    "typ": "garage",
-    "groesse": { "l": 30, "b": 20, "h": 5 },
-    "kostenProRunde": 30,
-    "bedingung": "hatGrundstueck",
+    "id": "kraftwerk",
+    "name": "Kraftwerk",
+    "emoji": "⚡",
+    "bild": null,
+    "beschreibung": "Erzeugt Strom für den Betrieb aller Maschinen. Ohne Strom keine Produktion.",
+    "kosten": 15000,
+    "typ": "kraftwerk",
+    "hallenTyp": "kraftwerk",
+    "groesse": "gross",
+    "kostenProRunde": 0,
+    "bedingung": null,
     "kategorie": "gebaeude",
-    "maxFahrzeuge": 5,
-    "benoetigtForschung": "fahrzeugbau"
+    "tileBreite": 16,
+    "tileHoehe": 12,
+    "maxMaschinen": 1,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Maschinenraum",
+        "groesse": 10,
+        "typ": "infrastruktur",
+        "slots": 1
+      },
+      {
+        "id": "r2",
+        "name": "Leitstand",
+        "groesse": 4,
+        "typ": "buero",
+        "slots": 0
+      }
+    ],
+    "epoche": 1
   }
 ]

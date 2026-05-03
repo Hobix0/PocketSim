@@ -58,7 +58,6 @@ async function spielStarten() {
 
   marktpreiseInitialisieren();
   spielstandLaden();
-  if (typeof stadtratInit === "function") stadtratInit();
   auftraegeAuffuellen();
 
   // UI
@@ -92,10 +91,25 @@ async function spielStarten() {
   marktScreenAktualisieren();
   auftraegeScreenAktualisieren();
 
-  // Intro NUR bei echtem Neustart
-  if (!aktiverSpielModus) {
-    setTimeout(introModalZeigen, 400);
+  // ── Gründungs-Check ──
+  // Wenn noch kein Unternehmen gegründet: Gründungsscreen zeigen
+  if (!unternehmen || !unternehmen.name) {
+    console.log("[PocketSim] Kein Unternehmen gefunden → Gründungsscreen");
+    if (typeof gruendungZeigen === "function") {
+      setTimeout(gruendungZeigen, 200);
+    }
+    return; // Spiel noch nicht starten
   }
+
+  // Unternehmen vorhanden → Header aktualisieren
+  if (typeof unternehmenHeaderAktualisieren === "function") {
+    unternehmenHeaderAktualisieren();
+  }
+
+  if (typeof epocheInit === "function") epocheInit();
+
+  // Intro NUR bei echtem Neustart ohne Unternehmen (legacy)
+  // if (!aktiverSpielModus) { setTimeout(introModalZeigen, 400); }
 }
 
 // Start — supabase übernimmt die Kontrolle
