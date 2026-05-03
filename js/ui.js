@@ -54,6 +54,9 @@ function lagerAnzeigenAktualisieren() {
     "<div id='lager-items-grid'>";
 
   for (let mat of MATERIALIEN) {
+    // Tier-Filter: nicht freigeschaltete Materialien verstecken
+    if (typeof materialIstSichtbar === "function" && !materialIstSichtbar(mat)) continue;
+
     let menge  = lager[mat.id] || 0;
     let leer   = menge === 0;
 
@@ -129,6 +132,7 @@ function statistikAktualisieren() {
   if (el3) el3.textContent = installierte_maschinen.length;
 
   kostenAnzeigenAktualisieren();
+  if (typeof stadtratBannerAktualisieren === "function") stadtratBannerAktualisieren();
 }
 
 function uebersichtAktualisieren() {

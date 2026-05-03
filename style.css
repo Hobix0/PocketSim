@@ -4257,3 +4257,157 @@ body.login-aktiv {
   background: var(--green-dim) !important;
   border-color: rgba(16,185,129,0.25) !important;
 }
+
+/* ══════════════════════════════════════════════════════
+   STADTRAT — Hauptprogression Banner
+   ══════════════════════════════════════════════════════ */
+
+.stadtrat-banner-container {
+  margin-bottom: 16px;
+}
+
+/* Haupt-Banner */
+.sr-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 10px 14px;
+}
+
+.sr-akt-badge {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sr-titel {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.sr-fortschritt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+/* Ziele */
+.sr-ziele {
+  background: var(--surface2);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sr-ziel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sr-ziel-fertig .sr-ziel-name {
+  color: var(--green);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.sr-ziel-name {
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--text2);
+  flex: 1;
+  min-width: 100px;
+}
+
+.sr-ziel-stand {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sr-ziel-balken {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-basis: 100%;
+}
+
+.sr-ziel-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Fertig-Banner */
+.sr-banner-fertig {
+  background: var(--green-dim);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* Stadtrat Modal */
+#modal-stadtrat {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#stadtrat-modal-inhalt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 400px;
+  animation: cardIn 0.3s ease;
+  text-align: center;
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+  .sr-ziele {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .sr-ziel-balken { flex-basis: auto; width: 100%; grid-column: 1 / -1; }
+}

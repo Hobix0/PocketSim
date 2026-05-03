@@ -58,6 +58,7 @@ async function spielStarten() {
 
   marktpreiseInitialisieren();
   spielstandLaden();
+  if (typeof stadtratInit === "function") stadtratInit();
   auftraegeAuffuellen();
 
   // UI

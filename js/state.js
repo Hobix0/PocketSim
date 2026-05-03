@@ -156,7 +156,8 @@ function spielstandDatenErstellen() {
         aktivesRezept: m.aktivesRezept,
         laeuft:        m.laeuft
       };
-    })
+    }),
+    stadtrat: (typeof stadtratZuStand === "function") ? stadtratZuStand() : null
   };
 }
 
@@ -276,6 +277,12 @@ function spielstandLaden() {
 
   if (installierte_maschinen.length > 0) produktionLaeuft = true;
 }
+
+  // Stadtrat-Progression wiederherstellen
+  if (stand.stadtrat && typeof stadtratAusStand === "function") {
+    stadtratAusStand(stand.stadtrat);
+  }
+
 
 function spielstandLadenAusSlot(stand) {
   geld        = stand.geld        || 100000;

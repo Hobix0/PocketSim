@@ -24,6 +24,7 @@ async function alleDatenLaden() {
   lagerInitialisieren();
   await ereignisseLaden();
   await hallenUpgradesLaden();
+  if (typeof stadtratLaden === "function") await stadtratLaden();
   console.log("✅ Alles geladen — " + [MATERIALIEN,REZEPTE,MASCHINEN,GEBAEUDE,GRUNDSTUECKE,FORSCHUNG,AUFTRAEGE_VORLAGEN].map(function(a){return a.length}).join("/") + " Einträge");
 }
 

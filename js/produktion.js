@@ -358,6 +358,7 @@ function produktionStarten() {
 
     if (typeof marktpreiseAktualisieren === "function") marktpreiseAktualisieren();
     if (typeof autoVerkaufDurchfuehren  === "function") autoVerkaufDurchfuehren();
+    if (typeof stadtratFortschrittPruefen === "function") stadtratFortschrittPruefen();
     if (typeof auftraegeRundeAktualisieren === "function") auftraegeRundeAktualisieren();
 
     // Ereignis prüfen

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "sr_1",
+    "titel": "Das Erbe",
+    "emoji": "🏚️",
+    "akt": 1,
+    "beschreibung": "1970. Du hast die alte Fabrik deines Großvaters geerbt — heruntergekomm­en, aber mit gutem Fundament. Der Stadtrat hat ein Auge auf dich. Zeig, dass du das Handwerk beherrschst.",
+    "ziele": [
+      { "material": "bretter", "menge": 50,  "beschreibung": "50 Bretter produzieren" },
+      { "material": "balken",  "menge": 20,  "beschreibung": "20 Balken produzieren" }
+    ],
+    "belohnung_geld": 15000,
+    "belohnung_text": "Der Stadtrat ist beeindruckt. Er genehmigt dir einen zinslosen Kredit für eine Mine.",
+    "belohnung_freischaltet": ["mine", "eisenerz_shop"],
+    "belohnung_tier": null,
+    "farbe": "#f59e0b"
+  },
+  {
+    "id": "sr_2",
+    "titel": "Bergischer Handwerker",
+    "emoji": "🔨",
+    "akt": 1,
+    "beschreibung": "Dein Name verbreitet sich in Remscheid. Die lokalen Schreiner und Bauunternehmer fragen nach hochwertigen Möbeln und Metallteilen. Zeit, dein Sortiment zu erweitern.",
+    "ziele": [
+      { "material": "moebel",       "menge": 10, "beschreibung": "10 Möbel herstellen" },
+      { "material": "eisenbarren",  "menge": 30, "beschreibung": "30 Eisenbarren produzieren" },
+      { "material": "schrauben",    "menge": 100,"beschreibung": "100 Schrauben produzieren" }
+    ],
+    "belohnung_geld": 35000,
+    "belohnung_text": "Die Lokalzeitung berichtet: 'Bergischer Handwerker tritt in Großvaters Fußstapfen.' Dein Ruf wächst — und damit die Aufträge.",
+    "belohnung_freischaltet": ["werkzeug_linie"],
+    "belohnung_tier": 3,
+    "farbe": "#f59e0b"
+  },
+  {
+    "id": "sr_3",
+    "titel": "Das Bergische Werkzeug",
+    "emoji": "🪚",
+    "akt": 2,
+    "beschreibung": "Remscheid war einst weltberühmt für seine Werkzeuge. Du hast die Chance, dieses Erbe wiederzubeleben. Ein Hamburger Großhändler sucht einen zuverlässigen Lieferanten.",
+    "ziele": [
+      { "material": "feile",          "menge": 50, "beschreibung": "50 Feilen produzieren" },
+      { "material": "saege_werkzeug", "menge": 20, "beschreibung": "20 Handsägen produzieren" },
+      { "material": "schloss",        "menge": 30, "beschreibung": "30 Schlösser produzieren" }
+    ],
+    "belohnung_geld": 80000,
+    "belohnung_text": "Erstes Exportgeschäft abgeschlossen! Der Hamburger Händler wird Stammkunde. Ein zweites Grundstück in Solingen wird verfügbar.",
+    "belohnung_freischaltet": ["solingen_grundstueck", "industrie_linie"],
+    "belohnung_tier": 4,
+    "farbe": "#06b6d4"
+  },
+  {
+    "id": "sr_4",
+    "titel": "Industrieller Aufstieg",
+    "emoji": "⚙️",
+    "akt": 2,
+    "beschreibung": "Ford Köln sucht einen neuen Zulieferer für Präzisionsteile. Das ist deine Chance in die Automobilindustrie einzusteigen — ohne selbst Autos zu bauen.",
+    "ziele": [
+      { "material": "bremsscheibe",    "menge": 25, "beschreibung": "25 Bremsscheiben produzieren" },
+      { "material": "getriebegehaeuse","menge": 10, "beschreibung": "10 Getriebegehäuse produzieren" },
+      { "material": "stahlblech",      "menge": 200,"beschreibung": "200 Stahlblech als Vorrat" }
+    ],
+    "belohnung_geld": 200000,
+    "belohnung_text": "Ford Köln unterzeichnet einen Rahmenvertrag! Dein Werk wird als offizieller Tier-1-Zulieferer gelistet. Wuppertal-Grundstück verfügbar.",
+    "belohnung_freischaltet": ["wuppertal_grundstueck", "export_markt"],
+    "belohnung_tier": null,
+    "farbe": "#06b6d4"
+  },
+  {
+    "id": "sr_5",
+    "titel": "Bergisches Imperium",
+    "emoji": "🏭",
+    "akt": 3,
+    "beschreibung": "Remscheid, Solingen, Wuppertal — das Bergische Städtedreieck arbeitet für dich. Jetzt geht es um den globalen Markt. Beweise, dass 'Made in Bergisches Land' Weltklasse bedeutet.",
+    "ziele": [
+      { "material": "werkzeugset",    "menge": 20,  "beschreibung": "20 Werkzeug-Sets exportieren" },
+      { "material": "industriepaket", "menge": 10,  "beschreibung": "10 Industriepakete exportieren" },
+      { "material": "fahrzeuginnenraum","menge": 15,"beschreibung": "15 Fahrzeuginnenräume liefern" }
+    ],
+    "belohnung_geld": 500000,
+    "belohnung_text": "🏆 Du hast gewonnen! Das Bergische Imperium ist vollständig. Dein Großvater wäre stolz.",
+    "belohnung_freischaltet": [],
+    "belohnung_tier": 5,
+    "farbe": "#f59e0b"
+  }
+]
