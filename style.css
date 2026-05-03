@@ -4411,3 +4411,422 @@ body.login-aktiv {
   }
   .sr-ziel-balken { flex-basis: auto; width: 100%; grid-column: 1 / -1; }
 }
+
+/* ══════════════════════════════════════════════════════
+   AUFTRÄGE — Neu
+   ══════════════════════════════════════════════════════ */
+
+.auftraege-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 600px) { .auftraege-kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.auftraege-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auftrag-card-neu {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s;
+}
+
+.auftrag-card-neu:hover { background: var(--surface2); }
+
+/* Header */
+.aufn-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aufn-emoji { font-size: 26px; flex-shrink: 0; }
+
+.aufn-title-block { flex: 1; min-width: 0; }
+
+.aufn-name {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+
+.aufn-typ-badge {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  border: 1px solid;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.aufn-deadline {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.aufn-deadline-zahl {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  display: block;
+  line-height: 1;
+}
+
+.aufn-deadline-label {
+  font-family: var(--font-head);
+  font-size: 8px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* Deadline Balken */
+.aufn-deadline-track {
+  height: 2px;
+  background: var(--surface2);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+/* Material Row */
+.aufn-material-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.aufn-mat-emoji { font-size: 20px; flex-shrink: 0; }
+
+.aufn-mat-info { flex: 1; min-width: 0; }
+
+.aufn-mat-name {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.aufn-fort-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.aufn-mat-stand {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.aufn-bonus { text-align: right; flex-shrink: 0; }
+
+.aufn-bonus-zahl {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green);
+  display: block;
+}
+
+.aufn-bonus-label {
+  font-family: var(--font-head);
+  font-size: 8px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.aufn-beschreibung {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+/* Buttons */
+.aufn-btn-bereit {
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+  border-radius: var(--radius) !important;
+  letter-spacing: 0.5px !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+  min-height: 44px !important;
+  cursor: pointer !important;
+}
+
+.aufn-btn-bereit:hover { background: #059669 !important; }
+
+.aufn-btn-warten {
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 12px !important;
+  border-radius: var(--radius) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  cursor: not-allowed !important;
+  min-height: 44px !important;
+}
+
+/* Leer-Hinweis */
+.auftrag-leer-hint {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+
+/* Desktop: 2-spaltig */
+@media (min-width: 900px) {
+  .auftraege-liste {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   MARKT — Karten-Grid
+   ══════════════════════════════════════════════════════ */
+
+.markt-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.markt-gruppe { margin-bottom: 20px; }
+
+.markt-gruppe-header {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-left: 2px solid;
+  border-radius: 0 4px 4px 0;
+  background: var(--surface2);
+  margin-bottom: 8px;
+}
+
+/* Markt Grid: 2 Spalten Mobile, 3-4 Desktop */
+.markt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (min-width: 600px)  { .markt-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1000px) { .markt-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Markt Karte */
+.markt-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+
+.markt-karte:hover { border-color: var(--border2); }
+.markt-karte-leer  { opacity: 0.5; }
+
+/* Top: Emoji + Name + Preis */
+.mk-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mk-ident {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mk-emoji { font-size: 18px; flex-shrink: 0; }
+
+.mk-name {
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mk-preis-block {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mk-preis {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.markt-preis-hoch   { color: var(--green); }
+.markt-preis-tief   { color: var(--red); }
+.markt-preis-normal { color: var(--text); }
+
+.mk-trend {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Balken */
+.mk-balken-track {
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mk-balken-fill {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.5s;
+}
+
+.mk-balken-mitte {
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px;
+  background: var(--border2);
+}
+
+.mk-basis-zeile {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text3);
+}
+
+/* Bestand */
+.mk-bestand-zeile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-top: 1px solid var(--border);
+}
+
+.mk-bestand-label { font-family: var(--font-head); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px; }
+.mk-bestand-zahl  { font-family: var(--font-mono); font-size: 12px; color: var(--text3); }
+.mk-bestand-zahl.hat-bestand { color: var(--text); font-weight: 600; }
+
+/* Aktionen */
+.mk-aktionen {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.mk-verkauf-zeile {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.mk-btn-sell {
+  width: auto !important;
+  padding: 5px 10px !important;
+  min-height: 30px !important;
+  font-size: 11px !important;
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  flex-shrink: 0;
+  cursor: pointer !important;
+}
+
+.mk-btn-sell:hover { background: #059669 !important; }
+
+.mk-btn-auto {
+  width: 100% !important;
+  padding: 5px 8px !important;
+  min-height: 28px !important;
+  font-size: 10px !important;
+  background: var(--surface2) !important;
+  color: var(--text3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  cursor: pointer !important;
+}
+
+.mk-btn-auto.aktiv {
+  background: var(--green-dim) !important;
+  color: var(--green) !important;
+  border-color: rgba(16,185,129,0.4) !important;
+}
+
+.mk-leer-hint {
+  font-family: var(--font-head);
+  font-size: 10px;
+  color: var(--text3);
+  font-style: italic;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* Mengen-Steuer kompakt im Markt */
+.markt-karte .mengen-steuer {
+  flex: 1;
+  min-width: 0;
+}
+
+.markt-karte .mengen-steuer input {
+  font-size: 12px !important;
+}

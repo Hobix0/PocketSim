@@ -102,30 +102,54 @@ function marktScreenAktualisieren() {
   let bereich = document.getElementById("markt-bereich");
   if (!bereich) return;
 
+  // Tier-Filter: nur sichtbare Materialien
+  let verkaufbareMats = MATERIALIEN.filter(function(m) {
+    return m.verkaufbar && (typeof materialIstSichtbar !== "function" || materialIstSichtbar(m));
+  });
+
+  // Statistik berechnen
+  let gesamtWert    = 0;
+  let matMitBestand = 0;
+  for (let mat of verkaufbareMats) {
+    let b = lager[mat.id] || 0;
+    let p = marktpreise[mat.id] || mat.verkaufpreis;
+    gesamtWert += b * p;
+    if (b > 0) matMitBestand++;
+  }
+
+  // ── KPI Header ──
+  let html =
+    "<div class='markt-kpi-grid'>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Lagerwert</span>" +
+        "<span class='kpi-value accent'>" + gesamtWert.toLocaleString("de-DE") + " €</span>" +
+      "</div>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Mit Bestand</span>" +
+        "<span class='kpi-value'>" + matMitBestand + " <span style='font-size:11px;color:var(--text3)'>Produkte</span></span>" +
+      "</div>" +
+    "</div>";
+
+  // ── Gruppen ──
   let gruppen = {};
   let reihe   = [];
-
-  for (let mat of MATERIALIEN) {
-    if (!mat.verkaufbar) continue;
+  for (let mat of verkaufbareMats) {
     let linie = mat.produktionslinie || "sonstige";
     if (!gruppen[linie]) { gruppen[linie] = []; reihe.push(linie); }
     gruppen[linie].push(mat);
   }
 
-  let html =
-    "<div class='markt-hinweis'>" +
-      "<span>📈</span>" +
-      "<p>Preise schwanken jede Runde ±15%. Verkaufe bei hohen Preisen. Auto-Verkauf verkauft automatisch jeden Zyklus.</p>" +
-    "</div>";
-
   for (let linienId of reihe) {
-    let linie  = (typeof PRODUKTIONSLINIEN !== "undefined") ? PRODUKTIONSLINIEN[linienId] : null;
-    let farbe  = linie ? linie.farbe : "var(--border2)";
+    let linie = (typeof PRODUKTIONSLINIEN !== "undefined") ? PRODUKTIONSLINIEN[linienId] : null;
+    let farbe = linie ? linie.farbe : "var(--border2)";
+    let linienName = linie ? linie.emoji + " " + linie.name : "📦 Sonstige";
 
     html +=
-      "<div class='markt-gruppe-header' style='color:" + farbe + "; border-color:" + farbe + "'>" +
-        (linie ? linie.emoji + " " + linie.name : "📦 Sonstige") +
-      "</div><div class='markt-liste'>";
+      "<div class='markt-gruppe'>" +
+        "<div class='markt-gruppe-header' style='color:" + farbe + ";border-color:" + farbe + "'>" +
+          linienName +
+        "</div>" +
+        "<div class='markt-grid'>";
 
     for (let mat of gruppen[linienId]) {
       let basisPreis = mat.verkaufpreis;
@@ -135,95 +159,88 @@ function marktScreenAktualisieren() {
       let autoAktiv  = autoVerkauf[mat.id] || false;
 
       let abweichung  = Math.round(((aktPreis - basisPreis) / basisPreis) * 100);
-      let preisKlasse = abweichung > 10 ? "markt-preis-hoch" :
-                        abweichung < -10 ? "markt-preis-tief" : "markt-preis-normal";
-      let trendIcon  = trend === "hoch"   ? "↑" : trend === "runter" ? "↓" : "→";
-      let trendFarbe = trend === "hoch"   ? "var(--green)" :
-                       trend === "runter" ? "var(--red)" : "var(--text3)";
+      let preisKlasse = abweichung > 10 ? "markt-preis-hoch" : abweichung < -10 ? "markt-preis-tief" : "markt-preis-normal";
+      let trendIcon   = trend === "hoch" ? "↑" : trend === "runter" ? "↓" : "→";
+      let trendFarbe  = trend === "hoch" ? "var(--green)" : trend === "runter" ? "var(--red)" : "var(--text3)";
+      let balkenLinks = abweichung >= 0 ? "50%" : (50 + Math.max(-50, abweichung / 3)) + "%";
+      let balkenBreite = Math.min(50, Math.abs(abweichung / 3)) + "%";
+      let balkenFarbe  = abweichung >= 0 ? "var(--green)" : "var(--red)";
 
       html +=
-        "<div class='markt-item'>" +
-          "<div class='markt-item-kopf'>" +
-            "<div class='markt-item-links'>" +
-              "<span class='markt-item-emoji'>" + mat.emoji + "</span>" +
-              "<div>" +
-                "<div class='markt-item-name'>" + mat.name + "</div>" +
-                "<div class='markt-item-bestand'>Bestand: " + bestand + " Stk</div>" +
-              "</div>" +
+        "<div class='markt-karte" + (bestand === 0 ? " markt-karte-leer" : "") + "'>" +
+
+          // ── Top: Name + Preis ──
+          "<div class='mk-top'>" +
+            "<div class='mk-ident'>" +
+              "<span class='mk-emoji'>" + mat.emoji + "</span>" +
+              "<span class='mk-name'>" + mat.name + "</span>" +
             "</div>" +
-            "<div class='markt-item-rechts'>" +
-              "<span class='markt-preis-aktuell " + preisKlasse + "'>" + aktPreis + " €</span>" +
-              "<span class='markt-trend' style='color:" + trendFarbe + "'>" + trendIcon + "</span>" +
+            "<div class='mk-preis-block'>" +
+              "<span class='mk-preis " + preisKlasse + "'>" + aktPreis + " €</span>" +
+              "<span class='mk-trend' style='color:" + trendFarbe + "'>" + trendIcon + "</span>" +
             "</div>" +
           "</div>" +
 
-          "<div class='markt-preis-balken'>" +
-            "<div class='markt-preis-balken-fill' " +
-              "style='left:" + (abweichung >= 0 ? "50%" : (50 + abweichung/3) + "%") + ";" +
-              "width:" + Math.min(50, Math.abs(abweichung/3)) + "%; " +
-              "background:" + (abweichung >= 0 ? "var(--green)" : "var(--red)") + "'>" +
-            "</div>" +
-            "<div class='markt-preis-mitte'></div>" +
+          // ── Preis Balken ──
+          "<div class='mk-balken-track'>" +
+            "<div class='mk-balken-fill' style='left:" + balkenLinks + ";width:" + balkenBreite + ";background:" + balkenFarbe + "'></div>" +
+            "<div class='mk-balken-mitte'></div>" +
           "</div>" +
-
-          "<div class='markt-preis-meta'>" +
-            "<span>Basis: " + basisPreis + " €</span>" +
-            "<span style='color:" + (abweichung >= 0 ? "var(--green)" : "var(--red)") + "'>" +
+          "<div class='mk-basis-zeile'>" +
+            "<span>Basis " + basisPreis + " €</span>" +
+            "<span style='color:" + (abweichung >= 0 ? "var(--green)" : "var(--red)") + ";font-weight:700'>" +
               (abweichung >= 0 ? "+" : "") + abweichung + "%" +
             "</span>" +
           "</div>" +
 
-          "<div class='markt-aktionen'>" +
-            (bestand > 0 ?
-              "<div class='markt-verkauf-zeile'>" +
-                "<div class='mengen-steuer'>" +
-                  "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='minus'>−</button>" +
-                  "<input type='number' id='markt-menge-" + mat.id + "' value='" + Math.min(bestand, 10) + "' min='1' max='" + bestand + "' />" +
-                  "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='plus' data-max='" + bestand + "'>+</button>" +
-                "</div>" +
-                "<button class='markt-btn-sell' data-mat-id='" + mat.id + "'>" +
-                  "Verkaufen" +
-                "</button>" +
-              "</div>"
-            : "<span class='markt-leer'>Kein Bestand</span>") +
+          // ── Bestand ──
+          "<div class='mk-bestand-zeile'>" +
+            "<span class='mk-bestand-label'>Lager</span>" +
+            "<span class='mk-bestand-zahl" + (bestand > 0 ? " hat-bestand" : "") + "'>" + bestand + " Stk</span>" +
+          "</div>" +
 
-            "<button class='markt-btn-auto" + (autoAktiv ? " aktiv" : "") + "' " +
-              "data-auto-mat-id='" + mat.id + "'>" +
-              (autoAktiv ? "🤖 Auto: AN" : "🤖 Auto: AUS") +
+          // ── Aktionen ──
+          "<div class='mk-aktionen'>" +
+            (bestand > 0 ?
+              "<div class='mk-verkauf-zeile'>" +
+                "<div class='mengen-steuer'>" +
+                  "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='minus' data-typ='markt'>−</button>" +
+                  "<input type='number' id='markt-menge-" + mat.id + "' value='" + Math.min(bestand, 10) + "' min='1' max='" + bestand + "' />" +
+                  "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='plus' data-max='" + bestand + "' data-typ='markt'>+</button>" +
+                "</div>" +
+                "<button class='mk-btn-sell' data-mat-id='" + mat.id + "'>Verkaufen</button>" +
+              "</div>"
+            : "<span class='mk-leer-hint'>Kein Bestand</span>") +
+            "<button class='mk-btn-auto" + (autoAktiv ? " aktiv" : "") + "' data-auto-mat-id='" + mat.id + "'>" +
+              (autoAktiv ? "🤖 Auto: AN" : "🤖 AUS") +
             "</button>" +
           "</div>" +
+
         "</div>";
     }
 
-    html += "</div>";
+    html += "</div></div>";
   }
 
   bereich.innerHTML = html;
 
-  // Event-Listener für Verkaufen-Buttons
-  bereich.querySelectorAll(".markt-btn-sell[data-mat-id]").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      marktVerkaufen(btn.getAttribute("data-mat-id"));
-    });
+  // Events
+  bereich.querySelectorAll("[data-mat-id]").forEach(function(btn) {
+    btn.addEventListener("click", function() { materialVerkaufen(btn.dataset.matId); });
   });
-
-  // Event-Listener für Auto-Verkauf-Buttons
-  bereich.querySelectorAll(".markt-btn-auto[data-auto-mat-id]").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      autoVerkaufToggle(btn.getAttribute("data-auto-mat-id"));
-    });
+  bereich.querySelectorAll("[data-auto-mat-id]").forEach(function(btn) {
+    btn.addEventListener("click", function() { autoVerkaufToggle(btn.dataset.autoMatId); });
   });
-
-  bereich.querySelectorAll(".mengen-btn").forEach(function(btn) {
+  bereich.querySelectorAll(".mengen-btn[data-typ='markt']").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      let id     = btn.getAttribute("data-id");
-      let aktion = btn.getAttribute("data-aktion");
-      let max    = parseInt(btn.getAttribute("data-max")) || 9999;
-      let input  = document.getElementById("markt-menge-" + id);
+      let id = btn.dataset.id;
+      let input = document.getElementById("markt-menge-" + id);
+      let max = parseInt(btn.dataset.max || lager[id] || 1);
       if (!input) return;
-      let val = parseInt(input.value) || 1;
-      if (aktion === "plus")  input.value = Math.min(max, val + 1);
-      if (aktion === "minus") input.value = Math.max(1,   val - 1);
+      if (btn.dataset.aktion === "plus") input.value = Math.min(max, parseInt(input.value || 1) + 1);
+      else input.value = Math.max(1, parseInt(input.value || 1) - 1);
     });
   });
+}
+
 }
