@@ -77,6 +77,17 @@
         <div class="subtitle">Produktionsimperium</div>
       </div>
       <div class="header-right">
+        <!-- Stadtrat Mini-Chip — immer sichtbar -->
+        <button id="stadtrat-header-chip" class="sr-header-chip" onclick="stadtratDetailOeffnen()" title="Aktueller Meilenstein">
+          <span id="sr-chip-emoji">🏚️</span>
+          <div class="sr-chip-body">
+            <span id="sr-chip-titel">Das Erbe</span>
+            <div class="sr-chip-balken">
+              <div id="sr-chip-fill" class="sr-chip-fill"></div>
+            </div>
+          </div>
+          <span id="sr-chip-prozent" class="sr-chip-prozent">0%</span>
+        </button>
         <span id="geld-anzeige">100.000 €</span>
         <button id="btn-pause" onclick="spielPauseUmschalten()">⏸️ Pause</button>
         <button id="cloud-badge" class="cloud-badge-btn" onclick="ausloggen()" title="Ausloggen">👤</button>
