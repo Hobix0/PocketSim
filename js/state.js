@@ -192,6 +192,16 @@ function spielstandLaden() {
   geld        = stand.geld        || 100000;
   mitarbeiter = stand.mitarbeiter || 0;
 
+  // ── Unternehmen laden (Haupt-Bug-Fix) ──
+  if (stand.unternehmen) {
+    unternehmen = stand.unternehmen;
+  }
+
+  // ── Epochen-State laden ──
+  if (stand.epoche_state && typeof epocheAusStand === "function") {
+    epocheAusStand(stand.epoche_state);
+  }
+
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];
   erforschte_technologien = stand.erforschte_technologien || [];
   aktive_forschung        = stand.aktive_forschung        || null;
@@ -285,6 +295,16 @@ function spielstandLaden() {
 function spielstandLadenAusSlot(stand) {
   geld        = stand.geld        || 100000;
   mitarbeiter = stand.mitarbeiter || 0;
+
+  // ── Unternehmen laden (Haupt-Bug-Fix) ──
+  if (stand.unternehmen) {
+    unternehmen = stand.unternehmen;
+  }
+
+  // ── Epochen-State laden ──
+  if (stand.epoche_state && typeof epocheAusStand === "function") {
+    epocheAusStand(stand.epoche_state);
+  }
 
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];
   erforschte_technologien = stand.erforschte_technologien || [];

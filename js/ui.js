@@ -24,156 +24,86 @@ function lagerAnzeigenAktualisieren() {
   let reihe = document.getElementById("lager-reihe");
   if (!reihe) return;
 
-  // ── Statistiken berechnen ──
   let gesamtMenge = 0;
   let gesamtWert  = 0;
-  let aktiveTypen = 0;
-  let sichtbareMats = MATERIALIEN.filter(function(m) {
-    return typeof materialIstSichtbar !== "function" || materialIstSichtbar(m);
-  });
+  let typenMitBestand = 0;
 
-  for (let mat of sichtbareMats) {
+  for (let k in lager) {
+    let m = gesamtMenge;
+    gesamtMenge += lager[k] || 0;
+    if ((lager[k] || 0) > 0) typenMitBestand++;
+  }
+
+  for (let mat of MATERIALIEN) {
     let menge = lager[mat.id] || 0;
-    let preis = (marktpreise && marktpreise[mat.id]) || mat.verkaufpreis || 0;
-    gesamtMenge += menge;
-    gesamtWert  += menge * preis;
-    if (menge > 0) aktiveTypen++;
+    let preis = (marktpreise && marktpreise[mat.id]) ? marktpreise[mat.id] : (mat.verkaufpreis || 0);
+    gesamtWert += menge * preis;
   }
 
-  // ── KPI Header ──
   let html =
-    "<div class='lager-kpi-grid'>" +
-      "<div class='kpi-card'>" +
-        "<span class='kpi-label'>Gesamt im Lager</span>" +
-        "<span class='kpi-value'>" + gesamtMenge.toLocaleString("de-DE") + "</span>" +
+    "<div class='lager-info-bar'>" +
+      "<div class='lager-info-item'>" +
+        "<span class='lager-info-label'>📦 Gesamt</span>" +
+        "<span class='lager-info-wert'>" + gesamtMenge.toLocaleString("de-DE") + "</span>" +
       "</div>" +
-      "<div class='kpi-card'>" +
-        "<span class='kpi-label'>Lagerwert</span>" +
-        "<span class='kpi-value accent'>" + gesamtWert.toLocaleString("de-DE") + " €</span>" +
+      "<div class='lager-info-item'>" +
+        "<span class='lager-info-label'>💰 Lagerwert</span>" +
+        "<span class='lager-info-wert'>" + gesamtWert.toLocaleString("de-DE") + " €</span>" +
       "</div>" +
-      "<div class='kpi-card'>" +
-        "<span class='kpi-label'>Produkte mit Bestand</span>" +
-        "<span class='kpi-value'>" + aktiveTypen + " <span style=\'font-size:11px;color:var(--text3)\'>/ " + sichtbareMats.length + "</span></span>" +
-      "</div>" +
-    "</div>";
+    "</div>" +
+    "<div id='lager-items-grid'>";
 
-  // ── Nach Produktionslinie gruppieren ──
-  let gruppen = {};
-  let reihenfolge = [];
+  for (let mat of MATERIALIEN) {
+    // Tier-Filter: nicht freigeschaltete Materialien verstecken
+    if (typeof materialIstSichtbar === "function" && !materialIstSichtbar(mat)) continue;
 
-  for (let mat of sichtbareMats) {
-    let linie = mat.produktionslinie || "sonstige";
-    if (!gruppen[linie]) { gruppen[linie] = []; reihenfolge.push(linie); }
-    gruppen[linie].push(mat);
-  }
+    let menge  = lager[mat.id] || 0;
+    let leer   = menge === 0;
 
-  // Linien-Config
-  let linienConfig = {
-    holz:       { name: "Holzverarbeitung",  emoji: "🪵", farbe: "#a3622a" },
-    metall:     { name: "Metallverarbeitung", emoji: "⚙️",  farbe: "#7a8fa6" },
-    werkzeug:   { name: "Bergisches Werkzeug",emoji: "🔧", farbe: "#f59e0b" },
-    industrie:  { name: "Industrie",          emoji: "🏭", farbe: "#06b6d4" },
-    zulieferer: { name: "Auto-Zulieferer",    emoji: "🚗", farbe: "#8b5cf6" },
-    rohstoffe:  { name: "Rohstoffe",          emoji: "⛏️",  farbe: "#6b7280" },
-    sonstige:   { name: "Sonstige",           emoji: "📦", farbe: "#4b5563" }
-  };
-
-  for (let linienId of reihenfolge) {
-    let cfg   = linienConfig[linienId] || linienConfig.sonstige;
-    let mats  = gruppen[linienId];
-
-    // Rohstoffe (nicht verkaufbar) als kompakte Liste
-    let alleRohstoffe = mats.every(function(m) { return !m.verkaufbar; });
-
-    html +=
-      "<div class='lager-gruppe'>" +
-        "<div class='lager-gruppe-header' style='color:" + cfg.farbe + ";border-color:" + cfg.farbe + "'>" +
-          cfg.emoji + " " + cfg.name +
-          "<span style='float:right;font-family:var(--font-mono);font-size:10px;color:var(--text3)'>" +
-            mats.filter(function(m) { return (lager[m.id]||0) > 0; }).length + "/" + mats.length +
-          "</span>" +
-        "</div>" +
-        "<div class='" + (alleRohstoffe ? "lager-rohstoff-grid" : "lager-karten-grid") + "'>";
-
-    for (let mat of mats) {
-      let menge  = lager[mat.id] || 0;
-      let leer   = menge === 0;
-      let preis  = (marktpreise && marktpreise[mat.id]) || mat.verkaufpreis || 0;
-      let wert   = menge * preis;
-
-      if (alleRohstoffe) {
-        // Kompaktes Rohstoff-Item
-        html +=
-          "<div class='lager-rohstoff-item" + (leer ? " leer" : "") + "'>" +
-            "<span class='lroi-emoji'>" + mat.emoji + "</span>" +
-            "<span class='lroi-name'>" + mat.name + "</span>" +
-            "<span class='lroi-menge" + (menge > 0 ? " hat-bestand" : "") + "'>" + menge.toLocaleString("de-DE") + "</span>" +
-          "</div>";
-      } else {
-        // Vollständige Produkt-Karte (wie Markt)
-        html +=
-          "<div class='lager-produkt-karte" + (leer ? " lager-karte-leer" : "") + "'>" +
-
-            // Top
-            "<div class='lpk-top'>" +
-              "<span class='lpk-emoji'>" + mat.emoji + "</span>" +
-              "<div class='lpk-info'>" +
-                "<span class='lpk-name'>" + mat.name + "</span>" +
-                "<span class='lpk-tier'>T" + (mat.tier || "?") + "</span>" +
-              "</div>" +
-            "</div>" +
-
-            // Bestand groß
-            "<div class='lpk-bestand'>" +
-              "<span class='lpk-menge" + (menge > 0 ? " hat-bestand" : "") + "'>" + menge.toLocaleString("de-DE") + "</span>" +
-              "<span class='lpk-einheit'>Stk</span>" +
-            "</div>" +
-
-            // Wert
-            (menge > 0
-              ? "<div class='lpk-wert'>≈ " + wert.toLocaleString("de-DE") + " €</div>"
-              : "<div class='lpk-wert lpk-wert-leer'>Kein Bestand</div>") +
-
-            // Verkauf
-            (mat.verkaufbar && menge > 0
-              ? "<div class='lpk-aktionen'>" +
-                  "<div class='mengen-steuer'>" +
-                    "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='minus' data-typ='lager'>−</button>" +
-                    "<input type='number' id='lager-menge-" + mat.id + "' value='" + Math.min(menge, 10) + "' min='1' max='" + menge + "' />" +
-                    "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='plus' data-max='" + menge + "' data-typ='lager'>+</button>" +
-                  "</div>" +
-                  "<button class='lpk-btn-sell' data-id='" + mat.id + "'>" +
-                    preis + " € <span style=\'font-size:9px\'>/ Stk</span>" +
-                  "</button>" +
-                "</div>"
-              : "") +
-
-          "</div>";
-      }
+    let verkaufHTML = "";
+    if (mat.verkaufbar && menge > 0) {
+      verkaufHTML =
+        "<div class='lager-verkauf'>" +
+          "<div class='shop-mengen' style='transform:scale(0.9)'>" +
+            "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='minus'>−</button>" +
+            "<input type='number' id='verkauf-menge-" + mat.id + "' value='1' min='1' max='" + menge + "' />" +
+            "<button class='mengen-btn' data-id='" + mat.id + "' data-aktion='plus'>+</button>" +
+          "</div>" +
+          "<button class='btn-verkaufen-lager' data-id='" + mat.id + "'>💰 " +
+            (marktpreise && marktpreise[mat.id] ? marktpreise[mat.id] : mat.verkaufpreis) + " €" +
+          "</button>" +
+        "</div>";
     }
 
-    html += "</div></div>";
+    html +=
+      "<div class='lager-item" + (leer ? " leer" : "") + "'>" +
+        "<div class='lager-item-header'>" +
+          "<span class='lager-item-label'>" + mat.emoji + " " + mat.name + "</span>" +
+          "<span class='lager-item-wert" + (menge > 0 ? " hat-bestand" : "") + "'>" + menge + "</span>" +
+        "</div>" +
+        verkaufHTML +
+      "</div>";
   }
 
+  html += "</div>";
   reihe.innerHTML = html;
 
-  // Events
-  reihe.querySelectorAll(".lpk-btn-sell").forEach(function(btn) {
+  reihe.querySelectorAll(".btn-verkaufen-lager").forEach(function(btn) {
     btn.addEventListener("click", function() { materialVerkaufen(btn.dataset.id); });
   });
 
-  reihe.querySelectorAll(".mengen-btn[data-typ='lager']").forEach(function(btn) {
+  reihe.querySelectorAll(".mengen-btn").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      let id  = btn.dataset.id;
-      let max = parseInt(btn.dataset.max || lager[id] || 1);
-      let inp = document.getElementById("lager-menge-" + id);
-      if (!inp) return;
-      if (btn.dataset.aktion === "plus") inp.value = Math.min(max, parseInt(inp.value||1) + 1);
-      else inp.value = Math.max(1, parseInt(inp.value||1) - 1);
+      let id     = btn.dataset.id;
+      let aktion = btn.dataset.aktion;
+      let input  = document.getElementById("verkauf-menge-" + id);
+      let maxMenge = lager[id] || 0;
+      if (!input) return;
+      if (aktion === "plus")  input.value = Math.min(maxMenge, parseInt(input.value || 1) + 1);
+      else                    input.value = Math.max(1, parseInt(input.value || 1) - 1);
     });
   });
 }
-
 
 // ── PERSONAL ──
 
@@ -203,6 +133,7 @@ function statistikAktualisieren() {
 
   kostenAnzeigenAktualisieren();
   if (typeof stadtratBannerAktualisieren === "function") stadtratBannerAktualisieren();
+  if (typeof uebersichtKPIsAktualisieren === "function") uebersichtKPIsAktualisieren();
 }
 
 function uebersichtAktualisieren() {
@@ -354,4 +285,86 @@ function maschineToggle(index) {
   installierte_maschinen[index].laeuft = !installierte_maschinen[index].laeuft;
   uebersichtAktualisieren();
   spielstandSpeichern();
+}
+
+
+// ── ÜBERSICHT DASHBOARD ──
+function uebersichtKPIsAktualisieren() {
+  let kpiBereich = document.getElementById("uebersicht-kpis");
+  if (!kpiBereich) return;
+
+  // Berechne KPIs
+  let einnahmen = 0, kosten = 0;
+  let laufende = 0, gestoppte = 0;
+
+  for (let m of installierte_maschinen) {
+    kosten += (m.kostenProRunde || 0);
+    if (m.laeuft) {
+      laufende++;
+      let rez = REZEPTE.find(function(r) { return r.id === m.aktivesRezept; });
+      if (rez) {
+        for (let out of rez.outputs) {
+          let mat = MATERIALIEN.find(function(m) { return m.id === out.material; });
+          if (mat && mat.verkaufpreis) einnahmen += out.menge * mat.verkaufpreis;
+        }
+      }
+    } else {
+      gestoppte++;
+    }
+  }
+
+  // Lagerwert
+  let lagerwert = 0;
+  for (let mat of MATERIALIEN) {
+    let menge = lager[mat.id] || 0;
+    let preis = (marktpreise && marktpreise[mat.id]) || mat.verkaufpreis || 0;
+    lagerwert += menge * preis;
+  }
+
+  let gewinn = einnahmen - kosten;
+
+  kpiBereich.innerHTML =
+    "<div class='dashboard-kpis'>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Guthaben</span>" +
+        "<span class='kpi-value accent'>" + geld.toLocaleString("de-DE") + " €</span>" +
+      "</div>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Gewinn / Runde</span>" +
+        "<span class='kpi-value " + (gewinn >= 0 ? "positive" : "negative") + "'>" +
+          (gewinn >= 0 ? "+" : "") + gewinn.toLocaleString("de-DE") + " €</span>" +
+      "</div>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Maschinen aktiv</span>" +
+        "<span class='kpi-value'>" + laufende + "<span style='font-size:12px;color:var(--text3)'>/" + (laufende+gestoppte) + "</span></span>" +
+      "</div>" +
+      "<div class='kpi-card'>" +
+        "<span class='kpi-label'>Lagerwert</span>" +
+        "<span class='kpi-value'>" + lagerwert.toLocaleString("de-DE") + " €</span>" +
+      "</div>" +
+    "</div>" +
+
+    // Maschinen-Status Schnellübersicht
+    (installierte_maschinen.length > 0 ?
+      "<div class='dashboard-maschinen-quick'>" +
+        "<div class='screen-titel' style='margin-top:14px'>Maschinen</div>" +
+        installierte_maschinen.map(function(m) {
+          let md  = MASCHINEN.find(function(md) { return md.id === m.id; });
+          let rez = REZEPTE.find(function(r) { return r.id === m.aktivesRezept; });
+          let name = md ? md.name : m.id;
+          let emo  = md ? md.emoji : "⚙️";
+          let prodText = rez ? rez.name : "Kein Rezept";
+          let statusFarbe = m.laeuft ? "var(--green)" : "var(--red)";
+          let statusText  = m.laeuft ? "Läuft" : "Gestoppt";
+          return "<div class='dash-maschine-row'>" +
+            "<span class='dmr-emoji'>" + emo + "</span>" +
+            "<div class='dmr-info'>" +
+              "<span class='dmr-name'>" + name + "</span>" +
+              "<span class='dmr-rezept'>" + prodText + "</span>" +
+            "</div>" +
+            "<span class='dmr-status' style='color:" + statusFarbe + "'>" + statusText + "</span>" +
+          "</div>";
+        }).join("") +
+      "</div>"
+    : "<div class='screen-hinweis'>Noch keine Maschinen. Kaufe deine erste Maschine im Shop.</div>");
 }

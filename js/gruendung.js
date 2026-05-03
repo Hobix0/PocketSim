@@ -263,6 +263,11 @@ function gruendungAbschliessen() {
 
   // Spiel initialisieren
   spielNachGruendungStarten();
+
+  // Tutorial starten (nach kurzer Verzögerung)
+  if (typeof tutorialNachGruendungStarten === "function") {
+    tutorialNachGruendungStarten();
+  }
 }
 
 function unternehmenFokusAnwenden(fokus) {

@@ -112,7 +112,7 @@ function zielauswahlGebaeudeHTML(maschineData) {
   }
 
   if (alleFabriken.length === 0) {
-    return "<p class='ziel-hinweis'>Keine Fabrik vorhanden! Kaufe eine Leichthalle oder Schwerhalle.</p>";
+    return "<p class='ziel-hinweis'>Keine Fabrik vorhanden! Kaufe zuerst eine Fabrikhalle im Shop.</p>";
   }
 
   let b    = new building();
@@ -128,8 +128,13 @@ function zielauswahlGebaeudeHTML(maschineData) {
     let gesperrt = !kompa.ok;
 
     // Hallentyp Farbe
-    let hallenFarbe = gData.hallenTyp === "schwer" ? "#6366f1" : "#f59e0b";
-    let hallenLabel = gData.hallenTyp === "schwer" ? "⚙️ Schwerhalle" : "🏗️ Leichthalle";
+    // Hallentyp-Farbe dynamisch aus Produktionslinien
+    let hallenFarbe = "#BA7517";
+    let hallenLabel = gData.emoji + " " + gData.name;
+    if (typeof PRODUKTIONSLINIEN !== "undefined") {
+      let linie = PRODUKTIONSLINIEN[gData.hallenTyp] || PRODUKTIONSLINIEN["metall"];
+      if (linie) { hallenFarbe = linie.farbe; }
+    }
 
     // Auslastung
     let daten   = hallenplanDaten(gData.id);

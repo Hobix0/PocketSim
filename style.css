@@ -5813,3 +5813,221 @@ body.login-aktiv {
   letter-spacing: 0 !important;
   margin-top: 6px;
 }
+
+/* ══════════════════════════════════════════════════════
+   TUTORIAL — Spotlight + Tooltip
+   ══════════════════════════════════════════════════════ */
+
+/* Overlay dimmt alles außer dem Highlight */
+#tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  background: rgba(0,0,0,0);
+  transition: background 0.3s;
+}
+
+body.tutorial-aktiv #tutorial-overlay {
+  background: rgba(0,0,0,0.55);
+}
+
+/* Highlight hebt Element hervor */
+.tutorial-highlight {
+  position: relative !important;
+  z-index: 9001 !important;
+  pointer-events: all !important;
+  box-shadow: 0 0 0 3px var(--amber), 0 0 0 6px rgba(245,158,11,0.25), 0 0 30px rgba(245,158,11,0.2) !important;
+  border-radius: var(--radius) !important;
+  animation: tutPuls 1.5s infinite !important;
+}
+
+@keyframes tutPuls {
+  0%, 100% { box-shadow: 0 0 0 3px var(--amber), 0 0 0 6px rgba(245,158,11,0.25); }
+  50%       { box-shadow: 0 0 0 3px var(--amber), 0 0 0 10px rgba(245,158,11,0.15); }
+}
+
+/* Tooltip */
+#tutorial-tooltip {
+  position: fixed;
+  z-index: 9500;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-lg);
+  animation: tutooltipEin 0.25s ease;
+}
+
+@keyframes tutooltipEin {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tut-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.tut-schritt-num {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.tut-skip {
+  width: auto !important;
+  padding: 3px 8px !important;
+  background: transparent !important;
+  color: var(--text3) !important;
+  border: none !important;
+  font-size: 10px !important;
+  cursor: pointer !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  min-height: auto !important;
+}
+
+.tut-skip:hover { color: var(--text2) !important; }
+
+.tut-dots {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.tut-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border2);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tut-dot.done   { background: var(--green); }
+.tut-dot.aktiv  { background: var(--amber); box-shadow: 0 0 5px var(--amber); width: 18px; border-radius: 3px; }
+
+.tut-titel {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.tut-text {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.tut-pfeil {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  animation: pfeilBounce 1s infinite;
+}
+
+@keyframes pfeilBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
+}
+
+.tut-footer { display: flex; gap: 8px; }
+
+.tut-btn-weiter {
+  width: 100% !important;
+  padding: 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius) !important;
+  background: var(--amber) !important;
+  color: #000 !important;
+  border: none !important;
+  cursor: pointer !important;
+  text-transform: none !important;
+  letter-spacing: 0.5px !important;
+  min-height: 40px !important;
+  transition: opacity 0.15s !important;
+}
+
+.tut-btn-weiter:hover { opacity: 0.88 !important; }
+
+.tut-auto-hint {
+  width: 100%;
+  padding: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile: Tooltip immer unten */
+@media (max-width: 767px) {
+  #tutorial-tooltip {
+    position: fixed !important;
+    bottom: calc(var(--nav-h) + 10px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    top: auto !important;
+    transform: none !important;
+  }
+}
+
+
+/* ══ DASHBOARD KPIs ══ */
+.dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 600px) { .dashboard-kpis { grid-template-columns: repeat(4, 1fr); } }
+
+/* Maschinen Schnellübersicht */
+.dashboard-maschinen-quick {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.dash-maschine-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.dash-maschine-row:last-child { border-bottom: none; }
+.dash-maschine-row:hover       { background: var(--surface2); }
+
+.dmr-emoji  { font-size: 18px; flex-shrink: 0; }
+.dmr-info   { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.dmr-name   { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); }
+.dmr-rezept { font-size: 11px; color: var(--text3); }
+.dmr-status { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0; }

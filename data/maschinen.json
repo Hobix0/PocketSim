@@ -9,8 +9,13 @@
     "kategorie": "produktion",
     "produktionslinie": "metall",
     "groesse": "klein",
-    "tileGroesse": 2,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 2,
+      "h": 2
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "eisen_schmelzen",
       "kupfer_schmelzen",
@@ -43,8 +48,13 @@
     "kategorie": "produktion",
     "produktionslinie": "baustoffe",
     "groesse": "klein",
-    "tileGroesse": 2,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 2,
+      "h": 2
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "glas_herstellen",
       "zement_herstellen"
@@ -76,8 +86,13 @@
     "kategorie": "produktion",
     "produktionslinie": "chemie",
     "groesse": "mittel",
-    "tileGroesse": 4,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 4,
+      "h": 4
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "plastik_herstellen",
       "gummi_herstellen"
@@ -109,8 +124,13 @@
     "kategorie": "produktion",
     "produktionslinie": "mechanik",
     "groesse": "mittel",
-    "tileGroesse": 3,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 3,
+      "h": 3
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "zahnrad_herstellen",
       "rohr_herstellen",
@@ -143,8 +163,13 @@
     "kategorie": "produktion",
     "produktionslinie": "elektronik",
     "groesse": "mittel",
-    "tileGroesse": 3,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 3,
+      "h": 3
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "kabel_herstellen",
       "schaltkreis_herstellen"
@@ -176,8 +201,13 @@
     "kategorie": "produktion",
     "produktionslinie": "mechanik",
     "groesse": "gross",
-    "tileGroesse": 4,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 4,
+      "h": 4
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "motor_herstellen"
     ],
@@ -208,8 +238,13 @@
     "kategorie": "produktion",
     "produktionslinie": "baustoffe",
     "groesse": "mittel",
-    "tileGroesse": 3,
-    "hallenTyp": "fabrik",
+    "tileGroesse": {
+      "w": 3,
+      "h": 3
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
     "rezepte": [
       "beton_herstellen"
     ],
@@ -240,8 +275,13 @@
     "kategorie": "infrastruktur",
     "produktionslinie": "energie",
     "groesse": "gross",
-    "tileGroesse": 6,
-    "hallenTyp": "kraftwerk",
+    "tileGroesse": {
+      "w": 6,
+      "h": 6
+    },
+    "hallenTyp": [
+      "kraftwerk"
+    ],
     "rezepte": [
       "strom_erzeugen"
     ],
@@ -272,8 +312,13 @@
     "kategorie": "infrastruktur",
     "produktionslinie": "forschung",
     "groesse": "gross",
-    "tileGroesse": 4,
-    "hallenTyp": "labor",
+    "tileGroesse": {
+      "w": 4,
+      "h": 4
+    },
+    "hallenTyp": [
+      "labor"
+    ],
     "rezepte": [],
     "aktivesRezept": null,
     "mitarbeiterProEinheit": 3,
@@ -302,8 +347,13 @@
     "kategorie": "infrastruktur",
     "produktionslinie": "logistik",
     "groesse": "gross",
-    "tileGroesse": 6,
-    "hallenTyp": "lager",
+    "tileGroesse": {
+      "w": 6,
+      "h": 6
+    },
+    "hallenTyp": [
+      "lager"
+    ],
     "rezepte": [],
     "aktivesRezept": null,
     "mitarbeiterProEinheit": 1,
