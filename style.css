@@ -677,6 +677,24 @@ button:hover {
    MODALS
    ══════════════════════════════════ */
 #modal-einstellungen,
+#modal-einstellungen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 10px;
+}
+
+#modal-einstellungen[style*="flex"] { display: flex !important; }
+
+@media (min-width: 768px) {
+  #modal-einstellungen { align-items: center; }
+}
+
 #modal-verwalten {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -3740,6 +3758,40 @@ select {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ══ MODAL ZIELAUSWAHL — Overlay Fix ══ */
+#modal-zielauswahl {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0,0,0,0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 300 !important;
+  display: none;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 10px !important;
+}
+
+#modal-zielauswahl[style*="flex"] {
+  display: flex !important;
+}
+
+#modal-zielauswahl-inhalt {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 12px 12px !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  padding: 20px !important;
+}
+
+@media (min-width: 768px) {
+  #modal-zielauswahl { align-items: center !important; }
+  #modal-zielauswahl-inhalt { border-radius: var(--radius-lg) !important; }
+}
+
 /* Modals: max Höhe mit Scroll */
 #modal-inhalt,
 #modal-verwalten-inhalt,
@@ -5412,4 +5464,3 @@ body.login-aktiv {
 }
 
 .lpk-btn-sell:hover { background: #059669 !important; }
-
