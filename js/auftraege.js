@@ -256,5 +256,3 @@ function auftraegeScreenAktualisieren() {
     });
   });
 }
-
-}
