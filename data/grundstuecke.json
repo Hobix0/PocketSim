@@ -63,5 +63,49 @@
     },
     "epoche": 1,
     "freischalten_durch": "epoche_2"
+  },
+  {
+    "id": "aethon_industriepark",
+    "name": "Industriepark Aethon-Ost",
+    "emoji": "🏭",
+    "bild": null,
+    "beschreibung": "Großes Industriegelände mit Bahnanschluss und Zugang zum Hafen.",
+    "standort": "Aethon-Ost",
+    "planet": "aethon",
+    "kosten": 80000,
+    "groesse": {
+      "l": 120,
+      "b": 100
+    },
+    "maxGebaeude": 15,
+    "kostenProRunde": 30,
+    "bedingung": null,
+    "kategorie": "grundstueck",
+    "ressourcenBonus": {},
+    "epoche": 2,
+    "freischalten_durch": "epoche_2_start"
+  },
+  {
+    "id": "aethon_forschungspark",
+    "name": "Forschungspark Alpha",
+    "emoji": "🔬",
+    "bild": null,
+    "beschreibung": "Technologiecluster mit Uni-Kooperation. Forschung 25% schneller.",
+    "standort": "Aethon-Mitte",
+    "planet": "aethon",
+    "kosten": 120000,
+    "groesse": {
+      "l": 80,
+      "b": 60
+    },
+    "maxGebaeude": 10,
+    "kostenProRunde": 40,
+    "bedingung": null,
+    "kategorie": "grundstueck",
+    "ressourcenBonus": {
+      "forschung_bonus": 0.25
+    },
+    "epoche": 2,
+    "freischalten_durch": "epoche_2_start"
   }
 ]

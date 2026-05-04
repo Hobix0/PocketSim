@@ -3,18 +3,19 @@
     "id": "grundlagen",
     "name": "Grundlagenforschung",
     "emoji": "🔬",
-    "beschreibung": "Basis aller weiteren Forschung.",
+    "beschreibung": "Basis aller weiteren Forschung. Schaltet alle Produktionslinien frei.",
     "kosten": 5000,
     "dauer": 10,
-    "kategorie": "basis",
+    "kategorie": "produktion",
     "effekte": [],
-    "bedingung": null
+    "bedingung": null,
+    "epoche": 1
   },
   {
     "id": "metallurgie",
     "name": "Metallurgie",
     "emoji": "⚙️",
-    "beschreibung": "Verbesserte Schmelzverfahren. +10% Eisenplatte Ausgabe.",
+    "beschreibung": "+10% Eisenplatten-Ausgabe aus Schmelzofen.",
     "kosten": 8000,
     "dauer": 15,
     "kategorie": "produktion",
@@ -25,13 +26,50 @@
         "wert": 0.1
       }
     ],
-    "bedingung": "grundlagen"
+    "bedingung": "grundlagen",
+    "epoche": 1
+  },
+  {
+    "id": "stahlverarbeitung",
+    "name": "Stahlverarbeitung",
+    "emoji": "🔩",
+    "beschreibung": "+15% Stahl-Ausgabe, −10% Kohle-Verbrauch.",
+    "kosten": 12000,
+    "dauer": 20,
+    "kategorie": "produktion",
+    "effekte": [
+      {
+        "typ": "produktionsBonus",
+        "material": "stahl",
+        "wert": 0.15
+      }
+    ],
+    "bedingung": "metallurgie",
+    "epoche": 1
+  },
+  {
+    "id": "praezisionsguss",
+    "name": "Präzisionsguss",
+    "emoji": "🔧",
+    "beschreibung": "+20% Zahnrad- und Rohr-Ausgabe aus Formerei.",
+    "kosten": 15000,
+    "dauer": 25,
+    "kategorie": "produktion",
+    "effekte": [
+      {
+        "typ": "produktionsBonus",
+        "material": "zahnrad",
+        "wert": 0.2
+      }
+    ],
+    "bedingung": "stahlverarbeitung",
+    "epoche": 1
   },
   {
     "id": "chemietechnik",
     "name": "Chemietechnik",
     "emoji": "🛢️",
-    "beschreibung": "Verbesserte Raffinierverfahren. +15% Plastik-Ausbeute.",
+    "beschreibung": "+15% Plastik-Ausbeute aus Ölraffinerie.",
     "kosten": 10000,
     "dauer": 18,
     "kategorie": "produktion",
@@ -42,29 +80,32 @@
         "wert": 0.15
       }
     ],
-    "bedingung": "grundlagen"
+    "bedingung": "grundlagen",
+    "epoche": 1
   },
   {
-    "id": "logistik_1",
-    "name": "Logistik-Grundlagen",
-    "emoji": "📦",
-    "beschreibung": "Optimierte Lagerhaltung. +200 Lagerkapazität.",
-    "kosten": 6000,
-    "dauer": 12,
-    "kategorie": "logistik",
+    "id": "polymerforschung",
+    "name": "Polymerforschung",
+    "emoji": "🟡",
+    "beschreibung": "+20% Gummi-Ausgabe, neue Kunststoff-Legierungen.",
+    "kosten": 14000,
+    "dauer": 22,
+    "kategorie": "produktion",
     "effekte": [
       {
-        "typ": "lagerBonus",
-        "wert": 200
+        "typ": "produktionsBonus",
+        "material": "gummi",
+        "wert": 0.2
       }
     ],
-    "bedingung": "grundlagen"
+    "bedingung": "chemietechnik",
+    "epoche": 1
   },
   {
     "id": "elektronik_1",
-    "name": "Elektronik-Grundlagen",
+    "name": "Grundelektronik",
     "emoji": "💾",
-    "beschreibung": "Grundlagen der Schaltkreistechnik. Schaltkreise 20% günstiger.",
+    "beschreibung": "Schaltkreise 20% günstiger herzustellen.",
     "kosten": 12000,
     "dauer": 20,
     "kategorie": "elektronik",
@@ -75,6 +116,144 @@
         "wert": 0.2
       }
     ],
-    "bedingung": "metallurgie"
+    "bedingung": "metallurgie",
+    "epoche": 1
+  },
+  {
+    "id": "elektronik_2",
+    "name": "Miniaturisierung",
+    "emoji": "🔌",
+    "beschreibung": "Kabelwerk +25% schneller, Schaltkreis-Dauer −2 Runden.",
+    "kosten": 18000,
+    "dauer": 28,
+    "kategorie": "elektronik",
+    "effekte": [
+      {
+        "typ": "maschinenBonus",
+        "maschine": "kabelwerk",
+        "wert": 0.25
+      }
+    ],
+    "bedingung": "elektronik_1",
+    "epoche": 1
+  },
+  {
+    "id": "logistik_1",
+    "name": "Lageroptimierung",
+    "emoji": "📦",
+    "beschreibung": "+200 Lagerkapazität für alle Materialien.",
+    "kosten": 6000,
+    "dauer": 12,
+    "kategorie": "logistik",
+    "effekte": [
+      {
+        "typ": "lagerBonus",
+        "wert": 200
+      }
+    ],
+    "bedingung": "grundlagen",
+    "epoche": 1
+  },
+  {
+    "id": "logistik_2",
+    "name": "Routenplanung",
+    "emoji": "🗺️",
+    "beschreibung": "LKW-Lieferzeit −1 Runde. Routen effizienter.",
+    "kosten": 10000,
+    "dauer": 18,
+    "kategorie": "logistik",
+    "effekte": [
+      {
+        "typ": "lkwBonus",
+        "wert": 1
+      }
+    ],
+    "bedingung": "logistik_1",
+    "epoche": 1
+  },
+  {
+    "id": "schwertransport",
+    "name": "Schwertransport",
+    "emoji": "🚛",
+    "beschreibung": "LKW Mk2 verfügbar. Kapazität aller LKWs +25%.",
+    "kosten": 20000,
+    "dauer": 30,
+    "kategorie": "logistik",
+    "effekte": [
+      {
+        "typ": "lkwKapazitaet",
+        "wert": 0.25
+      }
+    ],
+    "bedingung": "logistik_2",
+    "epoche": 1
+  },
+  {
+    "id": "energieeffizienz",
+    "name": "Energieeffizienz",
+    "emoji": "⚡",
+    "beschreibung": "Alle Maschinen verbrauchen 15% weniger Energie.",
+    "kosten": 9000,
+    "dauer": 16,
+    "kategorie": "wirtschaft",
+    "effekte": [
+      {
+        "typ": "energieBonus",
+        "wert": 0.15
+      }
+    ],
+    "bedingung": "grundlagen",
+    "epoche": 1
+  },
+  {
+    "id": "kraftwerksbau",
+    "name": "Kraftwerkstechnik",
+    "emoji": "🏭",
+    "beschreibung": "Kohlekraftwerk erzeugt 50% mehr Strom.",
+    "kosten": 14000,
+    "dauer": 24,
+    "kategorie": "wirtschaft",
+    "effekte": [
+      {
+        "typ": "energieProduktion",
+        "wert": 0.5
+      }
+    ],
+    "bedingung": "energieeffizienz",
+    "epoche": 1
+  },
+  {
+    "id": "marktanalyse",
+    "name": "Marktanalyse",
+    "emoji": "📊",
+    "beschreibung": "Preisschwankungen ±10% statt ±15%. Stabilerer Markt.",
+    "kosten": 8000,
+    "dauer": 14,
+    "kategorie": "wirtschaft",
+    "effekte": [
+      {
+        "typ": "marktStabilitaet",
+        "wert": 0.1
+      }
+    ],
+    "bedingung": "grundlagen",
+    "epoche": 1
+  },
+  {
+    "id": "exportnetzwerk",
+    "name": "Exportnetzwerk",
+    "emoji": "🌍",
+    "beschreibung": "Auftrags-Bonuszahlungen +10% höher.",
+    "kosten": 18000,
+    "dauer": 25,
+    "kategorie": "wirtschaft",
+    "effekte": [
+      {
+        "typ": "auftragBonus",
+        "wert": 0.1
+      }
+    ],
+    "bedingung": "marktanalyse",
+    "epoche": 1
   }
 ]

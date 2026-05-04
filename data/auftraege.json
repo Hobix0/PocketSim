@@ -178,5 +178,77 @@
     "basisBonus": 5500,
     "deadline": 7,
     "bedingung": null
+  },
+  {
+    "id": "auf_elektronik_1",
+    "name": "Industrieautomation GmbH",
+    "emoji": "💾",
+    "typ": "normal",
+    "beschreibung": "Automationsfirma benötigt Elektronikmodule für neue Produktionsstraßen.",
+    "material": "elektronikmodul",
+    "menge": 8,
+    "basisBonus": 22000,
+    "deadline": 18,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_elektronik_gross",
+    "name": "Siemens-Auftrag",
+    "emoji": "⭐",
+    "typ": "gross",
+    "beschreibung": "Großauftrag: Steuerungssysteme für europäische Kraftwerke.",
+    "material": "elektronikmodul",
+    "menge": 25,
+    "basisBonus": 68000,
+    "deadline": 25,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_titan_1",
+    "name": "Luft- und Raumfahrt AG",
+    "emoji": "✈️",
+    "typ": "normal",
+    "beschreibung": "Leichtbauteile für neue Turbinen aus Titanlegierung.",
+    "material": "titanlegierung",
+    "menge": 15,
+    "basisBonus": 35000,
+    "deadline": 20,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_motor_gross",
+    "name": "Energieversorger",
+    "emoji": "⚡",
+    "typ": "gross",
+    "beschreibung": "Zwei Hochleistungsmotoren für ein neues Pumpspeicherkraftwerk.",
+    "material": "hochleistungsmotor",
+    "menge": 2,
+    "basisBonus": 45000,
+    "deadline": 30,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_reaktorkern_1",
+    "name": "Kernkraftwerk Bau AG",
+    "emoji": "☢️",
+    "typ": "dringend",
+    "beschreibung": "⚡ Dringend! Reaktorkern für Jahresrevision eines Kernkraftwerks.",
+    "material": "reaktorkern",
+    "menge": 1,
+    "basisBonus": 12000,
+    "deadline": 8,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_computer_1",
+    "name": "Raumfahrtbehörde",
+    "emoji": "🚀",
+    "typ": "gross",
+    "beschreibung": "Steuerungscomputer für neue Satellitensteuerung.",
+    "material": "steuerungscomputer",
+    "menge": 3,
+    "basisBonus": 48000,
+    "deadline": 25,
+    "bedingung": "epoche_2"
   }
 ]

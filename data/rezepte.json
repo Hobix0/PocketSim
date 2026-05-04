@@ -428,5 +428,248 @@
       }
     ],
     "outputs": []
+  },
+  {
+    "id": "elektronikmodul_herstellen",
+    "name": "Elektronikmodul bauen",
+    "emoji": "🖥️",
+    "beschreibung": "Schaltkreise + Kabel + Stahl zu Elektronikmodulen assemblieren.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "elektronik",
+    "maschine": "elektronikfabrik",
+    "dauer": 8,
+    "energie": 200,
+    "xp": 25,
+    "inputs": [
+      {
+        "material": "schaltkreis",
+        "menge": 3
+      },
+      {
+        "material": "kupferkabel",
+        "menge": 8
+      },
+      {
+        "material": "stahl",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "elektronikmodul",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "steuerungscomputer_herstellen",
+    "name": "Steuerungscomputer",
+    "emoji": "🖥️",
+    "beschreibung": "Hochkomplexer Industriecomputer für vollautomatische Systeme.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "elektronik",
+    "maschine": "elektronikfabrik",
+    "dauer": 15,
+    "energie": 180,
+    "xp": 80,
+    "inputs": [
+      {
+        "material": "elektronikmodul",
+        "menge": 5
+      },
+      {
+        "material": "schaltkreis",
+        "menge": 10
+      },
+      {
+        "material": "plastik",
+        "menge": 4
+      }
+    ],
+    "outputs": [
+      {
+        "material": "steuerungscomputer",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "titan_herstellen",
+    "name": "Titanlegierung schmieden",
+    "emoji": "🔷",
+    "beschreibung": "Stahl und Seltene Erden zu Hochleistungs-Titanlegierung verschmelzen.",
+    "manuell": false,
+    "kategorie": "grundmaterial",
+    "produktionslinie": "metall",
+    "maschine": "titanschmiede",
+    "dauer": 10,
+    "energie": 300,
+    "xp": 20,
+    "inputs": [
+      {
+        "material": "stahl",
+        "menge": 4
+      },
+      {
+        "material": "kupferplatte",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "titanlegierung",
+        "menge": 3
+      }
+    ]
+  },
+  {
+    "id": "carbon_herstellen",
+    "name": "Carbonfaser herstellen",
+    "emoji": "🖤",
+    "beschreibung": "Plastik und Gummi zu Hochleistungs-Carbonfaser synthetisieren.",
+    "manuell": false,
+    "kategorie": "grundmaterial",
+    "produktionslinie": "chemie",
+    "maschine": "carbonfaserwerk",
+    "dauer": 8,
+    "energie": 250,
+    "xp": 20,
+    "inputs": [
+      {
+        "material": "plastik",
+        "menge": 5
+      },
+      {
+        "material": "gummi",
+        "menge": 3
+      }
+    ],
+    "outputs": [
+      {
+        "material": "carbonfaser",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "antrieb_herstellen",
+    "name": "Antriebseinheit bauen",
+    "emoji": "⚙️",
+    "beschreibung": "Zahnräder, Motoren und Titanlegierung zur Antriebseinheit assemblieren.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "mechanik",
+    "maschine": "montagewerk_2",
+    "dauer": 12,
+    "energie": 180,
+    "xp": 25,
+    "inputs": [
+      {
+        "material": "zahnrad",
+        "menge": 6
+      },
+      {
+        "material": "motor_klein",
+        "menge": 2
+      },
+      {
+        "material": "titanlegierung",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "antriebseinheit",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "motor_gross_herstellen",
+    "name": "Hochleistungsmotor bauen",
+    "emoji": "🔋",
+    "beschreibung": "Massiver 5MW-Motor aus Titan, Carbon und Elektronik.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "mechanik",
+    "maschine": "montagewerk_2",
+    "dauer": 20,
+    "energie": 180,
+    "xp": 80,
+    "inputs": [
+      {
+        "material": "antriebseinheit",
+        "menge": 4
+      },
+      {
+        "material": "elektronikmodul",
+        "menge": 3
+      },
+      {
+        "material": "carbonfaser",
+        "menge": 5
+      }
+    ],
+    "outputs": [
+      {
+        "material": "hochleistungsmotor",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "kernstrom_erzeugen",
+    "name": "Kernstrom erzeugen",
+    "emoji": "⚛️",
+    "beschreibung": "Angereichertes Uran verbrennen und massive Energiemengen erzeugen.",
+    "manuell": false,
+    "kategorie": "energie",
+    "produktionslinie": "energie",
+    "maschine": "kernkraftwerk",
+    "dauer": 1,
+    "energie": -2000,
+    "xp": 5,
+    "inputs": [
+      {
+        "material": "radioaktives_material",
+        "menge": 1
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "id": "reaktorkern_herstellen",
+    "name": "Reaktorkern fertigen",
+    "emoji": "☢️",
+    "beschreibung": "Hochpräziser Reaktorkern aus Titan und Stahl.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "energie",
+    "maschine": "kernkraftwerk",
+    "dauer": 25,
+    "energie": 500,
+    "xp": 50,
+    "inputs": [
+      {
+        "material": "titanlegierung",
+        "menge": 8
+      },
+      {
+        "material": "stahl",
+        "menge": 12
+      },
+      {
+        "material": "radioaktives_material",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "reaktorkern",
+        "menge": 1
+      }
+    ]
   }
 ]

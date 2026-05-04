@@ -3,6 +3,50 @@
 // Ersetzt stadtrat.js komplett
 // ══════════════════════════════════
 
+// ── Meilensteine Epoche 2 (Atomzeitalter) ──
+const EPOCHE2_MEILENSTEINE = [
+  {
+    id: "e2_m1",
+    titel: "Elektronik-Pionier",
+    beschreibung: "Die nächste Stufe der Industrie beginnt mit Elektronik. Baue deine erste Elektronikfabrik und produziere die neuen Bauteile.",
+    ziele: [
+      { material: "elektronikmodul", menge: 10, text: "10 Elektronikmodule bauen" },
+      { material: "titanlegierung",  menge: 8,  text: "8 Titanlegierungen fertigen" }
+    ],
+    belohnung_geld: 80000,
+    belohnung_text: "Willkommen im Atomzeitalter. Dein Unternehmen ist jetzt ein echter Hightech-Konzern.",
+    freischaltet_tier: 5,
+    epoche: 2
+  },
+  {
+    id: "e2_m2",
+    titel: "Kernkraft-Projekt",
+    beschreibung: "Energie ist das Fundament jeder Großindustrie. Bau ein Kernkraftwerk und erzeuge saubere Energie für dein Imperium.",
+    ziele: [
+      { material: "reaktorkern",      menge: 1,  text: "1 Reaktorkern fertigen" },
+      { material: "steuerungscomputer",menge: 2, text: "2 Steuerungscomputer bauen" }
+    ],
+    belohnung_geld: 150000,
+    belohnung_text: "Kernkraft läuft! Dein Energiebedarf ist für Jahrzehnte gedeckt.",
+    freischaltet_tier: null,
+    epoche: 2
+  },
+  {
+    id: "e2_m3",
+    titel: "Hochleistungs-Export",
+    beschreibung: "Der internationale Markt wartet auf deine Technologie. Liefere Hochleistungsmotoren an internationale Kunden.",
+    ziele: [
+      { material: "hochleistungsmotor", menge: 3, text: "3 Hochleistungsmotoren bauen" },
+      { material: "antriebseinheit",    menge: 10, text: "10 Antriebseinheiten fertigen" }
+    ],
+    belohnung_geld: 250000,
+    belohnung_text: "Du bist jetzt ein internationaler Technologielieferant. Epoche 3 (Raumzeitalter) wartet!",
+    freischaltet_tier: null,
+    freischaltet_epoche: 3,
+    epoche: 2
+  }
+];
+
 let EPOCHEN_DATEN = [];
 let aktuelleEpoche = 1;
 let epocheMeilensteine = [];   // abgeschlossene Meilenstein-IDs
@@ -93,7 +137,8 @@ function stadtratFortschrittPruefen() {
 }
 
 function epocheFortschrittPruefen() {
-  let meilensteine = EPOCHE1_MEILENSTEINE; // später epochenabhängig
+  let meilensteine = aktuelleEpoche === 1 ? EPOCHE1_MEILENSTEINE :
+                     aktuelleEpoche === 2 ? EPOCHE2_MEILENSTEINE : [];
   let aktueller = meilensteine.find(function(m) {
     return !epocheMeilensteine.includes(m.id);
   });
@@ -110,7 +155,8 @@ function stadtratManuellLiefern() {
 }
 
 function epocheManuellLiefern() {
-  let meilensteine = EPOCHE1_MEILENSTEINE;
+  let meilensteine = aktuelleEpoche === 1 ? EPOCHE1_MEILENSTEINE :
+                     aktuelleEpoche === 2 ? EPOCHE2_MEILENSTEINE : [];
   let aktueller = meilensteine.find(function(m) {
     return !epocheMeilensteine.includes(m.id);
   });
@@ -167,7 +213,8 @@ function epocheHeaderChipAktualisieren() {
   let chipProz = document.getElementById("sr-chip-prozent");
   if (!chip) return;
 
-  let meilensteine = EPOCHE1_MEILENSTEINE;
+  let meilensteine = aktuelleEpoche === 1 ? EPOCHE1_MEILENSTEINE :
+                     aktuelleEpoche === 2 ? EPOCHE2_MEILENSTEINE : [];
   let aktueller = meilensteine.find(function(m) {
     return !epocheMeilensteine.includes(m.id);
   });
@@ -212,7 +259,8 @@ function epocheBannerAktualisieren() {
   let banner = document.getElementById("stadtrat-banner");
   if (!banner) return;
 
-  let meilensteine = EPOCHE1_MEILENSTEINE;
+  let meilensteine = aktuelleEpoche === 1 ? EPOCHE1_MEILENSTEINE :
+                     aktuelleEpoche === 2 ? EPOCHE2_MEILENSTEINE : [];
   let aktueller = meilensteine.find(function(m) {
     return !epocheMeilensteine.includes(m.id);
   });
@@ -336,4 +384,41 @@ function epocheAusStand(stand) {
   aktuelleEpoche         = stand.aktuelleEpoche       || 1;
   epocheMeilensteine     = stand.epocheMeilensteine   || [];
   freigeschaltete_tiers  = stand.freigeschaltete_tiers|| [1,2];
+}
+
+
+// ── Großes Epochen-Übergangs-Modal ──
+function zeigeEpocheUebergang(neueEpoche) {
+  let epocheNamen = {
+    2: "Atomzeitalter",
+    3: "Raumzeitalter",
+    4: "Kolonialzeitalter",
+    5: "Galaktisches Zeitalter"
+  };
+  let epocheEmojis = { 2: "⚛️", 3: "🚀", 4: "🌍", 5: "🌌" };
+  let epocheTexte = {
+    2: "Kernkraft, Elektronik, Massenproduktion. Die Welt wird kleiner — dein Unternehmen größer.",
+    3: "Die Grenzen der Erde sind nicht mehr deine Grenzen. Der erste Raumhafen wartet.",
+    4: "Ein Planet reicht dir nicht. Kolonien auf fremden Welten erweitern dein Imperium.",
+    5: "Das Sonnensystem ist deins. Die Galaxis — der nächste Schritt."
+  };
+
+  let modal = document.getElementById("modal-stadtrat");
+  if (!modal) { modal = document.createElement("div"); modal.id = "modal-stadtrat"; document.body.appendChild(modal); }
+
+  modal.innerHTML =
+    "<div class='sr-fanfare-overlay'>" +
+      "<div class='sr-fanfare-box' style='border-top-color:var(--cyan)'>" +
+        "<div style='font-size:60px;text-align:center;margin-bottom:10px'>" + (epocheEmojis[neueEpoche] || "⭐") + "</div>" +
+        "<div style='font-family:var(--font-head);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);text-align:center'>Neue Epoche freigeschaltet</div>" +
+        "<h2 class='sr-fanfare-titel' style='color:var(--cyan)'>Epoche " + neueEpoche + " — " + (epocheNamen[neueEpoche] || "Neue Ära") + "</h2>" +
+        "<p class='sr-fanfare-text'>" + (epocheTexte[neueEpoche] || "") + "</p>" +
+        "<div class='sr-fanfare-reward' style='background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3)'>" +
+          "<span class='sr-fanfare-reward-zahl' style='color:var(--cyan)'>Tier " + (neueEpoche*2) + " + " + (neueEpoche*2+1) + " freigeschaltet</span>" +
+          "<span class='sr-fanfare-reward-label'>Neue Materialien & Maschinen verfügbar</span>" +
+        "</div>" +
+        "<button class='sr-fanfare-weiter' onclick='document.getElementById("modal-stadtrat").style.display="none"'>Weiter erforschen →</button>" +
+      "</div>" +
+    "</div>";
+  modal.style.display = "flex";
 }

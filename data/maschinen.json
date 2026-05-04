@@ -371,5 +371,188 @@
     "tier_min": 1,
     "raumTyp": "lager",
     "raumGroesse": 6
+  },
+  {
+    "id": "elektronikfabrik",
+    "name": "Elektronikfabrik",
+    "emoji": "💾",
+    "beschreibung": "Produziert Elektronikmodule und Steuerungscomputer.",
+    "kosten": 35000,
+    "kategorie": "produktion",
+    "produktionslinie": "elektronik",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 4,
+      "h": 4
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "elektronikmodul_herstellen",
+      "steuerungscomputer_herstellen"
+    ],
+    "aktivesRezept": "elektronikmodul_herstellen",
+    "mitarbeiterProEinheit": 3,
+    "kostenProRunde": 15,
+    "energieVerbrauch": 200,
+    "wartungskosten": 500,
+    "basisGeschwindigkeit": 0.8,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 4,
+    "queueSlots": 2,
+    "freischaltung": "epoche_2",
+    "farbe": "#534AB7",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 4
+  },
+  {
+    "id": "titanschmiede",
+    "name": "Titanschmiede",
+    "emoji": "🔷",
+    "beschreibung": "Schmilzt und verarbeitet Titan zu Hochleistungslegierungen.",
+    "kosten": 45000,
+    "kategorie": "produktion",
+    "produktionslinie": "metall",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 5,
+      "h": 5
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "titan_herstellen"
+    ],
+    "aktivesRezept": "titan_herstellen",
+    "mitarbeiterProEinheit": 3,
+    "kostenProRunde": 20,
+    "energieVerbrauch": 300,
+    "wartungskosten": 700,
+    "basisGeschwindigkeit": 0.6,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 3,
+    "queueSlots": 1,
+    "freischaltung": "epoche_2",
+    "farbe": "#185FA5",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 5
+  },
+  {
+    "id": "carbonfaserwerk",
+    "name": "Carbonfaseranlage",
+    "emoji": "🖤",
+    "beschreibung": "Synthetisiert Carbonfasern aus Plastik und chemischen Prozessen.",
+    "kosten": 40000,
+    "kategorie": "produktion",
+    "produktionslinie": "chemie",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 4,
+      "h": 4
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "carbon_herstellen"
+    ],
+    "aktivesRezept": "carbon_herstellen",
+    "mitarbeiterProEinheit": 2,
+    "kostenProRunde": 18,
+    "energieVerbrauch": 250,
+    "wartungskosten": 600,
+    "basisGeschwindigkeit": 0.7,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 3,
+    "queueSlots": 1,
+    "freischaltung": "epoche_2",
+    "farbe": "#2C2C2A",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 4
+  },
+  {
+    "id": "montagewerk_2",
+    "name": "Montagewerk Mk2",
+    "emoji": "🔧",
+    "beschreibung": "Assembliert Hochleistungsmotoren und Antriebseinheiten.",
+    "kosten": 55000,
+    "kategorie": "produktion",
+    "produktionslinie": "mechanik",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 5,
+      "h": 4
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "antrieb_herstellen",
+      "motor_gross_herstellen"
+    ],
+    "aktivesRezept": "antrieb_herstellen",
+    "mitarbeiterProEinheit": 4,
+    "kostenProRunde": 25,
+    "energieVerbrauch": 180,
+    "wartungskosten": 800,
+    "basisGeschwindigkeit": 0.5,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 4,
+    "queueSlots": 2,
+    "freischaltung": "epoche_2",
+    "farbe": "#BA7517",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 5
+  },
+  {
+    "id": "kernkraftwerk",
+    "name": "Kernkraftwerk",
+    "emoji": "⚛️",
+    "beschreibung": "Erzeugt massive Mengen Strom aus angereichertem Uran.",
+    "kosten": 120000,
+    "kategorie": "infrastruktur",
+    "produktionslinie": "energie",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 8,
+      "h": 8
+    },
+    "hallenTyp": [
+      "kraftwerk"
+    ],
+    "rezepte": [
+      "kernstrom_erzeugen",
+      "reaktorkern_herstellen"
+    ],
+    "aktivesRezept": "kernstrom_erzeugen",
+    "mitarbeiterProEinheit": 5,
+    "kostenProRunde": 0,
+    "energieVerbrauch": -2000,
+    "wartungskosten": 2000,
+    "basisGeschwindigkeit": 1.0,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 2,
+    "queueSlots": 1,
+    "freischaltung": "epoche_2",
+    "farbe": "#5F5E5A",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "infrastruktur",
+    "raumGroesse": 8
   }
 ]

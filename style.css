@@ -6499,3 +6499,124 @@ body.tutorial-aktiv #tutorial-overlay {
   letter-spacing: 0 !important;
   flex-shrink: 0;
 }
+
+/* ══════════════════════════════════════════════════════
+   FORSCHUNGSBAUM — Labor
+   ══════════════════════════════════════════════════════ */
+
+#screen-labor { padding: 0; }
+
+/* Tabs */
+.tech-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 14px 0;
+  overflow-x: auto;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+
+.tech-tab {
+  font-family: var(--font-head) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  padding: 7px 14px !important;
+  border-radius: 6px 6px 0 0 !important;
+  background: transparent !important;
+  color: var(--text3) !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  cursor: pointer !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s !important;
+  width: auto !important;
+  min-height: 34px !important;
+}
+
+.tech-tab:hover { color: var(--text) !important; }
+.tech-tab.aktiv, .tech-tab.active {
+  color: var(--amber) !important;
+  border-bottom-color: var(--amber) !important;
+  background: var(--amber-dim) !important;
+}
+
+/* SVG Tree Container */
+#labor-bereich {
+  height: calc(100vh - 120px);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Tech Node (SVG) */
+.tech-node { cursor: pointer; }
+.tech-node:hover rect { filter: brightness(1.2); }
+
+/* Tooltip */
+.tech-tooltip {
+  position: fixed;
+  z-index: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  max-width: 260px;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+}
+
+.tech-tooltip-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.tech-tooltip-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.tech-tooltip-cost {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--amber);
+}
+
+.tech-tooltip-status {
+  font-size: 11px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.tech-tooltip-status.erforscht { background: var(--green-dim); color: var(--green); }
+.tech-tooltip-status.verfuegbar { background: var(--amber-dim); color: var(--amber); }
+.tech-tooltip-status.gesperrt { background: var(--surface2); color: var(--text3); }
+
+/* Active research banner */
+.forschung-aktiv-banner {
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fab-icon { font-size: 20px; }
+.fab-info { flex: 1; }
+.fab-name { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--amber); }
+.fab-progress { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.fab-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width 0.5s; }
+.fab-runden { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }

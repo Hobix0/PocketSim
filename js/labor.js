@@ -29,10 +29,13 @@ function getCategoryLabel(category) {
   const labels = {
     'produktion': '⚙️ Produktion',
     'logistik': '🚚 Logistik',
+    'elektronik': '💾 Elektronik',
+    'wirtschaft': '💰 Wirtschaft',
     'automation': '🤖 Automation',
     'maschinen': '🛠 Maschinen',
     'gebaeude': '🏭 Gebäude',
-    'wirtschaft': '💰 Wirtschaft'
+    'energie': '⚡ Energie',
+    'basis': '🔬 Grundlagen'
   };
   return labels[category] || category.charAt(0).toUpperCase() + category.slice(1);
 }
@@ -51,12 +54,15 @@ function getCategoryEmoji(category) {
 
 function getCategoryColor(category) {
   const colors = {
-    'produktion': '#2196F3',
-    'logistik': '#795548',
+    'produktion': '#185FA5',
+    'logistik': '#BA7517',
+    'elektronik': '#534AB7',
+    'wirtschaft': '#0F6E56',
     'automation': '#9C27B0',
     'maschinen': '#F59E0B',
     'gebaeude': '#10B981',
-    'wirtschaft': '#FF9800'
+    'energie': '#5F5E5A',
+    'basis': '#EF9F27'
   };
   return colors[category] || '#666';
 }

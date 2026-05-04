@@ -35,6 +35,9 @@ function screenZeigen(screenName) {
   if (screenName === "lkw" && typeof lkwScreenAktualisieren === "function") {
     lkwScreenAktualisieren();
   }
+  if (screenName === "labor" && typeof laborAnzeigenAktualisieren === "function") {
+    laborAnzeigenAktualisieren();
+  }
   if (screenName === "uebersicht" && typeof uebersichtKPIsAktualisieren === "function") {
     uebersichtKPIsAktualisieren();
   }

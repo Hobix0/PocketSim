@@ -231,5 +231,136 @@
       }
     ],
     "epoche": 1
+  },
+  {
+    "id": "megafabrik",
+    "name": "Megafabrik",
+    "emoji": "🏗️",
+    "bild": null,
+    "beschreibung": "Riesen-Industrieanlage für bis zu 20 Maschinen. Mehrere Produktionslinien.",
+    "kosten": 120000,
+    "typ": "fabrik",
+    "hallenTyp": "fabrik",
+    "groesse": "riesig",
+    "kostenProRunde": 150,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 32,
+    "tileHoehe": 24,
+    "maxMaschinen": 20,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Hauptproduktion A",
+        "groesse": 20,
+        "typ": "produktion",
+        "slots": 8
+      },
+      {
+        "id": "r2",
+        "name": "Hauptproduktion B",
+        "groesse": 12,
+        "typ": "produktion",
+        "slots": 6
+      },
+      {
+        "id": "r3",
+        "name": "Lager",
+        "groesse": 8,
+        "typ": "lager",
+        "slots": 1
+      },
+      {
+        "id": "r4",
+        "name": "Kontrollraum",
+        "groesse": 4,
+        "typ": "buero",
+        "slots": 0
+      }
+    ],
+    "epoche": 2
+  },
+  {
+    "id": "kernkraftwerk_geb",
+    "name": "Kernkraftwerk-Gebäude",
+    "emoji": "⚛️",
+    "bild": null,
+    "beschreibung": "Speziell abgeschirmtes Gebäude für Kernkrafttechnik.",
+    "kosten": 200000,
+    "typ": "kraftwerk",
+    "hallenTyp": "kraftwerk",
+    "groesse": "riesig",
+    "kostenProRunde": 0,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 24,
+    "tileHoehe": 20,
+    "maxMaschinen": 1,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Reaktorraum",
+        "groesse": 16,
+        "typ": "infrastruktur",
+        "slots": 1
+      },
+      {
+        "id": "r2",
+        "name": "Kontrollraum",
+        "groesse": 6,
+        "typ": "buero",
+        "slots": 0
+      },
+      {
+        "id": "r3",
+        "name": "Sicherheitszone",
+        "groesse": 4,
+        "typ": "infrastruktur",
+        "slots": 0
+      }
+    ],
+    "epoche": 2
+  },
+  {
+    "id": "forschungsinstitut",
+    "name": "Forschungsinstitut",
+    "emoji": "🔬",
+    "bild": null,
+    "beschreibung": "Hochmodernes Forschungsinstitut. Forschungsgeschwindigkeit ×2.",
+    "kosten": 85000,
+    "typ": "labor",
+    "hallenTyp": "labor",
+    "groesse": "gross",
+    "kostenProRunde": 80,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 16,
+    "tileHoehe": 14,
+    "maxMaschinen": 4,
+    "forschungsMultiplikator": 2.0,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Labor A",
+        "groesse": 8,
+        "typ": "forschung",
+        "slots": 2
+      },
+      {
+        "id": "r2",
+        "name": "Labor B",
+        "groesse": 6,
+        "typ": "forschung",
+        "slots": 2
+      },
+      {
+        "id": "r3",
+        "name": "Bibliothek",
+        "groesse": 4,
+        "typ": "buero",
+        "slots": 0
+      }
+    ],
+    "epoche": 2
   }
 ]
