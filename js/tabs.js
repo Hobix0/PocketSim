@@ -4,6 +4,8 @@ let aktiverScreen = "uebersicht";
 let screenVerlauf = [];
 
 function screenZeigen(screenName) {
+  // Mehr-Menü schließen wenn offen
+  navMehrSchliessen();
   document.querySelectorAll(".screen").forEach(function(s) {
     s.classList.remove("aktiv");
   });
@@ -107,3 +109,49 @@ function zurueck() {
     }
   }
 }
+
+
+// ══════════════════════════════════
+// MEHR-MENÜ (Mobile Bottom Nav)
+// ══════════════════════════════════
+
+function navMehrToggle() {
+  let drawer  = document.getElementById("nav-mehr-drawer");
+  let overlay = document.getElementById("nav-mehr-overlay");
+  let offen   = drawer && drawer.classList.contains("offen");
+  if (offen) {
+    navMehrSchliessen();
+  } else {
+    if (drawer)  drawer.classList.add("offen");
+    if (overlay) overlay.classList.add("sichtbar");
+    document.getElementById("nav-mehr-btn") && document.getElementById("nav-mehr-btn").classList.add("aktiv");
+    // NMD-Buttons: aktiven Screen markieren
+    document.querySelectorAll(".nmd-btn").forEach(function(btn) {
+      btn.classList.toggle("aktiv", btn.getAttribute("data-screen") === aktiverScreen);
+    });
+  }
+}
+
+function navMehrSchliessen() {
+  let drawer  = document.getElementById("nav-mehr-drawer");
+  let overlay = document.getElementById("nav-mehr-overlay");
+  if (drawer)  drawer.classList.remove("offen");
+  if (overlay) overlay.classList.remove("sichtbar");
+  let mehrBtn = document.getElementById("nav-mehr-btn");
+  if (mehrBtn) mehrBtn.classList.remove("aktiv");
+}
+
+// NMD-Button Click Handler (nach DOM-Ready)
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".nmd-btn[data-screen]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      let screen = btn.getAttribute("data-screen");
+      navMehrSchliessen();
+      screenZeigen(screen);
+      // Bottom nav aktiv state
+      document.querySelectorAll(".nav-btn").forEach(function(b) {
+        b.classList.toggle("aktiv", b.getAttribute("data-screen") === screen);
+      });
+    });
+  });
+});

@@ -6620,3 +6620,118 @@ body.tutorial-aktiv #tutorial-overlay {
 .fab-progress { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
 .fab-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width 0.5s; }
 .fab-runden { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }
+
+/* ══════════════════════════════════════════════════════
+   MEHR-MENÜ (Bottom Nav Drawer)
+   ══════════════════════════════════════════════════════ */
+
+/* Mehr-Icon */
+#nav-mehr-btn .nav-icon { font-size: 22px; font-weight: 700; letter-spacing: -2px; }
+#nav-mehr-btn.aktiv .nav-icon { color: var(--accent); }
+
+/* Overlay */
+#nav-mehr-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+#nav-mehr-overlay.sichtbar { display: block; }
+
+/* Drawer */
+#nav-mehr-drawer {
+  position: fixed;
+  bottom: -100%;
+  left: 0; right: 0;
+  z-index: 160;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-radius: 18px 18px 0 0;
+  padding: 0 0 calc(70px + env(safe-area-inset-bottom, 0)) 0;
+  transition: bottom 0.3s cubic-bezier(0.34, 1.1, 0.64, 1);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+#nav-mehr-drawer.offen {
+  bottom: 60px; /* über der Bottom Nav */
+}
+
+/* Drawer Handle */
+#nav-mehr-drawer::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+
+.nmd-header {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 12px 20px 8px;
+}
+
+.nmd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px 12px 16px;
+}
+
+.nmd-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  padding: 12px 8px !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  color: var(--text2) !important;
+  min-height: 70px !important;
+  width: 100% !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.nmd-btn:hover, .nmd-btn:active {
+  background: var(--surface3) !important;
+  border-color: var(--border2) !important;
+  color: var(--text) !important;
+}
+
+.nmd-btn.aktiv {
+  background: var(--amber-dim) !important;
+  border-color: rgba(245,158,11,0.4) !important;
+  color: var(--amber) !important;
+}
+
+.nmd-icon  { font-size: 22px; line-height: 1; }
+.nmd-label {
+  font-family: var(--font-head) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  text-align: center;
+}
+
+/* Desktop: Mehr-Menü ausblenden */
+@media (min-width: 768px) {
+  #nav-mehr-overlay,
+  #nav-mehr-drawer { display: none !important; }
+}

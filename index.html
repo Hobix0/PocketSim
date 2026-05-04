@@ -345,36 +345,60 @@
     </main>
 
     <!-- Bottom Navigation (nur Mobile) -->
+    <!-- Bottom Nav (Mobile) -->
     <nav id="bottom-nav">
+      <!-- Feste 4 Haupt-Screens -->
       <button class="nav-btn aktiv" data-screen="uebersicht">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Übersicht</span>
-      </button>
-      <button class="nav-btn" data-screen="lager">
-        <span class="nav-icon">📦</span>
-        <span class="nav-label">Lager</span>
-      </button>
-      <button class="nav-btn" data-screen="personal">
-        <span class="nav-icon">👷‍♂️</span>
-        <span class="nav-label">Personal</span>
-      </button>
-      <button class="nav-btn" data-screen="markt">
-        <span class="nav-icon">📈</span>
-        <span class="nav-label">Markt</span>
-      </button>
-      <button class="nav-btn" data-screen="auftraege">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label">Aufträge</span>
       </button>
       <button class="nav-btn" data-screen="shop">
         <span class="nav-icon">🛒</span>
         <span class="nav-label">Shop</span>
       </button>
-      <button class="nav-btn" data-screen="lkw" onclick="if(typeof lkwScreenAktualisieren==='function')lkwScreenAktualisieren()">
-        <span class="nav-icon">🚚</span>
-        <span class="nav-label">Logistik</span>
+      <button class="nav-btn" data-screen="auftraege">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Aufträge</span>
+      </button>
+      <button class="nav-btn" data-screen="lager">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Lager</span>
+      </button>
+      <!-- Mehr-Button -->
+      <button class="nav-btn" id="nav-mehr-btn" onclick="navMehrToggle()">
+        <span class="nav-icon" id="nav-mehr-icon">⋯</span>
+        <span class="nav-label">Mehr</span>
       </button>
     </nav>
+
+    <!-- Mehr-Menü (Drawer) -->
+    <div id="nav-mehr-overlay" onclick="navMehrSchliessen()"></div>
+    <div id="nav-mehr-drawer">
+      <div class="nmd-header">Navigation</div>
+      <div class="nmd-grid">
+        <button class="nmd-btn" data-screen="markt">
+          <span class="nmd-icon">📈</span>
+          <span class="nmd-label">Markt</span>
+        </button>
+        <button class="nmd-btn" data-screen="lkw" onclick="if(typeof lkwScreenAktualisieren==='function')lkwScreenAktualisieren()">
+          <span class="nmd-icon">🚚</span>
+          <span class="nmd-label">Logistik</span>
+        </button>
+        <button class="nmd-btn" data-screen="labor" onclick="if(typeof laborAnzeigenAktualisieren==='function')laborAnzeigenAktualisieren()">
+          <span class="nmd-icon">🔬</span>
+          <span class="nmd-label">Forschung</span>
+        </button>
+        <button class="nmd-btn" data-screen="personal">
+          <span class="nmd-icon">👷</span>
+          <span class="nmd-label">Personal</span>
+        </button>
+        <button class="nmd-btn" data-screen="statistik">
+          <span class="nmd-icon">📊</span>
+          <span class="nmd-label">Statistik</span>
+        </button>
+        <!-- Weitere Screens werden hier automatisch hinzugefügt -->
+      </div>
+    </div>
 
     <!-- Einstellungen Modal -->
     <div id="modal-einstellungen" style="display:none">
