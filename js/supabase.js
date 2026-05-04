@@ -52,6 +52,19 @@ async function supabaseInit() {
       debugPruefen();
       cloudBadgeAktualisieren();
       loginInfo("", "");
+
+      // OAuth-Redirect: Spiel noch nicht gestartet → laden und starten
+      let gameWrapper = document.getElementById("game-wrapper");
+      let loginScreen = document.getElementById("login-screen");
+      let spielLaeuft = gameWrapper && gameWrapper.style.display !== "none";
+
+      if (!spielLaeuft) {
+        console.log("[Cloud] OAuth SIGNED_IN → Spiel wird gestartet");
+        ladebildschirmZeigen("Spielstand wird geladen...");
+        cloudPruefeUndLade().then(function() {
+          spielStarten();
+        });
+      }
     }
     if (event === "SIGNED_OUT") {
       aktuellerUser   = null;
@@ -269,19 +282,25 @@ async function cloudPruefeUndLade() {
     .single();
 
   if (error || !data) {
-    // Kein Cloud-Stand vorhanden → lokalen Stand hochladen
-    console.log("[Cloud] Kein Cloud-Stand — lade lokalen Stand hoch");
+    // Neuer Account (kein Spielstand) → frischen Start erzwingen
+    console.log("[Cloud] Kein Spielstand gefunden → Gründungsscreen");
+    localStorage.removeItem("pocketsim");
+    localStorage.removeItem("pocketsim_ts");
+    localStorage.removeItem("pocketsim_tutorial_done");
+    // Leeren Spielstand in Cloud anlegen
     cloudSpeichernSofort();
     return;
   }
 
-  // Cloud ist die Wahrheit beim Login — immer laden
-  // (kein Timestamp-Vergleich, der durch Geräteuhr-Unterschiede fehlschlägt)
-  console.log("[Cloud] ☁️ Lade Cloud-Stand (Runde " + (data.runde || 0) + ", " +
-    new Date(data.gespeichert_am).toLocaleString("de-DE") + ")");
+  let cloudTs = new Date(data.gespeichert_am).getTime();
+  let lokalTs = parseInt(localStorage.getItem("pocketsim_ts") || "0");
 
-  localStorage.setItem("pocketsim",    JSON.stringify(data.daten));
-  localStorage.setItem("pocketsim_ts", new Date(data.gespeichert_am).getTime().toString());
+  if (cloudTs > lokalTs) {
+    spielstandLadenAusSlot(data.daten);
+    localStorage.setItem("pocketsim_ts", cloudTs.toString());
+  } else {
+    cloudSpeichernSofort();
+  }
 }
 
 function cloudSyncDebounced() {
