@@ -224,14 +224,17 @@ function lkwLieferungAbschliessen(lkw) {
 // ── Screen / UI ──
 function lkwScreenAktualisieren() {
   let bereich = document.getElementById("lkw-bereich");
-  if (!bereich) return;
+  if (!bereich) { console.log("[LKW] kein lkw-bereich!"); return; }
 
   // Safety: warte bis Daten geladen
   if (typeof MATERIALIEN === "undefined" || typeof MASCHINEN === "undefined") {
+    console.log("[LKW] Daten noch nicht geladen, warte...");
     bereich.innerHTML = "<div style='padding:20px;color:var(--text3);text-align:center'>⏳ Lade Daten...</div>";
     setTimeout(lkwScreenAktualisieren, 500);
     return;
   }
+
+  console.log("[LKW] Render start, LKWs:", gekaufte_lkws.length, "Garage:", hatGarage());
 
   let html = "";
 
@@ -386,8 +389,10 @@ function lkwScreenAktualisieren() {
   }
   html += "</div>";
 
+  console.log("[LKW] HTML length:", html.length);
   try {
     bereich.innerHTML = html;
+    console.log("[LKW] Render OK, bereich innerHTML length:", bereich.innerHTML.length);
   } catch(e) {
     console.error("[LKW] Render-Fehler:", e);
     bereich.innerHTML = "<div style='padding:20px;color:var(--red);font-size:12px'>Fehler: " + e.message + "</div>";
