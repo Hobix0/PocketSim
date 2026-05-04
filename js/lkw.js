@@ -391,7 +391,15 @@ function lkwScreenAktualisieren() {
   } catch(e) {
     console.error("[LKW] Render-Fehler:", e);
     bereich.innerHTML = "<div style='padding:20px;color:var(--red);font-size:12px'>Fehler: " + e.message + "</div>";
+    return;
   }
+
+  // Event listeners for kaufen buttons
+  bereich.querySelectorAll("[data-lkw-kaufen]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      lkwKaufen(btn.getAttribute("data-lkw-kaufen"));
+    });
+  });
 }
 
 // ── Auftraege-Screen: LKW-Auswahl zeigen ──
