@@ -133,6 +133,7 @@ function spielstandDatenErstellen() {
     geld:                     geld,
     unternehmen:              unternehmen,
     epoche_state: (typeof epocheZuStand === "function") ? epocheZuStand() : null,
+    lkw_state: (typeof lkwZuStand === "function") ? lkwZuStand() : null,
     gekaufte_grundstuecke:    gekaufte_grundstuecke,
     gekaufte_gebaeude:        gekaufte_gebaeude,
     lager:                    lager,
@@ -200,6 +201,9 @@ function spielstandLaden() {
   // ── Epochen-State laden ──
   if (stand.epoche_state && typeof epocheAusStand === "function") {
     epocheAusStand(stand.epoche_state);
+  }
+  if (stand.lkw_state && typeof lkwAusStand === "function") {
+    lkwAusStand(stand.lkw_state);
   }
 
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];
@@ -304,6 +308,9 @@ function spielstandLadenAusSlot(stand) {
   // ── Epochen-State laden ──
   if (stand.epoche_state && typeof epocheAusStand === "function") {
     epocheAusStand(stand.epoche_state);
+  }
+  if (stand.lkw_state && typeof lkwAusStand === "function") {
+    lkwAusStand(stand.lkw_state);
   }
 
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];
@@ -431,6 +438,8 @@ function spielstandZuruecksetzen() {
   erforschte_technologien = [];
   aktive_forschung       = null;
   aktuelleEpoche         = 1;
+  gekaufte_lkws          = [];
+  lkw_statistik          = { lieferungen: 0, gesamtEinnahmen: 0 };
   epocheMeilensteine     = [];
   freigeschaltete_tiers  = [1, 2];
   autoVerkauf            = {};

@@ -6312,3 +6312,100 @@ body.tutorial-aktiv #tutorial-overlay {
   color: var(--text3);
 }
 
+
+
+/* ══════════════════════════════════════════════════════
+   LKW — Logistik Screen
+   ══════════════════════════════════════════════════════ */
+
+.lkw-kpi-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:14px; }
+@media(min-width:600px){ .lkw-kpi-grid { grid-template-columns:repeat(4,1fr); } }
+
+.lkw-section-title {
+  font-family: var(--font-head);
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+}
+
+/* Kein-LKW Hinweis */
+.lkw-kein-lkw-hint {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: var(--radius-lg);
+  padding: 14px; margin-bottom: 14px;
+}
+.lkw-hint-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.lkw-hint-titel { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
+.lkw-hint-text  { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* LKW Karte */
+.lkw-flotte { margin-bottom: 16px; }
+.lkw-karte {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 8px;
+}
+.lkw-karte.unterwegs { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.04); }
+.lkw-karte.bereit    { border-color: rgba(16,185,129,0.25); }
+
+.lkw-karte-header { display: flex; align-items: center; gap: 10px; }
+.lkw-emoji { font-size: 24px; flex-shrink: 0; }
+.lkw-info  { flex: 1; min-width: 0; }
+.lkw-name  { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); display: block; }
+.lkw-typ   { font-size: 11px; color: var(--text3); display: block; margin-top: 1px; }
+
+.lkw-status-badge {
+  font-family: var(--font-head); font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+}
+.badge-bereit    { background: var(--green-dim); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.badge-unterwegs { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+
+.lkw-ladung { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.lkw-ladung-info { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
+.lkw-progress-track { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+.lkw-progress-fill  { height: 100%; background: var(--amber); border-radius: 2px; transition: width 0.5s; }
+.lkw-ankunft { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }
+
+/* LKW Shop */
+.lkw-shop-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media(min-width:600px){ .lkw-shop-grid { grid-template-columns: repeat(3,1fr); } }
+
+.lkw-shop-karte {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px;
+}
+.lkw-shop-karte.gesperrt { opacity: 0.45; }
+
+.lsk-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.lsk-emoji  { font-size: 26px; flex-shrink: 0; }
+.lsk-info   { flex: 1; }
+.lsk-name   { font-family: var(--font-head); font-size: 15px; font-weight: 700; color: var(--text); display: block; }
+.lsk-details { font-size: 10px; color: var(--text3); display: block; margin-top: 1px; }
+
+.lsk-desc   { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+.lsk-stats  { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+
+.lsk-kaufen-btn {
+  width: 100% !important; padding: 10px !important;
+  font-size: 13px !important; font-weight: 700 !important;
+  background: var(--amber) !important; color: #000 !important;
+  border: none !important; border-radius: var(--radius) !important;
+  cursor: pointer !important; text-transform: none !important;
+  letter-spacing: 0 !important; min-height: 40px !important;
+}
+.lsk-kaufen-btn.disabled { opacity: 0.35 !important; cursor: not-allowed !important; }
+.lsk-locked { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; }
+
+/* LKW-Auswahl Button im Auftrags-Screen */
+.lkw-auswahl-btn {
+  width: 100% !important; padding: 10px 14px !important;
+  font-size: 13px !important; font-weight: 600 !important;
+  background: var(--surface2) !important; color: var(--text) !important;
+  border: 1px solid var(--border) !important; border-radius: var(--radius) !important;
+  cursor: pointer !important; text-transform: none !important;
+  letter-spacing: 0 !important; margin-bottom: 6px !important;
+  text-align: left !important;
+}
+.lkw-auswahl-btn:hover { background: var(--surface3) !important; border-color: var(--amber) !important; }

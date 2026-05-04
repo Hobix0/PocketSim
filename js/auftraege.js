@@ -252,7 +252,10 @@ function auftraegeScreenAktualisieren() {
   // Events
   bereich.querySelectorAll("[data-auftrag-id]").forEach(function(btn) {
     btn.addEventListener("click", function() {
-      auftragErfuellen(btn.dataset.auftragId);
+      if (typeof lkwAuswahl === 'function') lkwAuswahl(btn.dataset.auftragId);
+      else auftragErfuellen(btn.dataset.auftragId);
     });
   });
+}
+
 }

@@ -158,6 +158,10 @@
         <span class="sidebar-icon">📋</span>
         Aufträge
       </button>
+      <button class="sidebar-btn" data-screen="lkw">
+        <span class="sidebar-icon">🚚</span>
+        Logistik
+      </button>
       <!-- Sidebar -->
       <button class="sidebar-btn" data-screen="statistik">
         <span class="sidebar-icon">📊</span>
@@ -267,6 +271,13 @@
       <div id="screen-lager" class="screen">
         <h2>Lager</h2>
         <div class="lager-reihe" id="lager-reihe"></div>
+
+      <!-- Screen LKW -->
+      <div id="screen-lkw" class="screen">
+        <div class="screen-titel">🚚 Logistik</div>
+        <div id="lkw-bereich"></div>
+      </div>
+
         <h2 style="margin-top:20px">Statistik</h2>
         <div class="stat-karte">
           <span class="stat-label">Produktion / Runde</span>
@@ -520,6 +531,7 @@
     <script src="js/hallen_upgrades.js"></script>
     <script src="js/epoche.js"></script>
     <!-- 9. Start -->
+    <script src="js/lkw.js"></script>
     <script src="js/tutorial.js"></script>
     <script src="js/gruendung.js"></script>
     <script src="js/supabase.js"></script>
