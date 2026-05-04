@@ -54,19 +54,23 @@ const LKW_TYPEN = [
 
 // ── Kaufen ──
 function hatGarage() {
-  // Prüft ob auf einem der Grundstücke eine Garage gebaut wurde
-  let garageCount = 0;
-  for (let id in (gekaufte_gebaeude || {})) {
-    if (id === "garage" || id.startsWith("garage_")) garageCount++;
+  // gekaufte_gebaeude = { gsId: ["gebaeude_id", ...] }
+  for (let gsId in (gekaufte_gebaeude || {})) {
+    let liste = gekaufte_gebaeude[gsId] || [];
+    if (liste.some(function(id) { return id === "garage" || id.startsWith("garage"); })) {
+      return true;
+    }
   }
-  return garageCount > 0;
+  return false;
 }
 
 function maxLkwKapazitaet() {
-  // 2 Stellplätze pro Garage
   let count = 0;
-  for (let id in (gekaufte_gebaeude || {})) {
-    if (id === "garage" || id.startsWith("garage_")) count += 2;
+  for (let gsId in (gekaufte_gebaeude || {})) {
+    let liste = gekaufte_gebaeude[gsId] || [];
+    for (let id of liste) {
+      if (id === "garage" || id.startsWith("garage")) count += 2;
+    }
   }
   return count;
 }
@@ -221,6 +225,13 @@ function lkwLieferungAbschliessen(lkw) {
 function lkwScreenAktualisieren() {
   let bereich = document.getElementById("lkw-bereich");
   if (!bereich) return;
+
+  // Safety: warte bis Daten geladen
+  if (!window.MASCHINEN || !window.MATERIALIEN) {
+    bereich.innerHTML = "<div style='padding:20px;color:var(--text3);text-align:center'>⏳ Lade Daten...</div>";
+    setTimeout(lkwScreenAktualisieren, 500);
+    return;
+  }
 
   let html = "";
 
