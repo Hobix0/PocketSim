@@ -58,7 +58,7 @@ async function spielStarten() {
 
   marktpreiseInitialisieren();
   spielstandLaden();
-  auftraegeAuffuellen();
+  if (typeof auftraegeAuffuellen === "function") auftraegeAuffuellen();
 
   // UI
   geldAnzeigenAktualisieren();
