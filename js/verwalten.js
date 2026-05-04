@@ -122,8 +122,7 @@ function gebaeudeVerwaltenHTML(data) {
     "<div class='modal-sektion'>" +
       "<div class='modal-sektion-titel'>Stats</div>" +
       "<div class='modal-info-zeile'><span>Typ</span><span>" +
-        (data.hallenTyp === "schwer" ? "⚙️ Schwerhalle" :
-         data.hallenTyp === "leicht" ? "🏗️ Leichthalle" : data.typ) +
+        (data.emoji || "🏭") + " " + (data.name || data.typ) +
       "</span></div>" +
       "<div class='modal-info-zeile'><span>Größe</span><span>" +
         data.groesse.l + " × " + data.groesse.b + " m" +

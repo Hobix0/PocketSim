@@ -7,8 +7,8 @@
     "beschreibung": "Ein lokaler Baustoffhändler braucht Eisenplatten für eine Baustelle.",
     "material": "eisenplatte",
     "menge": 20,
-    "basisBonus": 3200,
-    "deadline": 10,
+    "basisBonus": 6500,
+    "deadline": 12,
     "bedingung": null
   },
   {
@@ -19,8 +19,8 @@
     "beschreibung": "Ein Maschinenbaubetrieb ordert regelmäßig Eisenplatten als Vorleistung.",
     "material": "eisenplatte",
     "menge": 60,
-    "basisBonus": 10000,
-    "deadline": 18,
+    "basisBonus": 18000,
+    "deadline": 20,
     "bedingung": null
   },
   {
@@ -31,8 +31,8 @@
     "beschreibung": "Ein Elektriker braucht Kupferplatten für Installationen.",
     "material": "kupferplatte",
     "menge": 15,
-    "basisBonus": 3800,
-    "deadline": 10,
+    "basisBonus": 5500,
+    "deadline": 12,
     "bedingung": null
   },
   {
@@ -43,8 +43,8 @@
     "beschreibung": "Eine Brückenbaufirma bestellt Stahl für ein Strukturprojekt.",
     "material": "stahl",
     "menge": 40,
-    "basisBonus": 16000,
-    "deadline": 15,
+    "basisBonus": 22000,
+    "deadline": 18,
     "bedingung": null
   },
   {
@@ -55,8 +55,8 @@
     "beschreibung": "Sturmschäden! Sofortige Stahllieferung für Reparaturarbeiten gesucht.",
     "material": "stahl",
     "menge": 15,
-    "basisBonus": 9000,
-    "deadline": 5,
+    "basisBonus": 11000,
+    "deadline": 6,
     "bedingung": null
   },
   {
@@ -67,8 +67,8 @@
     "beschreibung": "Ein Fensterbaubetrieb braucht Flachglas für Neubauten.",
     "material": "glas",
     "menge": 25,
-    "basisBonus": 4500,
-    "deadline": 12,
+    "basisBonus": 5800,
+    "deadline": 14,
     "bedingung": null
   },
   {
@@ -79,8 +79,8 @@
     "beschreibung": "Ein Bauunternehmen benötigt Zement für laufende Projekte.",
     "material": "zement",
     "menge": 30,
-    "basisBonus": 4200,
-    "deadline": 12,
+    "basisBonus": 5500,
+    "deadline": 14,
     "bedingung": null
   },
   {
@@ -91,8 +91,8 @@
     "beschreibung": "Eine Verpackungsfirma braucht Kunststoffgranulat.",
     "material": "plastik",
     "menge": 20,
-    "basisBonus": 5000,
-    "deadline": 12,
+    "basisBonus": 7000,
+    "deadline": 14,
     "bedingung": null
   },
   {
@@ -103,8 +103,8 @@
     "beschreibung": "Ein Maschinenbauer braucht Ersatzzahnräder für Industriemaschinen.",
     "material": "zahnrad",
     "menge": 10,
-    "basisBonus": 4200,
-    "deadline": 10,
+    "basisBonus": 5500,
+    "deadline": 12,
     "bedingung": null
   },
   {
@@ -115,8 +115,8 @@
     "beschreibung": "Großhandel braucht Kupferkabel für die Lagerbestände.",
     "material": "kupferkabel",
     "menge": 20,
-    "basisBonus": 6500,
-    "deadline": 12,
+    "basisBonus": 8500,
+    "deadline": 14,
     "bedingung": null
   },
   {
@@ -127,8 +127,8 @@
     "beschreibung": "Kraftwerksbauer braucht große Mengen Kabel für die Installation.",
     "material": "kupferkabel",
     "menge": 60,
-    "basisBonus": 19000,
-    "deadline": 20,
+    "basisBonus": 25000,
+    "deadline": 22,
     "bedingung": null
   },
   {
@@ -139,8 +139,8 @@
     "beschreibung": "Hochbau-Projekt braucht Stahlträger für die Konstruktion.",
     "material": "stahltraeger",
     "menge": 12,
-    "basisBonus": 9000,
-    "deadline": 15,
+    "basisBonus": 12000,
+    "deadline": 18,
     "bedingung": null
   },
   {
@@ -151,8 +151,8 @@
     "beschreibung": "Das Straßenbauamt benötigt Betonplatten für Infrastrukturprojekte.",
     "material": "betonplatte",
     "menge": 15,
-    "basisBonus": 7500,
-    "deadline": 12,
+    "basisBonus": 9000,
+    "deadline": 14,
     "bedingung": null
   },
   {
@@ -163,8 +163,8 @@
     "beschreibung": "Ein Hersteller für Industrieförderbänder sucht Elektromotoren.",
     "material": "motor_klein",
     "menge": 5,
-    "basisBonus": 7000,
-    "deadline": 18,
+    "basisBonus": 10000,
+    "deadline": 20,
     "bedingung": null
   },
   {
@@ -175,8 +175,8 @@
     "beschreibung": "Dringend! Schaltkreise für Produktionsausfall-Reparatur benötigt.",
     "material": "schaltkreis",
     "menge": 4,
-    "basisBonus": 4500,
-    "deadline": 6,
+    "basisBonus": 5500,
+    "deadline": 7,
     "bedingung": null
   }
 ]

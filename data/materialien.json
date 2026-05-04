@@ -8,7 +8,7 @@
     "bild": null,
     "beschreibung": "Rohes Eisenerz. Grundlage jeder Metallverarbeitung.",
     "imShop": true,
-    "kaufpreis": 80,
+    "kaufpreis": 60,
     "verkaufbar": false,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -28,7 +28,7 @@
     "bild": null,
     "beschreibung": "Kupferhaltiges Gestein. Für elektrische Bauteile unerlässlich.",
     "imShop": true,
-    "kaufpreis": 120,
+    "kaufpreis": 90,
     "verkaufbar": false,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -48,7 +48,7 @@
     "bild": null,
     "beschreibung": "Brennstoff und Reduktionsmittel. Wird in Schmelzöfen und Kraftwerken gebraucht.",
     "imShop": true,
-    "kaufpreis": 60,
+    "kaufpreis": 40,
     "verkaufbar": true,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -69,7 +69,7 @@
     "bild": null,
     "beschreibung": "Quarzsand. Rohstoff für Glas und Zement.",
     "imShop": true,
-    "kaufpreis": 30,
+    "kaufpreis": 20,
     "verkaufbar": false,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -89,7 +89,7 @@
     "bild": null,
     "beschreibung": "Kalkgestein für Zement und Stahl-Verhüttung.",
     "imShop": true,
-    "kaufpreis": 40,
+    "kaufpreis": 25,
     "verkaufbar": false,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -109,7 +109,7 @@
     "bild": null,
     "beschreibung": "Unraffiniertes Erdöl. Ausgangsstoff für Kunststoffe und Treibstoff.",
     "imShop": true,
-    "kaufpreis": 150,
+    "kaufpreis": 100,
     "verkaufbar": false,
     "bedingung": null,
     "kategorie": "rohstoffe",
@@ -139,7 +139,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 3,
     "lagerkosten": 0.5,
-    "verkaufpreis": 180
+    "verkaufpreis": 260
   },
   {
     "id": "kupferplatte",
@@ -160,7 +160,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 3,
     "lagerkosten": 0.5,
-    "verkaufpreis": 220
+    "verkaufpreis": 320
   },
   {
     "id": "stahl",
@@ -181,7 +181,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 5,
     "lagerkosten": 0.5,
-    "verkaufpreis": 380
+    "verkaufpreis": 480
   },
   {
     "id": "glas",
@@ -202,7 +202,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 3,
     "lagerkosten": 0.3,
-    "verkaufpreis": 150
+    "verkaufpreis": 200
   },
   {
     "id": "zement",
@@ -223,7 +223,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 3,
     "lagerkosten": 0.3,
-    "verkaufpreis": 120
+    "verkaufpreis": 160
   },
   {
     "id": "plastik",
@@ -244,7 +244,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 4,
     "lagerkosten": 0.4,
-    "verkaufpreis": 200
+    "verkaufpreis": 300
   },
   {
     "id": "gummi",
@@ -265,7 +265,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 4,
     "lagerkosten": 0.4,
-    "verkaufpreis": 250
+    "verkaufpreis": 360
   },
   {
     "id": "zahnrad",
@@ -286,7 +286,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 8,
     "lagerkosten": 1,
-    "verkaufpreis": 350
+    "verkaufpreis": 420
   },
   {
     "id": "kupferkabel",
@@ -307,7 +307,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 8,
     "lagerkosten": 1,
-    "verkaufpreis": 280
+    "verkaufpreis": 340
   },
   {
     "id": "stahltraeger",
@@ -328,7 +328,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 10,
     "lagerkosten": 2,
-    "verkaufpreis": 650
+    "verkaufpreis": 800
   },
   {
     "id": "betonplatte",
@@ -349,7 +349,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 10,
     "lagerkosten": 2,
-    "verkaufpreis": 450
+    "verkaufpreis": 520
   },
   {
     "id": "schaltkreis",
@@ -370,7 +370,7 @@
     "seltenheit": "selten",
     "xpWert": 15,
     "lagerkosten": 2,
-    "verkaufpreis": 800
+    "verkaufpreis": 950
   },
   {
     "id": "rohr",
@@ -391,7 +391,7 @@
     "seltenheit": "gewoehnlich",
     "xpWert": 8,
     "lagerkosten": 1,
-    "verkaufpreis": 420
+    "verkaufpreis": 500
   },
   {
     "id": "motor_klein",
@@ -412,6 +412,6 @@
     "seltenheit": "selten",
     "xpWert": 20,
     "lagerkosten": 3,
-    "verkaufpreis": 1200
+    "verkaufpreis": 1500
   }
 ]

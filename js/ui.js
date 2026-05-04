@@ -288,83 +288,242 @@ function maschineToggle(index) {
 }
 
 
-// ── ÜBERSICHT DASHBOARD ──
+// ══════════════════════════════════════════════════════
+// ÜBERSICHT — COCKPIT DASHBOARD
+// ══════════════════════════════════════════════════════
+
 function uebersichtKPIsAktualisieren() {
-  let kpiBereich = document.getElementById("uebersicht-kpis");
-  if (!kpiBereich) return;
+  let bereich = document.getElementById("uebersicht-kpis");
+  if (!bereich) return;
 
-  // Berechne KPIs
-  let einnahmen = 0, kosten = 0;
-  let laufende = 0, gestoppte = 0;
+  // ── KPI Berechnungen ──
+  let einnahmenProRunde = 0;
+  let kostenProRunde    = 0;
+  let laufende  = 0;
+  let gestoppte = 0;
+  let engpaesse = [];
 
-  for (let m of installierte_maschinen) {
-    kosten += (m.kostenProRunde || 0);
-    if (m.laeuft) {
-      laufende++;
-      let rez = REZEPTE.find(function(r) { return r.id === m.aktivesRezept; });
-      if (rez) {
-        for (let out of rez.outputs) {
-          let mat = MATERIALIEN.find(function(m) { return m.id === out.material; });
-          if (mat && mat.verkaufpreis) einnahmen += out.menge * mat.verkaufpreis;
-        }
+  // Grundstück + Gebäude Laufkosten
+  if (typeof GRUNDSTUECKE !== "undefined") {
+    for (let gs of GRUNDSTUECKE) {
+      if (gekaufte_grundstuecke && gekaufte_grundstuecke.includes(gs.id)) {
+        kostenProRunde += gs.kostenProRunde || 0;
       }
-    } else {
-      gestoppte++;
+    }
+  }
+  if (typeof GEBAEUDE !== "undefined") {
+    for (let [id, count] of Object.entries(gekaufte_gebaeude || {})) {
+      let g = GEBAEUDE.find(function(g) { return g.id === id; });
+      if (g) kostenProRunde += (g.kostenProRunde || 0) * (count || 1);
     }
   }
 
-  // Lagerwert
-  let lagerwert = 0;
-  for (let mat of MATERIALIEN) {
-    let menge = lager[mat.id] || 0;
-    let preis = (marktpreise && marktpreise[mat.id]) || mat.verkaufpreis || 0;
-    lagerwert += menge * preis;
+  // Maschinen
+  for (let m of installierte_maschinen) {
+    let md  = MASCHINEN ? MASCHINEN.find(function(md) { return md.id === m.id; }) : null;
+    let rez = REZEPTE   ? REZEPTE.find(function(r)  { return r.id  === m.aktivesRezept; }) : null;
+    kostenProRunde += md ? (md.kostenProRunde || 0) : 0;
+
+    if (m.laeuft && rez) {
+      laufende++;
+      // Einnahmen schätzen
+      for (let out of (rez.outputs || [])) {
+        let mat = MATERIALIEN ? MATERIALIEN.find(function(ma) { return ma.id === out.material; }) : null;
+        if (mat && mat.verkaufpreis) {
+          einnahmenProRunde += (out.menge * mat.verkaufpreis) / Math.max(rez.dauer, 1);
+        }
+      }
+      // Engpass: läuft aber Lager läuft aus?
+      for (let inp of (rez.inputs || [])) {
+        let bestand = lager[inp.material] || 0;
+        let mat = MATERIALIEN ? MATERIALIEN.find(function(ma) { return ma.id === inp.material; }) : null;
+        if (bestand < inp.menge * 2) {
+          engpaesse.push({
+            maschine: md ? md.name : m.id,
+            material: mat ? mat.name : inp.material,
+            emoji:    mat ? mat.emoji : "⚠️",
+            bestand:  bestand,
+            benoetigt: inp.menge
+          });
+        }
+      }
+    } else if (!m.laeuft) {
+      gestoppte++;
+      // Gestoppte Maschine ohne Rezept = Engpass
+      if (!m.aktivesRezept || m.aktivesRezept === "null") {
+        engpaesse.push({
+          maschine: md ? md.name : m.id,
+          material: "Kein Rezept gewählt",
+          emoji: "⚙️",
+          bestand: 0,
+          benoetigt: 0,
+          keinRezept: true
+        });
+      }
+    }
   }
 
-  let gewinn = einnahmen - kosten;
+  let gewinnProRunde = einnahmenProRunde - kostenProRunde;
+  let lagerwert = 0;
+  for (let mat of (MATERIALIEN || [])) {
+    lagerwert += (lager[mat.id] || 0) * ((marktpreise && marktpreise[mat.id]) || mat.verkaufpreis || 0);
+  }
 
-  kpiBereich.innerHTML =
-    "<div class='dashboard-kpis'>" +
+  // ── Firmen-Header ──
+  let firmaName   = (window.unternehmen && unternehmen.name)   || "PocketSim";
+  let firmaSlogan = (window.unternehmen && unternehmen.slogan) || "Produktionsimperium";
+  let firmaFarbe  = (window.unternehmen && unternehmen.farbe)  || "var(--amber)";
+  let firmaFokus  = window.unternehmen && unternehmen.fokus
+    ? { bergbau:"⛏ Bergbau", fertigung:"🏭 Fertigung", handel:"📦 Handel", forschung:"🔬 Forschung" }[unternehmen.fokus]
+    : "";
+  let epocheNum   = (window.aktuelleEpoche) || 1;
+
+  // ── Auftrags-Vorschau ──
+  let aktiveAuftraege = aktive_auftraege || [];
+  let dringendste = aktiveAuftraege
+    .slice()
+    .sort(function(a, b) { return (a.rundenVerbleibend||99) - (b.rundenVerbleibend||99); })
+    .slice(0, 3);
+
+  let html = "";
+
+  // ── 1. FIRMEN-BANNER ──
+  html +=
+    "<div class='cockpit-firma-banner' style='border-left-color:" + firmaFarbe + "'>" +
+      "<div class='cfb-left'>" +
+        "<div class='cfb-name' style='color:" + firmaFarbe + "'>" + firmaName + "</div>" +
+        (firmaSlogan ? "<div class='cfb-slogan'>" + firmaSlogan + "</div>" : "") +
+      "</div>" +
+      "<div class='cfb-right'>" +
+        "<div class='cfb-epoche'>Epoche " + epocheNum + "</div>" +
+        (firmaFokus ? "<div class='cfb-fokus'>" + firmaFokus + "</div>" : "") +
+      "</div>" +
+    "</div>";
+
+  // ── 2. KPI-KARTEN ──
+  let kpiKlasse = gewinnProRunde >= 0 ? "positive" : "negative";
+  html +=
+    "<div class='cockpit-kpis'>" +
       "<div class='kpi-card'>" +
         "<span class='kpi-label'>Guthaben</span>" +
         "<span class='kpi-value accent'>" + geld.toLocaleString("de-DE") + " €</span>" +
       "</div>" +
       "<div class='kpi-card'>" +
         "<span class='kpi-label'>Gewinn / Runde</span>" +
-        "<span class='kpi-value " + (gewinn >= 0 ? "positive" : "negative") + "'>" +
-          (gewinn >= 0 ? "+" : "") + gewinn.toLocaleString("de-DE") + " €</span>" +
+        "<span class='kpi-value " + kpiKlasse + "'>" +
+          (gewinnProRunde >= 0 ? "+" : "") + Math.round(gewinnProRunde).toLocaleString("de-DE") + " €</span>" +
       "</div>" +
       "<div class='kpi-card'>" +
-        "<span class='kpi-label'>Maschinen aktiv</span>" +
-        "<span class='kpi-value'>" + laufende + "<span style='font-size:12px;color:var(--text3)'>/" + (laufende+gestoppte) + "</span></span>" +
+        "<span class='kpi-label'>Maschinen</span>" +
+        "<span class='kpi-value'>" +
+          "<span style='color:var(--green)'>" + laufende + " aktiv</span>" +
+          (gestoppte > 0 ? " <span style='color:var(--red);font-size:12px'>· " + gestoppte + " gestoppt</span>" : "") +
+        "</span>" +
       "</div>" +
       "<div class='kpi-card'>" +
         "<span class='kpi-label'>Lagerwert</span>" +
         "<span class='kpi-value'>" + lagerwert.toLocaleString("de-DE") + " €</span>" +
       "</div>" +
-    "</div>" +
+    "</div>";
 
-    // Maschinen-Status Schnellübersicht
-    (installierte_maschinen.length > 0 ?
-      "<div class='dashboard-maschinen-quick'>" +
-        "<div class='screen-titel' style='margin-top:14px'>Maschinen</div>" +
-        installierte_maschinen.map(function(m) {
-          let md  = MASCHINEN.find(function(md) { return md.id === m.id; });
-          let rez = REZEPTE.find(function(r) { return r.id === m.aktivesRezept; });
-          let name = md ? md.name : m.id;
-          let emo  = md ? md.emoji : "⚙️";
-          let prodText = rez ? rez.name : "Kein Rezept";
-          let statusFarbe = m.laeuft ? "var(--green)" : "var(--red)";
-          let statusText  = m.laeuft ? "Läuft" : "Gestoppt";
-          return "<div class='dash-maschine-row'>" +
-            "<span class='dmr-emoji'>" + emo + "</span>" +
-            "<div class='dmr-info'>" +
-              "<span class='dmr-name'>" + name + "</span>" +
-              "<span class='dmr-rezept'>" + prodText + "</span>" +
+  // ── 3. ENGPASS-WARNUNG ──
+  if (engpaesse.length > 0) {
+    html += "<div class='cockpit-engpaesse'>";
+    html += "<div class='cockpit-section-title'>⚠️ Engpässe</div>";
+    for (let e of engpaesse.slice(0, 4)) {
+      html +=
+        "<div class='cockpit-engpass-item'>" +
+          "<span class='cei-emoji'>" + e.emoji + "</span>" +
+          "<div class='cei-info'>" +
+            "<span class='cei-maschine'>" + e.maschine + "</span>" +
+            (e.keinRezept
+              ? "<span class='cei-problem'>Kein Rezept gewählt — Maschine steht still</span>"
+              : "<span class='cei-problem'>" + e.material + " fast leer (" + e.bestand + " / " + (e.benoetigt * 3) + " Mindest)</span>") +
+          "</div>" +
+          "<button class='cei-btn' onclick='tabWechseln("shop")'>Kaufen →</button>" +
+        "</div>";
+    }
+    html += "</div>";
+  }
+
+  // ── 4. MASCHINEN STATUS ──
+  if (installierte_maschinen.length > 0) {
+    html += "<div class='cockpit-section'>";
+    html += "<div class='cockpit-section-title'>⚙️ Maschinen</div>";
+    html += "<div class='cockpit-maschinen'>";
+    for (let m of installierte_maschinen) {
+      let md  = MASCHINEN ? MASCHINEN.find(function(md) { return md.id === m.id; }) : null;
+      let rez = REZEPTE   ? REZEPTE.find(function(r)   { return r.id  === m.aktivesRezept; }) : null;
+      let name = md ? md.name : m.id;
+      let emoji = md ? md.emoji : "⚙️";
+      let rezName = rez ? rez.name : "Kein Rezept";
+      let istLaufend = m.laeuft;
+
+      // Output Material für Anzeige
+      let outMat = rez && rez.outputs && rez.outputs[0]
+        ? (MATERIALIEN ? MATERIALIEN.find(function(ma) { return ma.id === rez.outputs[0].material; }) : null)
+        : null;
+
+      html +=
+        "<div class='cockpit-maschine-karte " + (istLaufend ? "laeuft" : "gestoppt") + "'>" +
+          "<div class='cmk-header'>" +
+            "<span class='cmk-emoji'>" + emoji + "</span>" +
+            "<div class='cmk-info'>" +
+              "<span class='cmk-name'>" + name + "</span>" +
+              "<span class='cmk-rezept'>" + rezName + "</span>" +
             "</div>" +
-            "<span class='dmr-status' style='color:" + statusFarbe + "'>" + statusText + "</span>" +
-          "</div>";
-        }).join("") +
-      "</div>"
-    : "<div class='screen-hinweis'>Noch keine Maschinen. Kaufe deine erste Maschine im Shop.</div>");
+            "<div class='cmk-status-dot " + (istLaufend ? "dot-an" : "dot-aus") + "'></div>" +
+          "</div>" +
+          (outMat && istLaufend
+            ? "<div class='cmk-output'>" + outMat.emoji + " produziert " + outMat.name + "</div>"
+            : "") +
+        "</div>";
+    }
+    html += "</div></div>";
+  } else {
+    html +=
+      "<div class='cockpit-leer-hint'>" +
+        "<div style='font-size:32px;margin-bottom:8px'>🏭</div>" +
+        "<div style='font-family:var(--font-head);font-size:14px;font-weight:700'>Noch keine Maschinen</div>" +
+        "<div style='font-size:12px;color:var(--text3);margin-top:4px'>Kaufe dein erstes Grundstück und eine Fabrikhalle im Shop.</div>" +
+        "<button style='margin-top:12px' onclick='tabWechseln("shop")'>→ Zum Shop</button>" +
+      "</div>";
+  }
+
+  // ── 5. AKTIVE AUFTRÄGE ──
+  if (dringendste.length > 0) {
+    html += "<div class='cockpit-section'>";
+    html += "<div class='cockpit-section-title'>📋 Aufträge <span style='font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-left:6px'>" + aktiveAuftraege.length + " aktiv</span></div>";
+    html += "<div class='cockpit-auftraege'>";
+    for (let a of dringendste) {
+      let vorlage = AUFTRAEGE_VORLAGEN ? AUFTRAEGE_VORLAGEN.find(function(v) { return v.id === a.vorlageId; }) : null;
+      if (!vorlage) continue;
+      let mat = MATERIALIEN ? MATERIALIEN.find(function(m) { return m.id === vorlage.material; }) : null;
+      let bestand = lager[vorlage.material] || 0;
+      let pct = Math.min(100, Math.round((bestand / vorlage.menge) * 100));
+      let dringend = a.rundenVerbleibend <= 3;
+      let fertig   = bestand >= vorlage.menge;
+      let fillFarbe = fertig ? "var(--green)" : dringend ? "var(--red)" : "var(--amber)";
+
+      html +=
+        "<div class='cockpit-auftrag-row " + (dringend ? "dringend" : "") + "'>" +
+          "<div class='car-left'>" +
+            "<div class='car-name'>" + vorlage.name + "</div>" +
+            "<div class='car-material'>" + (mat ? mat.emoji : "📦") + " " + bestand + " / " + vorlage.menge + " " + (mat ? mat.name : "") + "</div>" +
+            "<div class='car-bar'><div style='width:" + pct + "%;height:100%;border-radius:2px;background:" + fillFarbe + ";transition:width .5s'></div></div>" +
+          "</div>" +
+          "<div class='car-right'>" +
+            "<span class='car-bonus'>+" + (a.bonus||0).toLocaleString("de-DE") + " €</span>" +
+            "<span class='car-deadline " + (dringend ? "rot" : "") + "'>" + a.rundenVerbleibend + " R</span>" +
+          "</div>" +
+        "</div>";
+    }
+    if (aktiveAuftraege.length > 3) {
+      html += "<button style='width:100%;margin-top:4px' onclick='tabWechseln("auftraege")'>Alle " + aktiveAuftraege.length + " Aufträge →</button>";
+    }
+    html += "</div></div>";
+  }
+
+  bereich.innerHTML = html;
 }
+

@@ -6031,3 +6031,284 @@ body.tutorial-aktiv #tutorial-overlay {
 .dmr-name   { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--text); }
 .dmr-rezept { font-size: 11px; color: var(--text3); }
 .dmr-status { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════
+   COCKPIT DASHBOARD — Übersicht
+   ══════════════════════════════════════════════════════ */
+
+/* Firmen-Banner */
+.cockpit-firma-banner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.cfb-left  { flex: 1; min-width: 0; }
+.cfb-right { text-align: right; flex-shrink: 0; }
+
+.cfb-name {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.cfb-slogan {
+  font-size: 12px;
+  color: var(--text3);
+  font-style: italic;
+}
+
+.cfb-epoche {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 3px;
+}
+
+.cfb-fokus {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+/* KPI Grid */
+.cockpit-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 600px) { .cockpit-kpis { grid-template-columns: repeat(4, 1fr); } }
+
+/* Section Titles */
+.cockpit-section { margin-bottom: 12px; }
+
+.cockpit-section-title {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+/* Engpass-Bereich */
+.cockpit-engpaesse {
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.cockpit-engpaesse .cockpit-section-title { color: var(--red); }
+
+.cockpit-engpass-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(239,68,68,0.12);
+}
+
+.cockpit-engpass-item:last-child { border-bottom: none; }
+
+.cei-emoji { font-size: 18px; flex-shrink: 0; }
+
+.cei-info  { flex: 1; min-width: 0; }
+
+.cei-maschine {
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  margin-bottom: 1px;
+}
+
+.cei-problem {
+  font-size: 11px;
+  color: var(--red);
+  display: block;
+}
+
+.cei-btn {
+  width: auto !important;
+  padding: 4px 10px !important;
+  min-height: 28px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  background: rgba(239,68,68,0.12) !important;
+  color: var(--red) !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
+  border-radius: 6px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  flex-shrink: 0;
+  cursor: pointer !important;
+}
+
+/* Maschinen Grid */
+.cockpit-maschinen {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+@media (min-width: 600px)  { .cockpit-maschinen { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px)  { .cockpit-maschinen { grid-template-columns: repeat(4, 1fr); } }
+
+.cockpit-maschine-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+
+.cockpit-maschine-karte.laeuft    { border-color: rgba(16,185,129,0.25); }
+.cockpit-maschine-karte.gestoppt  { opacity: 0.55; }
+
+.cmk-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmk-emoji { font-size: 20px; flex-shrink: 0; }
+
+.cmk-info  { flex: 1; min-width: 0; }
+
+.cmk-name {
+  font-family: var(--font-head);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.cmk-rezept {
+  font-size: 10px;
+  color: var(--text3);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmk-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-an  { background: var(--green); box-shadow: 0 0 5px var(--green); animation: dotPuls 2s infinite; }
+.dot-aus { background: var(--red); }
+
+@keyframes dotPuls {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.cmk-output {
+  font-size: 10px;
+  color: var(--green);
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
+}
+
+/* Auftrags-Preview */
+.cockpit-auftraege { display: flex; flex-direction: column; gap: 4px; }
+
+.cockpit-auftrag-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  transition: border-color 0.15s;
+}
+
+.cockpit-auftrag-row.dringend {
+  border-color: rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.04);
+}
+
+.car-left  { flex: 1; min-width: 0; }
+
+.car-name {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.car-material {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 5px;
+}
+
+.car-bar {
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.car-right { text-align: right; flex-shrink: 0; }
+
+.car-bonus {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.car-deadline {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+.car-deadline.rot { color: var(--red); font-weight: 700; }
+
+/* Leer-Hint */
+.cockpit-leer-hint {
+  text-align: center;
+  padding: 32px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text3);
+}
+

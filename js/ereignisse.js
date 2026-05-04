@@ -18,7 +18,7 @@ async function ereignisseLaden() {
 // ── Bedingung prüfen ──
 function ereignisBedingungErfuellt(bedingung) {
   if (!bedingung)                   return true;
-  if (bedingung === "hatSchwerhalle") return hatGebaeude("schwerhalle");
+  if (bedingung === "hatGroßfabrik") return hatGebaeude("grossfabrik") || hatGebaeude("fabrik");
   if (bedingung === "hatMitarbeiter") return mitarbeiter > 0;
   if (bedingung === "hatMaschine")    return installierte_maschinen.length > 0;
   if (bedingung === "hatForschung")   return erforschte_technologien.length > 0;

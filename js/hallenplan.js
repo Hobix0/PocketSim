@@ -30,7 +30,7 @@ function tileBg(typ, hallenTyp) {
     kanal:  { bg: "#1a1e48", img: TILE_SVGS.kanal,  size: "40px 8px"  },
     tuer:   { bg: "#1e2230", img: TILE_SVGS.tuer,   size: "40px 40px" }
   };
-  let key = configs[typ] ? typ : (hallenTyp === "schwer" ? "schwer" : "leicht");
+  let key = configs[typ] ? typ : "leicht";
   let c   = configs[key];
   return "background-color:" + c.bg + ";background-image:url('" + c.img + "');background-size:" + c.size + ";image-rendering:pixelated;";
 }
@@ -118,7 +118,7 @@ function maschinenPositionenInitialisieren(gebaeudeId) {
 }
 
 function tileMapGenerieren(gebData, tW, tH) {
-  let map = [], isSchwer = gebData.hallenTyp === "schwer";
+  let map = [], isSchwer = false;
   for (let y = 0; y < tH; y++) {
     map.push([]);
     for (let x = 0; x < tW; x++) {
@@ -182,9 +182,9 @@ function hallenplanDaten(gebaeudeId) {
 
 function hallenplanRendern(daten) {
   if (!daten) return "<p class='screen-hinweis'>Keine Hallendaten.</p>";
-  let geb = daten.gebData, isSchwer = geb.hallenTyp === "schwer";
-  let lFarbe = isSchwer ? "#6366f1" : "#f59e0b";
-  let lName  = isSchwer ? "⚙️ Schwerhalle" : "🏗️ Leichthalle";
+  let geb = daten.gebData, isSchwer = false;
+  let lFarbe = "#f59e0b";
+  let lName  = (geb.emoji || "🏭") + " " + (geb.name || geb.typ);
 
   let belegte = 0;
   for (let m of daten.meineMaschinen) {
@@ -334,7 +334,7 @@ function maschinenTileHTML(pm, gebaeudeId, linienFarbe) {
   let md     = pm.maschineData;
   let mFarbe = md && md.farbe ? md.farbe : linienFarbe;
   let led    = m.laeuft ? "var(--green)" : "var(--red)";
-  let isSchwer = (GEBAEUDE.find(function(g){return g.id===gebaeudeId;})||{}).hallenTyp === "schwer";
+  let isSchwer = false;
   let bgCol  = isSchwer ? "#161838" : "#1a1d24";
 
   let istVerbinde = typeof foerderbandModus !== "undefined" && foerderbandModus.aktiv;

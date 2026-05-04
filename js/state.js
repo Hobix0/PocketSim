@@ -396,3 +396,54 @@ function spielstandLadenAusSlot(stand) {
 
   if (installierte_maschinen.length > 0) produktionLaeuft = true;
 }
+
+function spielstandZuruecksetzen() {
+  if (!confirm("⚠️ Wirklich komplett zurücksetzen?\n\nAlle Daten, dein Unternehmen und Fortschritt werden unwiderruflich gelöscht.")) return;
+
+  // 1. LocalStorage komplett leeren
+  localStorage.removeItem("pocketsim");
+  localStorage.removeItem("pocketsim_ts");
+  localStorage.removeItem("pocketsim_tutorial_done");
+
+  // 2. Cloud-Spielstand löschen (Supabase)
+  if (typeof supabase !== "undefined" && typeof aktuellerUser !== "undefined" && aktuellerUser) {
+    supabase
+      .from("spielstand")
+      .delete()
+      .eq("user_id", aktuellerUser.id)
+      .then(function() {
+        console.log("[Reset] Cloud-Spielstand gelöscht");
+      });
+  }
+
+  // 3. Alle globalen Variablen zurücksetzen
+  geld        = 0;
+  unternehmen = null;
+  lager       = {};
+  installierte_maschinen = [];
+  gekaufte_grundstuecke  = [];
+  gekaufte_gebaeude      = {};
+  mitarbeiter            = 0;
+  aktive_auftraege       = [];
+  abgeschlossene_auftraege = 0;
+  verfallene_auftraege   = 0;
+  spielRundeGesamt       = 0;
+  erforschte_technologien = [];
+  aktive_forschung       = null;
+  aktuelleEpoche         = 1;
+  epocheMeilensteine     = [];
+  freigeschaltete_tiers  = [1, 2];
+  autoVerkauf            = {};
+  marktpreise            = {};
+
+  // 4. Header zurücksetzen
+  let h1 = document.querySelector("#header h1");
+  if (h1) h1.innerHTML = "Pocket<span>Sim</span>";
+  let sub = document.querySelector("#header .subtitle");
+  if (sub) sub.textContent = "Produktionsimperium";
+
+  // 5. Gründungsscreen + Tutorial starten
+  setTimeout(function() {
+    if (typeof gruendungZeigen === "function") gruendungZeigen();
+  }, 100);
+}

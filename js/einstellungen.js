@@ -18,11 +18,8 @@ function einstellungenSchliessen() {
   document.getElementById("modal-einstellungen").style.display = "none";
 }
 
-function spielstandZuruecksetzen() {
-  if (!confirm("Wirklich zurücksetzen? Alle Fortschritte gehen verloren!")) return;
-  localStorage.removeItem("pocketsim");
-  location.reload();
-}
+// Reset wird vollständig von state.js übernommen
+// spielstandZuruecksetzen() ist in state.js definiert
 
 function debugAnzeigenAktualisieren() {
   let btnGeld   = document.getElementById("btn-debug-geld");

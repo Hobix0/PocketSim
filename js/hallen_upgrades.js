@@ -143,7 +143,7 @@ function hallenUpgradeKaufen(gebaeudeId, upgradeId) {
   if (upgrade.effekt.typ === "hallenTypUpgrade") {
     gebData.hallenTyp = upgrade.effekt.zu;
     zeigeNotification(
-      "🏗️ " + gebData.name + " wurde zur Schwerhalle aufgerüstet!",
+      "⬆️ " + gebData.name + " wurde aufgerüstet!",
       "green"
     );
   }
@@ -177,7 +177,7 @@ function hallenUpgradeScreenAktualisieren(gebaeudeId) {
   let gebData  = GEBAEUDE.find(function(g) { return g.id === gebaeudeId; });
   if (!gebData) return;
 
-  let isSchwer = gebData.hallenTyp === "schwer";
+  let isSchwer = false; // Schwer/Leicht-Konzept entfernt
   let lFarbe   = isSchwer ? "#6366f1" : "#f59e0b";
 
   // Aktive Upgrades zusammenfassen
@@ -239,7 +239,7 @@ function hallenUpgradeScreenAktualisieren(gebaeudeId) {
       if (u.effekt.typ === "tileErweiterung")   effektText = "📐 +" + (u.effekt.breite || 0) + " Breite, +" + (u.effekt.hoehe || 0) + " Höhe";
       if (u.effekt.typ === "ausfallSchutz")     effektText = "🛡️ -" + Math.round(u.effekt.reduktion * 100) + "% Ausfall";
       if (u.effekt.typ === "kostenReduktion")   effektText = "💸 -" + Math.round(u.effekt.wert * 100) + "% Kosten";
-      if (u.effekt.typ === "hallenTypUpgrade")  effektText = "🏗️ Halle → Schwerhalle";
+      if (u.effekt.typ === "hallenTypUpgrade")  effektText = "⬆️ Hallen-Upgrade";
 
       let vorbedText = "";
       if (gesperrt && u.bedingung) {

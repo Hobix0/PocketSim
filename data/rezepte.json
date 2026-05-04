@@ -8,13 +8,13 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "metall",
     "maschine": "schmelzofen",
-    "dauer": 4,
+    "dauer": 3,
     "energie": 80,
     "xp": 3,
     "inputs": [
       {
         "material": "eisenerz",
-        "menge": 3
+        "menge": 2
       },
       {
         "material": "kohle",
@@ -37,13 +37,13 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "metall",
     "maschine": "schmelzofen",
-    "dauer": 4,
+    "dauer": 3,
     "energie": 70,
     "xp": 3,
     "inputs": [
       {
         "material": "kupfererz",
-        "menge": 3
+        "menge": 2
       }
     ],
     "outputs": [
@@ -62,17 +62,17 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "metall",
     "maschine": "schmelzofen",
-    "dauer": 8,
+    "dauer": 6,
     "energie": 120,
     "xp": 6,
     "inputs": [
       {
         "material": "eisenplatte",
-        "menge": 3
+        "menge": 2
       },
       {
         "material": "kohle",
-        "menge": 2
+        "menge": 1
       }
     ],
     "outputs": [
@@ -91,13 +91,13 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "baustoffe",
     "maschine": "steinbrecher",
-    "dauer": 5,
+    "dauer": 4,
     "energie": 60,
     "xp": 3,
     "inputs": [
       {
         "material": "sand",
-        "menge": 4
+        "menge": 3
       },
       {
         "material": "kohle",
@@ -120,13 +120,13 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "baustoffe",
     "maschine": "steinbrecher",
-    "dauer": 6,
+    "dauer": 5,
     "energie": 70,
     "xp": 3,
     "inputs": [
       {
         "material": "kalkstein",
-        "menge": 3
+        "menge": 2
       },
       {
         "material": "sand",
@@ -149,19 +149,19 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "chemie",
     "maschine": "oelraffinerie",
-    "dauer": 6,
+    "dauer": 5,
     "energie": 150,
     "xp": 5,
     "inputs": [
       {
         "material": "rohoel",
-        "menge": 3
+        "menge": 2
       }
     ],
     "outputs": [
       {
         "material": "plastik",
-        "menge": 4
+        "menge": 3
       }
     ]
   },
@@ -174,7 +174,7 @@
     "kategorie": "grundmaterial",
     "produktionslinie": "chemie",
     "maschine": "oelraffinerie",
-    "dauer": 8,
+    "dauer": 6,
     "energie": 160,
     "xp": 5,
     "inputs": [
@@ -203,7 +203,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "mechanik",
     "maschine": "formerei",
-    "dauer": 5,
+    "dauer": 4,
     "energie": 100,
     "xp": 8,
     "inputs": [
@@ -232,7 +232,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "mechanik",
     "maschine": "formerei",
-    "dauer": 6,
+    "dauer": 5,
     "energie": 110,
     "xp": 8,
     "inputs": [
@@ -257,7 +257,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "metall",
     "maschine": "formerei",
-    "dauer": 8,
+    "dauer": 7,
     "energie": 120,
     "xp": 10,
     "inputs": [
@@ -286,7 +286,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "elektronik",
     "maschine": "kabelwerk",
-    "dauer": 4,
+    "dauer": 3,
     "energie": 90,
     "xp": 8,
     "inputs": [
@@ -315,7 +315,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "elektronik",
     "maschine": "kabelwerk",
-    "dauer": 10,
+    "dauer": 8,
     "energie": 80,
     "xp": 15,
     "inputs": [
@@ -348,7 +348,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "mechanik",
     "maschine": "motorenfabrik",
-    "dauer": 12,
+    "dauer": 10,
     "energie": 120,
     "xp": 20,
     "inputs": [
@@ -385,7 +385,7 @@
     "kategorie": "bauteil",
     "produktionslinie": "baustoffe",
     "maschine": "betonwerk",
-    "dauer": 8,
+    "dauer": 6,
     "energie": 80,
     "xp": 10,
     "inputs": [

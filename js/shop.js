@@ -15,12 +15,12 @@ function bedingungErfuellt(bedingung) {
   if (bedingung === "hatGrundstueck")  return hatGrundstueck();
   if (bedingung === "hatGebaeude")     return hatGebaeude();
   if (bedingung === "hatFabrik")       return hatGebaeude("leichtbauhalle") || hatGebaeude("schwerlasthalle");
-  if (bedingung === "hatLeichthalle")  return hatGebaeude("leichtbauhalle");
-  if (bedingung === "hatSchwerhalle")  return hatGebaeude("schwerlasthalle");
+  if (bedingung === "hatKleine Fabrikhalle")  return hatGebaeude("kleine_fabrik") || hatGebaeude("fabrik");
+  if (bedingung === "hatGroßfabrik")  return hatGebaeude("grossfabrik");
   if (bedingung === "hatLagerhalle")   return hatGebaeude("lagerhalle");
   if (bedingung === "hatMine")         return hatGebaeude("mine");
   if (bedingung === "hatMaschine")     return installierte_maschinen.length > 0;
-  if (bedingung === "hatBaumstaemme")  return (lager.baumstaemme || 0) > 0;
+  if (bedingung === "hatBaumstaemme")  return (lager.eisenerz || 0) > 0;
   if (bedingung === "hatSchmelzofen")  return hatGebaeude("schwerlasthalle") || hatGebaeude("leichtbauhalle");
   if (typeof istErforscht === "function" && istErforscht(bedingung)) return true;
   return false;
