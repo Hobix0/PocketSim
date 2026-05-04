@@ -37,12 +37,12 @@ function screenZeigen(screenName) {
   if (screenName === "personal" && typeof personalAnzeigenAktualisieren === "function") {
     personalAnzeigenAktualisieren();
   }
-  if (screenName === "lkw" && typeof lkwScreenAktualisieren === "function") {
+  /*if (screenName === "lkw" && typeof lkwScreenAktualisieren === "function") {
     lkwScreenAktualisieren();
   }
   if (screenName === "labor" && typeof laborAnzeigenAktualisieren === "function") {
     laborAnzeigenAktualisieren();
-  }
+  }*/
   if (screenName === "uebersicht" && typeof uebersichtKPIsAktualisieren === "function") {
     uebersichtKPIsAktualisieren();
   }
