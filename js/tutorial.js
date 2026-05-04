@@ -1,6 +1,9 @@
 // ══════════════════════════════════
-// TUTORIAL — Schritt-für-Schritt
-// Spotlight + Tooltip System
+// TUTORIAL — Komplett neu
+// Ansatz: Kein Overlay, kein Tooltip
+// Stattdessen: In-Screen Hinweis-Banner
+// der jeweils den nächsten Schritt zeigt
+// + Spotlight Box auf Ziel-Element
 // ══════════════════════════════════
 
 let tutorialAktiv   = false;
@@ -8,125 +11,102 @@ let tutorialSchritt = 0;
 let tutorialTimer   = null;
 
 // ══════════════════════════════════
-// SCHRITTE
+// SCHRITTE DEFINITION
 // ══════════════════════════════════
 
 const TUTORIAL_SCHRITTE = [
   {
-    id: "willkommen",
-    titel: "Willkommen in deiner Fabrik",
-    text: "Das ist deine Übersicht — dein Cockpit. Hier siehst du was läuft, was fehlt, was als nächstes zu tun ist. Lass uns deine erste Fabrik aufbauen.",
-    ziel: null,
-    position: "mitte",
-    weiter: "manuell",
-    aktion: null,
-    pfeil: false
+    id:       "grundstueck",
+    screen:   "shop",
+    titel:    "Grundstück kaufen",
+    icon:     "🏭",
+    text:     "Geh in den Shop und kaufe dein erstes Gelände. Es ist kostenlos.",
+    ziel:     "[data-screen='shop']",
+    check:    function() { return gekaufte_grundstuecke && gekaufte_grundstuecke.length > 0; },
+    aktion:   "shop",
+    pfeil:    "Shop → Grundstücke → Kaufen"
   },
   {
-    id: "shop_oeffnen",
-    titel: "Schritt 1 — Grundstück kaufen",
-    text: "Ohne Grundstück keine Fabrik. Öffne den Shop und kaufe dein erstes Gelände. Es ist kostenlos zum Start.",
-    ziel: "[data-screen='shop']",
-    position: "rechts",
-    weiter: "screen:shop",
-    aktion: function() { tutorialScreenWechseln("shop"); },
-    pfeil: true
-  },
-  {
-    id: "grundstueck_kaufen",
-    titel: "Grundstück auswählen",
-    text: "Scrolle zum Abschnitt 'Grundstücke' und kaufe das Industriegelände Aethon-Süd. Es kostet 0 € — dein Startgelände.",
-    ziel: "#shop-inhalt",
-    position: "rechts",
-    weiter: "zustand:grundstueck",
-    aktion: null,
-    pfeil: false,
-    check: function() { return gekaufte_grundstuecke && gekaufte_grundstuecke.length > 0; }
-  },
-  {
-    id: "gebaeude_kaufen",
-    titel: "Schritt 2 — Fabrikhalle bauen",
-    text: "Gut! Jetzt brauchst du eine Halle. Kaufe eine Kleine Fabrikhalle (8.000 €). Sie ist die Heimat deiner ersten Maschinen.",
-    ziel: "#shop-inhalt",
-    position: "rechts",
-    weiter: "zustand:gebaeude",
-    aktion: null,
-    pfeil: false,
-    check: function() {
-      return gekaufte_gebaeude && Object.keys(gekaufte_gebaeude).some(function(id) {
-        return id.includes("fabrik") || id.includes("halle");
+    id:       "gebaeude",
+    screen:   "shop",
+    titel:    "Fabrikhalle bauen",
+    icon:     "🏗️",
+    text:     "Jetzt brauchst du eine Halle für deine Maschinen. Kaufe eine Kleine Fabrikhalle (8.000 €).",
+    ziel:     null,
+    check:    function() {
+      if (!gekaufte_gebaeude) return false;
+      return Object.values(gekaufte_gebaeude).some(function(arr) {
+        return arr && arr.some(function(id) { return id.includes("fabrik"); });
       });
-    }
+    },
+    aktion:   "shop",
+    pfeil:    "Shop → Gebäude → Kleine Fabrikhalle"
   },
   {
-    id: "maschine_kaufen",
-    titel: "Schritt 3 — Erste Maschine",
-    text: "Eine leere Halle produziert nichts. Kaufe einen Schmelzofen (3.500 €). Er verwandelt Eisenerz in Eisenplatten.",
-    ziel: "#shop-inhalt",
-    position: "rechts",
-    weiter: "zustand:maschine",
-    aktion: null,
-    pfeil: false,
-    check: function() {
-      return installierte_maschinen && installierte_maschinen.length > 0;
-    }
+    id:       "maschine",
+    screen:   "shop",
+    titel:    "Schmelzofen kaufen",
+    icon:     "🔥",
+    text:     "Zeit für die erste Maschine! Kaufe einen Schmelzofen (3.500 €).",
+    ziel:     null,
+    check:    function() { return installierte_maschinen && installierte_maschinen.length > 0; },
+    aktion:   "shop",
+    pfeil:    "Shop → Maschinen → Schmelzofen"
   },
   {
-    id: "rohstoff_kaufen",
-    titel: "Schritt 4 — Rohstoffe beschaffen",
-    text: "Der Schmelzofen braucht Eisenerz und Kohle. Im Shop unter 'Materialien kaufen' kannst du Rohstoffe direkt bestellen.",
-    ziel: "#shop-inhalt",
-    position: "rechts",
-    weiter: "zustand:rohstoffe",
-    aktion: null,
-    pfeil: false,
-    check: function() {
-      return (lager["eisenerz"] || 0) >= 5 && (lager["kohle"] || 0) >= 2;
-    }
+    id:       "rohstoffe",
+    screen:   "shop",
+    titel:    "Rohstoffe kaufen",
+    icon:     "⛏️",
+    text:     "Der Schmelzofen braucht Eisenerz und Kohle. Kaufe mindestens 10 Eisenerz und 5 Kohle.",
+    ziel:     null,
+    check:    function() { return (lager["eisenerz"] || 0) >= 10 && (lager["kohle"] || 0) >= 5; },
+    aktion:   "shop",
+    pfeil:    "Shop → Materialien → Eisenerz + Kohle"
   },
   {
-    id: "produktion_starten",
-    titel: "Schritt 5 — Produktion starten",
-    text: "Geh zur Übersicht und starte deinen Schmelzofen. Klicke auf die Maschine → 'Starten'. Dann läuft sie automatisch.",
-    ziel: "[data-screen='uebersicht']",
-    position: "rechts",
-    weiter: "zustand:produktion",
-    aktion: function() { tutorialScreenWechseln("uebersicht"); },
-    pfeil: true,
-    check: function() {
-      return installierte_maschinen && installierte_maschinen.some(function(m) { return m.laeuft; });
-    }
+    id:       "produktion",
+    screen:   "uebersicht",
+    titel:    "Produktion starten",
+    icon:     "⚙️",
+    text:     "Geh zur Übersicht. Klicke auf deinen Schmelzofen und starte ihn.",
+    ziel:     "[data-screen='uebersicht']",
+    check:    function() { return installierte_maschinen && installierte_maschinen.some(function(m) { return m.laeuft; }); },
+    aktion:   "uebersicht",
+    pfeil:    "Übersicht → Schmelzofen → Starten"
   },
   {
-    id: "lager_checken",
-    titel: "Schritt 6 — Lager beobachten",
-    text: "Deine ersten Eisenplatten entstehen! Öffne das Lager und warte bis mindestens 5 Eisenplatten vorhanden sind.",
-    ziel: "[data-screen='lager']",
-    position: "rechts",
-    weiter: "zustand:lager",
-    aktion: function() { tutorialScreenWechseln("lager"); },
-    pfeil: true,
-    check: function() { return (lager["eisenplatte"] || 0) >= 5; }
+    id:       "lager",
+    screen:   "lager",
+    titel:    "Erste Produktion",
+    icon:     "📦",
+    text:     "Warte bis 5 Eisenplatten im Lager sind. Du kannst das im Lager-Tab verfolgen.",
+    ziel:     "[data-screen='lager']",
+    check:    function() { return (lager["eisenplatte"] || 0) >= 5; },
+    aktion:   "lager",
+    pfeil:    "Lager → Eisenplatte beobachten"
   },
   {
-    id: "auftrag_checken",
-    titel: "Schritt 7 — Erster Auftrag",
-    text: "Schau dir die Aufträge an. Dort warten Kunden auf deine Produkte. Erfülle deinen ersten Auftrag und kassiere den Bonus.",
-    ziel: "[data-screen='auftraege']",
-    position: "rechts",
-    weiter: "manuell",
-    aktion: function() { tutorialScreenWechseln("auftraege"); },
-    pfeil: true
+    id:       "auftrag",
+    screen:   "auftraege",
+    titel:    "Erster Auftrag",
+    icon:     "📋",
+    text:     "Schau dir die Aufträge an und erfülle deinen ersten wenn genug Material da ist.",
+    ziel:     "[data-screen='auftraege']",
+    check:    function() { return abgeschlossene_auftraege && abgeschlossene_auftraege > 0; },
+    aktion:   "auftraege",
+    pfeil:    "Aufträge → Liefern"
   },
   {
-    id: "abschluss",
-    titel: "Du weißt wie es geht 🎉",
-    text: "Produktion läuft, Lager füllt sich, Aufträge kommen rein. Jetzt liegt es an dir wie groß dein Unternehmen wird. Mehr Maschinen, neue Materialien, neue Epoche — der Weg ist offen.",
-    ziel: null,
-    position: "mitte",
-    weiter: "manuell",
-    aktion: null,
-    pfeil: false,
+    id:       "fertig",
+    screen:   "uebersicht",
+    titel:    "Du hast es drauf! 🎉",
+    icon:     "🚀",
+    text:     "Fabrik läuft, Lager füllt sich, Aufträge werden erfüllt. Jetzt liegt es an dir wie groß dein Imperium wird.",
+    ziel:     null,
+    check:    null,
+    aktion:   "uebersicht",
+    pfeil:    null,
     abschluss: true
   }
 ];
@@ -136,15 +116,14 @@ const TUTORIAL_SCHRITTE = [
 // ══════════════════════════════════
 
 function tutorialStarten() {
-  // Nicht starten wenn schon abgeschlossen
   if (localStorage.getItem("pocketsim_tutorial_done") === "1") return;
 
   tutorialAktiv   = true;
   tutorialSchritt = 0;
-  tutorialRendern();
 
-  // Auto-Check alle 2 Sekunden
-  tutorialTimer = setInterval(tutorialAutoCheck, 2000);
+  tutorialBannerErstellen();
+  tutorialRendern();
+  tutorialTimer = setInterval(tutorialAutoCheck, 1500);
 }
 
 function tutorialSkippen() {
@@ -155,22 +134,8 @@ function tutorialBeenden(skip) {
   tutorialAktiv = false;
   clearInterval(tutorialTimer);
   tutorialTimer = null;
-
-  // Overlay entfernen
-  let overlay = document.getElementById("tutorial-overlay");
-  let tooltip  = document.getElementById("tutorial-tooltip");
-  if (overlay) overlay.style.display = "none";
-  if (tooltip) tooltip.style.display = "none";
-
-  // Spotlight entfernen
-  document.querySelectorAll(".tutorial-highlight").forEach(function(el) {
-    el.classList.remove("tutorial-highlight");
-    el.removeAttribute("style");
-  });
-  document.body.classList.remove("tutorial-aktiv");
+  tutorialBannerAusblenden();
   tutorialSpotlightEntfernen();
-  let overlay = document.getElementById("tutorial-overlay");
-  if (overlay) overlay.style.display = "none";
 
   if (!skip) {
     localStorage.setItem("pocketsim_tutorial_done", "1");
@@ -178,8 +143,22 @@ function tutorialBeenden(skip) {
 }
 
 // ══════════════════════════════════
-// RENDERN
+// BANNER (persistenter Hinweis)
 // ══════════════════════════════════
+
+function tutorialBannerErstellen() {
+  let banner = document.getElementById("tut-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "tut-banner";
+    document.body.appendChild(banner);
+  }
+}
+
+function tutorialBannerAusblenden() {
+  let banner = document.getElementById("tut-banner");
+  if (banner) banner.style.display = "none";
+}
 
 function tutorialRendern() {
   if (!tutorialAktiv) return;
@@ -187,141 +166,91 @@ function tutorialRendern() {
   let schritt = TUTORIAL_SCHRITTE[tutorialSchritt];
   if (!schritt) { tutorialBeenden(false); return; }
 
-  let overlay = document.getElementById("tutorial-overlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "tutorial-overlay";
-    document.body.appendChild(overlay);
-  }
-  overlay.style.display = "block";
-  document.body.classList.add("tutorial-aktiv");
+  let banner = document.getElementById("tut-banner");
+  if (!banner) return;
 
-  // Spotlight: alte entfernen
-  document.querySelectorAll(".tutorial-highlight").forEach(function(el) {
-    el.classList.remove("tutorial-highlight");
-    el.removeAttribute("style");
-  });
+  let istAbschluss = !!schritt.abschluss;
+  let gesamtSchritte = TUTORIAL_SCHRITTE.length;
+  let fortProzent = Math.round((tutorialSchritt / (gesamtSchritte - 1)) * 100);
+
+  // Fortschritts-Dots
+  let dotsHTML = TUTORIAL_SCHRITTE.map(function(s, i) {
+    if (i < tutorialSchritt) return "<div class='tut-dot tut-dot-done'></div>";
+    if (i === tutorialSchritt) return "<div class='tut-dot tut-dot-aktiv'></div>";
+    return "<div class='tut-dot'></div>";
+  }).join("");
+
+  banner.innerHTML =
+    "<div class='tut-inner'>" +
+      "<div class='tut-top'>" +
+        "<div class='tut-icon-wrap'>" +
+          "<span class='tut-big-icon'>" + schritt.icon + "</span>" +
+        "</div>" +
+        "<div class='tut-content'>" +
+          "<div class='tut-step-label'>Schritt " + (tutorialSchritt + 1) + " von " + gesamtSchritte + "</div>" +
+          "<div class='tut-headline'>" + schritt.titel + "</div>" +
+          "<p class='tut-body'>" + schritt.text + "</p>" +
+          (schritt.pfeil ? "<div class='tut-pfeil-hint'>👆 " + schritt.pfeil + "</div>" : "") +
+        "</div>" +
+        "<button class='tut-close' onclick='tutorialSkippen()' title='Tutorial beenden'>✕</button>" +
+      "</div>" +
+      "<div class='tut-footer'>" +
+        "<div class='tut-dots'>" + dotsHTML + "</div>" +
+        (istAbschluss
+          ? "<button class='tut-btn-fertig' onclick='tutorialBeenden(false)'>Loslegen! 🚀</button>"
+          : (schritt.check ? "" : "<button class='tut-btn-weiter' onclick='tutorialWeiter()'>Weiter →</button>")
+        ) +
+      "</div>" +
+    "</div>";
+
+  banner.style.display = "block";
+  banner.className = "tut-banner-sichtbar";
+
+  // Spotlight auf Ziel-Element
   tutorialSpotlightEntfernen();
-
-  // Ziel-Element highlighten
-  let zielEl = schritt.ziel ? document.querySelector(schritt.ziel) : null;
-  if (zielEl) {
-    zielEl.classList.add("tutorial-highlight");
-    // Für Fixed-Position Elemente (Nav-Buttons): Spotlight als Pseudo-Box
-    tutorialSpotlightZeigen(zielEl);
+  if (schritt.ziel) {
+    setTimeout(function() {
+      let zielEl = document.querySelector(schritt.ziel);
+      if (zielEl) tutorialSpotlightZeigen(zielEl);
+    }, 100);
   }
 
-  // Wenn Zielauswahl-Modal offen: Overlay ausblenden
-  let zielModal = document.getElementById("modal-zielauswahl");
-  if (zielModal && zielModal.style.display !== "none" && zielModal.style.display !== "") {
-    if (overlay) overlay.style.display = "none";
-    tutorialSpotlightEntfernen();
-    let tooltip = document.getElementById("tutorial-tooltip");
-    if (tooltip) tooltip.style.display = "none";
-    return;
+  // Zum richtigen Screen navigieren (wenn nötig)
+  if (schritt.aktion && typeof screenZeigen === "function" && aktiverScreen !== schritt.aktion) {
+    // Nicht automatisch navigieren — nur Hinweis zeigen
   }
-
-  tutorialTooltipRendern(schritt, zielEl);
 }
+
+// ══════════════════════════════════
+// SPOTLIGHT
+// ══════════════════════════════════
 
 function tutorialSpotlightZeigen(el) {
   let rect = el.getBoundingClientRect();
-  // Spotlight-Box direkt über dem Element
-  let spot = document.getElementById("tutorial-spotlight");
+  let spot = document.getElementById("tut-spot");
   if (!spot) {
     spot = document.createElement("div");
-    spot.id = "tutorial-spotlight";
+    spot.id = "tut-spot";
     document.body.appendChild(spot);
   }
-  let pad = 6;
+  let pad = 5;
   spot.style.cssText =
-    "position:fixed;" +
+    "position:fixed;z-index:8999;pointer-events:none;" +
+    "border-radius:10px;" +
     "top:" + (rect.top - pad) + "px;" +
     "left:" + (rect.left - pad) + "px;" +
-    "width:" + (rect.width + pad*2) + "px;" +
-    "height:" + (rect.height + pad*2) + "px;" +
-    "z-index:9200;" +
-    "pointer-events:none;" +
-    "border-radius:10px;" +
-    "box-shadow:0 0 0 3px var(--amber),0 0 0 9999px rgba(0,0,0,0.55);" +
+    "width:" + (rect.width + pad * 2) + "px;" +
+    "height:" + (rect.height + pad * 2) + "px;" +
+    "box-shadow:0 0 0 2px var(--amber),0 0 12px rgba(245,158,11,0.5);" +
     "animation:tutSpotPuls 1.5s infinite;";
   spot.style.display = "block";
 }
 
 function tutorialSpotlightEntfernen() {
-  let spot = document.getElementById("tutorial-spotlight");
+  let spot = document.getElementById("tut-spot");
   if (spot) spot.style.display = "none";
-}
-
-function tutorialTooltipRendern(schritt, zielEl) {
-  let tooltip = document.getElementById("tutorial-tooltip");
-  if (!tooltip) {
-    tooltip = document.createElement("div");
-    tooltip.id = "tutorial-tooltip";
-    document.body.appendChild(tooltip);
-  }
-
-  let fortHTML = TUTORIAL_SCHRITTE.map(function(s, i) {
-    return "<div class='tut-dot" + (i < tutorialSchritt ? " done" : i === tutorialSchritt ? " aktiv" : "") + "'></div>";
-  }).join("");
-
-  let istLetzter = schritt.abschluss;
-  let btnText    = istLetzter ? "🚀 Los geht's!" : "Weiter →";
-  let btnDisabled = schritt.weiter !== "manuell" && !istLetzter && !schritt.check ? "" : "";
-
-  tooltip.innerHTML =
-    "<div class='tut-header'>" +
-      "<div class='tut-schritt-num'>Schritt " + (tutorialSchritt + 1) + " / " + TUTORIAL_SCHRITTE.length + "</div>" +
-      "<button class='tut-skip' onclick='tutorialSkippen()'>Tutorial überspringen</button>" +
-    "</div>" +
-    "<div class='tut-dots'>" + fortHTML + "</div>" +
-    "<div class='tut-titel'>" + schritt.titel + "</div>" +
-    "<p class='tut-text'>" + schritt.text + "</p>" +
-    (schritt.pfeil && zielEl ? "<div class='tut-pfeil'>👆 Klick oben</div>" : "") +
-    "<div class='tut-footer'>" +
-      (schritt.weiter === "manuell" || istLetzter
-        ? "<button class='tut-btn-weiter' onclick='tutorialWeiter()'>" + btnText + "</button>"
-        : "<div class='tut-auto-hint'>⏳ Warte auf Aktion...</div>") +
-    "</div>";
-
-  // Tooltip positionieren
-  tooltip.style.display = "block";
-  tooltip.className = "tut-" + schritt.position;
-
-  // Mobile: immer oben zentriert (über Content, unter Header)
-  let isMobile = window.innerWidth < 768;
-  
-  if (isMobile) {
-    tooltip.style.left      = "10px";
-    tooltip.style.right     = "10px";
-    tooltip.style.top       = "60px";
-    tooltip.style.bottom    = "auto";
-    tooltip.style.transform = "none";
-    tooltip.style.width     = "auto";
-    tooltip.style.maxWidth  = "none";
-    tooltip.style.zIndex    = "9600";
-  } else if (schritt.position === "mitte") {
-    tooltip.style.left   = "50%";
-    tooltip.style.top    = "50%";
-    tooltip.style.transform = "translate(-50%, -50%)";
-    tooltip.style.right  = "auto";
-    tooltip.style.bottom = "auto";
-  } else if (zielEl && schritt.position === "rechts") {
-    let rect = zielEl.getBoundingClientRect();
-    let tooltipH = 240;
-    let top = Math.min(rect.top, window.innerHeight - tooltipH - 20);
-    tooltip.style.left      = "auto";
-    tooltip.style.right     = "12px";
-    tooltip.style.top       = Math.max(80, top) + "px";
-    tooltip.style.transform = "none";
-    tooltip.style.bottom    = "auto";
-  } else {
-    tooltip.style.left      = "auto";
-    tooltip.style.right     = "12px";
-    tooltip.style.bottom    = "80px";
-    tooltip.style.top       = "auto";
-    tooltip.style.transform = "none";
-  }
+  let old = document.getElementById("tutorial-spotlight");
+  if (old) old.style.display = "none";
 }
 
 // ══════════════════════════════════
@@ -333,9 +262,6 @@ function tutorialWeiter() {
     tutorialBeenden(false);
     return;
   }
-  let schritt = TUTORIAL_SCHRITTE[tutorialSchritt];
-  // Aktion ausführen wenn vorhanden
-  if (schritt.aktion) schritt.aktion();
   tutorialSchritt++;
   tutorialRendern();
 }
@@ -343,50 +269,43 @@ function tutorialWeiter() {
 function tutorialAutoCheck() {
   if (!tutorialAktiv) return;
   let schritt = TUTORIAL_SCHRITTE[tutorialSchritt];
-  if (!schritt || schritt.weiter === "manuell") return;
+  if (!schritt || !schritt.check) return;
 
-  // Screen-basierter Übergang
-  if (schritt.weiter.startsWith("screen:")) {
-    let screen = schritt.weiter.split(":")[1];
-    let aktiv  = document.getElementById("screen-" + screen);
-    if (aktiv && aktiv.classList.contains("aktiv")) {
-      tutorialSchritt++;
-      tutorialRendern();
-    }
-    return;
+  if (schritt.check()) {
+    setTimeout(function() {
+      if (tutorialAktiv) {
+        tutorialSchritt++;
+        tutorialRendern();
+      }
+    }, 600);
   }
 
-  // Zustand-basierter Übergang
-  if (schritt.weiter.startsWith("zustand:") && schritt.check) {
-    if (schritt.check()) {
-      // Kurze Verzögerung damit der Spieler den Erfolg sieht
-      setTimeout(function() {
-        if (tutorialAktiv) {
-          tutorialSchritt++;
-          tutorialRendern();
-        }
-      }, 800);
-    }
+  // Spotlight aktualisieren (bei Scroll/Resize)
+  if (schritt.ziel) {
+    let zielEl = document.querySelector(schritt.ziel);
+    if (zielEl) tutorialSpotlightZeigen(zielEl);
   }
-}
-
-function tutorialScreenWechseln(screen) {
-  // Screen-Wechsel über bestehende Navigation
-  let btn = document.querySelector("[data-screen='" + screen + "']");
-  if (btn) btn.click();
 }
 
 // ══════════════════════════════════
 // INTEGRATION
 // ══════════════════════════════════
 
-// Wird nach Gründung aufgerufen
 function tutorialNachGruendungStarten() {
-  setTimeout(tutorialStarten, 1500);
+  setTimeout(tutorialStarten, 1200);
 }
 
-// Reset für Tests
 function tutorialReset() {
   localStorage.removeItem("pocketsim_tutorial_done");
   tutorialSchritt = 0;
 }
+
+// Spotlight bei Resize aktualisieren
+window.addEventListener("resize", function() {
+  if (!tutorialAktiv) return;
+  let schritt = TUTORIAL_SCHRITTE[tutorialSchritt];
+  if (schritt && schritt.ziel) {
+    let el = document.querySelector(schritt.ziel);
+    if (el) tutorialSpotlightZeigen(el);
+  }
+});

@@ -7033,3 +7033,174 @@ body.tutorial-aktiv #tutorial-overlay {
   display: flex !important;
   z-index: 9800 !important;
 }
+
+/* ══════════════════════════════════════════════════════
+   TUTORIAL NEU — Persistent Banner
+   ══════════════════════════════════════════════════════ */
+
+#tut-banner {
+  display: none;
+  position: fixed;
+  top: 52px;             /* direkt unter Header */
+  left: 0; right: 0;
+  z-index: 9100;
+  padding: 0 10px 6px;
+  pointer-events: none;
+}
+
+.tut-banner-sichtbar {
+  display: block !important;
+}
+
+.tut-inner {
+  background: var(--surface);
+  border: 1.5px solid var(--amber);
+  border-top: 3px solid var(--amber);
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.2);
+  overflow: hidden;
+  pointer-events: all;
+  animation: tutBannerEin 0.25s cubic-bezier(.34,1.3,.64,1);
+}
+
+@keyframes tutBannerEin {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.tut-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px 6px;
+}
+
+.tut-icon-wrap {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  background: var(--amber-dim);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+.tut-content { flex: 1; min-width: 0; }
+
+.tut-step-label {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 2px;
+}
+
+.tut-headline {
+  font-family: var(--font-head);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.tut-body {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+
+.tut-pfeil-hint {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.3px;
+}
+
+.tut-close {
+  width: 26px !important;
+  height: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  color: var(--text3) !important;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.tut-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 8px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+  gap: 10px;
+}
+
+.tut-dots {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.tut-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--border2);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tut-dot-done   { background: var(--green); }
+.tut-dot-aktiv  { background: var(--amber); width: 16px; border-radius: 3px; }
+
+.tut-btn-weiter, .tut-btn-fertig {
+  flex-shrink: 0;
+  padding: 6px 14px !important;
+  min-height: 32px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  width: auto !important;
+}
+
+.tut-btn-weiter {
+  background: var(--amber) !important;
+  color: #000 !important;
+  border: none !important;
+}
+
+.tut-btn-fertig {
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+}
+
+/* Spotlight pulse */
+@keyframes tutSpotPuls {
+  0%, 100% { box-shadow: 0 0 0 2px var(--amber), 0 0 12px rgba(245,158,11,0.4); }
+  50%       { box-shadow: 0 0 0 4px var(--amber), 0 0 20px rgba(245,158,11,0.6); }
+}
+
+/* Desktop: Banner breiter begrenzen */
+@media (min-width: 768px) {
+  #tut-banner {
+    left: 200px; /* neben Sidebar */
+  }
+}
