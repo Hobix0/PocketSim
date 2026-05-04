@@ -388,7 +388,8 @@ function uebersichtKPIsAktualisieren() {
   let html = "";
 
   // ── 1. FIRMEN-BANNER ──
-  html +=
+  
+  /*html +=
     "<div class='cockpit-firma-banner' style='border-left-color:" + firmaFarbe + "'>" +
       "<div class='cfb-left'>" +
         "<div class='cfb-name' style='color:" + firmaFarbe + "'>" + firmaName + "</div>" +
@@ -399,7 +400,7 @@ function uebersichtKPIsAktualisieren() {
         (firmaFokus ? "<div class='cfb-fokus'>" + firmaFokus + "</div>" : "") +
       "</div>" +
     "</div>";
-
+  */
   // ── 2. KPI-KARTEN ──
   let kpiKlasse = gewinnProRunde >= 0 ? "positive" : "negative";
   html +=
