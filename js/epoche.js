@@ -417,7 +417,7 @@ function zeigeEpocheUebergang(neueEpoche) {
           "<span class='sr-fanfare-reward-zahl' style='color:var(--cyan)'>Tier " + (neueEpoche*2) + " + " + (neueEpoche*2+1) + " freigeschaltet</span>" +
           "<span class='sr-fanfare-reward-label'>Neue Materialien & Maschinen verfügbar</span>" +
         "</div>" +
-        "<button class='sr-fanfare-weiter' onclick='document.getElementById("modal-stadtrat").style.display="none"'>Weiter erforschen →</button>" +
+        "<button class='sr-fanfare-weiter' onclick='stadtratFanfareSchliessen()'>Weiter erforschen →</button>" +
       "</div>" +
     "</div>";
   modal.style.display = "flex";

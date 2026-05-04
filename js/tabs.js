@@ -4,6 +4,9 @@ let aktiverScreen = "uebersicht";
 let screenVerlauf = [];
 
 function screenZeigen(screenName) {
+  // Ignore Mehr-Button and invalid screens
+  if (!screenName || screenName === "mehr") return;
+
   // Mehr-Menü schließen wenn offen
   navMehrSchliessen();
   document.querySelectorAll(".screen").forEach(function(s) {
