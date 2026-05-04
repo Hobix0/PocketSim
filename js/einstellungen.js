@@ -50,6 +50,10 @@ window.pocketsim = {
     if (debugPanelSichtbar) {
       console.log("[PocketSim] Einstellungen öffnen um Debug-Tools zu nutzen");
       einstellungenOeffnen();
+      // Nach kurzem Delay befüllen wenn DOM bereit
+      setTimeout(function() {
+        debugMaterialDropdownBefuellen();
+      }, 100);
     }
   },
   addGeld: function(betrag) {
@@ -120,7 +124,7 @@ function debugGeldAktion() {
 // ── Debug: Material setzen ──
 function debugMaterialDropdownBefuellen() {
   let select = document.getElementById("debug-mat-select");
-  if (!select || !window.MATERIALIEN) return;
+  if (!select || typeof MATERIALIEN === "undefined" || !MATERIALIEN || !MATERIALIEN.length) return;
   // Immer neu befüllen (clear first)
   while (select.options.length > 1) select.remove(1);
   for (let mat of MATERIALIEN) {

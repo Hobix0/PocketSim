@@ -227,7 +227,8 @@ function lkwScreenAktualisieren() {
   if (!bereich) return;
 
   // Safety: warte bis Daten geladen
-  if (!window.MASCHINEN || !window.MATERIALIEN) {
+  if (typeof MASCHINEN === "undefined" || !MASCHINEN || !MASCHINEN.length ||
+      typeof MATERIALIEN === "undefined" || !MATERIALIEN || !MATERIALIEN.length) {
     bereich.innerHTML = "<div style='padding:20px;color:var(--text3);text-align:center'>⏳ Lade Daten...</div>";
     setTimeout(lkwScreenAktualisieren, 500);
     return;
