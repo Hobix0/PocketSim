@@ -370,13 +370,13 @@ function uebersichtKPIsAktualisieren() {
   }
 
   // ── Firmen-Header ──
-  let firmaName   = (window.unternehmen && unternehmen.name)   || "PocketSim";
-  let firmaSlogan = (window.unternehmen && unternehmen.slogan) || "Produktionsimperium";
-  let firmaFarbe  = (window.unternehmen && unternehmen.farbe)  || "var(--amber)";
-  let firmaFokus  = window.unternehmen && unternehmen.fokus
+  let firmaName   = (typeof unternehmen !== "undefined" && unternehmen && unternehmen.name) || "PocketSim";
+  let firmaSlogan = (typeof unternehmen !== "undefined" && unternehmen && unternehmen.slogan) || "Produktionsimperium";
+  let firmaFarbe  = (typeof unternehmen !== "undefined" && unternehmen && unternehmen.farbe) || "var(--amber)";
+  let firmaFokus  = typeof unternehmen !== "undefined" && unternehmen && unternehmen.fokus
     ? { bergbau:"⛏ Bergbau", fertigung:"🏭 Fertigung", handel:"📦 Handel", forschung:"🔬 Forschung" }[unternehmen.fokus]
     : "";
-  let epocheNum   = (window.aktuelleEpoche) || 1;
+  let epocheNum   = (typeof aktuelleEpoche !== "undefined" && aktuelleEpoche) || 1;
 
   // ── Auftrags-Vorschau ──
   let aktiveAuftraege = aktive_auftraege || [];

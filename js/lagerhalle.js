@@ -224,6 +224,21 @@ function gebaeudeAnklicken(id) {
     drillDown("labor", pfad + " › " + data.name);
     laborAnzeigenAktualisieren?.();
   }
+
+  if (data.typ === "logistik" || data.typ === "kraftwerk") {
+    // Logistik (Garage) und Kraftwerk → LKW/Info Screen oder Verwalten
+    if (data.typ === "logistik") {
+      // Zur Logistik-Navigation
+      if (typeof screenZeigen === "function") screenZeigen("lkw");
+      // Nav-Button aktivieren
+      document.querySelectorAll(".sidebar-btn, .nav-btn").forEach(function(b) {
+        b.classList.toggle("aktiv", b.getAttribute("data-screen") === "lkw");
+      });
+    } else {
+      // Kraftwerk: Verwalten-Modal öffnen
+      verwaltenOeffnen("gebaeude", data.id);
+    }
+  }
 }
 
 

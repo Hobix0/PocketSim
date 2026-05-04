@@ -227,12 +227,13 @@ function lkwScreenAktualisieren() {
   if (!bereich) return;
 
   // Safety: warte bis Daten geladen
-  if (typeof MASCHINEN === "undefined" || !MASCHINEN || !MASCHINEN.length ||
-      typeof MATERIALIEN === "undefined" || !MATERIALIEN || !MATERIALIEN.length) {
+  if (typeof MATERIALIEN === "undefined" || typeof MASCHINEN === "undefined") {
     bereich.innerHTML = "<div style='padding:20px;color:var(--text3);text-align:center'>⏳ Lade Daten...</div>";
     setTimeout(lkwScreenAktualisieren, 500);
     return;
   }
+
+  try {
 
   let html = "";
 
