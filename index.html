@@ -364,10 +364,9 @@
         <span class="nav-icon">🛒</span>
         <span class="nav-label">Shop</span>
       </button>
-      <!-- Bottom Nav (ersetze einen weniger wichtigen Button) -->
-      <button class="nav-btn" data-screen="statistik">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">Statistik</span>
+      <button class="nav-btn" data-screen="lkw">
+        <span class="nav-icon">🚚</span>
+        <span class="nav-label">Logistik</span>
       </button>
     </nav>
 
@@ -408,21 +407,48 @@
             🔊 Sounds: AN
           </button>
         </div>
-        <div class="einstellung-gruppe" id="debug-gruppe">
-          <h3>🛠️ Debug</h3>
-          <p class="einstellung-text" style="margin-bottom:10px">
-            Nur zum Testen — wird nicht gespeichert.
+        <!-- Debug-Panel: standardmäßig VERSTECKT — via pocketsim.debug() in Konsole aktivieren -->
+        <div class="einstellung-gruppe" id="debug-gruppe" style="display:none">
+          <h3>🛠️ Debug-Panel <span style="font-family:var(--font-mono);font-size:10px;color:var(--amber);background:var(--amber-dim);padding:2px 7px;border-radius:4px;margin-left:6px">DEV</span></h3>
+          <p class="einstellung-text" style="margin-bottom:12px">
+            Wird nicht gespeichert. Aktivieren: <code>pocketsim.debug()</code> in der Browser-Konsole.
           </p>
-          <div style="display:flex; flex-direction:column; gap:8px">
-            <button id="btn-debug-geld" onclick="debugGeldToggle()">
-              💰 Unendlich Geld: AUS
-            </button>
-            <button id="btn-debug-kosten" onclick="debugKostenToggle()">
-              ⚡ Laufende Kosten: AN
-            </button>
-            <button id="btn-debug-alle-freischalten" onclick="debugAllesFreischalten()">
-              🔓 Alles freischalten
-            </button>
+
+          <!-- Geld-Steuerung -->
+          <div class="debug-section">
+            <div class="debug-section-label">💰 Geld</div>
+            <div class="debug-input-row">
+              <select id="debug-geld-aktion" class="debug-select">
+                <option value="add">+ Hinzufügen</option>
+                <option value="remove">− Entfernen</option>
+              </select>
+              <input id="debug-geld-input" type="number" value="50000" min="1" class="debug-input" placeholder="Betrag" />
+              <button onclick="debugGeldAktion()" class="debug-btn-go">OK</button>
+            </div>
+          </div>
+
+          <!-- Material-Steuerung -->
+          <div class="debug-section">
+            <div class="debug-section-label">📦 Material</div>
+            <div class="debug-input-row">
+              <select id="debug-mat-aktion" class="debug-select">
+                <option value="set">= Setzen</option>
+                <option value="add">+ Hinzufügen</option>
+                <option value="remove">− Entfernen</option>
+              </select>
+              <select id="debug-mat-select" class="debug-select" style="flex:2">
+                <option value="">— Material wählen —</option>
+              </select>
+              <input id="debug-mat-menge" type="number" value="100" min="1" class="debug-input" style="width:70px" />
+              <button onclick="debugMaterialAktion()" class="debug-btn-go">OK</button>
+            </div>
+          </div>
+
+          <!-- Toggle Buttons -->
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button id="btn-debug-geld" onclick="debugGeldToggle()">💰 Unendlich Geld: AUS</button>
+            <button id="btn-debug-kosten" onclick="debugKostenToggle()">⚡ Laufende Kosten: AN</button>
+            <button id="btn-debug-alle-freischalten" onclick="debugAllesFreischalten()">🔓 Alles freischalten</button>
           </div>
         </div>
       </div>

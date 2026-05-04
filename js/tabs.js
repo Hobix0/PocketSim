@@ -32,6 +32,12 @@ function screenZeigen(screenName) {
   if (screenName === "personal" && typeof personalAnzeigenAktualisieren === "function") {
     personalAnzeigenAktualisieren();
   }
+  if (screenName === "lkw" && typeof lkwScreenAktualisieren === "function") {
+    lkwScreenAktualisieren();
+  }
+  if (screenName === "uebersicht" && typeof uebersichtKPIsAktualisieren === "function") {
+    uebersichtKPIsAktualisieren();
+  }
 }
 
 function drillDown(screenName, pfad) {
