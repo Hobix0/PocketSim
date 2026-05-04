@@ -53,9 +53,40 @@ const LKW_TYPEN = [
 ];
 
 // ── Kaufen ──
+function hatGarage() {
+  // Prüft ob auf einem der Grundstücke eine Garage gebaut wurde
+  let garageCount = 0;
+  for (let id in (gekaufte_gebaeude || {})) {
+    if (id === "garage" || id.startsWith("garage_")) garageCount++;
+  }
+  return garageCount > 0;
+}
+
+function maxLkwKapazitaet() {
+  // 2 Stellplätze pro Garage
+  let count = 0;
+  for (let id in (gekaufte_gebaeude || {})) {
+    if (id === "garage" || id.startsWith("garage_")) count += 2;
+  }
+  return count;
+}
+
 function lkwKaufen(typId) {
   let typ = LKW_TYPEN.find(function(t) { return t.id === typId; });
   if (!typ) return;
+
+  // Garage-Prüfung
+  if (!hatGarage()) {
+    zeigeNotification("❌ Keine Garage vorhanden! Baue zuerst eine Garage.", "red");
+    return;
+  }
+
+  // Stellplatz-Prüfung
+  let max = maxLkwKapazitaet();
+  if (gekaufte_lkws.length >= max) {
+    zeigeNotification("❌ Keine freien Stellplätze! Baue weitere Garagen. (" + gekaufte_lkws.length + "/" + max + ")", "red");
+    return;
+  }
 
   // Bedingung prüfen
   if (typ.bedingung && !gekaufte_lkws.some(function(l) { return l.typ === typ.bedingung; })) {
@@ -157,6 +188,12 @@ function lkwRundeTick() {
 }
 
 function lkwLieferungAbschliessen(lkw) {
+  // Transfer-Lieferung?
+  if (lkw.ladung && lkw.ladung.typ === "transfer") {
+    lkwTransferAbschliessen(lkw);
+    lkw.unterwegs = false; lkw.ladung = null; lkw.rundenBisAnkunft = 0; lkw.route = null;
+    return;
+  }
   let auftrag = aktive_auftraege.find(function(a) { return a.id === lkw.ladung.auftragId; });
 
   if (auftrag) {
@@ -200,6 +237,26 @@ function lkwScreenAktualisieren() {
     "</div>";
 
   // ── Info: Kein LKW = Malus ──
+  // Garage-Status anzeigen
+  let garageVorhanden = typeof hatGarage === "function" && hatGarage();
+  let maxPlätze = typeof maxLkwKapazitaet === "function" ? maxLkwKapazitaet() : 0;
+
+  if (!garageVorhanden) {
+    html +=
+      "<div class='lkw-kein-lkw-hint' style='border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.06)'>" +
+        "<div class='lkw-hint-icon'>🚗</div>" +
+        "<div>" +
+          "<div class='lkw-hint-titel' style='color:var(--red)'>Keine Garage vorhanden</div>" +
+          "<div class='lkw-hint-text'>Kaufe zuerst eine Garage (12.000 €) im Shop. Jede Garage bietet 2 LKW-Stellplätze.</div>" +
+        "</div>" +
+      "</div>";
+  } else if (maxPlätze > 0) {
+    html +=
+      "<div class='lkw-garage-status'>" +
+        "🚗 Garage aktiv · <strong>" + gekaufte_lkws.length + " / " + maxPlätze + "</strong> Stellplätze belegt" +
+      "</div>";
+  }
+
   if (gekaufte_lkws.length === 0) {
     html +=
       "<div class='lkw-kein-lkw-hint'>" +
@@ -245,6 +302,43 @@ function lkwScreenAktualisieren() {
               "<div class='lkw-ankunft'>Ankunft in " + lkw.rundenBisAnkunft + " Runde" + (lkw.rundenBisAnkunft !== 1 ? "n" : "") + "</div>" +
             "</div>"
           : "") +
+        "</div>";
+    }
+    html += "</div>";
+  }
+
+  // ── Grundstück-Transfer ──
+  if (gekaufte_grundstuecke && gekaufte_grundstuecke.length > 1 && gekaufte_lkws.length > 0) {
+    html += "<div class='lkw-section-title' style='margin-top:16px'>🗺️ Grundstück-Transfer</div>";
+    html += "<div class='lkw-transfer-hint'>Schicke Waren von einem Grundstück zu einem anderen. Wähle Quelle, Ziel, Material und Menge.</div>";
+    html += "<div class='lkw-transfer-row'>";
+    
+    let verfuegbareTr = gekaufte_lkws.filter(function(l) { return !l.unterwegs; });
+    
+    if (verfuegbareTr.length === 0) {
+      html += "<p style='font-size:12px;color:var(--text3)'>Alle LKWs sind gerade unterwegs.</p>";
+    } else {
+      // Einfaches Transfer-UI
+      let gsOptionen = (gekaufte_grundstuecke || []).map(function(id) {
+        let gs = typeof GRUNDSTUECKE !== "undefined" ? GRUNDSTUECKE.find(function(g) { return g.id === id; }) : null;
+        return "<option value='" + id + "'>" + (gs ? gs.name : id) + "</option>";
+      }).join("");
+      
+      let matOptionen = Object.entries(lager)
+        .filter(function(e) { return e[1] > 0; })
+        .map(function(e) {
+          let m = typeof MATERIALIEN !== "undefined" ? MATERIALIEN.find(function(m) { return m.id === e[0]; }) : null;
+          return "<option value='" + e[0] + "'>" + (m ? m.name : e[0]) + " (" + e[1] + ")</option>";
+        }).join("");
+        
+      html +=
+        "<div class='lkw-transfer-form'>" +
+          "<select id='tr-von' class='lkw-select'>" + gsOptionen + "</select>" +
+          "<span style='color:var(--text3)'>→</span>" +
+          "<select id='tr-nach' class='lkw-select'>" + gsOptionen + "</select>" +
+          "<select id='tr-mat' class='lkw-select'>" + matOptionen + "</select>" +
+          "<input id='tr-menge' type='number' value='10' min='1' class='lkw-select' style='width:70px' />" +
+          "<button onclick='lkwTransferUI()' style='min-height:36px;padding:6px 12px;font-size:12px'>Transfer →</button>" +
         "</div>";
     }
     html += "</div>";
@@ -350,11 +444,101 @@ function auftragErfuellenOhneLkw(auftragId) {
 
 // ── State Integration ──
 function lkwZuStand() {
-  return { lkws: gekaufte_lkws, statistik: lkw_statistik };
+  return {
+    lkws:              gekaufte_lkws,
+    statistik:         lkw_statistik,
+    grundstueck_lager: window.grundstueck_lager || {}
+  };
 }
 
 function lkwAusStand(stand) {
   if (!stand) return;
-  gekaufte_lkws  = stand.lkws       || [];
-  lkw_statistik  = stand.statistik  || { lieferungen: 0, gesamtEinnahmen: 0 };
+  gekaufte_lkws           = stand.lkws              || [];
+  lkw_statistik           = stand.statistik         || { lieferungen: 0, gesamtEinnahmen: 0 };
+  window.grundstueck_lager = stand.grundstueck_lager || {};
+}
+
+// ══════════════════════════════════
+// GRUNDSTÜCK-TRANSFER
+// LKW schickt Waren von GS A → GS B
+// Jedes Grundstück hat eigenes Lager
+// ══════════════════════════════════
+
+// grundstueck_lager = { "aethon_start": { eisenplatte: 50, ... }, "aethon_industrie": {...} }
+// Das aktive Hauptlager ist das erste Grundstück
+// Transfer-LKW bewegt Waren zwischen Grundstücken
+
+function grundstueckLagerInitialisieren() {
+  if (!window.grundstueck_lager) window.grundstueck_lager = {};
+  for (let gs of (gekaufte_grundstuecke || [])) {
+    if (!grundstueck_lager[gs]) grundstueck_lager[gs] = {};
+  }
+}
+
+function aktivesGrundstueck() {
+  // Erstes Grundstück = aktives Hauptlager
+  return (gekaufte_grundstuecke && gekaufte_grundstuecke[0]) || null;
+}
+
+function lkwTransferStarten(vonGsId, nachGsId, material, menge, lkwId) {
+  let lkw = gekaufte_lkws.find(function(l) { return l.id === lkwId; });
+  if (!lkw || lkw.unterwegs) {
+    zeigeNotification("❌ LKW nicht verfügbar!", "red"); return;
+  }
+  let typ = LKW_TYPEN.find(function(t) { return t.id === lkw.typ; });
+  if (menge > (typ ? typ.kapazitaet : 50)) {
+    zeigeNotification("❌ Ladung zu groß!", "red"); return;
+  }
+
+  // Waren vom Quell-Grundstück entnehmen
+  let vonLager = (window.grundstueck_lager && grundstueck_lager[vonGsId]) || lager;
+  let bestand = vonLager[material] || 0;
+  if (bestand < menge) {
+    zeigeNotification("❌ Nicht genug " + material + " auf Grundstück!", "red"); return;
+  }
+  vonLager[material] = Math.max(0, bestand - menge);
+
+  lkw.unterwegs = true;
+  lkw.ladung = {
+    typ: "transfer",
+    vonGs: vonGsId,
+    nachGs: nachGsId,
+    material: material,
+    menge: menge
+  };
+  lkw.rundenBisAnkunft = typ ? typ.geschwindigkeit : 3;
+  lkw.route = vonGsId + " → " + nachGsId;
+
+  lagerAnzeigenAktualisieren();
+  lkwScreenAktualisieren();
+  zeigeNotification("🚚 Transfer gestartet: " + menge + "× " + material, "green");
+}
+
+function lkwTransferAbschliessen(lkw) {
+  if (!lkw.ladung || lkw.ladung.typ !== "transfer") return;
+  let nachLager = (window.grundstueck_lager && grundstueck_lager[lkw.ladung.nachGs]);
+  if (!nachLager) {
+    // Fallback: ins Hauptlager
+    lager[lkw.ladung.material] = (lager[lkw.ladung.material] || 0) + lkw.ladung.menge;
+  } else {
+    nachLager[lkw.ladung.material] = (nachLager[lkw.ladung.material] || 0) + lkw.ladung.menge;
+  }
+  lagerAnzeigenAktualisieren();
+  zeigeNotification("📦 Transfer angekommen: " + lkw.ladung.menge + "× " + lkw.ladung.material, "green");
+}
+
+function lkwTransferUI() {
+  let von   = document.getElementById("tr-von");
+  let nach  = document.getElementById("tr-nach");
+  let mat   = document.getElementById("tr-mat");
+  let menge = document.getElementById("tr-menge");
+  if (!von || !nach || !mat || !menge) return;
+  if (von.value === nach.value) {
+    zeigeNotification("❌ Quelle und Ziel müssen unterschiedlich sein!", "red"); return;
+  }
+  let verfuegbar = gekaufte_lkws.find(function(l) { return !l.unterwegs; });
+  if (!verfuegbar) {
+    zeigeNotification("❌ Kein LKW verfügbar!", "red"); return;
+  }
+  lkwTransferStarten(von.value, nach.value, mat.value, parseInt(menge.value) || 1, verfuegbar.id);
 }

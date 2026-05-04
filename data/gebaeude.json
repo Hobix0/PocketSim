@@ -203,5 +203,33 @@
       }
     ],
     "epoche": 1
+  },
+  {
+    "id": "garage",
+    "name": "Garage",
+    "emoji": "🚗",
+    "bild": null,
+    "beschreibung": "Notwendig für LKWs. Ohne Garage können keine LKWs gekauft oder betrieben werden. Pro Garage: 2 LKW-Stellplätze.",
+    "kosten": 12000,
+    "typ": "logistik",
+    "hallenTyp": "garage",
+    "groesse": "mittel",
+    "kostenProRunde": 5,
+    "bedingung": null,
+    "kategorie": "gebaeude",
+    "tileBreite": 12,
+    "tileHoehe": 8,
+    "maxMaschinen": 0,
+    "lkwStellplaetze": 2,
+    "raeume": [
+      {
+        "id": "r1",
+        "name": "Stellplätze",
+        "groesse": 10,
+        "typ": "logistik",
+        "slots": 2
+      }
+    ],
+    "epoche": 1
   }
 ]

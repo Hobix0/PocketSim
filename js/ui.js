@@ -440,7 +440,7 @@ function uebersichtKPIsAktualisieren() {
               ? "<span class='cei-problem'>Kein Rezept gewählt — Maschine steht still</span>"
               : "<span class='cei-problem'>" + e.material + " fast leer (" + e.bestand + " / " + (e.benoetigt * 3) + " Mindest)</span>") +
           "</div>" +
-          "<button class='cei-btn' onclick='tabWechseln("shop")'>Kaufen →</button>" +
+          "<button class='cei-btn' onclick=\"tabWechseln('shop')\">Kaufen →</button>" +
         "</div>";
     }
     html += "</div>";
@@ -486,7 +486,7 @@ function uebersichtKPIsAktualisieren() {
         "<div style='font-size:32px;margin-bottom:8px'>🏭</div>" +
         "<div style='font-family:var(--font-head);font-size:14px;font-weight:700'>Noch keine Maschinen</div>" +
         "<div style='font-size:12px;color:var(--text3);margin-top:4px'>Kaufe dein erstes Grundstück und eine Fabrikhalle im Shop.</div>" +
-        "<button style='margin-top:12px' onclick='tabWechseln("shop")'>→ Zum Shop</button>" +
+        "<button style='margin-top:12px' onclick='\"tabWechseln(quote)\"'.replace('quote',\"'shop'\")>→ Zum Shop</button>" +
       "</div>";
   }
 
@@ -519,7 +519,7 @@ function uebersichtKPIsAktualisieren() {
         "</div>";
     }
     if (aktiveAuftraege.length > 3) {
-      html += "<button style='width:100%;margin-top:4px' onclick='tabWechseln("auftraege")'>Alle " + aktiveAuftraege.length + " Aufträge →</button>";
+      html += '<button style="width:100%;margin-top:4px" onclick="tabWechseln(\'auftraege\')">Alle ' + aktiveAuftraege.length + " Aufträge →</button>";
     }
     html += "</div></div>";
   }
