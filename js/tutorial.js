@@ -165,8 +165,12 @@ function tutorialBeenden(skip) {
   // Spotlight entfernen
   document.querySelectorAll(".tutorial-highlight").forEach(function(el) {
     el.classList.remove("tutorial-highlight");
+    el.removeAttribute("style");
   });
   document.body.classList.remove("tutorial-aktiv");
+  tutorialSpotlightEntfernen();
+  let overlay = document.getElementById("tutorial-overlay");
+  if (overlay) overlay.style.display = "none";
 
   if (!skip) {
     localStorage.setItem("pocketsim_tutorial_done", "1");
@@ -183,7 +187,6 @@ function tutorialRendern() {
   let schritt = TUTORIAL_SCHRITTE[tutorialSchritt];
   if (!schritt) { tutorialBeenden(false); return; }
 
-  // Overlay
   let overlay = document.getElementById("tutorial-overlay");
   if (!overlay) {
     overlay = document.createElement("div");
@@ -193,17 +196,61 @@ function tutorialRendern() {
   overlay.style.display = "block";
   document.body.classList.add("tutorial-aktiv");
 
-  // Spotlight: altes entfernen
+  // Spotlight: alte entfernen
   document.querySelectorAll(".tutorial-highlight").forEach(function(el) {
     el.classList.remove("tutorial-highlight");
+    el.removeAttribute("style");
   });
+  tutorialSpotlightEntfernen();
 
   // Ziel-Element highlighten
   let zielEl = schritt.ziel ? document.querySelector(schritt.ziel) : null;
-  if (zielEl) zielEl.classList.add("tutorial-highlight");
+  if (zielEl) {
+    zielEl.classList.add("tutorial-highlight");
+    // Für Fixed-Position Elemente (Nav-Buttons): Spotlight als Pseudo-Box
+    tutorialSpotlightZeigen(zielEl);
+  }
 
-  // Tooltip positionieren
+  // Wenn Zielauswahl-Modal offen: Overlay ausblenden
+  let zielModal = document.getElementById("modal-zielauswahl");
+  if (zielModal && zielModal.style.display !== "none" && zielModal.style.display !== "") {
+    if (overlay) overlay.style.display = "none";
+    tutorialSpotlightEntfernen();
+    let tooltip = document.getElementById("tutorial-tooltip");
+    if (tooltip) tooltip.style.display = "none";
+    return;
+  }
+
   tutorialTooltipRendern(schritt, zielEl);
+}
+
+function tutorialSpotlightZeigen(el) {
+  let rect = el.getBoundingClientRect();
+  // Spotlight-Box direkt über dem Element
+  let spot = document.getElementById("tutorial-spotlight");
+  if (!spot) {
+    spot = document.createElement("div");
+    spot.id = "tutorial-spotlight";
+    document.body.appendChild(spot);
+  }
+  let pad = 6;
+  spot.style.cssText =
+    "position:fixed;" +
+    "top:" + (rect.top - pad) + "px;" +
+    "left:" + (rect.left - pad) + "px;" +
+    "width:" + (rect.width + pad*2) + "px;" +
+    "height:" + (rect.height + pad*2) + "px;" +
+    "z-index:9200;" +
+    "pointer-events:none;" +
+    "border-radius:10px;" +
+    "box-shadow:0 0 0 3px var(--amber),0 0 0 9999px rgba(0,0,0,0.55);" +
+    "animation:tutSpotPuls 1.5s infinite;";
+  spot.style.display = "block";
+}
+
+function tutorialSpotlightEntfernen() {
+  let spot = document.getElementById("tutorial-spotlight");
+  if (spot) spot.style.display = "none";
 }
 
 function tutorialTooltipRendern(schritt, zielEl) {

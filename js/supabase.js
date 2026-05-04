@@ -94,6 +94,13 @@ async function supabaseInit() {
   window.addEventListener("pagehide", function() {
     if (syncAktiv) cloudSpeichernSofort();
   });
+
+  // iOS-Backup: alle 30 Sekunden speichern
+  setInterval(function() {
+    if (syncAktiv && typeof spielRundeGesamt !== "undefined" && spielRundeGesamt > 0) {
+      cloudSpeichernSofort();
+    }
+  }, 30000);
 }
 
 // ══════════════════════════════════
