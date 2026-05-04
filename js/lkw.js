@@ -233,8 +233,6 @@ function lkwScreenAktualisieren() {
     return;
   }
 
-  try {
-
   let html = "";
 
   // ── KPIs ──
@@ -388,7 +386,12 @@ function lkwScreenAktualisieren() {
   }
   html += "</div>";
 
-  bereich.innerHTML = html;
+  try {
+    bereich.innerHTML = html;
+  } catch(e) {
+    console.error("[LKW] Render-Fehler:", e);
+    bereich.innerHTML = "<div style='padding:20px;color:var(--red);font-size:12px'>Fehler: " + e.message + "</div>";
+  }
 }
 
 // ── Auftraege-Screen: LKW-Auswahl zeigen ──
