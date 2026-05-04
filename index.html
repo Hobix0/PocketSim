@@ -158,7 +158,7 @@
         <span class="sidebar-icon">📋</span>
         Aufträge
       </button>
-      <button class="sidebar-btn" data-screen="lkw">
+      <button class="sidebar-btn" data-screen="lkw" onclick="if(typeof lkwScreenAktualisieren==='function')lkwScreenAktualisieren()">
         <span class="sidebar-icon">🚚</span>
         Logistik
       </button>
@@ -269,16 +269,10 @@
 
       <!-- Screen 8: Lager -->
       <div id="screen-lager" class="screen">
-        <h2>Lager</h2>
-        <div class="lager-reihe" id="lager-reihe"></div>
+        <div class="screen-titel">📦 Lager</div>
+        <div id="lager-reihe"></div>
 
-      <!-- Screen LKW -->
-      <div id="screen-lkw" class="screen">
-        <div class="screen-titel">🚚 Logistik</div>
-        <div id="lkw-bereich"></div>
-      </div>
-
-        <h2 style="margin-top:20px">Statistik</h2>
+        <h2 style="margin-top:20px;display:none">Statistik (intern)</h2>
         <div class="stat-karte">
           <span class="stat-label">Produktion / Runde</span>
           <span class="stat-wert" id="stat-bretter-runde">0</span>
@@ -331,6 +325,12 @@
       <!-- Statistik Screen -->
 <div id="screen-statistik" class="screen">
   <div class="screen-titel">📊 Statistik</div>
+
+      <!-- Screen LKW -->
+      <div id="screen-lkw" class="screen">
+        <div class="screen-titel">🚚 Logistik</div>
+        <div id="lkw-bereich"></div>
+      </div>
   <div id="statistik-bereich">
     <p class="screen-hinweis">Lass einige Runden laufen...</p>
   </div>
@@ -364,7 +364,7 @@
         <span class="nav-icon">🛒</span>
         <span class="nav-label">Shop</span>
       </button>
-      <button class="nav-btn" data-screen="lkw">
+      <button class="nav-btn" data-screen="lkw" onclick="if(typeof lkwScreenAktualisieren==='function')lkwScreenAktualisieren()">
         <span class="nav-icon">🚚</span>
         <span class="nav-label">Logistik</span>
       </button>

@@ -226,8 +226,7 @@ function auftraegeScreenAktualisieren() {
   bereich.querySelectorAll(".auftrag-btn[data-auftrag-id]").forEach(function(btn) {
     btn.addEventListener("click", function() {
       let id = btn.getAttribute("data-auftrag-id");
-      if (typeof lkwAuswahl === "function") lkwAuswahl(id);
-      else auftragErfuellen(id);
+      if (typeof lkwAuswahl === "function") lkwAuswahl(id); else auftragErfuellen(id);
     });
   });
 }
