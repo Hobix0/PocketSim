@@ -20,6 +20,10 @@ function einstellungenOeffnen() {
 
   debugAnzeigenAktualisieren();
   debugPanelVisibility();
+  // Material-Dropdown immer frisch befüllen wenn Panel sichtbar
+  if (debugPanelSichtbar && typeof debugMaterialDropdownBefuellen === "function") {
+    debugMaterialDropdownBefuellen();
+  }
   cloudSyncInfoAktualisieren();
   document.getElementById("modal-einstellungen").style.display = "flex";
 }
@@ -117,7 +121,8 @@ function debugGeldAktion() {
 function debugMaterialDropdownBefuellen() {
   let select = document.getElementById("debug-mat-select");
   if (!select || !window.MATERIALIEN) return;
-  if (select.options.length > 1) return; // schon befüllt
+  // Immer neu befüllen (clear first)
+  while (select.options.length > 1) select.remove(1);
   for (let mat of MATERIALIEN) {
     let opt = document.createElement("option");
     opt.value       = mat.id;

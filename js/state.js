@@ -413,8 +413,8 @@ function spielstandZuruecksetzen() {
   localStorage.removeItem("pocketsim_tutorial_done");
 
   // 2. Cloud-Spielstand löschen (Supabase)
-  if (typeof supabase !== "undefined" && typeof aktuellerUser !== "undefined" && aktuellerUser) {
-    supabase
+  if (typeof supabaseClient !== "undefined" && supabaseClient && typeof aktuellerUser !== "undefined" && aktuellerUser) {
+    supabaseClient
       .from("spielstand")
       .delete()
       .eq("user_id", aktuellerUser.id)
