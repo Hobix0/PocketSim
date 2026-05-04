@@ -9,7 +9,11 @@
     "kategorie": "produktion",
     "effekte": [],
     "bedingung": null,
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 0,
+      "reihe": 1
+    }
   },
   {
     "id": "metallurgie",
@@ -27,7 +31,11 @@
       }
     ],
     "bedingung": "grundlagen",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 0
+    }
   },
   {
     "id": "stahlverarbeitung",
@@ -45,7 +53,11 @@
       }
     ],
     "bedingung": "metallurgie",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 2,
+      "reihe": 0
+    }
   },
   {
     "id": "praezisionsguss",
@@ -63,7 +75,11 @@
       }
     ],
     "bedingung": "stahlverarbeitung",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 3,
+      "reihe": 0
+    }
   },
   {
     "id": "chemietechnik",
@@ -81,7 +97,11 @@
       }
     ],
     "bedingung": "grundlagen",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 2
+    }
   },
   {
     "id": "polymerforschung",
@@ -99,7 +119,11 @@
       }
     ],
     "bedingung": "chemietechnik",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 2,
+      "reihe": 2
+    }
   },
   {
     "id": "elektronik_1",
@@ -117,7 +141,11 @@
       }
     ],
     "bedingung": "metallurgie",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 0,
+      "reihe": 0
+    }
   },
   {
     "id": "elektronik_2",
@@ -135,7 +163,11 @@
       }
     ],
     "bedingung": "elektronik_1",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 0
+    }
   },
   {
     "id": "logistik_1",
@@ -152,7 +184,11 @@
       }
     ],
     "bedingung": "grundlagen",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 0,
+      "reihe": 0
+    }
   },
   {
     "id": "logistik_2",
@@ -169,7 +205,11 @@
       }
     ],
     "bedingung": "logistik_1",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 0
+    }
   },
   {
     "id": "schwertransport",
@@ -186,7 +226,11 @@
       }
     ],
     "bedingung": "logistik_2",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 2,
+      "reihe": 0
+    }
   },
   {
     "id": "energieeffizienz",
@@ -203,7 +247,11 @@
       }
     ],
     "bedingung": "grundlagen",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 0,
+      "reihe": 0
+    }
   },
   {
     "id": "kraftwerksbau",
@@ -220,7 +268,11 @@
       }
     ],
     "bedingung": "energieeffizienz",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 0
+    }
   },
   {
     "id": "marktanalyse",
@@ -237,7 +289,11 @@
       }
     ],
     "bedingung": "grundlagen",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 0,
+      "reihe": 1
+    }
   },
   {
     "id": "exportnetzwerk",
@@ -254,6 +310,10 @@
       }
     ],
     "bedingung": "marktanalyse",
-    "epoche": 1
+    "epoche": 1,
+    "position": {
+      "spalte": 1,
+      "reihe": 1
+    }
   }
 ]

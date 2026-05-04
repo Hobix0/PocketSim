@@ -513,14 +513,10 @@ function renderTechTree() {
   }
 
   // Kategorie-Farben
-  const kategorieFarben = {
-    'produktion': getCategoryColor('produktion'),
-    'wirtschaft': getCategoryColor('wirtschaft'),
-    'automation': getCategoryColor('automation'),
-    'maschinen': getCategoryColor('maschinen'),
-    'gebaeude': getCategoryColor('gebaeude'),
-    'logistik': getCategoryColor('logistik')
-  };
+  const kategorieFarben = {};
+  ["produktion","wirtschaft","logistik","elektronik","energie","maschinen","gebaeude","automation","basis"].forEach(function(k) {
+    kategorieFarben[k] = getCategoryColor(k);
+  });
 
   // Berechne Positionen
   const nodeSpacingX = 250;
@@ -528,32 +524,37 @@ function renderTechTree() {
   const categorySpacing = 300;
 
   let positions = {};
-  let currentY = 100;
-
-  // Gruppiere nach Kategorie
+  let currentY = 80;
+  
+  // Koordinaten sind pro Kategorie unabhängig
+  // Jede Kategorie startet bei Y=80, X=150 + spalte*spacing
   const kategorien = {};
-  filteredForschung.forEach(f => {
+  filteredForschung.forEach(function(f) {
     if (!kategorien[f.kategorie]) kategorien[f.kategorie] = [];
     kategorien[f.kategorie].push(f);
   });
 
-  Object.keys(kategorien).forEach(kat => {
+  Object.keys(kategorien).forEach(function(kat) {
     const techs = kategorien[kat];
-    // Sortiere nach Spalte
-    techs.sort((a, b) => (a.position?.spalte || 0) - (b.position?.spalte || 0));
+    techs.sort(function(a, b) { return (a.position && a.position.spalte || 0) - (b.position && b.position.spalte || 0); });
 
+    // Wenn nur eine Kategorie angezeigt: alles bei Y=80 starten
+    let baseY = (currentCategory !== 'all') ? 80 : currentY;
     let maxRow = 0;
-    techs.forEach(tech => {
-      const col = tech.position?.spalte || 0;
-      const row = tech.position?.reihe || 0;
+    
+    techs.forEach(function(tech) {
+      const col = tech.position && tech.position.spalte !== undefined ? tech.position.spalte : 0;
+      const row = tech.position && tech.position.reihe !== undefined ? tech.position.reihe : 0;
       positions[tech.id] = {
         x: 150 + col * nodeSpacingX,
-        y: currentY + row * nodeSpacingY,
+        y: baseY + row * nodeSpacingY,
         kategorie: kat
       };
       maxRow = Math.max(maxRow, row);
     });
-    currentY += (maxRow + 1) * nodeSpacingY + categorySpacing;
+    if (currentCategory === 'all') {
+      currentY += (maxRow + 1) * nodeSpacingY + categorySpacing;
+    }
   });
 
   // SVG Inhalt leeren

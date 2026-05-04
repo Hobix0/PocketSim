@@ -241,7 +241,19 @@ function tutorialTooltipRendern(schritt, zielEl) {
   tooltip.style.display = "block";
   tooltip.className = "tut-" + schritt.position;
 
-  if (schritt.position === "mitte") {
+  // Mobile: immer oben zentriert (über Content, unter Header)
+  let isMobile = window.innerWidth < 768;
+  
+  if (isMobile) {
+    tooltip.style.left      = "10px";
+    tooltip.style.right     = "10px";
+    tooltip.style.top       = "60px";
+    tooltip.style.bottom    = "auto";
+    tooltip.style.transform = "none";
+    tooltip.style.width     = "auto";
+    tooltip.style.maxWidth  = "none";
+    tooltip.style.zIndex    = "9600";
+  } else if (schritt.position === "mitte") {
     tooltip.style.left   = "50%";
     tooltip.style.top    = "50%";
     tooltip.style.transform = "translate(-50%, -50%)";
@@ -249,7 +261,7 @@ function tutorialTooltipRendern(schritt, zielEl) {
     tooltip.style.bottom = "auto";
   } else if (zielEl && schritt.position === "rechts") {
     let rect = zielEl.getBoundingClientRect();
-    let tooltipH = 220;
+    let tooltipH = 240;
     let top = Math.min(rect.top, window.innerHeight - tooltipH - 20);
     tooltip.style.left      = "auto";
     tooltip.style.right     = "12px";
@@ -257,7 +269,6 @@ function tutorialTooltipRendern(schritt, zielEl) {
     tooltip.style.transform = "none";
     tooltip.style.bottom    = "auto";
   } else {
-    // Fallback: unten rechts
     tooltip.style.left      = "auto";
     tooltip.style.right     = "12px";
     tooltip.style.bottom    = "80px";

@@ -6735,3 +6735,226 @@ body.tutorial-aktiv #tutorial-overlay {
   #nav-mehr-overlay,
   #nav-mehr-drawer { display: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════
+   HEADER — Pause Button + Cleanup
+   ══════════════════════════════════════════════════════ */
+
+#btn-pause {
+  min-width: 36px !important;
+  width: auto !important;
+  padding: 5px 10px !important;
+  font-size: 16px !important;
+  min-height: 32px !important;
+  letter-spacing: 0 !important;
+  font-family: var(--font-body) !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+#pause-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ══ GRUNDSTÜCKE DASHBOARD ══ */
+.cockpit-grundstuecke {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cockpit-gs-karte {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cockpit-gs-karte:hover { border-color: var(--amber); background: var(--surface2); }
+
+.cgk-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.cgk-emoji  { font-size:24px; flex-shrink:0; }
+.cgk-info   { flex:1; min-width:0; }
+.cgk-name   { font-family:var(--font-head); font-size:15px; font-weight:800; color:var(--text); display:block; }
+.cgk-sub    { font-size:11px; color:var(--text3); display:block; margin-top:1px; }
+
+.cgk-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.cgk-stat    { text-align:center; }
+.cgk-stat-zahl  { font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--text); display:block; }
+.cgk-stat-label { font-family:var(--font-head); font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; display:block; }
+.cgk-stat-zahl.negative { color:var(--red); }
+
+.cgk-open {
+  font-family: var(--font-head);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 1px;
+  text-align: right;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* ══ INPUT FIELDS — Lager + Markt ══ */
+input[type="number"],
+input[type="text"] {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text) !important;
+  padding: 8px 10px !important;
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  text-align: center !important;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus {
+  border-color: var(--amber) !important;
+  background: var(--surface3, var(--surface)) !important;
+}
+
+/* Mengen-Steuerung kompakter */
+.mengen-steuer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 3px !important;
+  width: 100% !important;
+}
+
+.mengen-steuer input {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 5px 2px !important;
+  text-align: center !important;
+  font-family: var(--font-mono) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  min-width: 0 !important;
+}
+
+.mengen-steuer input:focus {
+  background: var(--surface) !important;
+  border: 1px solid var(--amber) !important;
+}
+
+.mengen-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text2) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+.mengen-btn:hover { background: var(--surface3, var(--surface)) !important; color: var(--text) !important; border-color: var(--amber) !important; }
+
+/* ══ ZIELAUSWAHL POPUP ══ */
+#modal-zielauswahl {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 350 !important;
+  background: rgba(0,0,0,0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  display: none;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  padding: 10px !important;
+}
+
+@media (min-width: 768px) {
+  #modal-zielauswahl { align-items: center !important; }
+}
+
+#modal-zielauswahl-inhalt {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-top: 3px solid var(--amber) !important;
+  border-radius: 16px 16px 10px 10px !important;
+  padding: 20px !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+  animation: cardIn 0.25s ease !important;
+}
+
+@media (min-width: 768px) {
+  #modal-zielauswahl-inhalt { border-radius: var(--radius-lg) !important; }
+}
+
+#modal-zielauswahl-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 14px !important;
+  font-family: var(--font-head) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+#btn-zielauswahl-schliessen {
+  width: 28px !important; height: 28px !important;
+  min-height: 28px !important; padding: 0 !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  font-size: 14px !important; cursor: pointer !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+}
+
+/* ══ TUTORIAL MOBILE ══ */
+@media (max-width: 767px) {
+  #tutorial-tooltip {
+    position: fixed !important;
+    top: 56px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none !important;
+    bottom: auto !important;
+    transform: none !important;
+    z-index: 9600 !important;
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .tut-text { font-size: 12px !important; }
+  .tut-titel { font-size: 13px !important; }
+}

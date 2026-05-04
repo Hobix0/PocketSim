@@ -114,6 +114,13 @@ function spielPauseUmschalten() {
     }
     if (typeof zeigeNotification === "function") zeigeNotification("▶️ Spiel fortgesetzt", "green");
   }
+  // Pause-Icon aktualisieren
+  let pauseIcon = document.getElementById("pause-icon");
+  let pauseBtn  = document.getElementById("btn-pause");
+  if (pauseIcon) pauseIcon.textContent = spielPausiert ? "▶" : "⏸";
+  if (pauseBtn)  pauseBtn.setAttribute("title", spielPausiert ? "Weiter" : "Pause");
+  // rundenStatus in Header aktualisieren
+  if (typeof rundenStatusAktualisieren === "function") rundenStatusAktualisieren();
   if (typeof hallenplanAktualisieren === "function" && window.aktivesGebaeudeId) {
     hallenplanAktualisieren(window.aktivesGebaeudeId);
   }
