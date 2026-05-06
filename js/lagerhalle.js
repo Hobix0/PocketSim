@@ -192,16 +192,19 @@ function gebaeudeAnklicken(id) {
   let gs = GRUNDSTUECKE.find(g => g.id === window.aktivesGrundstueckId);
   let pfad = gs ? gs.name : "Grundstück";
 
-  if (data.typ === "fabrik") {
-    window.aktivesGebaeudeId = id;
-
-    drillDown("maschinen", pfad + " › " + data.name);
-
-    if (typeof hallenplanGenerieren === "function") {
-      document.getElementById("hallenplan-bereich").innerHTML =
-        hallenplanGenerieren(id);
+  if (data.typ === "fabrik" || data.typ === "lager" || data.typ === "kraftwerk" || data.typ === "labor") {
+    // 2D Fabrikkarte öffnen
+    let gsId = (gekaufte_grundstuecke && gekaufte_grundstuecke[0]) || null;
+    if (typeof fabrikkarteOeffnen === "function") {
+      fabrikkarteOeffnen(id, gsId);
+      return; // Modal übernimmt — kein drillDown nötig
     }
-
+    // Fallback
+    window.aktivesGebaeudeId = id;
+    drillDown("maschinen", pfad + " › " + data.name);
+    if (typeof hallenplanGenerieren === "function") {
+      document.getElementById("hallenplan-bereich").innerHTML = hallenplanGenerieren(id);
+    }
     if (typeof hallenUpgradeScreenAktualisieren === "function") {
       hallenUpgradeScreenAktualisieren(id);
     }

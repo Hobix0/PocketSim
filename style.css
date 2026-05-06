@@ -7204,3 +7204,265 @@ body.tutorial-aktiv #tutorial-overlay {
     left: 200px; /* neben Sidebar */
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   FABRIKKARTE — 2D Factory Visualization
+   ══════════════════════════════════════════════════════ */
+
+#modal-fabrikkarte {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.fk-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* ── Header ── */
+.fk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.fk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fk-geb-emoji { font-size: 24px; }
+
+.fk-geb-name {
+  font-family: var(--font-head);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.fk-geb-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.fk-header-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fk-btn-icon {
+  width: 32px !important; height: 32px !important;
+  min-height: 32px !important; padding: 0 !important;
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 7px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  color: var(--text2) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  letter-spacing: 0 !important; text-transform: none !important;
+}
+
+.fk-btn-icon:hover { background: var(--surface3, var(--surface)) !important; color: var(--text) !important; }
+
+.fk-btn-close {
+  width: 32px !important; height: 32px !important;
+  min-height: 32px !important; padding: 0 !important;
+  background: rgba(239,68,68,0.1) !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
+  border-radius: 7px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  color: var(--red) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  letter-spacing: 0 !important; text-transform: none !important;
+}
+
+/* ── Body ── */
+.fk-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.fk-canvas {
+  flex: 1;
+  display: block;
+  cursor: default;
+  touch-action: none;
+  background: #0b0d10;
+}
+
+/* ── Sidebar ── */
+.fk-sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.fk-sidebar-titel {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 12px 12px 6px;
+}
+
+.fk-list-label {
+  font-family: var(--font-head);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--amber);
+  padding: 8px 12px 4px;
+}
+
+.fk-mas-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 0.5px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.fk-mas-item:hover { background: var(--surface2); }
+
+.fk-mas-unplaced {
+  border-left: 2px solid var(--amber);
+  background: rgba(245,158,11,0.04);
+}
+
+.fk-mas-icon   { font-size: 18px; flex-shrink: 0; }
+.fk-mas-info   { flex: 1; min-width: 0; }
+.fk-mas-name   { font-family: var(--font-head); font-size: 12px; font-weight: 700; color: var(--text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fk-mas-sub    { font-size: 10px; color: var(--text3); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fk-mas-aktion { font-family: var(--font-head); font-size: 9px; font-weight: 700; color: var(--amber); letter-spacing: 0.5px; flex-shrink: 0; }
+
+.fk-leer-hint {
+  padding: 16px 12px;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.5;
+}
+
+/* ── Info Panel ── */
+.fk-info-panel {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+  background: var(--surface2);
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.fk-info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.fk-info-name {
+  font-family: var(--font-head);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.fk-info-status {
+  font-family: var(--font-head);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.fk-info-rezept {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fk-info-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fk-btn-primary {
+  width: 100% !important; padding: 8px !important; min-height: 34px !important;
+  font-size: 12px !important; font-weight: 700 !important;
+  background: var(--amber) !important; color: #000 !important;
+  border: none !important; border-radius: 7px !important;
+  cursor: pointer !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+
+.fk-btn-sec {
+  width: 100% !important; padding: 7px !important; min-height: 32px !important;
+  font-size: 11px !important; font-weight: 600 !important;
+  background: var(--surface) !important; color: var(--text2) !important;
+  border: 1px solid var(--border) !important; border-radius: 7px !important;
+  cursor: pointer !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+
+/* ── Platzier-Hinweis ── */
+.fk-platzier-hinweis {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--amber-dim);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: var(--radius);
+}
+
+.fk-ph-icon  { font-size: 22px; flex-shrink: 0; }
+.fk-ph-name  { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--amber); margin-bottom: 3px; }
+.fk-ph-text  { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+.fk-btn-abbr {
+  margin-top: 8px; width: 100% !important; padding: 6px !important; min-height: 30px !important;
+  font-size: 11px !important; font-weight: 600 !important;
+  background: transparent !important; color: var(--text3) !important;
+  border: 1px solid var(--border) !important; border-radius: 6px !important;
+  cursor: pointer !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+
+/* Mobile: Sidebar unten */
+@media (max-width: 767px) {
+  .fk-body { flex-direction: column; }
+  .fk-canvas { height: 55vh; width: 100% !important; }
+  .fk-sidebar { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--border); flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+  .fk-maschinenlist { display: flex; flex-direction: row; overflow-x: auto; min-width: 0; }
+  .fk-mas-item { flex-direction: column; align-items: center; text-align: center; padding: 8px; min-width: 80px; border-bottom: none; border-right: 0.5px solid var(--border); }
+  .fk-mas-aktion { display: none; }
+  .fk-info-panel { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 14px 14px 0 0; z-index: 10; }
+  .fk-sidebar-titel { display: none; }
+}
