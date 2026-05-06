@@ -104,7 +104,7 @@ function alleItemsSammeln() {
   for (let gs of GRUNDSTUECKE) {
     items.push({
       id: gs.id, name: gs.name, emoji: gs.emoji, bild: gs.bild || null,
-      beschreibung: gs.beschreibung + (gs.groesse ? " — " + (gs.groesse.l || gs.groesse) + (gs.groesse.b ? "×" + gs.groesse.b + "m" : "") : ""),
+      beschreibung: gs.beschreibung + " " + gs.groesse.l + "×" + gs.groesse.b + "m",
       preis: "💰 " + gs.kosten.toLocaleString("de-DE") + " €",
       kategorie: gs.kategorie, bedingung: gs.bedingung, typ: "grundstueck",
       gekauft: gekaufte_grundstuecke.includes(gs.id),

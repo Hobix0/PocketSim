@@ -141,6 +141,7 @@ function spielstandDatenErstellen() {
     unternehmen:              unternehmen,
     epoche_state: (typeof epocheZuStand === "function") ? epocheZuStand() : null,
     lkw_state: (typeof lkwZuStand === "function") ? lkwZuStand() : null,
+    fabrik_verbindungen: (typeof fabrik_verbindungen !== "undefined") ? fabrik_verbindungen : [],
     gekaufte_grundstuecke:    gekaufte_grundstuecke,
     gekaufte_gebaeude:        gekaufte_gebaeude,
     lager:                    lager,
@@ -211,6 +212,9 @@ function spielstandLaden() {
   }
   if (stand.lkw_state && typeof lkwAusStand === "function") {
     lkwAusStand(stand.lkw_state);
+  }
+  if (stand.fabrik_verbindungen) {
+    fabrik_verbindungen = stand.fabrik_verbindungen;
   }
 
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];
@@ -318,6 +322,9 @@ function spielstandLadenAusSlot(stand) {
   }
   if (stand.lkw_state && typeof lkwAusStand === "function") {
     lkwAusStand(stand.lkw_state);
+  }
+  if (stand.fabrik_verbindungen) {
+    fabrik_verbindungen = stand.fabrik_verbindungen;
   }
 
   gekaufte_grundstuecke   = stand.gekaufte_grundstuecke   || [];

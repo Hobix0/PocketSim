@@ -7466,3 +7466,19 @@ body.tutorial-aktiv #tutorial-overlay {
   .fk-info-panel { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 14px 14px 0 0; z-index: 10; }
   .fk-sidebar-titel { display: none; }
 }
+
+/* ── Fabrikkarte Wareneingang Hinweis ── */
+.fk-wareneingang-hint {
+  font-size: 11px;
+  color: var(--text3);
+  padding: 4px 12px 6px;
+  line-height: 1.4;
+}
+.fk-btn-verbinde {
+  background: transparent;
+  transition: all 0.15s;
+}
+.fk-btn-verbinde.aktiv {
+  background: var(--amber) !important;
+  color: #000 !important;
+}
