@@ -166,7 +166,7 @@ const FK = {
   // ═══════════ VERBINDUNGEN ═══════════
 
   drawConnections(ox,oy,T) {
-    for (let v of fabrik_verbindungen) {
+    for (let v of fabrik_verbindungen) { try {
       const mas = this.getMachines();
       const isVonSpecial  = v.vonInstId  && (v.vonInstId  === "__lager__" || v.vonInstId  === "__export__");
       const isNachSpecial = v.nachInstId && (v.nachInstId === "__lager__" || v.nachInstId === "__export__");
@@ -204,7 +204,7 @@ const FK = {
       c.beginPath(); c.moveTo(p1.x,p1.y-1);
       c.bezierCurveTo(cpx,p1.y-1,cpx,p2.y-1,p2.x,p2.y-1); c.stroke();
       // Fluss-Partikel
-      if (von&&von.m&&von.m.laeuft) {
+      if (von&&von?.m?.laeuft) {
         const f = (this.t*0.35 + fabrik_verbindungen.indexOf(v)*0.2) % 1;
         const bx = (1-f)**3*p1.x+3*(1-f)**2*f*cpx+3*(1-f)*f**2*cpx+f**3*p2.x;
         const by = (1-f)**3*p1.y+3*(1-f)**2*f*p1.y+3*(1-f)*f**2*p2.y+f**3*p2.y;
@@ -216,7 +216,7 @@ const FK = {
       c.fillStyle="#fff"; c.font=`bold ${Math.max(8,9*this.zoom)}px sans-serif`;
       c.textAlign="center"; c.fillText("×",mx,my+3*this.zoom);
       v._del={x:mx,y:my,r:9*this.zoom};
-    }
+    } catch(e){} }
   },
 
 
