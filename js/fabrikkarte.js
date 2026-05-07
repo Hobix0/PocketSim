@@ -391,7 +391,7 @@ const FK = {
 
     // Ports (nur wenn ausgewählt oder Port-Drag aktiv)
     if (sel || this.portDrag) {
-      this.drawPorts(entry, px, py, pw, ph, sel);
+      this.drawPorts(entry, px, py, pw, ph, sel, T);
     }
 
     // Auswahl-Rahmen
@@ -401,7 +401,7 @@ const FK = {
     }
   },
 
-  drawPorts(entry, px, py, pw, ph, big) {
+  drawPorts(entry, px, py, pw, ph, big, T) {
     const c=this.ctx;
     const r=big?Math.max(9,12*this.zoom):Math.max(5,6*this.zoom);
     const inp=this.getInpMats(entry.md), out=this.getOutMats(entry.md);
