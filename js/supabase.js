@@ -20,6 +20,7 @@ let _syncTimer      = null;
 // ══════════════════════════════════
 
 async function supabaseInit() {
+  let _spielGestartet = false;  // Guard gegen doppeltes Starten
   if (typeof window.supabase === "undefined") {
     console.warn("[Cloud] Supabase fehlt — starte ohne Login");
     loginScreenVerstecken();
@@ -43,8 +44,6 @@ async function supabaseInit() {
     // Nicht eingeloggt → Login-Screen zeigen
     loginScreenZeigen();
   }
-
-  let _spielGestartet = false;  // Guard gegen doppeltes Starten
 
   // Auth-Änderungen beobachten
   supabaseClient.auth.onAuthStateChange(function(event, session) {
