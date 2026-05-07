@@ -38,11 +38,13 @@ async function supabaseInit() {
     debugPruefen();
     ladebildschirmZeigen("Spielstand wird geladen...");
     await cloudPruefeUndLade();
-    spielStarten();
+    if (!_spielGestartet) { _spielGestartet = true; spielStarten(); }
   } else {
     // Nicht eingeloggt → Login-Screen zeigen
     loginScreenZeigen();
   }
+
+  let _spielGestartet = false;  // Guard gegen doppeltes Starten
 
   // Auth-Änderungen beobachten
   supabaseClient.auth.onAuthStateChange(function(event, session) {
@@ -62,7 +64,7 @@ async function supabaseInit() {
         console.log("[Cloud] OAuth SIGNED_IN → Spiel wird gestartet");
         ladebildschirmZeigen("Spielstand wird geladen...");
         cloudPruefeUndLade().then(function() {
-          spielStarten();
+          if (!_spielGestartet) { _spielGestartet = true; spielStarten(); }
         });
       }
     }

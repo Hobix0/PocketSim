@@ -1,3 +1,12 @@
+
+// ══════════════════════════════════════════════════════
+// SPEZIAL NODES — Lager & Export
+// Feste Positionen am Rand der Fabrik
+// ══════════════════════════════════════════════════════
+
+const SPECIAL_NODE_LAGER  = { id:"__lager__",  name:"Lager",  emoji:"📦", farbe:"#1A4A2A", farbe2:"#0D2515", glow:"#44CC66" };
+const SPECIAL_NODE_EXPORT = { id:"__export__", name:"Export", emoji:"🚚", farbe:"#1A2A4A", farbe2:"#0D1525", glow:"#4466CC" };
+
 // ══════════════════════════════════════════════════════
 // FABRIKKARTE v3 — Sauber, funktional, schön
 // Klick-to-Place statt Drag, stabiles Layout
@@ -131,6 +140,9 @@ const FK = {
       if (entry.pos) this.drawMachine(entry, ox, oy, T);
     }
 
+    // Spezial Nodes
+    this.drawSpecialNodes(ox, oy, bW, bH, T);
+
     // Verbindungs-Vorschau
     if (this.verbindeModus && this.verbindeVon) this.drawConnPreview();
 
@@ -156,12 +168,23 @@ const FK = {
   drawConnections(ox,oy,T) {
     for (let v of fabrik_verbindungen) {
       const mas = this.getMachines();
-      const von  = v.vonInstId ? mas.find(m=>m.key===v.vonInstId)  : mas.find(m=>m.md.id===v.vonMasId);
-      const nach = v.nachInstId? mas.find(m=>m.key===v.nachInstId) : mas.find(m=>m.md.id===v.nachMasId);
-      if (!von||!von.pos||!nach||!nach.pos) continue;
+      const isVonSpecial  = v.vonInstId  && (v.vonInstId  === "__lager__" || v.vonInstId  === "__export__");
+      const isNachSpecial = v.nachInstId && (v.nachInstId === "__lager__" || v.nachInstId === "__export__");
+      const von  = isVonSpecial  ? null : (v.vonInstId  ? mas.find(m=>m.key===v.vonInstId)  : mas.find(m=>m.md.id===v.vonMasId));
+      const nach = isNachSpecial ? null : (v.nachInstId ? mas.find(m=>m.key===v.nachInstId) : mas.find(m=>m.md.id===v.nachMasId));
 
-      const p1 = this.portCoords(von,  "output", v.vonPortIdx,  ox,oy,T);
-      const p2 = this.portCoords(nach, "input",  v.nachPortIdx, ox,oy,T);
+      // Koordinaten für Special Nodes
+      const sn = this._specialNodes||[];
+      const vonSN  = isVonSpecial  ? sn.find(n=>n.spec.id===v.vonInstId)  : null;
+      const nachSN = isNachSpecial ? sn.find(n=>n.spec.id===v.nachInstId) : null;
+      if (!von&&!vonSN)  continue;
+      if (!nach&&!nachSN) continue;
+      if (von&&!von.pos)  continue;
+      if (nach&&!nach.pos) continue;
+
+      const p1 = vonSN  ? vonSN._outPort  : this.portCoords(von,  "output", v.vonPortIdx,  ox,oy,T);
+      const p2 = nachSN ? nachSN._inPort  : this.portCoords(nach, "input",  v.nachPortIdx, ox,oy,T);
+      if (!p1||!p2) continue;
       const farbe = this.MAT_FARBEN[v.material]||this.MAT_FARBEN._def;
       const cpx  = (p1.x+p2.x)/2;
 
@@ -191,6 +214,63 @@ const FK = {
       c.fillStyle="#fff"; c.font=`bold ${Math.max(8,9*this.zoom)}px sans-serif`;
       c.textAlign="center"; c.fillText("×",mx,my+3*this.zoom);
       v._del={x:mx,y:my,r:9*this.zoom};
+    }
+  },
+
+
+  drawSpecialNodes(ox, oy, bW, bH, T) {
+    const c = this.ctx;
+    const nodes = [
+      { spec: SPECIAL_NODE_LAGER,  x: ox - 70*this.zoom, y: oy + bH*0.25, typ:"both" },
+      { spec: SPECIAL_NODE_EXPORT, x: ox + bW + 10*this.zoom, y: oy + bH*0.5, typ:"input" }
+    ];
+
+    for (let node of nodes) {
+      const nW = 60*this.zoom, nH = 80*this.zoom;
+      const nx = node.x, ny = node.y - nH/2;
+
+      // Speichert Pos für Klick-Erkennung
+      node._rect = { x:nx, y:ny, w:nW, h:nH };
+
+      // Box
+      const g = c.createLinearGradient(nx,ny,nx,ny+nH);
+      g.addColorStop(0, node.spec.farbe); g.addColorStop(1, node.spec.farbe2);
+      this.rr(c, nx, ny, nW, nH, 8*this.zoom);
+      c.fillStyle = g; c.fill();
+      c.strokeStyle = node.spec.glow; c.lineWidth = 1.5;
+      c.shadowColor = node.spec.glow; c.shadowBlur = 8;
+      c.stroke(); c.shadowBlur = 0;
+
+      // Emoji + Name
+      const esz = Math.max(16, Math.min(22*this.zoom, 28));
+      c.font = esz+"px serif"; c.textAlign = "center";
+      c.fillText(node.spec.emoji, nx+nW/2, ny+nH*0.45+esz*0.35);
+      c.font = `bold ${Math.max(8,9*this.zoom)}px 'IBM Plex Sans',sans-serif`;
+      c.fillStyle = "rgba(255,255,255,0.7)"; c.textAlign = "center";
+      c.fillText(node.spec.name, nx+nW/2, ny+nH-6*this.zoom);
+
+      // Ports
+      const pr = Math.max(5, 6*this.zoom);
+      if (node.typ === "both" || node.typ === "output") {
+        // Output-Port rechts (Material aus Lager → Maschine)
+        c.fillStyle="#44CC66"; c.strokeStyle="rgba(255,255,255,0.5)"; c.lineWidth=1.2;
+        c.beginPath(); c.arc(nx+nW, ny+nH*0.35, pr,0,Math.PI*2); c.fill(); c.stroke();
+        if (this.zoom > 0.6) { c.fillStyle="rgba(255,255,255,0.7)"; c.font=`bold ${Math.max(6,7*this.zoom)}px sans-serif`; c.textAlign="center"; c.fillText("▶",nx+nW,ny+nH*0.35+2.5*this.zoom); }
+        node._outPort = {x:nx+nW, y:ny+nH*0.35};
+      }
+      if (node.typ === "both" || node.typ === "input") {
+        // Input-Port rechts bei Lager, links bei Export
+        const ipx = node.typ==="input" ? nx : nx+nW;
+        const ipy = ny+nH*0.65;
+        c.fillStyle="#4488FF"; c.strokeStyle="rgba(255,255,255,0.5)"; c.lineWidth=1.2;
+        c.beginPath(); c.arc(ipx, ipy, pr,0,Math.PI*2); c.fill(); c.stroke();
+        if (this.zoom > 0.6) { c.fillStyle="rgba(255,255,255,0.7)"; c.font=`bold ${Math.max(6,7*this.zoom)}px sans-serif`; c.textAlign="center"; c.fillText("◀",ipx,ipy+2.5*this.zoom); }
+        node._inPort = {x:ipx, y:ipy};
+      }
+
+      this._specialNodes = this._specialNodes||[];
+      const existing = this._specialNodes.find(n=>n.spec.id===node.spec.id);
+      if (!existing) this._specialNodes.push(node); else Object.assign(existing, node);
     }
   },
 
@@ -505,6 +585,18 @@ const FK = {
         if (Math.hypot(x-(px+pw),y-py2)<r) return {masId:e.md.id,instId:e.key||e.md.id,typ:"output",idx:i,mat:outputs[i],x:px+pw,y:py2};
       }
     }
+    // Spezial-Nodes prüfen
+    if (this._specialNodes) {
+      for (let sn of this._specialNodes) {
+        const r2 = Math.max(12, 14*this.zoom);
+        if (sn._outPort && Math.hypot(x-sn._outPort.x, y-sn._outPort.y) < r2) {
+          return {masId: sn.spec.id, instId: sn.spec.id, typ:"output", idx:0, mat:"*", x:sn._outPort.x, y:sn._outPort.y, special:true};
+        }
+        if (sn._inPort && Math.hypot(x-sn._inPort.x, y-sn._inPort.y) < r2) {
+          return {masId: sn.spec.id, instId: sn.spec.id, typ:"input", idx:0, mat:"*", x:sn._inPort.x, y:sn._inPort.y, special:true};
+        }
+      }
+    }
     return null;
   },
 
@@ -749,10 +841,15 @@ function fabrikInfoAusblenden() {
 }
 
 function fabrikToggle(masId) {
-  const m=installierte_maschinen.find(m=>m.id===masId); if (!m) return;
-  const inp=FK.getInputMats(MASCHINEN.find(d=>d.id===masId));
-  const alleV=inp.every((_,i)=>fabrik_verbindungen.some(v=>v.nachMasId===masId&&v.nachPortIdx===i));
-  if (!m.laeuft&&!alleV&&inp.length>0) { zeigeNotification("⚠ Erst alle Inputs verbinden!","red"); return; }
+  const sel=FK.ausgewaehlt;
+  const m=(sel&&sel.masId===masId)?sel.m:installierte_maschinen.find(m=>m.id===masId);
+  if (!m) return;
+  const md=MASCHINEN.find(d=>d.id===masId);
+  const iKey=m.instanceId||m.id;
+  const inp=FK.getInputMats(md);
+  const alleV=inp.length===0||inp.every((_,i)=>fabrik_verbindungen.some(v=>v.nachInstId===iKey&&v.nachPortIdx===i));
+  if (!m.laeuft&&!alleV) { zeigeNotification("⚠ Erst alle Inputs verbinden! (🔗)","red"); return; }
+  if (!m.laeuft&&m.platziert===false) { zeigeNotification("⚠ Erst platzieren!","red"); return; }
   if (m.laeuft) { if (typeof maschineStoppen==="function") maschineStoppen(m); }
   else          { if (typeof maschineStarten ==="function") maschineStarten(m); }
   setTimeout(()=>{const md=MASCHINEN.find(d=>d.id===masId);if (md) {fabrikInfoZeigen(md,m);fabrikSidebarAktualisieren();}},100);
