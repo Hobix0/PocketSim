@@ -61,7 +61,7 @@ const FK = {
     stahlrohr:"#506070",motor_klein:"#3A5870",elektronikmodul:"#2255BB",_def:"#446688"
   },
 
-  DOCK_H: 80, // Höhe des Docks unten
+  DOCK_H: 0, // Höhe des Docks unten
 
   // ═══ INIT ═══
   init(canvas, geb, gsId) {
@@ -164,8 +164,6 @@ const FK = {
       this.drawGhost(this.dockDrag.md, tp, ox, oy, T);
     }
 
-    // Dock
-    this.drawDock(H, W);
   },
 
   // ═══ SPEZIAL NODES ═══
@@ -471,60 +469,6 @@ const FK = {
     c.globalAlpha=1;
   },
 
-  // ═══ DOCK ═══
-  drawDock(H, W) {
-    const c=this.ctx;
-    const dH=this.DOCK_H, dY=H-dH;
-    const mas=this.machines().filter(m=>!m.pos);
-
-    // Dock-Hintergrund
-    c.fillStyle="#0A0D14";
-    c.fillRect(0,dY,W,dH);
-    c.strokeStyle="rgba(245,158,11,0.3)"; c.lineWidth=1;
-    c.beginPath(); c.moveTo(0,dY); c.lineTo(W,dY); c.stroke();
-
-    if (mas.length===0) {
-      c.fillStyle="rgba(255,255,255,0.2)"; c.font="12px 'IBM Plex Sans',sans-serif"; c.textAlign="center";
-      c.fillText("Alle Maschinen platziert ✓", W/2, dY+dH/2+4);
-      return;
-    }
-
-    // Label
-    c.fillStyle="rgba(245,158,11,0.6)"; c.font=`bold 9px 'IBM Plex Sans',sans-serif`; c.textAlign="left";
-    c.fillText("📦 WARENEINGANG — TIPPEN & AUF DIE FABRIK ZIEHEN", 12, dY+13);
-
-    // Maschinen-Kacheln
-    const boxH=dH-18, boxW=Math.min(boxH*0.8, 55);
-    let dx=10;
-    for (let entry of mas) {
-      const cl=this.COLORS[entry.md.id]||this.COLORS._def;
-      const ico=this.ICO[entry.md.id]||this.ICO._def;
-      const by=dY+16;
-
-      const isActive = this.dockDrag?.key === entry.key;
-      c.globalAlpha = isActive ? 0.35 : 1;
-
-      // Box
-      const grd=c.createLinearGradient(dx,by,dx,by+boxH);
-      grd.addColorStop(0,cl[0]); grd.addColorStop(1,cl[1]);
-      this.rr(c,dx,by,boxW,boxH,6); c.fillStyle=grd; c.fill();
-      c.strokeStyle="rgba(245,158,11,0.5)"; c.lineWidth=1.2; c.stroke();
-
-      // Icon
-      const esz=Math.max(14,Math.min(boxH*0.45,24));
-      c.font=esz+"px serif"; c.textAlign="center";
-      c.fillText(ico, dx+boxW/2, by+boxH*0.52+esz*0.3);
-
-      // Name
-      c.font="bold 8px 'IBM Plex Sans',sans-serif"; c.fillStyle="rgba(255,255,255,0.6)"; c.textAlign="center";
-      const nm=entry.md.name.length>8?entry.md.name.slice(0,7)+"…":entry.md.name;
-      c.fillText(nm, dx+boxW/2, by+boxH-4);
-
-      c.globalAlpha=1;
-      entry._dock={x:dx,y:by,w:boxW,h:boxH};
-      dx+=boxW+6;
-    }
-  },
 
   // ═══ EVENTS ═══
   ev() {
@@ -593,16 +537,6 @@ const FK = {
             }
           }
         }
-      }
-    }
-
-    // Dock: Maschine aufnehmen
-    for (let entry of this.machines().filter(m=>!m.pos)) {
-      if (!entry._dock) continue;
-      const d=entry._dock;
-      if (x>=d.x&&x<=d.x+d.w&&y>=d.y&&y<=d.y+d.h) {
-        this.dockDrag={md:entry.md,key:entry.key};
-        this.sel=null; fabrikInfoAusblenden(); return;
       }
     }
 
@@ -709,6 +643,8 @@ const FK = {
       }
     }
     zeigeNotification("✅ "+md.name+" platziert!","green");
+    FK.dockDrag=null; FK.canvas.style.cursor="grab";
+    document.querySelectorAll(".fk-dock-item").forEach(b=>b.classList.remove("aktiv"));
     spielstandSpeichern(); fabrikInfoAktualisieren();
   },
 
@@ -847,7 +783,7 @@ function fabrikkarteOeffnen(gebaeudeId, gsId) {
           <span class="fk-geb-emo">${geb.emoji||"🏭"}</span>
           <div>
             <div class="fk-geb-nm">${geb.name}</div>
-            <div class="fk-geb-sb">${geb.tileBreite}×${geb.tileHoehe} · max ${geb.maxMaschinen||0} Maschinen · <span id="fk-anl">Tippe Maschine im Dock → auf Fabrik ziehen</span></div>
+            <div class="fk-geb-sb">${geb.tileBreite}×${geb.tileHoehe} · max ${geb.maxMaschinen||0} Maschinen</div>
           </div>
         </div>
         <div class="fk-head-r">
@@ -857,7 +793,13 @@ function fabrikkarteOeffnen(gebaeudeId, gsId) {
           <button class="fk-ib fk-ib-close" onclick="fabrikkarteSchliessen()">✕</button>
         </div>
       </header>
-      <canvas id="fk-c" class="fk-canvas" style="display:block;touch-action:none"></canvas>
+      <div class="fk-main">
+        <canvas id="fk-c" class="fk-canvas" style="display:block;touch-action:none"></canvas>
+      </div>
+      <div id="fk-dock" class="fk-dock">
+        <div class="fk-dock-label">📦 WARENEINGANG</div>
+        <div id="fk-dock-items" class="fk-dock-items"></div>
+      </div>
       <div id="fk-sheet" class="fk-sheet" style="display:none"></div>
     </div>`;
 
@@ -865,9 +807,11 @@ function fabrikkarteOeffnen(gebaeudeId, gsId) {
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     const canvas=document.getElementById("fk-c");
-    canvas.width  = window.innerWidth  - (window.innerWidth>768?0:0);
-    canvas.height = window.innerHeight - 52; // minus header
+    const main=canvas.parentElement;
+    canvas.width  = main.clientWidth;
+    canvas.height = main.clientHeight;
     FK.init(canvas, geb, gsId);
+    fabrikDockAktualisieren();
   }));
 }
 
@@ -921,6 +865,7 @@ function fabrikInfoAktualisieren() {
     const e=FK.machines().find(m=>m.key===FK.sel.key);
     if (e) fabrikInfoZeigen(e.md,e.m,e.key);
   }
+  fabrikDockAktualisieren();
 }
 
 function fabrikToggle(key) {
@@ -952,4 +897,60 @@ function fabrikRotieren(key) {
   const rotLabels = ["0°","90°","180°","270°"];
   zeigeNotification("↻ " + rotLabels[m.fabrikRot] + " gedreht", "green");
   spielstandSpeichern();
+}
+
+function fabrikDockAktualisieren() {
+  const items = document.getElementById("fk-dock-items");
+  if (!items) return;
+
+  const mas = FK.machines().filter(m => !m.pos);
+  const dock = document.getElementById("fk-dock");
+
+  if (mas.length === 0) {
+    if (dock) dock.style.display = "none";
+    return;
+  }
+  if (dock) dock.style.display = "flex";
+
+  items.innerHTML = mas.map(e => {
+    const ico = FK.ICO[e.md.id] || FK.ICO._def;
+    const cl  = FK.COLORS[e.md.id] || FK.COLORS._def;
+    const nm  = e.md.name.length > 9 ? e.md.name.slice(0, 8) + "…" : e.md.name;
+    return `<button class="fk-dock-item" 
+      onclick="fabrikDockWaehlen('${e.key}')"
+      style="--cl1:${cl[0]};--cl2:${cl[1]}">
+      <span class="fk-di-ico">${ico}</span>
+      <span class="fk-di-nm">${nm}</span>
+      <span class="fk-di-sz">${e.md.tileGroesse?.w||2}×${e.md.tileGroesse?.h||2}</span>
+    </button>`;
+  }).join("");
+}
+
+function fabrikDockWaehlen(key) {
+  const e = FK.machines().find(m => m.key === key);
+  if (!e) return;
+
+  // Aktiven Zustand toggeln
+  if (FK.dockDrag?.key === key) {
+    FK.dockDrag = null;
+    FK.canvas.style.cursor = "grab";
+    document.querySelectorAll(".fk-dock-item").forEach(b => b.classList.remove("aktiv"));
+    zeigeNotification("Platzierung abgebrochen", "green");
+    return;
+  }
+
+  FK.dockDrag = { md: e.md, key };
+  FK.sel = null;
+  fabrikInfoAusblenden();
+  FK.canvas.style.cursor = "crosshair";
+
+  // Aktiven Button markieren
+  document.querySelectorAll(".fk-dock-item").forEach(b => b.classList.remove("aktiv"));
+  event.currentTarget.classList.add("aktiv");
+  zeigeNotification("📦 " + e.md.name + " — Tippe auf die Fabrik um sie zu platzieren", "green");
+}
+
+function fabrikkarteOeffnen_fabrikInfoAktualisieren() {
+  fabrikDockAktualisieren();
+  fabrikInfoAktualisieren();
 }
