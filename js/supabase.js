@@ -19,8 +19,9 @@ let _syncTimer      = null;
 // INIT — Zeigt Login oder startet Spiel
 // ══════════════════════════════════
 
+var _spielGestartet = false;  // Guard: spielStarten nur einmal
+
 async function supabaseInit() {
-  let _spielGestartet = false;  // Guard gegen doppeltes Starten
   if (typeof window.supabase === "undefined") {
     console.warn("[Cloud] Supabase fehlt — starte ohne Login");
     loginScreenVerstecken();
