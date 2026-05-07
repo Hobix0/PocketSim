@@ -62,17 +62,15 @@ const FK = {
   },
 
   fit() {
-    if (!this.gebaeude) return;
-    const W = this.canvas.width, H = this.canvas.height;
-    const maxZ = Math.min(
-      (W - 40) / (this.gebaeude.tileBreite * this.TILE),
-      (H - 60) / (this.gebaeude.tileHoehe  * this.TILE)
-    );
-    this.zoom = Math.max(0.3, Math.min(maxZ, 1.4));
-    const bW = this.gebaeude.tileBreite * this.TILE * this.zoom;
-    const bH = this.gebaeude.tileHoehe  * this.TILE * this.zoom;
-    this.panX = (W - bW) / 2;
-    this.panY = Math.max(16, (H - bH) / 2 - 20);
+    if (!this.gebaeude||!this.canvas) return;
+    const W=this.canvas.width, H=this.canvas.height;
+    const pad=32;
+    const maxZ=Math.min((W-pad*2)/(this.gebaeude.tileBreite*this.TILE),(H-pad*2)/(this.gebaeude.tileHoehe*this.TILE));
+    this.zoom=Math.max(0.3,Math.min(maxZ,1.5));
+    const bW=this.gebaeude.tileBreite*this.TILE*this.zoom;
+    const bH=this.gebaeude.tileHoehe*this.TILE*this.zoom;
+    this.panX=Math.round((W-bW)/2);
+    this.panY=Math.round((H-bH)/2);
   },
 
   // ═══════════ LOOP ═══════════
@@ -158,8 +156,8 @@ const FK = {
   drawConnections(ox,oy,T) {
     for (let v of fabrik_verbindungen) {
       const mas = this.getMachines();
-      const von  = mas.find(m=>m.md.id===v.vonMasId);
-      const nach = mas.find(m=>m.md.id===v.nachMasId);
+      const von  = v.vonInstId ? mas.find(m=>m.key===v.vonInstId)  : mas.find(m=>m.md.id===v.vonMasId);
+      const nach = v.nachInstId? mas.find(m=>m.key===v.nachInstId) : mas.find(m=>m.md.id===v.nachMasId);
       if (!von||!von.pos||!nach||!nach.pos) continue;
 
       const p1 = this.portCoords(von,  "output", v.vonPortIdx,  ox,oy,T);
@@ -283,17 +281,18 @@ const FK = {
     }
 
     // Ports zeichnen
-    this.drawPorts(md, px, py, pw, ph);
+    this.drawPorts(md, m, px, py, pw, ph);
   },
 
-  drawPorts(md, px, py, pw, ph) {
+  drawPorts(md, m, px, py, pw, ph) {
     const c=this.ctx;
     const r=Math.max(5,6*this.zoom);
     const inputs=this.getInputMats(md), outputs=this.getOutputMats(md);
+    const iKey=m&&m.instanceId?m.instanceId:md.id;
 
     inputs.forEach((mat,i)=>{
       const py2=py+ph*((i+1)/(inputs.length+1));
-      const conn=fabrik_verbindungen.some(v=>v.nachMasId===md.id&&v.nachPortIdx===i);
+      const conn=fabrik_verbindungen.some(v=>v.nachInstId===iKey&&v.nachPortIdx===i);
       const farbe=this.MAT_FARBEN[mat]||this.MAT_FARBEN._def;
       c.fillStyle=conn?farbe:"rgba(200,60,60,0.7)";
       c.strokeStyle=conn?"rgba(255,255,255,0.6)":"#AA2222";
@@ -308,7 +307,7 @@ const FK = {
 
     outputs.forEach((mat,i)=>{
       const py2=py+ph*((i+1)/(outputs.length+1));
-      const conn=fabrik_verbindungen.some(v=>v.vonMasId===md.id&&v.vonPortIdx===i);
+      const conn=fabrik_verbindungen.some(v=>v.vonInstId===iKey&&v.vonPortIdx===i);
       const farbe=this.MAT_FARBEN[mat]||this.MAT_FARBEN._def;
       c.fillStyle=conn?farbe:"rgba(80,80,80,0.6)";
       c.strokeStyle=conn?"rgba(255,255,255,0.6)":"rgba(150,150,150,0.5)";
@@ -460,8 +459,17 @@ const FK = {
     }
     if (this.collides(tp.tx,tp.ty,tw,th,md.id)) { zeigeNotification("❌ Platz belegt!","red"); return; }
 
+    // Finde das richtige Exemplar (erste unplatzierte Instanz dieser Maschine)
+    const gebKey = this.gebaeude.id;
     for (let m of installierte_maschinen) {
-      if (m.id===md.id) { m.fabrikPos=m.fabrikPos||{}; m.fabrikPos[this.gebaeude.id]={tx:tp.tx,ty:tp.ty}; m.platziert=true; break; }
+      if (m.id!==md.id) continue;
+      const key=m.instanceId||m.id;
+      const posKey=gebKey+"_"+key;
+      if (m.fabrikPos && m.fabrikPos[posKey]) continue; // schon platziert
+      m.fabrikPos=m.fabrikPos||{};
+      m.fabrikPos[posKey]={tx:tp.tx,ty:tp.ty};
+      m.platziert=true;
+      break;
     }
     zeigeNotification("✅ "+md.name+" platziert!","green");
     spielstandSpeichern();
@@ -481,7 +489,7 @@ const FK = {
   // ═══════════ VERBINDEN ═══════════
 
   portAt(x,y) {
-    const r=Math.max(8,9*this.zoom);
+    const r=Math.max(12,14*this.zoom);  // großzügige Trefferzone
     for (let e of this.getMachines()) {
       if (!e.pos) continue;
       const T=this.TILE*this.zoom, ox=this.panX, oy=this.panY;
@@ -490,11 +498,11 @@ const FK = {
       const inputs=this.getInputMats(e.md), outputs=this.getOutputMats(e.md);
       for (let i=0;i<inputs.length;i++) {
         const py2=py+ph*((i+1)/(inputs.length+1));
-        if (Math.hypot(x-px,y-py2)<r) return {masId:e.md.id,typ:"input",idx:i,mat:inputs[i],x:px,y:py2};
+        if (Math.hypot(x-px,y-py2)<r) return {masId:e.md.id,instId:e.key||e.md.id,typ:"input",idx:i,mat:inputs[i],x:px,y:py2};
       }
       for (let i=0;i<outputs.length;i++) {
         const py2=py+ph*((i+1)/(outputs.length+1));
-        if (Math.hypot(x-(px+pw),y-py2)<r) return {masId:e.md.id,typ:"output",idx:i,mat:outputs[i],x:px+pw,y:py2};
+        if (Math.hypot(x-(px+pw),y-py2)<r) return {masId:e.md.id,instId:e.key||e.md.id,typ:"output",idx:i,mat:outputs[i],x:px+pw,y:py2};
       }
     }
     return null;
@@ -517,7 +525,7 @@ const FK = {
     if (fabrik_verbindungen.some(v=>v.vonMasId===von.masId&&v.vonPortIdx===von.idx&&v.nachMasId===nach.masId&&v.nachPortIdx===nach.idx)) {
       zeigeNotification("Bereits verbunden.","red"); return;
     }
-    fabrik_verbindungen.push({id:Date.now(),vonMasId:von.masId,vonPortIdx:von.idx,nachMasId:nach.masId,nachPortIdx:nach.idx,material:von.mat||nach.mat});
+    fabrik_verbindungen.push({id:Date.now(),vonMasId:von.masId,vonInstId:von.instId,vonPortIdx:von.idx,nachMasId:nach.masId,nachInstId:nach.instId,nachPortIdx:nach.idx,material:von.mat||nach.mat});
     zeigeNotification("🔗 Verbunden!","green");
     spielstandSpeichern(); fabrikSidebarAktualisieren();
   },
@@ -531,13 +539,20 @@ const FK = {
 
   getMachines() {
     if (typeof MASCHINEN==="undefined"||!this.gebaeude) return [];
-    return installierte_maschinen
-      .filter(m=>{const md=MASCHINEN.find(d=>d.id===m.id); return md&&(!md.hallenTyp||md.hallenTyp.includes(this.gebaeude.hallenTyp));})
-      .map(m=>{
-        const md=MASCHINEN.find(d=>d.id===m.id);
-        const pos=m.fabrikPos?.[this.gebaeude.id]||null;
-        return {md,m,pos};
-      });
+    // instanceId für Eindeutigkeit, legacy fallback
+    let idx=0;
+    return installierte_maschinen.map(m=>{
+      if (!m.instanceId) m.instanceId=m.id+"_"+idx;
+      idx++;
+      return m;
+    })
+    .filter(m=>{const md=MASCHINEN.find(d=>d.id===m.id); return md&&(!md.hallenTyp||md.hallenTyp.includes(this.gebaeude.hallenTyp));})
+    .map(m=>{
+      const md=MASCHINEN.find(d=>d.id===m.id);
+      const key=m.instanceId||m.id;
+      const pos=m.fabrikPos?.[this.gebaeude.id+"_"+key]||null;
+      return {md,m,pos,key};
+    });
   },
 
   getInputMats(md) {
@@ -602,16 +617,29 @@ function fabrikkarteOeffnen(gebaeudeId, gsId) {
 
   modal.style.display="flex";
 
-  setTimeout(()=>{
-    const canvas=document.getElementById("fk-c");
-    const body=canvas.parentElement;
-    // Korrekte Canvas-Größe setzen
-    const sideW=220;
-    canvas.width  = Math.max(300, body.clientWidth - sideW);
-    canvas.height = body.clientHeight;
-    FK.init(canvas, geb, gsId);
-    fabrikSidebarAktualisieren();
-  },50);
+  // Canvas-Größe korrekt setzen nach Render
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      const canvas = document.getElementById("fk-c");
+      if (!canvas) return;
+      const sideEl = document.getElementById("fk-side");
+      const headEl = document.querySelector(".fk-head");
+      const sideW  = sideEl ? sideEl.offsetWidth  : 220;
+      const headH  = headEl ? headEl.offsetHeight : 52;
+      const isMob  = window.innerWidth < 768;
+
+      if (isMob) {
+        canvas.width  = window.innerWidth;
+        canvas.height = Math.floor(window.innerHeight * 0.52);
+      } else {
+        canvas.width  = Math.max(300, window.innerWidth - sideW);
+        canvas.height = Math.max(300, window.innerHeight - headH);
+      }
+
+      FK.init(canvas, geb, gsId);
+      fabrikSidebarAktualisieren();
+    });
+  });
 }
 
 function fabrikkarteSchliessen() {
@@ -732,7 +760,8 @@ function fabrikToggle(masId) {
 
 function fabrikVerschieben(masId) {
   const m=installierte_maschinen.find(m=>m.id===masId); if (!m) return;
-  if (m.fabrikPos) delete m.fabrikPos[FK.gebaeude.id];
+  const vKey=(m.instanceId||m.id); const vPosKey=FK.gebaeude.id+"_"+vKey;
+  if (m.fabrikPos) delete m.fabrikPos[vPosKey];
   m.platziert=false;
   fabrikInfoAusblenden(); fabrikSidebarAktualisieren();
   zeigeNotification("↔ "+masId+" in Wareneingang zurückgelegt","green");

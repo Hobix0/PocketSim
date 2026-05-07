@@ -117,6 +117,7 @@ function maschineKaufen(maschineId) {
 
   installierte_maschinen.push({
     id:                  md.id,
+    instanceId:          md.id + "_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
     name:                md.name,
     emoji:               md.emoji,
     kosten:              md.kosten,
@@ -124,9 +125,11 @@ function maschineKaufen(maschineId) {
     rezepte:             md.rezepte,
     kostenProRunde:      md.kostenProRunde,
     aktivesRezept:       md.aktivesRezept,
-    laeuft:              true,
+    laeuft:              false,   // erst platzieren!
+    platziert:           false,   // muss im Fabrikplan platziert werden
     gebaeudeId:          gebId,
-    sessionProduktionen: 0
+    sessionProduktionen: 0,
+    fabrikPos:           {}
   });
 
   geldAnzeigenAktualisieren();
