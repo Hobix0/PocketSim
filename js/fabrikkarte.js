@@ -182,6 +182,8 @@ const FK = {
       if (von&&!von.pos)  continue;
       if (nach&&!nach.pos) continue;
 
+      if (!vonSN  && (!von  || !von.pos))  continue;
+      if (!nachSN && (!nach || !nach.pos)) continue;
       const p1 = vonSN  ? vonSN._outPort  : this.portCoords(von,  "output", v.vonPortIdx,  ox,oy,T);
       const p2 = nachSN ? nachSN._inPort  : this.portCoords(nach, "input",  v.nachPortIdx, ox,oy,T);
       if (!p1||!p2) continue;
@@ -202,7 +204,7 @@ const FK = {
       c.beginPath(); c.moveTo(p1.x,p1.y-1);
       c.bezierCurveTo(cpx,p1.y-1,cpx,p2.y-1,p2.x,p2.y-1); c.stroke();
       // Fluss-Partikel
-      if (von.m&&von.m.laeuft) {
+      if (von&&von.m&&von.m.laeuft) {
         const f = (this.t*0.35 + fabrik_verbindungen.indexOf(v)*0.2) % 1;
         const bx = (1-f)**3*p1.x+3*(1-f)**2*f*cpx+3*(1-f)*f**2*cpx+f**3*p2.x;
         const by = (1-f)**3*p1.y+3*(1-f)**2*f*p1.y+3*(1-f)*f**2*p2.y+f**3*p2.y;
@@ -269,7 +271,7 @@ const FK = {
       }
 
       this._specialNodes = this._specialNodes||[];
-      const existing = this._specialNodes.find(n=>n.spec.id===node.spec.id);
+      const existing = this._specialNodes.find(n=>n&&n.spec&&n.spec.id===node.spec.id);
       if (!existing) this._specialNodes.push(node); else Object.assign(existing, node);
     }
   },
