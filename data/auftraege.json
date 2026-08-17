@@ -250,5 +250,29 @@
     "basisBonus": 48000,
     "deadline": 25,
     "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_reifen_1",
+    "name": "Reifenhändler Bergisch Land",
+    "emoji": "🛞",
+    "typ": "normal",
+    "beschreibung": "Ein regionaler Reifenhändler braucht Nachschub für die Wintersaison.",
+    "material": "reifen",
+    "menge": 16,
+    "basisBonus": 18000,
+    "deadline": 16,
+    "bedingung": "epoche_2"
+  },
+  {
+    "id": "auf_pkw_rahmen_1",
+    "name": "Autohaus Remscheid",
+    "emoji": "🚗",
+    "typ": "gross",
+    "beschreibung": "⭐ Dein erster PKW-Auftrag! Ein lokales Autohaus bestellt einen fahrbereiten Rahmen für die Präsentation.",
+    "material": "pkw_rahmen",
+    "menge": 1,
+    "basisBonus": 40000,
+    "deadline": 35,
+    "bedingung": "epoche_2"
   }
 ]

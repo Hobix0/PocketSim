@@ -671,5 +671,253 @@
         "menge": 1
       }
     ]
+  },
+  {
+    "id": "reifen_herstellen",
+    "name": "Reifen vulkanisieren",
+    "emoji": "🛞",
+    "beschreibung": "Gummi um einen Stahlgürtel vulkanisieren.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "reifenfabrik",
+    "dauer": 6,
+    "energie": 140,
+    "xp": 22,
+    "inputs": [
+      {
+        "material": "gummi",
+        "menge": 4
+      },
+      {
+        "material": "stahl",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "reifen",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "fahrgestell_herstellen",
+    "name": "Fahrgestell schweißen",
+    "emoji": "🔩",
+    "beschreibung": "Stahlträger und Titanlegierung zum tragenden Chassis verschweißen.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugwerk",
+    "dauer": 14,
+    "energie": 220,
+    "xp": 30,
+    "inputs": [
+      {
+        "material": "stahltraeger",
+        "menge": 4
+      },
+      {
+        "material": "titanlegierung",
+        "menge": 3
+      }
+    ],
+    "outputs": [
+      {
+        "material": "fahrgestell",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "karosserieteil_herstellen",
+    "name": "Karosserie pressen",
+    "emoji": "🚘",
+    "beschreibung": "Stahl-Carbon-Verbund zu Karosserieteilen pressen.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugwerk",
+    "dauer": 12,
+    "energie": 220,
+    "xp": 28,
+    "inputs": [
+      {
+        "material": "stahl",
+        "menge": 6
+      },
+      {
+        "material": "carbonfaser",
+        "menge": 3
+      }
+    ],
+    "outputs": [
+      {
+        "material": "karosserieteil",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "bordelektronik_herstellen",
+    "name": "Bordelektronik verkabeln",
+    "emoji": "🖲️",
+    "beschreibung": "Elektronikmodule und Kabel zum Bordsystem verbinden.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "fahrzeugwerk",
+    "dauer": 10,
+    "energie": 220,
+    "xp": 26,
+    "inputs": [
+      {
+        "material": "elektronikmodul",
+        "menge": 3
+      },
+      {
+        "material": "kupferkabel",
+        "menge": 10
+      }
+    ],
+    "outputs": [
+      {
+        "material": "bordelektronik",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "fahrzeuginnenraum_herstellen",
+    "name": "Innenraum ausstatten",
+    "emoji": "💺",
+    "beschreibung": "Sitze, Verkleidung und Bordelektronik zum kompletten Innenraum montieren.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "montagehalle_pkw",
+    "dauer": 18,
+    "energie": 260,
+    "xp": 60,
+    "inputs": [
+      {
+        "material": "plastik",
+        "menge": 6
+      },
+      {
+        "material": "gummi",
+        "menge": 4
+      },
+      {
+        "material": "bordelektronik",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "fahrzeuginnenraum",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "pkw_rahmen_herstellen",
+    "name": "PKW-Rahmen montieren",
+    "emoji": "🚗",
+    "beschreibung": "Fahrgestell, Karosserie, Reifen und Innenraum zum fahrbereiten Rahmen zusammenbauen.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "fahrzeug",
+    "maschine": "montagehalle_pkw",
+    "dauer": 30,
+    "energie": 260,
+    "xp": 150,
+    "inputs": [
+      {
+        "material": "fahrgestell",
+        "menge": 1
+      },
+      {
+        "material": "karosserieteil",
+        "menge": 4
+      },
+      {
+        "material": "reifen",
+        "menge": 4
+      },
+      {
+        "material": "fahrzeuginnenraum",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "pkw_rahmen",
+        "menge": 1
+      }
+    ]
+  },
+  {
+    "id": "fertigbauteil_herstellen",
+    "name": "Fertigbauteil gießen",
+    "emoji": "🏢",
+    "beschreibung": "Betonplatten mit Stahlarmierung zu vorgefertigten Großbauelementen gießen.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "baustoffe",
+    "maschine": "betonwerk",
+    "dauer": 10,
+    "energie": 80,
+    "xp": 24,
+    "inputs": [
+      {
+        "material": "betonplatte",
+        "menge": 4
+      },
+      {
+        "material": "stahltraeger",
+        "menge": 2
+      },
+      {
+        "material": "glas",
+        "menge": 2
+      }
+    ],
+    "outputs": [
+      {
+        "material": "fertigbauteil",
+        "menge": 2
+      }
+    ]
+  },
+  {
+    "id": "kernkraftmodul_herstellen",
+    "name": "Kernkraftmodul montieren",
+    "emoji": "⚛️",
+    "beschreibung": "Reaktorkern und Steuerungscomputer zum vollständigen Kernkraftmodul zusammenbauen.",
+    "manuell": false,
+    "kategorie": "bauteil",
+    "produktionslinie": "energie",
+    "maschine": "kernkraftwerk",
+    "dauer": 35,
+    "energie": 500,
+    "xp": 100,
+    "inputs": [
+      {
+        "material": "reaktorkern",
+        "menge": 2
+      },
+      {
+        "material": "steuerungscomputer",
+        "menge": 1
+      }
+    ],
+    "outputs": [
+      {
+        "material": "kernkraftmodul",
+        "menge": 1
+      }
+    ]
   }
 ]

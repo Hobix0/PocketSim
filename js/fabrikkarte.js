@@ -70,10 +70,26 @@ const FK = {
     this.sel = null; this.portDrag = null; this.dockDrag = null;
     this._sn = null; // special nodes cache
     this.fit(); this.ev(); this.loop();
+
+    // Fenstergröße/Bildschirmdrehung: Canvas-Pixelgröße nachziehen
+    this._resize = () => {
+      if (!this.canvas) return;
+      const main = this.canvas.parentElement;
+      if (!main) return;
+      this.canvas.width  = main.clientWidth;
+      this.canvas.height = main.clientHeight;
+    };
+    window.addEventListener("resize", this._resize);
+    window.addEventListener("orientationchange", this._resize);
   },
 
   destroy() {
     if (this.frame) cancelAnimationFrame(this.frame);
+    if (this._resize) {
+      window.removeEventListener("resize", this._resize);
+      window.removeEventListener("orientationchange", this._resize);
+      this._resize = null;
+    }
     this.canvas = null;
   },
 
@@ -94,8 +110,56 @@ const FK = {
   // ═══ LOOP ═══
   loop() {
     const s = this;
-    function f(ts) { s.t = ts/1000; s.draw(); s.frame = requestAnimationFrame(f); }
+    let frameCount = 0;
+    function f(ts) {
+      s.t = ts/1000; s.draw();
+      // Verbindungs-Check ~1x/Sek statt jeden Frame (Performance + keine Spam-Meldungen)
+      frameCount++;
+      if (frameCount % 60 === 0) s.pruneInvalidConnections();
+      s.frame = requestAnimationFrame(f);
+    }
     this.frame = requestAnimationFrame(f);
+  },
+
+  // Entfernt Verbindungen, deren Port nach einem Rezeptwechsel nicht mehr
+  // existiert oder ein anderes Material führt. Läuft unabhängig davon, wo
+  // das Rezept gewechselt wurde (Shop/Verwalten/etc.) — kein externer Hook nötig.
+  pruneInvalidConnections() {
+    if (!fabrik_verbindungen.length) return;
+    const mas = this.machines();
+    const vorher = fabrik_verbindungen.length;
+
+    fabrik_verbindungen = fabrik_verbindungen.filter(v => {
+      const vonSpecial  = v.vonInstId  === "__lager__" || v.vonInstId  === "__export__";
+      const nachSpecial = v.nachInstId === "__lager__" || v.nachInstId === "__export__";
+
+      if (!nachSpecial) {
+        const nachE = mas.find(m => m.key === v.nachInstId);
+        if (nachE) {
+          const inp = this.getInpMats(nachE.md);
+          if (v.nachPortIdx >= inp.length) return false;
+          if (v.material !== "*" && inp[v.nachPortIdx] !== v.material) return false;
+        }
+      }
+      if (!vonSpecial) {
+        const vonE = mas.find(m => m.key === v.vonInstId);
+        if (vonE) {
+          const out = this.getOutMats(vonE.md);
+          if (v.vonPortIdx >= out.length) return false;
+          if (v.material !== "*" && out[v.vonPortIdx] !== v.material) return false;
+        }
+      }
+      return true;
+    });
+
+    if (fabrik_verbindungen.length < vorher) {
+      const anzahl = vorher - fabrik_verbindungen.length;
+      if (typeof zeigeNotification === "function") {
+        zeigeNotification("🔌 " + anzahl + " Verbindung(en) durch Rezeptwechsel gelöst", "red");
+      }
+      if (typeof spielstandSpeichern === "function") spielstandSpeichern();
+      fabrikInfoAktualisieren();
+    }
   },
 
   // ═══ DRAW ═══
@@ -391,7 +455,7 @@ const FK = {
 
     // Ports (nur wenn ausgewählt oder Port-Drag aktiv)
     if (sel || this.portDrag) {
-      this.drawPorts(entry, px, py, pw, ph, sel, T);
+      this.drawPorts(entry, ox, oy, T, sel);
     }
 
     // Auswahl-Rahmen
@@ -401,52 +465,37 @@ const FK = {
     }
   },
 
-  drawPorts(entry, px, py, pw, ph, big, T) {
+  // Einzige Quelle für Port-Positionen (rotationsbewusst) — wird von
+  // Zeichnen UND Hit-Testing (findPort) benutzt, damit beides immer übereinstimmt.
+  drawPorts(entry, ox, oy, T, big) {
     const c=this.ctx;
     const r=big?Math.max(9,12*this.zoom):Math.max(5,6*this.zoom);
     const inp=this.getInpMats(entry.md), out=this.getOutMats(entry.md);
     const iKey=entry.key;
 
-    const rot=entry.m?.fabrikRot||0;
-    const rawTw2=entry.md.tileGroesse?.w||2, rawTh2=entry.md.tileGroesse?.h||2;
-    const tw2=rot%2===0?rawTw2:rawTh2, th2=rot%2===0?rawTh2:rawTw2;
-    const pw2=tw2*T, ph2=th2*T;
-    // recalc px/py based on rotation-aware size
-    const px2=px, py2b=py, pw3=pw2, ph3=ph2;
-
     inp.forEach((mat,i)=>{
-      const frac=(i+1)/(inp.length+1);
-      let portX,portY;
-      if (rot===0){portX=px2;portY=py2b+ph3*frac;}
-      else if(rot===1){portX=px2+pw3*frac;portY=py2b;}
-      else if(rot===2){portX=px2+pw3;portY=py2b+ph3*(1-frac);}
-      else{portX=px2+pw3*(1-frac);portY=py2b+ph3;}
+      const p=this.portXY(entry,"input",i,ox,oy,T);
       const conn=fabrik_verbindungen.some(v=>(v.nachInstId===iKey||v.nachMasId===entry.md.id)&&v.nachPortIdx===i);
       const col=this.MAT_COL[mat]||this.MAT_COL._def;
       c.fillStyle=conn?col:"rgba(200,50,50,0.8)";
       c.strokeStyle=conn?"rgba(255,255,255,0.6)":"#AA2222"; c.lineWidth=1.5;
-      c.beginPath(); c.arc(portX,portY,r,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(p.x,p.y,r,0,Math.PI*2); c.fill(); c.stroke();
       if (big&&r>7) {
         c.fillStyle="rgba(255,255,255,0.8)"; c.font=`bold ${Math.max(7,9*this.zoom)}px sans-serif`; c.textAlign="center";
-        c.fillText("◀",portX,portY+3*this.zoom);
+        c.fillText("◀",p.x,p.y+3*this.zoom);
       }
     });
 
     out.forEach((mat,i)=>{
-      const frac2=(i+1)/(out.length+1);
-      let portX,portY;
-      if (rot===0){portX=px2+pw3;portY=py2b+ph3*frac2;}
-      else if(rot===1){portX=px2+pw3*frac2;portY=py2b+ph3;}
-      else if(rot===2){portX=px2;portY=py2b+ph3*(1-frac2);}
-      else{portX=px2+pw3*(1-frac2);portY=py2b;}
+      const p=this.portXY(entry,"output",i,ox,oy,T);
       const conn=fabrik_verbindungen.some(v=>(v.vonInstId===iKey||v.vonMasId===entry.md.id)&&v.vonPortIdx===i);
       const col=this.MAT_COL[mat]||this.MAT_COL._def;
       c.fillStyle=conn?col:"rgba(80,80,80,0.7)";
       c.strokeStyle=conn?"rgba(255,255,255,0.6)":"rgba(150,150,150,0.4)"; c.lineWidth=1.5;
-      c.beginPath(); c.arc(px+pw,py2,r,0,Math.PI*2); c.fill(); c.stroke();
+      c.beginPath(); c.arc(p.x,p.y,r,0,Math.PI*2); c.fill(); c.stroke();
       if (big&&r>7) {
         c.fillStyle="rgba(255,255,255,0.8)"; c.font=`bold ${Math.max(7,9*this.zoom)}px sans-serif`; c.textAlign="center";
-        c.fillText("▶",portX,portY+3*this.zoom);
+        c.fillText("▶",p.x,p.y+3*this.zoom);
       }
     });
   },
@@ -471,18 +520,44 @@ const FK = {
 
 
   // ═══ EVENTS ═══
+  // Wichtig: nur der ERSTE Finger löst Tap/Select/Pan aus. Sobald ein
+  // zweiter Finger dazukommt, wird jede laufende Aktion abgebrochen und
+  // auf reines Pinch-Zoom umgeschaltet — verhindert Konflikte zwischen
+  // Pan/Select und Zoom bei Mehrfachberührung.
   ev() {
     const C=this.canvas, s=this;
-    C.addEventListener("pointerdown",  e=>{e.preventDefault();C.setPointerCapture(e.pointerId);s.onDown(s.cp(e),e);});
-    C.addEventListener("pointermove",  e=>{s.onMove(s.cp(e));});
-    C.addEventListener("pointerup",    e=>{s.onUp(s.cp(e));});
-    C.addEventListener("pointercancel",e=>{s.onUp(s.cp(e));});
-    C.addEventListener("wheel",        e=>{e.preventDefault();s.onWheel(e);},{passive:false});
-    // Pinch via pointer events
     C._ptrs={};
-    C.addEventListener("pointerdown",e=>{C._ptrs[e.pointerId]={x:e.clientX,y:e.clientY};});
-    C.addEventListener("pointermove",e=>{if(C._ptrs[e.pointerId]){C._ptrs[e.pointerId]={x:e.clientX,y:e.clientY};s.checkPinch();}});
-    C.addEventListener("pointerup",  e=>{delete C._ptrs[e.pointerId];s.pinch=null;});
+
+    C.addEventListener("pointerdown", e=>{
+      e.preventDefault(); C.setPointerCapture(e.pointerId);
+      const warLeer = Object.keys(C._ptrs).length===0;
+      C._ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+      if (Object.keys(C._ptrs).length>=2) {
+        // Zweiter Finger: alle laufenden Einzel-Finger-Aktionen abbrechen
+        s.drag=null; s.dockDrag=null; s.portDrag=null; s.wpDrag=null; s.pinch=null;
+        return;
+      }
+      if (warLeer) s.onDown(s.cp(e), e);
+    });
+
+    C.addEventListener("pointermove", e=>{
+      if (C._ptrs[e.pointerId]) C._ptrs[e.pointerId]={x:e.clientX,y:e.clientY};
+      if (Object.keys(C._ptrs).length>=2) { s.checkPinch(); return; }
+      s.onMove(s.cp(e));
+    });
+
+    C.addEventListener("pointerup", e=>{
+      delete C._ptrs[e.pointerId];
+      if (Object.keys(C._ptrs).length<2) s.pinch=null;
+      if (Object.keys(C._ptrs).length===0) s.onUp(s.cp(e));
+    });
+
+    C.addEventListener("pointercancel", e=>{
+      delete C._ptrs[e.pointerId];
+      s.pinch=null; s.drag=null; s.dockDrag=null; s.portDrag=null; s.wpDrag=null;
+    });
+
+    C.addEventListener("wheel", e=>{e.preventDefault();s.onWheel(e);},{passive:false});
   },
 
   checkPinch() {
@@ -663,18 +738,19 @@ const FK = {
       }
     }
 
+    // Nutzt dieselbe portXY()-Berechnung wie das Zeichnen — garantiert dass
+    // Klick-Trefferzone und sichtbarer Port immer exakt übereinstimmen,
+    // auch bei gedrehten Maschinen.
     for (let e of mas) {
       if (!e.pos) continue;
-      const tw=e.md.tileGroesse?.w||2, th=e.md.tileGroesse?.h||2;
-      const px=ox+e.pos.tx*T, py=oy+e.pos.ty*T, pw=tw*T, ph=th*T;
       const inp=this.getInpMats(e.md), out=this.getOutMats(e.md);
       for (let i=0;i<inp.length;i++) {
-        const py2=py+ph*((i+1)/(inp.length+1));
-        if (Math.hypot(x-px,y-py2)<r) return {masId:e.md.id,instId:e.key,typ:"input",idx:i,mat:inp[i],x:px,y:py2};
+        const p=this.portXY(e,"input",i,ox,oy,T);
+        if (Math.hypot(x-p.x,y-p.y)<r) return {masId:e.md.id,instId:e.key,typ:"input",idx:i,mat:inp[i],x:p.x,y:p.y};
       }
       for (let i=0;i<out.length;i++) {
-        const py2=py+ph*((i+1)/(out.length+1));
-        if (Math.hypot(x-(px+pw),y-py2)<r) return {masId:e.md.id,instId:e.key,typ:"output",idx:i,mat:out[i],x:px+pw,y:py2};
+        const p=this.portXY(e,"output",i,ox,oy,T);
+        if (Math.hypot(x-p.x,y-p.y)<r) return {masId:e.md.id,instId:e.key,typ:"output",idx:i,mat:out[i],x:p.x,y:p.y};
       }
     }
     return null;
@@ -723,7 +799,9 @@ const FK = {
   collides(tx,ty,tw,th,skipKey) {
     for (let e of this.machines()) {
       if (!e.pos||e.key===skipKey) continue;
-      const ew=e.md.tileGroesse?.w||2, eh=e.md.tileGroesse?.h||2;
+      const rawW=e.md.tileGroesse?.w||2, rawH=e.md.tileGroesse?.h||2;
+      const rot=e.m?.fabrikRot||0;
+      const ew=rot%2===0?rawW:rawH, eh=rot%2===0?rawH:rawW; // Rotation berücksichtigen
       if (tx<e.pos.tx+ew&&tx+tw>e.pos.tx&&ty<e.pos.ty+eh&&ty+th>e.pos.ty) return true;
     }
     return false;
@@ -737,7 +815,12 @@ const FK = {
       return m;
     }).filter(m=>{
       const md=MASCHINEN.find(d=>d.id===m.id);
-      return md&&(!md.hallenTyp||md.hallenTyp.includes(this.geb.hallenTyp));
+      if (!md) return false;
+      // Maschine gehört zu genau EINEM Gebäude (dort gekauft) — nicht global
+      // nach Hallentyp anzeigen, sonst tauchen Maschinen aus Halle A auch in
+      // Halle B auf. Legacy-Maschinen ohne gebaeudeId fallen auf Hallentyp zurück.
+      if (m.gebaeudeId) return m.gebaeudeId===this.geb.id;
+      return !md.hallenTyp||md.hallenTyp.includes(this.geb.hallenTyp);
     }).map((m,idx)=>{
       const md=MASCHINEN.find(d=>d.id===m.id);
       const key=m.instanceId;
@@ -823,9 +906,7 @@ function fabrikkarteSchliessen() {
 
 function fabrikInfoZeigen(md, m, key) {
   const sheet=document.getElementById("fk-sheet"); if (!sheet) return;
-  const vis=FK.VISUALS?.[md.id]||{};
   const ico=FK.ICO?.[md.id]||"⚙️";
-  const glow=FK.GLOW?.[md.id]||"#4488aa";
   const laueft=m?.laeuft;
   const inp=FK.getInpMats(md);
   const alleV=inp.length===0||inp.every((_,i)=>fabrik_verbindungen.some(v=>(v.nachInstId===key||v.nachMasId===md.id)&&v.nachPortIdx===i));
@@ -877,6 +958,7 @@ function fabrikToggle(key) {
   if (!m.laeuft&&!alleV&&inp.length) { zeigeNotification("⚠ Erst Ports verbinden (◀▶)","red"); return; }
   if (m.laeuft){if(typeof maschineStoppen==="function")maschineStoppen(m);}
   else         {if(typeof maschineStarten ==="function")maschineStarten(m);}
+  if (typeof spielstandSpeichern==="function") spielstandSpeichern();
   setTimeout(()=>{if(md)fabrikInfoZeigen(md,m,key);},80);
 }
 
@@ -886,7 +968,10 @@ function fabrikVerschieben(key) {
   const posKey=FK.geb.id+"_"+key;
   if (m.fabrikPos) delete m.fabrikPos[posKey];
   m.platziert=false;
+  // Verbindungen dieser Maschine sind jetzt ungültig (nicht mehr platziert)
+  fabrik_verbindungen = fabrik_verbindungen.filter(v => v.vonInstId!==key && v.nachInstId!==key);
   FK.sel=null; fabrikInfoAusblenden();
+  spielstandSpeichern();
   zeigeNotification("↔ In Wareneingang zurück","green");
 }
 
@@ -917,7 +1002,7 @@ function fabrikDockAktualisieren() {
     const cl  = FK.COLORS[e.md.id] || FK.COLORS._def;
     const nm  = e.md.name.length > 9 ? e.md.name.slice(0, 8) + "…" : e.md.name;
     return `<button class="fk-dock-item" 
-      onclick="fabrikDockWaehlen('${e.key}')"
+      onclick="fabrikDockWaehlen('${e.key}', event)"
       style="--cl1:${cl[0]};--cl2:${cl[1]}">
       <span class="fk-di-ico">${ico}</span>
       <span class="fk-di-nm">${nm}</span>
@@ -926,7 +1011,7 @@ function fabrikDockAktualisieren() {
   }).join("");
 }
 
-function fabrikDockWaehlen(key) {
+function fabrikDockWaehlen(key, evt) {
   const e = FK.machines().find(m => m.key === key);
   if (!e) return;
 
@@ -946,11 +1031,6 @@ function fabrikDockWaehlen(key) {
 
   // Aktiven Button markieren
   document.querySelectorAll(".fk-dock-item").forEach(b => b.classList.remove("aktiv"));
-  event.currentTarget.classList.add("aktiv");
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add("aktiv");
   zeigeNotification("📦 " + e.md.name + " — Tippe auf die Fabrik um sie zu platzieren", "green");
-}
-
-function fabrikkarteOeffnen_fabrikInfoAktualisieren() {
-  fabrikDockAktualisieren();
-  fabrikInfoAktualisieren();
 }

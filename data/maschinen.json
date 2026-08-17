@@ -246,7 +246,8 @@
       "fabrik"
     ],
     "rezepte": [
-      "beton_herstellen"
+      "beton_herstellen",
+      "fertigbauteil_herstellen"
     ],
     "aktivesRezept": "beton_herstellen",
     "mitarbeiterProEinheit": 2,
@@ -536,7 +537,8 @@
     ],
     "rezepte": [
       "kernstrom_erzeugen",
-      "reaktorkern_herstellen"
+      "reaktorkern_herstellen",
+      "kernkraftmodul_herstellen"
     ],
     "aktivesRezept": "kernstrom_erzeugen",
     "mitarbeiterProEinheit": 5,
@@ -553,6 +555,117 @@
     "epoche": 2,
     "tier_min": 4,
     "raumTyp": "infrastruktur",
+    "raumGroesse": 8
+  },
+  {
+    "id": "reifenfabrik",
+    "name": "Reifenpresse",
+    "emoji": "🛞",
+    "beschreibung": "Vulkanisiert Gummi und Stahl zu langlebigen Reifen.",
+    "kosten": 32000,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "groesse": "mittel",
+    "tileGroesse": {
+      "w": 3,
+      "h": 3
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "reifen_herstellen"
+    ],
+    "aktivesRezept": "reifen_herstellen",
+    "mitarbeiterProEinheit": 2,
+    "kostenProRunde": 14,
+    "energieVerbrauch": 140,
+    "wartungskosten": 400,
+    "basisGeschwindigkeit": 0.9,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 4,
+    "queueSlots": 1,
+    "freischaltung": "epoche_2",
+    "farbe": "#2C2C2A",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 3
+  },
+  {
+    "id": "fahrzeugwerk",
+    "name": "Karosseriestraße",
+    "emoji": "🚘",
+    "beschreibung": "Fertigt Fahrgestell, Karosserie und Bordelektronik für Fahrzeuge.",
+    "kosten": 60000,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "groesse": "gross",
+    "tileGroesse": {
+      "w": 6,
+      "h": 5
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "fahrgestell_herstellen",
+      "karosserieteil_herstellen",
+      "bordelektronik_herstellen"
+    ],
+    "aktivesRezept": "fahrgestell_herstellen",
+    "mitarbeiterProEinheit": 4,
+    "kostenProRunde": 28,
+    "energieVerbrauch": 220,
+    "wartungskosten": 900,
+    "basisGeschwindigkeit": 0.6,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 4,
+    "queueSlots": 2,
+    "freischaltung": "epoche_2",
+    "farbe": "#185FA5",
+    "epoche": 2,
+    "tier_min": 4,
+    "raumTyp": "produktion",
+    "raumGroesse": 6
+  },
+  {
+    "id": "montagehalle_pkw",
+    "name": "PKW-Montageroboter",
+    "emoji": "🏁",
+    "beschreibung": "Endmontage: fügt alle Fahrzeugkomponenten zum fahrbereiten Rahmen zusammen.",
+    "kosten": 95000,
+    "kategorie": "produktion",
+    "produktionslinie": "fahrzeug",
+    "groesse": "riesig",
+    "tileGroesse": {
+      "w": 8,
+      "h": 6
+    },
+    "hallenTyp": [
+      "fabrik"
+    ],
+    "rezepte": [
+      "fahrzeuginnenraum_herstellen",
+      "pkw_rahmen_herstellen"
+    ],
+    "aktivesRezept": "fahrzeuginnenraum_herstellen",
+    "mitarbeiterProEinheit": 5,
+    "kostenProRunde": 40,
+    "energieVerbrauch": 260,
+    "wartungskosten": 1400,
+    "basisGeschwindigkeit": 0.4,
+    "effizienz": 1.0,
+    "level": 1,
+    "maxLevel": 3,
+    "queueSlots": 2,
+    "freischaltung": "epoche_2",
+    "farbe": "#0F6E56",
+    "epoche": 2,
+    "tier_min": 5,
+    "raumTyp": "produktion",
     "raumGroesse": 8
   }
 ]
