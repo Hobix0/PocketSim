@@ -1,169 +1,98 @@
-# 🏭 PocketSim — Produktionsimperium
+# PocketSim Factory
 
-> Baue dein Industrieimperium in Remscheid auf. Verarbeite Rohstoffe, forsche neue Technologien und produziere irgendwann deinen ersten eigenen PKW.
+> Baue in 3D eine Fabrik in Remscheid auf: Erz bohren, Bänder ziehen, Platten schmelzen und Motoren montieren, bis die Fertigung durchgetaktet läuft.
 
-![PocketSim Screenshot](Header.jpg)
+**Live spielen:** [herosrs.github.io/PocketSim](https://herosrs.github.io/PocketSim/)
 
-**🌐 Live spielen:** [herosrs.github.io/PocketSim](https://herosrs.github.io/PocketSim/)
-
----
-
-## 🎮 Was ist PocketSim?
-
-PocketSim ist ein browser-basiertes Produktionsmanagement- und Idle-Spiel. Du startest mit einem leeren Grundstück in Remscheid und baust Schritt für Schritt ein Industrieimperium auf — von der ersten Stammsäge bis zur vollautomatisierten Fahrzeugmontage.
-
-Das Spiel ist inspiriert von Games wie **Factorio**, **Satisfactory** und **Mini Metro**, aber komplett im Browser — ohne Installation, ohne Login, ohne Werbung.
+PocketSim Factory ist ein Fabrik-Aufbauspiel im Browser, inspiriert von **Factorio**, **Satisfactory** und **shapez**. Die 3D-Grafik läuft mit Three.js. Es gibt keinen Build-Schritt, keine Installation und keinen Login, und das Spiel läuft auf dem Desktop genauso wie auf dem Handy.
 
 ---
 
-## ✨ Features
+## Spielprinzip
 
-### 🏗️ Produktionslinien
-- **Holz-Linie** — Baumstamm → Brett → Diele → Furnier → Möbel
-- **Metall-Linie** — Eisenerz → Roheisen → Stahlbarren → Maschinenrahmen
-- **Fahrzeug-Linie** — Karosserie + Achsmodul + Innenausstattung → PKW / Transporter / LKW
+1. **Gewinnen**: Bohrer auf Eisen-, Kupfer-, Kohle- oder Sandvorkommen setzen, Holzfäller neben Wälder.
+2. **Transportieren**: Förderbänder ziehen. Gebäude geben ihre Waren an angrenzende Bänder ab, die von ihnen wegzeigen. Verteiler und Kreuzungen helfen beim Routing.
+3. **Verarbeiten**: Schmelzofen, Sägewerk, Presse, Hochofen und Montagehalle verwandeln Rohstoffe in immer wertvollere Produkte.
+4. **Verkaufen**: Was im Handelsdepot ankommt, wird verkauft oder für einen Auftrag gezählt. Wer den Markt mit einer Ware flutet, drückt den Preis.
+5. **Forschen**: Neue Gebäude und Boni kosten Geld und setzen voraus, dass bestimmte Waren schon geliefert wurden.
 
-### 🏭 Hallensystem
-- Tile-Grid mit Drag & Drop — Maschinen frei positionieren
-- Leichthalle & Schwerlasthalle mit unterschiedlichen Maschinen-Kompatibilitäten
-- Förderbänder zwischen Maschinen mit animiertem SVG-Overlay
-- Hallen-Upgrades: Lüftung, Erweiterung, Sicherheit, Dämmung
+### Produktionsketten
 
-### 🔬 Forschungsbaum
-- 35+ Technologien in 6 Kategorien
-- Maschinen werden nach und nach durch Forschung freigeschaltet
-- Interaktiver SVG-Baum mit Zoom und Pan
+| Stufe | Produkte |
+|---|---|
+| Rohstoffe | Holz, Eisenerz, Kupfererz, Kohle, Sand |
+| Grundmaterial | Bretter, Eisenplatten, Kupferplatten, Glas |
+| Bauteile | Zahnräder, Kupferdraht, Stahlträger |
+| Komponenten | Schaltkreise, Motoren, Möbel |
 
-### 📊 Wirtschaft
-- Dynamische Marktpreise mit Trend-Anzeige
-- Auftrags-System (Normal / Dringend / Großauftrag)
-- Statistik-Screen mit Gewinn/Verlust-Graph
-- ROI-Berechnung pro Maschine
+### Systeme
 
-### ⚡ Ereignis-System
-- 10+ zufällige Ereignisse pro Runde
-- Positive & negative Effekte (Holzboom, Energiekrise, Streik, Förderung...)
-- Spielmodi: Startup, Normal, Hardcore
-
-### 📱 Progressive Web App
-- Installierbar auf iOS & Android
-- Offline spielbar
-- Kein Server nötig nach Installation
+- **Strom**: Netzanschluss (kostet laufend Geld), Windräder (je nach Wind), Kohlekraftwerke (brauchen Kohle per Band) und Solarfelder (nur tagsüber). Bei Strommangel laufen alle Maschinen langsamer.
+- **Tag & Nacht**: Ein Tag dauert 6 Minuten. Nachts leuchten die Hallen, und Solarfelder liefern nichts.
+- **Aufträge**: Bis zu 3 gleichzeitig, mit Zeitlimit und Bonus-Belohnung.
+- **Ereignisse**: Bauboom, Energiekrise, Sturmfront, Förderprogramm und mehr.
+- **Upgrades**: Maschinen, Bohrer und Holzfäller bis Stufe 5 ausbauen.
+- **Ziele**: Ein geführter Einstieg vom ersten Bohrer bis zur Motorenfertigung.
+- **Statistik**: Einnahmenverlauf, Produktion pro Minute und Marktpreise.
+- **Speichern**: Automatisch alle 30 s im Browser, dazu Export/Import als JSON.
 
 ---
 
-## 🚀 Spielen
+## Steuerung
 
-### Im Browser
-Einfach aufrufen: **[herosrs.github.io/PocketSim](https://herosrs.github.io/PocketSim/)**
+| Eingabe | Aktion |
+|---|---|
+| Linksklick | Auswählen / Bauen · Ziehen verschiebt die Karte |
+| Rechte Maustaste ziehen | Karte verschieben |
+| Mittlere Maustaste ziehen, `Q` / `E` | Kamera drehen |
+| Mausrad | Zoomen |
+| `WASD` / Pfeiltasten | Kamera bewegen |
+| `R` | Gebäude bzw. Band drehen |
+| `X` | Abrisswerkzeug |
+| `C` | Gebäude unter der Maus kopieren |
+| `1`–`9`, `Tab` | Gebäude wählen, Kategorie wechseln |
+| `F` / `T` | Forschung / Statistik |
+| Leertaste | Pause |
+| Touch | Ein Finger baut bzw. verschiebt, zwei Finger bewegen, zoomen und drehen |
 
-### Als App installieren (empfohlen)
-**iPhone/iPad:**
-1. Safari öffnen → Seite aufrufen
-2. Teilen-Button → "Zum Home-Bildschirm"
-3. PocketSim-Icon antippen → Vollbild, kein Browser
+---
 
-**Android:**
-1. Chrome öffnen → Seite aufrufen
-2. Menü → "App installieren"
-3. Fertig!
+## Technik
 
-### Lokal ausführen
+```
+index.html        Einstieg, Import-Map für Three.js (CDN)
+css/style.css     Leitstand-UI nach dem „Factory“-Stil (Refero Styles), responsiv bis Smartphone
+src/data.js       Spielinhalte: Waren, Rezepte, Gebäude, Forschung, Ziele, Ereignisse
+src/sim.js        Simulation: Weltgenerierung, Bänder, Maschinen, Strom, Markt, Speichern
+src/models.js     Prozedurale Low-Poly-Modelle für Gebäude, Bänder und Waren
+src/render.js     Three.js-Szene: Terrain, Instancing, Partikel, Tag/Nacht, Bloom
+src/input.js      Kamera, Maus/Touch/Tastatur, Bauwerkzeuge
+src/ui.js         HUD, Baumenü, Inspektor, Aufträge, Forschung, Statistik, Menü
+src/audio.js      Synthesizer-Sounds über WebAudio
+src/main.js       Verdrahtung und Spielschleife
+```
+
+- Keine Abhängigkeiten außer Three.js (r170, per Import-Map von jsDelivr)
+- Alle Modelle und Icons werden zur Laufzeit erzeugt, es gibt keine Asset-Dateien
+- Bänder und Waren werden über `InstancedMesh` gezeichnet, dadurch bleiben auch große Fabriken flüssig
+
+### Lokal starten
+
+ES-Module brauchen einen Webserver:
+
 ```bash
-git clone https://github.com/HerosRS/PocketSim.git
-cd PocketSim
-python3 server.py
-# → http://localhost:8080
+python3 -m http.server 8080
 ```
 
----
-
-## 🗂️ Projektstruktur
-
-```
-PocketSim/
-├── index.html          # Haupt-HTML
-├── style.css           # Komplettes CSS (Dark Theme)
-├── manifest.json       # PWA Manifest
-├── sw.js               # Service Worker (Offline-Cache)
-├── server.py           # Lokaler Dev-Server
-│
-├── data/               # Spieldaten (JSON)
-│   ├── materialien.json    # 37 Materialien
-│   ├── rezepte.json        # 26 Rezepte
-│   ├── maschinen.json      # 19 Maschinen
-│   ├── gebaeude.json       # 6 Gebäude
-│   ├── forschung.json      # 35 Forschungen
-│   ├── grundstuecke.json   # Remscheid, Solingen, Wuppertal
-│   ├── auftraege.json
-│   ├── ereignisse.json
-│   ├── spielmodi.json
-│   └── hallen_upgrades.json
-│
-├── js/                 # JavaScript Module
-│   ├── main.js             # Einstiegspunkt
-│   ├── state.js            # Spielstand & Variablen
-│   ├── produktion.js       # Produktionsloop & Timer
-│   ├── hallenplan.js       # Tile-Grid Renderer
-│   ├── foerderband.js      # Förderband-System
-│   ├── hallen_upgrades.js  # Hallen-Upgrades
-│   ├── labor.js            # Forschungsbaum (SVG)
-│   ├── wirtschaft.js       # Markt & Preise
-│   ├── auftraege.js        # Auftrags-System
-│   ├── ereignisse.js       # Ereignis-System
-│   ├── statistik.js        # Statistik & Graphen
-│   ├── shop.js             # Shop
-│   └── ...
-│
-├── assets/             # Bilder für Materialien & Maschinen
-└── icons/              # PWA Icons
-```
+Danach `http://localhost:8080` öffnen. `server.py` funktioniert weiterhin, zum Beispiel in Pythonista auf dem iPhone.
 
 ---
 
-## 🛠️ Technologie
-
-| Was | Womit |
-|-----|-------|
-| Frontend | Vanilla HTML/CSS/JavaScript |
-| Keine Frameworks | Kein React, kein Vue, kein jQuery |
-| Daten | JSON-Dateien |
-| Speichern | localStorage |
-| Offline | Service Worker (PWA) |
-| Hosting | GitHub Pages |
-| Fonts | Google Fonts (Rajdhani + Inter) |
-
----
-
-## 🗺️ Roadmap
-
-- [x] Holz-Produktionslinie
-- [x] Metall-Produktionslinie  
-- [x] Tile-Grid Hallensystem
-- [x] Drag & Drop Maschinen
-- [x] Förderbänder
-- [x] Forschungsbaum
-- [x] Ereignis-System
-- [x] Statistik & Graphen
-- [x] PWA / Offline-Modus
-- [ ] Fahrzeug-Produktionslinie (in Arbeit)
-- [ ] Garage & Fuhrpark-System
-- [ ] Throughput-Anzeige
-- [ ] Achievements
-- [ ] Mehr Grundstücke & Städte
-
----
-
-## 👨‍💻 Entwicklung
+## Entwicklung
 
 Entwickelt von **Luca** (HerosRS) mit Unterstützung von Claude (Anthropic).
 
-Lernprojekt mit dem Ziel: Ein vollständiges Spiel im Browser bauen — ohne Frameworks, nur mit den Grundlagen.
+## Lizenz
 
----
-
-## 📄 Lizenz
-
-Privates Projekt — kein Open Source.  
+Privates Projekt, kein Open Source.
 © 2025 HerosRS
-

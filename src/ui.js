@@ -1,0 +1,516 @@
+// HUD, Baumenü, Inspektor, Aufträge, Forschung, Statistik, Menü.
+import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, CATEGORIES, DEPOSITS, RESEARCH, RESEARCH_BY_ID, GOALS, CONFIG } from './data.js';
+import { fmtMoney, levelMul, upgradeCost } from './sim.js';
+import { sound, audio } from './audio.js';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const ICONS = {
+  cursor: '<path d="M5 3l14 8-6 2-3 6z"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  rotate: '<path d="M20 12a8 8 0 1 1-3-6.2M20 4v5h-5"/>',
+  flask: '<path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7 15h10"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
+  copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+  up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+};
+export const icon = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+
+const fmt = (n, d = 0) => Number(n).toLocaleString('de-DE', { maximumFractionDigits: d, minimumFractionDigits: d });
+const fmtTime = s => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+export class UI {
+  constructor(game, controls, renderer, thumbs, api) {
+    Object.assign(this, { game, controls, renderer, thumbs, api });
+    this.cat = 'logistik';
+    this.modal = null;
+    this.goalCollapsed = false;
+    this.lastHtml = {};
+
+    document.querySelectorAll('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon); });
+    document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { sound('ui'); this.open(b.dataset.open); }));
+    $('#modal').addEventListener('pointerdown', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) this.close(); });
+    $('#goal').addEventListener('click', () => { this.goalCollapsed = !this.goalCollapsed; this.renderGoal(); });
+
+    this.renderSpeed();
+    this.renderTools();
+    this.renderCats();
+    this.renderBuild();
+    this.renderGoal();
+    this.renderContracts();
+
+    game.on('toast', t => this.toast(t.text, t.kind));
+    game.on('contracts', () => this.renderContracts(true));
+    game.on('research', () => { this.renderBuild(); this.renderSelected(true); });
+    game.on('goal', () => { this.renderGoal(); sound('success'); });
+    game.on('event', () => this.renderEvent());
+    game.on('entityChanged', () => this.renderSelected(true));
+    game.on('world', () => {
+      if (controls.selected != null && !game.entities.has(controls.selected)) controls.select(null);
+    });
+    this.setupBuildTooltips();
+    this._t = 0;
+  }
+
+  thumb(type) { return this.thumbs.buildings[type]; }
+  itemImg(id, title = true) { return `<img src="${this.thumbs.items[id]}" alt="" ${title ? `title="${esc(ITEMS[id].name)}"` : ''}>`; }
+
+  // ───────────────────────── Laufende Aktualisierung
+  frame(dt) {
+    this._t += dt;
+    if (this._t < 0.2) return;
+    this._t = 0;
+    const g = this.game;
+    $('#money').textContent = fmtMoney(g.money);
+    const inc = g.incomePerMin();
+    const incEl = $('#income');
+    incEl.textContent = g.stats.history.length ? `${inc >= 0 ? '+' : ''}${fmtMoney(inc)}/min` : '';
+    incEl.classList.toggle('neg', inc < 0);
+    const p = g.power || { demand: 0, supply: 0, ratio: 1 };
+    const bar = $('#powerBar');
+    bar.style.width = `${p.supply > 0 ? Math.min(100, p.demand / p.supply * 100) : 0}%`;
+    bar.className = p.ratio < 1 ? 'bad' : p.demand > p.supply * 0.85 ? 'warn' : '';
+    $('#powerText').textContent = `${fmt(p.demand)} / ${fmt(p.supply)} kW`;
+    const h = g.dayFrac * 24;
+    $('#clock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor((h % 1) * 60 / 10) * 10).padStart(2, '0')}`;
+    $('#dayLabel').textContent = `Tag ${g.day}`;
+    $('#weather').textContent = `${g.daylight > 0.05 ? 'TAG' : 'NACHT'} · WIND ${Math.round(g.wind * 100)}%`;
+    this.refreshBuild();
+    this.renderContracts();
+    this.renderEvent();
+    this.renderSelected();
+    const ready = RESEARCH.filter(r => g.researchState(r.id) === 'ready').length;
+    const badge = $('#researchBadge');
+    badge.classList.toggle('hidden', !ready);
+    badge.textContent = ready;
+    if (this.modal && this.modal !== 'menu') this.renderModal();
+  }
+
+  setHtml(el, key, html) {
+    if (this.lastHtml[key] === html) return false;
+    this.lastHtml[key] = html;
+    el.innerHTML = html;
+    return true;
+  }
+
+  // ───────────────────────── Geschwindigkeit
+  renderSpeed() {
+    const el = $('#speed'), g = this.game;
+    const opts = [[0, icon('pause')], [1, '1×'], [2, '2×'], [4, '4×']];
+    el.innerHTML = opts.map(([v, l]) => `<button data-v="${v}" title="${v ? `Tempo ${v}×` : 'Pause (Leertaste)'}" class="${(v === 0 ? g.paused : !g.paused && g.speed === v) ? 'on' : ''}">${l}</button>`).join('');
+    el.querySelectorAll('button').forEach(b => b.onclick = () => {
+      const v = +b.dataset.v;
+      if (v === 0) g.paused = !g.paused; else { g.paused = false; g.speed = v; }
+      sound('ui');
+      this.renderSpeed();
+    });
+  }
+
+  // ───────────────────────── Werkzeuge & Baumenü
+  renderTools() {
+    const c = this.controls;
+    $('#tools').innerHTML = `
+      <button data-t="select" class="${c.tool === 'select' ? 'on' : ''}" title="Auswählen (Esc)">${icon('cursor')}</button>
+      <button data-t="delete" class="del ${c.tool === 'delete' ? 'on' : ''}" title="Abreißen (X)">${icon('trash')}<kbd>X</kbd></button>
+      <button data-t="rotate" title="Drehen (R)">${icon('rotate')}<kbd>R</kbd></button>`;
+    $('#tools').querySelectorAll('button').forEach(b => b.onclick = () => {
+      sound('ui');
+      if (b.dataset.t === 'rotate') c.rotate();
+      else c.setTool(b.dataset.t === c.tool && b.dataset.t !== 'select' ? 'select' : b.dataset.t);
+    });
+  }
+
+  renderCats() {
+    $('#cats').innerHTML = CATEGORIES.map(c => `<button data-c="${c.id}" class="${this.cat === c.id ? 'on' : ''}">${c.name}</button>`).join('');
+    $('#cats').querySelectorAll('button').forEach(b => b.onclick = () => { this.cat = b.dataset.c; sound('ui'); this.renderCats(); this.renderBuild(); });
+  }
+
+  buildList() { return Object.keys(BUILDINGS).filter(t => BUILDINGS[t].cat === this.cat); }
+
+  renderBuild() {
+    const g = this.game, c = this.controls;
+    $('#buildItems').innerHTML = this.buildList().map((t, i) => {
+      const B = BUILDINGS[t], unlocked = g.isUnlocked(t);
+      const cost = unlocked ? fmtMoney(B.cost) : RESEARCH_BY_ID[B.unlock].name;
+      return `<button class="bitem ${unlocked ? '' : 'locked'} ${c.buildType === t ? 'on' : ''}" data-b="${t}">
+        <kbd>${i + 1}</kbd><img src="${this.thumb(t)}" alt=""><span class="n">${B.name}</span><span class="c">${cost}</span></button>`;
+    }).join('');
+    $('#buildItems').querySelectorAll('.bitem').forEach(b => b.onclick = () => this.pickBuilding(b.dataset.b));
+  }
+
+  pickBuilding(t) {
+    const g = this.game;
+    if (!g.isUnlocked(t)) { this.toast(`Erfordert Forschung „${RESEARCH_BY_ID[BUILDINGS[t].unlock].name}“`, 'warn'); sound('error'); return; }
+    sound('ui');
+    this.controls.setTool('build', t);
+  }
+
+  refreshBuild() {
+    const g = this.game;
+    $('#buildItems').querySelectorAll('.bitem').forEach(b => {
+      const t = b.dataset.b;
+      b.classList.toggle('poor', g.isUnlocked(t) && g.money < BUILDINGS[t].cost);
+      b.classList.toggle('on', this.controls.buildType === t);
+    });
+  }
+
+  setupBuildTooltips() {
+    const tip = $('#tooltip');
+    const items = $('#buildItems');
+    items.addEventListener('pointerover', e => {
+      const b = e.target.closest('.bitem');
+      if (!b || e.pointerType === 'touch') return;
+      const B = BUILDINGS[b.dataset.b];
+      const extra = [];
+      if (B.power) extra.push(`${B.power} kW`);
+      if (B.supply) extra.push(`+${B.supply} kW`);
+      extra.push(`${B.size}×${B.size}`);
+      tip.innerHTML = `<b>${B.name}</b>${esc(B.desc)}<div class="meta"><span>${fmtMoney(B.cost)}</span>${extra.map(x => `<span>${x}</span>`).join('')}</div>`;
+      tip.classList.remove('hidden');
+      const r = b.getBoundingClientRect();
+      tip.style.left = `${Math.max(8, Math.min(innerWidth - 270, r.left + r.width / 2 - 130))}px`;
+      tip.style.top = `${r.top - tip.offsetHeight - 10}px`;
+    });
+    items.addEventListener('pointerout', e => { if (!e.relatedTarget?.closest?.('.bitem')) tip.classList.add('hidden'); });
+    items.addEventListener('click', () => tip.classList.add('hidden'));
+  }
+
+  onTool() { this.renderTools(); this.renderBuild(); }
+
+  onKey(k) {
+    if (k === ' ') { this.game.paused = !this.game.paused; this.renderSpeed(); }
+    else if (k === 'f') this.modal === 'research' ? this.close() : this.open('research');
+    else if (k === 't') this.modal === 'stats' ? this.close() : this.open('stats');
+    else if (k === 'tab') { const i = CATEGORIES.findIndex(c => c.id === this.cat); this.cat = CATEGORIES[(i + 1) % CATEGORIES.length].id; this.renderCats(); this.renderBuild(); }
+    else if (/^[1-9]$/.test(k)) { const t = this.buildList()[+k - 1]; if (t) this.pickBuilding(t); }
+  }
+
+  onEscape() { if (this.modal) this.close(); }
+
+  // ───────────────────────── Hover
+  onHover(t) {
+    const el = $('#hoverInfo'), g = this.game;
+    if (!t) { el.textContent = ''; return; }
+    const parts = [`Feld ${t.x}, ${t.z}`];
+    const i = g.idx(t.x, t.z);
+    if (g.terrain[i] === 1) parts.push('Wasser');
+    const dep = DEPOSITS[g.deposit[i]];
+    if (dep) parts.push(dep.name);
+    const ent = g.at(t.x, t.z);
+    if (ent) parts.push(BUILDINGS[ent.type].name);
+    el.textContent = parts.join(' · ');
+  }
+
+  // ───────────────────────── Ziel
+  renderGoal() {
+    const g = this.game, goal = GOALS[g.goalIndex], el = $('#goal');
+    if (!goal) { el.classList.add('hidden'); return; }
+    el.classList.toggle('collapsed', this.goalCollapsed);
+    const steps = GOALS.map((_, i) => `<i class="${i < g.goalIndex ? 'done' : i === g.goalIndex ? 'now' : ''}"></i>`).join('');
+    el.innerHTML = `<span class="label">Aktuelles Ziel</span><span class="count">${String(g.goalIndex + 1).padStart(2, '0')} / ${String(GOALS.length).padStart(2, '0')}</span>
+      <span class="text">${esc(goal.text)}</span><span class="reward">+${fmtMoney(goal.reward)}</span><span class="steps">${steps}</span>`;
+  }
+
+  // ───────────────────────── Aufträge
+  renderContracts() {
+    const g = this.game;
+    $('#contractCount').textContent = `${g.contracts.length}/3`;
+    const html = g.contracts.length ? g.contracts.map(c => `
+      <div class="contract">
+        ${this.itemImg(c.item)}
+        <span class="title">${c.delivered}/${c.qty} ${esc(ITEMS[c.item].name)}</span>
+        <span class="reward">+${fmtMoney(c.reward)}</span>
+        <span class="prog"><i style="width:${c.delivered / c.qty * 100}%"></i></span>
+        <span class="time ${c.time < 60 ? 'urgent' : ''}">${fmtTime(c.time)}</span>
+      </div>`).join('') : '<div class="empty">Neue Aufträge treffen bald ein. Liefere die Ware ans Handelsdepot.</div>';
+    this.setHtml($('#contracts'), 'contracts', html);
+  }
+
+  // ───────────────────────── Ereignis
+  renderEvent() {
+    const ev = this.game.event, el = $('#eventBanner');
+    if (!ev) { el.classList.add('hidden'); this.lastHtml.event = ''; return; }
+    el.classList.remove('hidden');
+    this.setHtml(el, 'event', `<b>${esc(ev.title)}</b><span>${esc(ev.text)}</span><span class="bar"><i style="width:${ev.left / ev.duration * 100}%"></i></span>`);
+  }
+
+  // ───────────────────────── Inspektor
+  onSelect() { this.renderSelected(true); }
+
+  renderSelected(force = false) {
+    const g = this.game, el = $('#inspector');
+    const e = this.controls.selected != null ? g.entities.get(this.controls.selected) : null;
+    if (!e) { el.classList.add('hidden'); this.lastHtml.insp = ''; return; }
+    el.classList.remove('hidden');
+    const B = BUILDINGS[e.type];
+    let status = '', body = '', progress = null;
+    const powerOk = (g.power?.ratio ?? 1) >= 0.999;
+    const pm = g.power?.ratio ?? 1;
+
+    if (B.kind === 'machine') {
+      const r = RECIPES[e.recipe];
+      const missing = r && Object.keys(r.in).some(k => (e.inBuf[k] || 0) < r.in[k]);
+      const outFull = Object.values(e.outBuf).reduce((a, b) => a + b, 0) >= 8;
+      status = e.crafting ? (powerOk ? ['ok', 'Produziert'] : ['bad', `Strommangel (${Math.round(pm * 100)} %)`]) : outFull ? ['bad', 'Ausgabe voll – Abtransport fehlt'] : missing ? ['idle', 'Wartet auf Zutaten'] : ['idle', 'Bereit'];
+      progress = e.progress;
+      const speed = g.mods.machineMul * levelMul(e.level);
+      const rs = g.recipesFor(e.type);
+      body += `<div class="sect">Rezept</div><div class="recipes">${rs.map(rid => {
+        const R = RECIPES[rid], ok = g.recipeUnlocked(rid);
+        const ins = Object.entries(R.in).map(([k, n]) => `<span class="chip">${n}${this.itemImg(k)}</span>`).join('');
+        const outs = Object.entries(R.out).map(([k, n]) => `<span class="chip">${n}${this.itemImg(k)}</span>`).join('');
+        return `<button class="recipe ${rid === e.recipe ? 'on' : ''}" data-recipe="${rid}" ${ok ? '' : 'disabled style="opacity:.4"'}>${ins}<span class="arrow">→</span>${outs}<span class="t">${ok ? `${fmt(R.time / speed, 1)} s` : 'GESPERRT'}</span></button>`;
+      }).join('')}</div>`;
+      if (r) {
+        body += `<div class="sect">Eingang</div><div class="bufs">${Object.entries(r.in).map(([k, n]) => `<span class="buf ${(e.inBuf[k] || 0) < n ? 'low' : ''}">${this.itemImg(k)}${e.inBuf[k] || 0}/${n}</span>`).join('')}</div>`;
+        const outs = Object.entries(e.outBuf).filter(([, n]) => n > 0);
+        body += `<div class="sect">Ausgang</div><div class="bufs">${outs.length ? outs.map(([k, n]) => `<span class="buf">${this.itemImg(k)}${n}</span>`).join('') : '<span class="empty">leer</span>'}</div>`;
+        const per = 60 / (r.time / speed);
+        body += `<div class="sect">Leistung</div><div class="kv">${Object.entries(r.out).map(([k, n]) => `<span>${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}${Object.entries(r.in).map(([k, n]) => `<span>Bedarf ${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}<span>Strom</span><span>${B.power} kW</span></div>`;
+      }
+    } else if (B.kind === 'miner' || B.kind === 'lumber') {
+      const res = B.kind === 'miner' ? e.res : 'holz';
+      const base = B.kind === 'miner' ? e.tiles * CONFIG.minerRate : (e._forest || 0) * CONFIG.lumberRate;
+      const rate = base * g.mods.minerMul * levelMul(e.level) * 60;
+      status = base <= 0 ? ['bad', 'Kein Wald in Reichweite'] : e.out >= 6 ? ['bad', 'Ausgabe voll – Band anschließen'] : powerOk ? ['ok', 'Fördert'] : ['bad', `Strommangel (${Math.round(pm * 100)} %)`];
+      progress = e.progress % 1;
+      body += `<div class="sect">Förderung</div><div class="bufs"><span class="buf">${this.itemImg(res)}${e.out} im Puffer</span></div>
+        <div class="kv" style="margin-top:10px"><span>${B.kind === 'miner' ? 'Vorkommensfelder' : 'Waldfelder im Umkreis'}</span><span>${B.kind === 'miner' ? e.tiles + ' / 4' : e._forest || 0}</span><span>Rate</span><span>${fmt(rate, 1)} ${ITEMS[res].name}/min</span><span>Strom</span><span>${B.power} kW</span></div>`;
+    } else if (B.kind === 'storage') {
+      status = e.total >= B.capacity ? ['bad', 'Voll'] : ['ok', `${e.total} / ${B.capacity} belegt`];
+      const inv = Object.entries(e.inv).filter(([, n]) => n > 0);
+      body += `<div class="sect">Inhalt</div><div class="bufs">${inv.length ? inv.map(([k, n]) => `<span class="buf">${this.itemImg(k)}${n}</span>`).join('') : '<span class="empty">leer</span>'}</div>`;
+    } else if (B.kind === 'generator') {
+      status = e.output > 0.5 ? ['ok', `Erzeugt ${fmt(e.output)} kW`] : ['idle', e.type === 'kraftwerk' ? (e.fuel ? 'Bereit, kein Bedarf' : 'Braucht Kohle') : 'Keine Erzeugung'];
+      body += `<div class="kv"><span>Leistung</span><span>${fmt(e.output)} / ${B.supply} kW</span>${e.type === 'kraftwerk' ? `<span>Kohle im Lager</span><span>${e.fuel}</span>` : ''}</div>`;
+    } else if (B.kind === 'grid') {
+      const p = g.power;
+      status = ['ok', 'Verbunden mit dem Stadtnetz'];
+      body += `<div class="kv"><span>Kapazität</span><span>${fmt(B.supply * g.mods.gridMul)} kW</span><span>Netzbezug gesamt</span><span>${fmt(p?.gridDraw || 0)} kW</span><span>Kosten</span><span>${fmtMoney((p?.gridDraw || 0) * CONFIG.gridCostPerKWs * 60 * (g.event?.gridCost || 1))}/min</span></div>`;
+    } else if (B.kind === 'depot') {
+      status = ['ok', 'Nimmt alle Waren an'];
+      const top = ITEM_IDS.filter(k => g.stats.sold[k]).sort((a, b) => g.ratePerMin('sold', b) * ITEMS[b].price - g.ratePerMin('sold', a) * ITEMS[a].price).slice(0, 6);
+      body += `<div class="sect">Aktuelle Preise</div><div class="kv">${top.length ? top.map(k => `<span>${ITEMS[k].name}</span><span>${fmtMoney(g.price(k))}</span>`).join('') : '<span>Noch nichts verkauft</span><span></span>'}</div>`;
+    } else if (B.kind === 'belt') {
+      status = ['ok', `${e.items.length} Waren auf dem Band`];
+      body += `<div class="kv"><span>Geschwindigkeit</span><span>${fmt(CONFIG.beltSpeed * g.mods.beltMul / CONFIG.beltSpacing * 60)} Waren/min</span></div>`;
+    } else {
+      status = ['ok', 'Aktiv'];
+    }
+
+    const canUp = g.canUpgrade(e);
+    const cost = canUp ? upgradeCost(e) : 0;
+    const html = `
+      <div class="insp-head"><img src="${this.thumb(e.type)}" alt=""><div><h2>${B.name}${['machine', 'miner', 'lumber'].includes(B.kind) ? `<span class="lvl">Stufe ${e.level}</span>` : ''}</h2><p>${esc(B.desc)}</p></div><button class="x" data-act="close">&times;</button></div>
+      <div class="status ${status[0]}">${status[1]}</div>
+      ${progress != null ? `<div class="progress"><i id="inspProg" style="width:${progress * 100}%"></i></div>` : ''}
+      ${body}
+      <div class="actions">
+        ${canUp ? `<button class="btn primary" data-act="upgrade" ${g.money < cost ? 'disabled' : ''}>${icon('up')} Stufe ${e.level + 1} · ${fmtMoney(cost)}</button>` : ''}
+        <button class="btn" data-act="rotate" title="R">${icon('rotate')}</button>
+        ${g.isUnlocked(e.type) ? `<button class="btn" data-act="copy" title="Kopieren (C)">${icon('copy')}</button>` : ''}
+        <button class="btn danger" data-act="delete" title="Abreißen">${icon('trash')}</button>
+      </div>`;
+    // Fortschritt ohne Neuaufbau aktualisieren, damit Klicks nicht verloren gehen
+    const key = html.replace(/style="width:[^"]*"/, '');
+    if (!force && this.lastHtml.inspKey === key) {
+      const pr = $('#inspProg');
+      if (pr) pr.style.width = `${progress * 100}%`;
+      return;
+    }
+    this.lastHtml.inspKey = key;
+    el.innerHTML = html;
+    el.onpointerdown = ev => {
+      const b = ev.target.closest('[data-act],[data-recipe]');
+      if (!b || b.disabled) return;
+      ev.preventDefault();
+      if (b.dataset.recipe) { g.setRecipe(e.id, b.dataset.recipe); sound('click'); return; }
+      const a = b.dataset.act;
+      if (a === 'close') this.controls.select(null);
+      if (a === 'upgrade' && g.upgrade(e.id)) sound('money');
+      if (a === 'rotate') { g.rotate(e.id); sound('rotate'); }
+      if (a === 'copy') { this.controls.buildRot = e.rot; this.controls.setTool('build', e.type); }
+      if (a === 'delete') { if (g.remove(e.id)) { sound('delete'); this.controls.select(null); } }
+      this.renderSelected(true);
+    };
+  }
+
+  // ───────────────────────── Modals
+  open(name) {
+    this.modal = name;
+    this.lastHtml.modal = '';
+    $('#modal').classList.remove('hidden');
+    this.renderModal();
+  }
+
+  close() {
+    this.modal = null;
+    $('#modal').classList.add('hidden');
+  }
+
+  renderModal() {
+    const body = $('#modalBody');
+    let html = '';
+    if (this.modal === 'research') html = this.researchHtml();
+    else if (this.modal === 'stats') html = this.statsHtml();
+    else if (this.modal === 'menu') html = this.menuHtml();
+    if (this.setHtml(body, 'modal', html)) this.bindModal(body);
+    if (this.modal === 'stats') this.drawChart();
+  }
+
+  researchHtml() {
+    const g = this.game;
+    const depth = {};
+    const d = id => depth[id] ??= RESEARCH_BY_ID[id].prereq.reduce((m, p) => Math.max(m, d(p) + 1), 0);
+    RESEARCH.forEach(r => d(r.id));
+    const cards = [...RESEARCH].sort((a, b) => depth[a.id] - depth[b.id]).map(r => {
+      const st = g.researchState(r.id);
+      const reqs = Object.entries(r.req).map(([k, n]) => {
+        const have = Math.min(n, g.stats.sold[k] || 0);
+        return `<div class="req ${have >= n ? 'ok' : ''}">${this.itemImg(k)}<span class="bar"><i style="width:${have / n * 100}%"></i></span><span>${fmt(have)}/${fmt(n)}</span></div>`;
+      }).join('');
+      const pre = r.prereq.length ? `<div class="pre">Benötigt: ${r.prereq.map(p => RESEARCH_BY_ID[p].name).join(', ')}</div>` : '';
+      const btn = st === 'done' ? '<span class="tag good">Erforscht</span>'
+        : `<button class="btn ${st === 'ready' ? 'primary' : ''}" data-research="${r.id}" ${st === 'ready' ? '' : 'disabled'}>${st === 'locked' ? 'Gesperrt' : st === 'req' ? 'Lieferungen fehlen' : `Erforschen · ${fmtMoney(r.cost)}`}</button>`;
+      return `<div class="rcard ${st}"><h4>${r.name}${st !== 'done' ? `<span class="tag">${fmtMoney(r.cost)}</span>` : ''}</h4><p>${esc(r.desc)}</p>${st !== 'done' ? reqs + pre : ''}${btn}</div>`;
+    }).join('');
+    return `<h2>Forschung</h2><p class="sub">Forschung kostet Geld und verlangt, dass du bestimmte Waren bereits ans Depot geliefert hast. Lieferungen für Aufträge zählen mit.</p><div class="rgrid">${cards}</div>`;
+  }
+
+  statsHtml() {
+    const g = this.game, s = g.stats;
+    const rows = ITEM_IDS.filter(k => s.produced[k] || s.sold[k]).map(k => {
+      const m = g.market[k];
+      const trend = m > 1.02 ? '<span class="trend up">▲</span>' : m < 0.98 ? '<span class="trend down">▼</span>' : '';
+      return `<tr><td>${this.itemImg(k, false)}${ITEMS[k].name}</td><td>${fmt(g.ratePerMin('produced', k), 1)}</td><td>${fmt(g.ratePerMin('sold', k), 1)}</td><td>${fmt(s.sold[k] || 0)}</td><td>${fmtMoney(g.price(k))} ${trend}</td><td>${Math.round(m * 100)} %</td></tr>`;
+    }).join('');
+    const buildings = g.countBuildings(e => e.type !== 'band');
+    return `<h2>Statistik</h2><p class="sub">Tag ${g.day} · ${buildings} Gebäude · ${g.countBuildings(e => e.type === 'band')} Förderbänder</p>
+      <div class="stats-grid">
+        <div class="kpi"><label>Einnahmen gesamt</label><b>${fmtMoney(s.earned)}</b></div>
+        <div class="kpi"><label>Pro Minute</label><b>${fmtMoney(g.incomePerMin())}</b></div>
+        <div class="kpi"><label>Stromkosten gesamt</label><b>${fmtMoney(s.powerCost)}</b></div>
+        <div class="kpi"><label>Aufträge erfüllt</label><b>${s.contractsDone}</b></div>
+      </div>
+      <canvas class="chart" id="chart"></canvas>
+      <table class="items-table"><thead><tr><th>Ware</th><th>Prod./min</th><th>Geliefert/min</th><th>Geliefert</th><th>Preis</th><th>Markt</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="empty">Noch keine Produktion.</td></tr>'}</tbody></table>`;
+  }
+
+  drawChart() {
+    const cv = $('#chart');
+    if (!cv) return;
+    const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    const c = cv.getContext('2d');
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    const hist = this.game.stats.history.slice(-120);
+    c.fillStyle = '#8a8380'; c.font = '11px "Geist Mono", monospace';
+    if (hist.length < 2) { c.fillText('Daten werden gesammelt …', 14, 24); return; }
+    const pad = 28, maxE = Math.max(1, ...hist.map(p => p.earned)), maxM = Math.max(1, ...hist.map(p => p.money)), minM = Math.min(0, ...hist.map(p => p.money));
+    const bw = (w - pad * 2) / hist.length;
+    hist.forEach((p, i) => {
+      const bh = p.earned / maxE * (h - pad * 2);
+      c.fillStyle = 'rgba(160,202,146,.55)';
+      c.fillRect(pad + i * bw + 1, h - pad - bh, Math.max(1, bw - 2), bh);
+      const ph = p.power / maxE * (h - pad * 2);
+      c.fillStyle = '#ee6018';
+      c.fillRect(pad + i * bw + 1, h - pad - ph, Math.max(1, bw - 2), Math.min(ph, 2));
+    });
+    c.beginPath();
+    hist.forEach((p, i) => {
+      const x = pad + i * bw + bw / 2, y = h - pad - (p.money - minM) / (maxM - minM) * (h - pad * 2);
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    });
+    c.strokeStyle = '#eeeeee'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = '#8a8380';
+    c.fillText('KAPITAL', pad, 16);
+    c.fillStyle = '#eeeeee'; c.fillRect(pad - 12, 9, 8, 2);
+    c.fillStyle = '#a0ca92'; c.fillRect(pad + 50, 8, 8, 8);
+    c.fillStyle = '#8a8380'; c.fillText('EINNAHMEN JE 5 S · STROMKOSTEN', pad + 62, 16);
+    c.fillText(`max ${fmtMoney(maxM)}`, w - pad - 90, 16);
+  }
+
+  menuHtml() {
+    const q = this.renderer.quality;
+    return `<h2>Menü</h2><p class="sub">Dein Spiel wird automatisch alle 30 Sekunden im Browser gespeichert.</p>
+      <div class="menu-grid">
+        <section><h4>Spielstand</h4><div class="row">
+          <button class="btn primary" data-m="save">Jetzt speichern</button>
+          <button class="btn" data-m="export">Exportieren</button>
+          <button class="btn" data-m="import">Importieren</button>
+          <button class="btn danger" data-m="new">Neues Spiel</button>
+        </div><input type="file" id="importFile" accept="application/json,.json" hidden></section>
+        <section><h4>Einstellungen</h4>
+          <label class="toggle">Schatten <input type="checkbox" data-q="shadows" ${q.shadows ? 'checked' : ''}></label>
+          <label class="toggle">Leuchteffekte (Bloom) <input type="checkbox" data-q="bloom" ${q.bloom ? 'checked' : ''}></label>
+          <label class="toggle">Sound <input type="checkbox" data-q="sound" ${audio.enabled ? 'checked' : ''}></label>
+        </section>
+        <section><h4>Steuerung</h4><div class="keys">
+          <kbd>Links</kbd><span>Auswählen · Bauen · Ziehen verschiebt die Karte</span>
+          <kbd>Rechts</kbd><span>Karte verschieben</span>
+          <kbd>Mitte</kbd><span>Kamera drehen</span>
+          <kbd>WASD</kbd><span>Kamera bewegen</span>
+          <kbd>Q / E</kbd><span>Kamera drehen</span>
+          <kbd>R</kbd><span>Gebäude / Band drehen</span>
+          <kbd>X</kbd><span>Abrisswerkzeug</span>
+          <kbd>C</kbd><span>Gebäude unter der Maus kopieren</span>
+          <kbd>1–9</kbd><span>Gebäude wählen · <kbd>Tab</kbd> Kategorie</span>
+          <kbd>F / T</kbd><span>Forschung / Statistik</span>
+          <kbd>Leertaste</kbd><span>Pause</span>
+        </div></section>
+        <section><h4>So funktioniert's</h4><div class="keys" style="grid-template-columns:1fr">
+          <span>Bohrer auf Erzfelder setzen. Gebäude geben ihre Waren an angrenzende Bänder ab, die von ihnen weg zeigen.</span>
+          <span>Bänder in Maschinen führen. Die Maschine nimmt nur, was ihr Rezept braucht.</span>
+          <span>Alles, was im Handelsdepot ankommt, wird verkauft oder für einen Auftrag gezählt.</span>
+          <span>Viel von derselben Ware drückt den Preis. Lohnender sind Aufträge und höhere Produktstufen.</span>
+          <span>Auf dem Handy: Mit zwei Fingern bewegen, zoomen und drehen.</span>
+        </div></section>
+      </div>`;
+  }
+
+  bindModal(body) {
+    const g = this.game;
+    body.querySelectorAll('[data-research]').forEach(b => b.onpointerdown = () => {
+      if (g.doResearch(b.dataset.research)) { sound('success'); this.lastHtml.modal = ''; this.renderModal(); }
+    });
+    body.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+      const m = b.dataset.m;
+      if (m === 'save') { this.api.save(); this.toast('Gespeichert', 'success'); }
+      if (m === 'export') this.api.exportSave();
+      if (m === 'import') body.querySelector('#importFile').click();
+      if (m === 'new' && confirm('Neues Spiel beginnen? Der aktuelle Spielstand geht verloren.')) { this.close(); this.api.newGame(); }
+    });
+    const file = body.querySelector('#importFile');
+    if (file) file.onchange = async () => {
+      const f = file.files[0];
+      if (!f) return;
+      try { this.api.importSave(JSON.parse(await f.text())); this.close(); this.toast('Spielstand importiert', 'success'); }
+      catch (err) { this.toast(`Import fehlgeschlagen: ${err.message}`, 'warn'); }
+    };
+    body.querySelectorAll('[data-q]').forEach(inp => inp.onchange = () => {
+      const k = inp.dataset.q;
+      if (k === 'sound') audio.enabled = inp.checked;
+      else this.renderer.setQuality({ [k]: inp.checked });
+      this.api.saveSettings();
+    });
+    body.querySelectorAll('[data-close]').forEach(b => b.onclick = () => this.close());
+  }
+
+  // ───────────────────────── Toasts
+  toast(text, kind = 'info') {
+    const box = $('#toasts');
+    const el = document.createElement('div');
+    el.className = `toast ${kind}`;
+    el.textContent = text;
+    box.appendChild(el);
+    while (box.children.length > 4) box.firstChild.remove();
+    if (kind === 'warn') sound('warn');
+    if (kind === 'event') sound('event');
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 300); }, kind === 'warn' ? 2600 : 4000);
+  }
+}
