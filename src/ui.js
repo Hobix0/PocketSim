@@ -1,5 +1,5 @@
 // HUD, Baumenü, Inspektor, Aufträge, Forschung, Statistik, Menü.
-import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, CATEGORIES, DEPOSITS, RESEARCH, RESEARCH_BY_ID, GOALS, CONFIG } from './data.js';
+import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, CATEGORIES, RESEARCH, RESEARCH_BY_ID, GOALS, CONFIG, BUYABLE } from './data.js';
 import { fmtMoney, levelMul, upgradeCost } from './sim.js';
 import { sound, audio } from './audio.js';
 
@@ -17,6 +17,7 @@ const ICONS = {
   copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
   up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
   bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  cube: '<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
 };
 export const icon = (n, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
 
@@ -33,6 +34,7 @@ export class UI {
 
     document.querySelectorAll('[data-icon]').forEach(el => { el.outerHTML = icon(el.dataset.icon); });
     document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => { sound('ui'); this.open(b.dataset.open); }));
+    $('#isoBtn').addEventListener('click', () => { sound('ui'); this.controls.setIso(!this.controls.cam.iso); });
     $('#modal').addEventListener('pointerdown', e => { if (e.target.id === 'modal' || e.target.closest('[data-close]')) this.close(); });
     $('#goal').addEventListener('click', () => { this.goalCollapsed = !this.goalCollapsed; this.renderGoal(); });
 
@@ -78,7 +80,7 @@ export class UI {
     const h = g.dayFrac * 24;
     $('#clock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor((h % 1) * 60 / 10) * 10).padStart(2, '0')}`;
     $('#dayLabel').textContent = `Tag ${g.day}`;
-    $('#weather').textContent = `${g.daylight > 0.05 ? 'TAG' : 'NACHT'} · WIND ${Math.round(g.wind * 100)}%`;
+    $('#weather').textContent = g.daylight > 0.05 ? 'TAGSCHICHT' : 'NACHTSCHICHT';
     this.refreshBuild();
     this.renderContracts();
     this.renderEvent();
@@ -181,6 +183,13 @@ export class UI {
 
   onTool() { this.renderTools(); this.renderBuild(); }
 
+  onIso(on) {
+    const b = $('#isoBtn');
+    b.classList.toggle('on', on);
+    b.querySelector('span').textContent = on ? 'Isometrisch' : 'Perspektive';
+    this.api.saveSettings();
+  }
+
   onKey(k) {
     if (k === ' ') { this.game.paused = !this.game.paused; this.renderSpeed(); }
     else if (k === 'f') this.modal === 'research' ? this.close() : this.open('research');
@@ -197,9 +206,7 @@ export class UI {
     if (!t) { el.textContent = ''; return; }
     const parts = [`Feld ${t.x}, ${t.z}`];
     const i = g.idx(t.x, t.z);
-    if (g.terrain[i] === 1) parts.push('Wasser');
-    const dep = DEPOSITS[g.deposit[i]];
-    if (dep) parts.push(dep.name);
+    if (g.terrain[i] === 2) parts.push('Hallenstütze');
     const ent = g.at(t.x, t.z);
     if (ent) parts.push(BUILDINGS[ent.type].name);
     el.textContent = parts.join(' · ');
@@ -226,7 +233,7 @@ export class UI {
         <span class="reward">+${fmtMoney(c.reward)}</span>
         <span class="prog"><i style="width:${c.delivered / c.qty * 100}%"></i></span>
         <span class="time ${c.time < 60 ? 'urgent' : ''}">${fmtTime(c.time)}</span>
-      </div>`).join('') : '<div class="empty">Neue Aufträge treffen bald ein. Liefere die Ware ans Handelsdepot.</div>';
+      </div>`).join('') : '<div class="empty">Neue Aufträge treffen bald ein. Liefere die Teile an den Versand.</div>';
     this.setHtml($('#contracts'), 'contracts', html);
   }
 
@@ -272,32 +279,33 @@ export class UI {
         const per = 60 / (r.time / speed);
         body += `<div class="sect">Leistung</div><div class="kv">${Object.entries(r.out).map(([k, n]) => `<span>${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}${Object.entries(r.in).map(([k, n]) => `<span>Bedarf ${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}<span>Strom</span><span>${B.power} kW</span></div>`;
       }
-    } else if (B.kind === 'miner' || B.kind === 'lumber') {
-      const res = B.kind === 'miner' ? e.res : 'holz';
-      const base = B.kind === 'miner' ? e.tiles * CONFIG.minerRate : (e._forest || 0) * CONFIG.lumberRate;
-      const rate = base * g.mods.minerMul * levelMul(e.level) * 60;
-      status = base <= 0 ? ['bad', 'Kein Wald in Reichweite'] : e.out >= 6 ? ['bad', 'Ausgabe voll – Band anschließen'] : powerOk ? ['ok', 'Fördert'] : ['bad', `Strommangel (${Math.round(pm * 100)} %)`];
-      progress = e.progress % 1;
-      body += `<div class="sect">Förderung</div><div class="bufs"><span class="buf">${this.itemImg(res)}${e.out} im Puffer</span></div>
-        <div class="kv" style="margin-top:10px"><span>${B.kind === 'miner' ? 'Vorkommensfelder' : 'Waldfelder im Umkreis'}</span><span>${B.kind === 'miner' ? e.tiles + ' / 4' : e._forest || 0}</span><span>Rate</span><span>${fmt(rate, 1)} ${ITEMS[res].name}/min</span><span>Strom</span><span>${B.power} kW</span></div>`;
+    } else if (B.kind === 'inbound') {
+      const price = g.buyPrice(e.item), rate = B.rate * levelMul(e.level) * 60;
+      status = !e.on ? ['idle', 'Bestellung pausiert'] : e._poor ? ['bad', 'Zu wenig Geld für den Einkauf'] : e.out >= 4 ? ['bad', 'Rückstau – Ausgang vorne frei machen'] : ['ok', 'Liefert an'];
+      progress = Math.min(1, e.progress);
+      body += `<div class="sect">Material bestellen</div><div class="recipes">${BUYABLE.map(id => {
+        const ok = g.buyUnlocked(id);
+        return `<button class="recipe ${id === e.item ? 'on' : ''}" data-buy="${id}" ${ok ? '' : 'disabled style="opacity:.4"'}><span class="chip">${this.itemImg(id)}</span>${ITEMS[id].name}<span class="t">${ok ? fmtMoney(g.buyPrice(id)) : 'GESPERRT'}</span></button>`;
+      }).join('')}</div>
+        <div class="sect">Lieferung</div><div class="kv"><span>Rate</span><span>${fmt(rate, 0)}/min</span><span>Kosten</span><span>${fmtMoney(price * rate)}/min</span><span>Im Tor</span><span>${e.out} / 4</span></div>`;
+    } else if (B.kind === 'outbound') {
+      status = ['ok', 'Nimmt alle Teile von jeder Seite an'];
+      const top = ITEM_IDS.filter(k => g.stats.sold[k]).sort((a, b) => g.ratePerMin('sold', b) * ITEMS[b].price - g.ratePerMin('sold', a) * ITEMS[a].price).slice(0, 6);
+      body += `<div class="sect">Aktuelle Preise</div><div class="kv">${top.length ? top.map(k => `<span>${ITEMS[k].name}</span><span>${fmtMoney(g.price(k))}</span>`).join('') : '<span>Noch nichts verkauft</span><span></span>'}</div>`;
+    } else if (B.kind === 'decor') {
+      status = ['idle', 'Altbestand'];
+      body += `<div class="kv"><span>Entsorgung</span><span>${B.removeCost ? fmtMoney(B.removeCost) : 'kostenlos'}</span></div>`;
     } else if (B.kind === 'storage') {
       status = e.total >= B.capacity ? ['bad', 'Voll'] : ['ok', `${e.total} / ${B.capacity} belegt`];
       const inv = Object.entries(e.inv).filter(([, n]) => n > 0);
       body += `<div class="sect">Inhalt</div><div class="bufs">${inv.length ? inv.map(([k, n]) => `<span class="buf">${this.itemImg(k)}${n}</span>`).join('') : '<span class="empty">leer</span>'}</div>`;
-    } else if (B.kind === 'generator') {
-      status = e.output > 0.5 ? ['ok', `Erzeugt ${fmt(e.output)} kW`] : ['idle', e.type === 'kraftwerk' ? (e.fuel ? 'Bereit, kein Bedarf' : 'Braucht Kohle') : 'Keine Erzeugung'];
-      body += `<div class="kv"><span>Leistung</span><span>${fmt(e.output)} / ${B.supply} kW</span>${e.type === 'kraftwerk' ? `<span>Kohle im Lager</span><span>${e.fuel}</span>` : ''}</div>`;
     } else if (B.kind === 'grid') {
       const p = g.power;
       status = ['ok', 'Verbunden mit dem Stadtnetz'];
       body += `<div class="kv"><span>Kapazität</span><span>${fmt(B.supply * g.mods.gridMul)} kW</span><span>Netzbezug gesamt</span><span>${fmt(p?.gridDraw || 0)} kW</span><span>Kosten</span><span>${fmtMoney((p?.gridDraw || 0) * CONFIG.gridCostPerKWs * 60 * (g.event?.gridCost || 1))}/min</span></div>`;
-    } else if (B.kind === 'depot') {
-      status = ['ok', 'Nimmt alle Waren an'];
-      const top = ITEM_IDS.filter(k => g.stats.sold[k]).sort((a, b) => g.ratePerMin('sold', b) * ITEMS[b].price - g.ratePerMin('sold', a) * ITEMS[a].price).slice(0, 6);
-      body += `<div class="sect">Aktuelle Preise</div><div class="kv">${top.length ? top.map(k => `<span>${ITEMS[k].name}</span><span>${fmtMoney(g.price(k))}</span>`).join('') : '<span>Noch nichts verkauft</span><span></span>'}</div>`;
     } else if (B.kind === 'belt') {
-      status = ['ok', `${e.items.length} Waren auf dem Band`];
-      body += `<div class="kv"><span>Geschwindigkeit</span><span>${fmt(CONFIG.beltSpeed * g.mods.beltMul / CONFIG.beltSpacing * 60)} Waren/min</span></div>`;
+      status = ['ok', `${e.items.length} Teile auf der Bahn`];
+      body += `<div class="kv"><span>Durchsatz max.</span><span>${fmt(CONFIG.beltSpeed * g.mods.beltMul / CONFIG.beltSpacing * 60)} Teile/min</span></div>`;
     } else {
       status = ['ok', 'Aktiv'];
     }
@@ -305,15 +313,18 @@ export class UI {
     const canUp = g.canUpgrade(e);
     const cost = canUp ? upgradeCost(e) : 0;
     const html = `
-      <div class="insp-head"><img src="${this.thumb(e.type)}" alt=""><div><h2>${B.name}${['machine', 'miner', 'lumber'].includes(B.kind) ? `<span class="lvl">Stufe ${e.level}</span>` : ''}</h2><p>${esc(B.desc)}</p></div><button class="x" data-act="close">&times;</button></div>
+      <div class="insp-head"><img src="${this.thumb(e.type)}" alt=""><div><h2>${B.name}${['machine', 'inbound'].includes(B.kind) ? `<span class="lvl">Stufe ${e.level}</span>` : ''}</h2><p>${esc(B.desc)}</p></div><button class="x" data-act="close">&times;</button></div>
       <div class="status ${status[0]}">${status[1]}</div>
       ${progress != null ? `<div class="progress"><i id="inspProg" style="width:${progress * 100}%"></i></div>` : ''}
       ${body}
+      ${['machine', 'storage', 'inbound'].includes(B.kind) ? '<div class="ports"><i></i>Ausgang vorne (Pfeil) · Eingänge hinten und seitlich</div>' : ''}
       <div class="actions">
         ${canUp ? `<button class="btn primary" data-act="upgrade" ${g.money < cost ? 'disabled' : ''}>${icon('up')} Stufe ${e.level + 1} · ${fmtMoney(cost)}</button>` : ''}
-        <button class="btn" data-act="rotate" title="R">${icon('rotate')}</button>
+        ${B.kind === 'inbound' ? `<button class="btn" data-act="toggle">${e.on ? 'Pausieren' : 'Fortsetzen'}</button>` : ''}
+        ${B.kind === 'decor' ? `<button class="btn danger" data-act="delete" ${g.money < B.removeCost ? 'disabled' : ''}>${icon('trash')} ${B.removeCost ? `Entsorgen · ${fmtMoney(B.removeCost)}` : 'Wegfahren'}</button>` : `
+        ${B.wall ? '' : `<button class="btn" data-act="rotate" title="R">${icon('rotate')}</button>`}
         ${g.isUnlocked(e.type) ? `<button class="btn" data-act="copy" title="Kopieren (C)">${icon('copy')}</button>` : ''}
-        <button class="btn danger" data-act="delete" title="Abreißen">${icon('trash')}</button>
+        <button class="btn danger" data-act="delete" title="Abreißen">${icon('trash')}</button>`}
       </div>`;
     // Fortschritt ohne Neuaufbau aktualisieren, damit Klicks nicht verloren gehen
     const key = html.replace(/style="width:[^"]*"/, '');
@@ -325,14 +336,16 @@ export class UI {
     this.lastHtml.inspKey = key;
     el.innerHTML = html;
     el.onpointerdown = ev => {
-      const b = ev.target.closest('[data-act],[data-recipe]');
+      const b = ev.target.closest('[data-act],[data-recipe],[data-buy]');
       if (!b || b.disabled) return;
       ev.preventDefault();
       if (b.dataset.recipe) { g.setRecipe(e.id, b.dataset.recipe); sound('click'); return; }
+      if (b.dataset.buy) { g.setInbound(e.id, b.dataset.buy); sound('click'); return; }
       const a = b.dataset.act;
       if (a === 'close') this.controls.select(null);
       if (a === 'upgrade' && g.upgrade(e.id)) sound('money');
       if (a === 'rotate') { g.rotate(e.id); sound('rotate'); }
+      if (a === 'toggle') { g.toggleInbound(e.id); sound('click'); }
       if (a === 'copy') { this.controls.buildRot = e.rot; this.controls.setTool('build', e.type); }
       if (a === 'delete') { if (g.remove(e.id)) { sound('delete'); this.controls.select(null); } }
       this.renderSelected(true);
@@ -378,7 +391,7 @@ export class UI {
         : `<button class="btn ${st === 'ready' ? 'primary' : ''}" data-research="${r.id}" ${st === 'ready' ? '' : 'disabled'}>${st === 'locked' ? 'Gesperrt' : st === 'req' ? 'Lieferungen fehlen' : `Erforschen · ${fmtMoney(r.cost)}`}</button>`;
       return `<div class="rcard ${st}"><h4>${r.name}${st !== 'done' ? `<span class="tag">${fmtMoney(r.cost)}</span>` : ''}</h4><p>${esc(r.desc)}</p>${st !== 'done' ? reqs + pre : ''}${btn}</div>`;
     }).join('');
-    return `<h2>Forschung</h2><p class="sub">Forschung kostet Geld und verlangt, dass du bestimmte Waren bereits ans Depot geliefert hast. Lieferungen für Aufträge zählen mit.</p><div class="rgrid">${cards}</div>`;
+    return `<h2>Forschung</h2><p class="sub">Forschung kostet Geld und verlangt, dass du bestimmte Teile bereits an den Versand geliefert hast. Lieferungen für Aufträge zählen mit.</p><div class="rgrid">${cards}</div>`;
   }
 
   statsHtml() {
@@ -393,7 +406,7 @@ export class UI {
       <div class="stats-grid">
         <div class="kpi"><label>Einnahmen gesamt</label><b>${fmtMoney(s.earned)}</b></div>
         <div class="kpi"><label>Pro Minute</label><b>${fmtMoney(g.incomePerMin())}</b></div>
-        <div class="kpi"><label>Stromkosten gesamt</label><b>${fmtMoney(s.powerCost)}</b></div>
+        <div class="kpi"><label>Einkauf + Strom</label><b>${fmtMoney((s.buyCost || 0) + s.powerCost)}</b></div>
         <div class="kpi"><label>Aufträge erfüllt</label><b>${s.contractsDone}</b></div>
       </div>
       <canvas class="chart" id="chart"></canvas>
@@ -417,9 +430,9 @@ export class UI {
       const bh = p.earned / maxE * (h - pad * 2);
       c.fillStyle = 'rgba(160,202,146,.55)';
       c.fillRect(pad + i * bw + 1, h - pad - bh, Math.max(1, bw - 2), bh);
-      const ph = p.power / maxE * (h - pad * 2);
+      const ph = (p.power + (p.buy || 0)) / maxE * (h - pad * 2);
       c.fillStyle = '#ee6018';
-      c.fillRect(pad + i * bw + 1, h - pad - ph, Math.max(1, bw - 2), Math.min(ph, 2));
+      c.fillRect(pad + i * bw + 1, h - pad - ph, Math.max(1, bw - 2), 2);
     });
     c.beginPath();
     hist.forEach((p, i) => {
@@ -447,7 +460,9 @@ export class UI {
         </div><input type="file" id="importFile" accept="application/json,.json" hidden></section>
         <section><h4>Einstellungen</h4>
           <label class="toggle">Schatten <input type="checkbox" data-q="shadows" ${q.shadows ? 'checked' : ''}></label>
+          <label class="toggle">Umgebungsverdeckung (AO) <input type="checkbox" data-q="ao" ${q.ao ? 'checked' : ''}></label>
           <label class="toggle">Leuchteffekte (Bloom) <input type="checkbox" data-q="bloom" ${q.bloom ? 'checked' : ''}></label>
+          <label class="toggle">Dachbinder anzeigen <input type="checkbox" data-q="trusses" ${q.trusses ? 'checked' : ''}></label>
           <label class="toggle">Sound <input type="checkbox" data-q="sound" ${audio.enabled ? 'checked' : ''}></label>
         </section>
         <section><h4>Steuerung</h4><div class="keys">
@@ -455,7 +470,8 @@ export class UI {
           <kbd>Rechts</kbd><span>Karte verschieben</span>
           <kbd>Mitte</kbd><span>Kamera drehen</span>
           <kbd>WASD</kbd><span>Kamera bewegen</span>
-          <kbd>Q / E</kbd><span>Kamera drehen</span>
+          <kbd>Q / E</kbd><span>Kamera drehen (isometrisch in 90°-Schritten)</span>
+          <kbd>I</kbd><span>Isometrische Ansicht ein/aus</span>
           <kbd>R</kbd><span>Gebäude / Band drehen</span>
           <kbd>X</kbd><span>Abrisswerkzeug</span>
           <kbd>C</kbd><span>Gebäude unter der Maus kopieren</span>
@@ -464,10 +480,11 @@ export class UI {
           <kbd>Leertaste</kbd><span>Pause</span>
         </div></section>
         <section><h4>So funktioniert's</h4><div class="keys" style="grid-template-columns:1fr">
-          <span>Bohrer auf Erzfelder setzen. Gebäude geben ihre Waren an angrenzende Bänder ab, die von ihnen weg zeigen.</span>
-          <span>Bänder in Maschinen führen. Die Maschine nimmt nur, was ihr Rezept braucht.</span>
-          <span>Alles, was im Handelsdepot ankommt, wird verkauft oder für einen Auftrag gezählt.</span>
-          <span>Viel von derselben Ware drückt den Preis. Lohnender sind Aufträge und höhere Produktstufen.</span>
+          <span>Der Wareneingang kauft Material ein. Wähle im Inspektor, was bestellt wird.</span>
+          <span>Maschinen geben nur vorne ab (oranger Pfeil am Boden) und nehmen hinten und seitlich an.</span>
+          <span>Die Signalsäule zeigt den Zustand: grün läuft, orange blockiert, aus wartet.</span>
+          <span>Alles, was im Versand ankommt, wird verkauft oder für einen Auftrag gezählt.</span>
+          <span>Viel von demselben Teil drückt den Preis. Lohnender sind Aufträge und höhere Produktstufen.</span>
           <span>Auf dem Handy: Mit zwei Fingern bewegen, zoomen und drehen.</span>
         </div></section>
       </div>`;

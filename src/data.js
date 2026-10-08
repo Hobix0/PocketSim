@@ -1,123 +1,146 @@
-// Spielinhalte: Items, Rezepte, Gebäude, Forschung, Ziele, Ereignisse.
+// Spielinhalte: Werkzeugfertigung in einer Remscheider Fabrikhalle.
+// Rohmaterial kommt über den Wareneingang, fertige Ware geht über den Versand.
 
 export const ITEMS = {
-  holz:         { name: 'Holz',          color: 0x8b5a2b, shape: 'log',   price: 2 },
-  eisenerz:     { name: 'Eisenerz',      color: 0x8a5a4a, shape: 'ore',   price: 3 },
-  kupfererz:    { name: 'Kupfererz',     color: 0xc8743a, shape: 'ore',   price: 3 },
-  kohle:        { name: 'Kohle',         color: 0x26262b, shape: 'ore',   price: 3 },
-  sand:         { name: 'Sand',          color: 0xe6c88c, shape: 'pile',  price: 1 },
-  bretter:      { name: 'Bretter',       color: 0xdba468, shape: 'plank', price: 5 },
-  eisenplatte:  { name: 'Eisenplatte',   color: 0xb4bec8, shape: 'plate', price: 9 },
-  kupferplatte: { name: 'Kupferplatte',  color: 0xe8884a, shape: 'plate', price: 9 },
-  glas:         { name: 'Glas',          color: 0x9fe6f5, shape: 'glass', price: 12 },
-  zahnrad:      { name: 'Zahnrad',       color: 0xcfd5dd, shape: 'gear',  price: 22 },
-  draht:        { name: 'Kupferdraht',   color: 0xf09a55, shape: 'coil',  price: 6 },
-  stahl:        { name: 'Stahlträger',   color: 0x5a6878, shape: 'beam',  price: 36 },
-  schaltkreis:  { name: 'Schaltkreis',   color: 0x2fae6c, shape: 'chip',  price: 55 },
-  motor:        { name: 'Motor',         color: 0x3e4c60, shape: 'motor', price: 160 },
-  moebel:       { name: 'Möbel',         color: 0xb47844, shape: 'crate', price: 85 },
+  // Einkauf
+  rundstahl:   { name: 'Rundstahl',        color: 0x7c8794, shape: 'bar',    price: 4,  buy: 4 },
+  stahlblech:  { name: 'Stahlblech',       color: 0xa9b3bd, shape: 'sheet',  price: 5,  buy: 5 },
+  holz:        { name: 'Kantholz',         color: 0xc29560, shape: 'plank',  price: 2,  buy: 2 },
+  granulat:    { name: 'Kunststoffgranulat', color: 0x2f6fd0, shape: 'sack', price: 3,  buy: 3 },
+  kupfer:      { name: 'Kupferdraht',      color: 0xd9824a, shape: 'coil',   price: 6,  buy: 6 },
+  // Halbzeuge
+  rohling:     { name: 'Stahlrohling',     color: 0x8d969f, shape: 'billet', price: 3 },
+  welle:       { name: 'Welle',            color: 0xc7ced6, shape: 'shaft',  price: 12 },
+  stiel:       { name: 'Holzstiel',        color: 0xd8ad74, shape: 'stick',  price: 3 },
+  schmiedeteil:{ name: 'Schmiederohling',  color: 0x5b4f49, shape: 'forged', price: 10 },
+  gehaertet:   { name: 'Gehärtetes Teil',  color: 0x3c4450, shape: 'forged', price: 16 },
+  blechteil:   { name: 'Blechteil',        color: 0xb9c2ca, shape: 'plate',  price: 4 },
+  gehaeuse:    { name: 'Blechgehäuse',     color: 0x2b5ea8, shape: 'box',    price: 12 },
+  griff:       { name: 'Kunststoffgriff',  color: 0xd23a2f, shape: 'grip',   price: 3 },
+  zahnrad:     { name: 'Zahnrad',          color: 0xd0d6dd, shape: 'gear',   price: 18 },
+  spule:       { name: 'Spule',            color: 0xc8733a, shape: 'spool',  price: 20 },
+  // Produkte
+  hammer:      { name: 'Hammer',           color: 0x4a525c, shape: 'hammer', price: 26 },
+  schluessel:  { name: 'Schraubenschlüssel', color: 0xd9dfe5, shape: 'wrench', price: 24 },
+  zange:       { name: 'Zange',            color: 0xd23a2f, shape: 'pliers', price: 45 },
+  getriebe:    { name: 'Getriebe',         color: 0x56606b, shape: 'gearbox', price: 80 },
+  motor:       { name: 'Elektromotor',     color: 0x2f3a46, shape: 'motor',  price: 70 },
+  koffer:      { name: 'Werkzeugkoffer',   color: 0xee6018, shape: 'case',   price: 160 },
+  akkuschrauber: { name: 'Akkuschrauber',  color: 0x2d8a4e, shape: 'drill',  price: 260 },
 };
 export const ITEM_IDS = Object.keys(ITEMS);
+export const BUYABLE = ITEM_IDS.filter(id => ITEMS[id].buy);
 
 export const RECIPES = {
-  r_eisen:       { name: 'Eisenplatte',  building: 'schmelzofen', time: 2,   in: { eisenerz: 1 },  out: { eisenplatte: 1 } },
-  r_kupfer:      { name: 'Kupferplatte', building: 'schmelzofen', time: 2,   in: { kupfererz: 1 }, out: { kupferplatte: 1 } },
-  r_glas:        { name: 'Glas',         building: 'schmelzofen', time: 3,   in: { sand: 2 },      out: { glas: 1 }, unlock: 'glas' },
-  r_bretter:     { name: 'Bretter',      building: 'saegewerk',   time: 1.5, in: { holz: 1 },      out: { bretter: 2 } },
-  r_zahnrad:     { name: 'Zahnrad',      building: 'presse',      time: 1.5, in: { eisenplatte: 2 }, out: { zahnrad: 1 } },
-  r_draht:       { name: 'Kupferdraht',  building: 'presse',      time: 1,   in: { kupferplatte: 1 }, out: { draht: 2 } },
-  r_stahl:       { name: 'Stahlträger',  building: 'hochofen',    time: 4,   in: { eisenplatte: 2, kohle: 1 }, out: { stahl: 1 } },
-  r_schaltkreis: { name: 'Schaltkreis',  building: 'montage',     time: 3,   in: { draht: 3, eisenplatte: 1 }, out: { schaltkreis: 1 } },
-  r_moebel:      { name: 'Möbel',        building: 'montage',     time: 4,   in: { bretter: 4, glas: 1 }, out: { moebel: 1 }, unlock: 'glas' },
-  r_motor:       { name: 'Motor',        building: 'montage',     time: 5,   in: { zahnrad: 2, stahl: 1 }, out: { motor: 1 }, unlock: 'motorbau' },
+  r_rohling:   { building: 'saege',      time: 1.5, in: { rundstahl: 1 }, out: { rohling: 2 } },
+  r_welle:     { building: 'drehbank',   time: 2,   in: { rohling: 1 },   out: { welle: 1 } },
+  r_stiel:     { building: 'drehbank',   time: 1.5, in: { holz: 1 },      out: { stiel: 2 } },
+  r_schmieden: { building: 'schmiede',   time: 2.5, in: { rohling: 1 },   out: { schmiedeteil: 1 } },
+  r_haerten:   { building: 'haerteofen', time: 4,   in: { schmiedeteil: 2 }, out: { gehaertet: 2 } },
+  r_schluessel:{ building: 'schleifen',  time: 2,   in: { gehaertet: 1 }, out: { schluessel: 1 } },
+  r_hammer:    { building: 'werkbank',   time: 3,   in: { gehaertet: 1, stiel: 1 }, out: { hammer: 1 } },
+  r_blechteil: { building: 'stanze',     time: 1,   in: { stahlblech: 1 }, out: { blechteil: 2 } },
+  r_gehaeuse:  { building: 'kantbank',   time: 2,   in: { blechteil: 2 }, out: { gehaeuse: 1 } },
+  r_griff:     { building: 'spritzguss', time: 2,   in: { granulat: 1 },  out: { griff: 2 } },
+  r_zahnrad:   { building: 'fraese',     time: 3,   in: { rohling: 1 },   out: { zahnrad: 1 } },
+  r_spule:     { building: 'wickel',     time: 2.5, in: { kupfer: 2 },    out: { spule: 1 } },
+  r_zange:     { building: 'montage',    time: 4,   in: { gehaertet: 2, griff: 2 }, out: { zange: 1 } },
+  r_getriebe:  { building: 'montage',    time: 5,   in: { zahnrad: 2, welle: 1, gehaeuse: 1 }, out: { getriebe: 1 } },
+  r_motor:     { building: 'montage',    time: 5,   in: { spule: 1, welle: 1, gehaeuse: 1 }, out: { motor: 1 }, unlock: 'elektro' },
+  r_koffer:    { building: 'montage',    time: 6,   in: { gehaeuse: 1, hammer: 1, schluessel: 1, zange: 1 }, out: { koffer: 1 } },
+  r_akku:      { building: 'montage',    time: 8,   in: { motor: 1, getriebe: 1, griff: 2 }, out: { akkuschrauber: 1 }, unlock: 'akku' },
 };
 
-// kind: belt | splitter | junction | miner | lumber | machine | depot | storage | grid | generator
+// kind: belt | splitter | junction | machine | inbound | outbound | storage | grid | decor
+// ports: Ausgang immer vorne (Drehrichtung), Eingänge hinten und seitlich.
 export const BUILDINGS = {
-  band:        { name: 'Förderband',    kind: 'belt',      size: 1, cost: 8,     cat: 'logistik',   desc: 'Transportiert Waren. Ziehen zum Verlegen, R zum Drehen.' },
-  verteiler:   { name: 'Verteiler',     kind: 'splitter',  size: 1, cost: 40,    cat: 'logistik',   desc: 'Verteilt Waren reihum auf alle anderen Seiten.' },
-  kreuzung:    { name: 'Kreuzung',      kind: 'junction',  size: 1, cost: 30,    cat: 'logistik',   desc: 'Lässt zwei Bänder sich kreuzen.' },
-  lager:       { name: 'Lager',         kind: 'storage',   size: 2, cost: 300,   cat: 'logistik',   desc: 'Puffert bis zu 200 Waren und gibt sie an Bänder weiter.', capacity: 200 },
-  depot:       { name: 'Handelsdepot',  kind: 'depot',     size: 3, cost: 1500,  cat: 'logistik',   desc: 'Verkauft alles, was angeliefert wird – und erfüllt Aufträge.' },
+  band:       { name: 'Rollenbahn',       kind: 'belt',     size: 1, cost: 10,   cat: 'logistik',   desc: 'Transportiert Teile. Ziehen zum Verlegen, R zum Drehen.' },
+  verteiler:  { name: 'Verteiler',        kind: 'splitter', size: 1, cost: 40,   cat: 'logistik',   desc: 'Verteilt Teile reihum auf alle anderen Seiten.' },
+  kreuzung:   { name: 'Kreuzung',         kind: 'junction', size: 1, cost: 30,   cat: 'logistik',   desc: 'Zwei Bahnen kreuzen sich, ohne sich zu vermischen.' },
+  lager:      { name: 'Palettenregal',    kind: 'storage',  size: 2, cost: 300,  cat: 'logistik',   desc: 'Puffert bis zu 200 Teile. Nimmt hinten und seitlich an, gibt vorne ab.', capacity: 200 },
+  eingang:    { name: 'Wareneingang',     kind: 'inbound',  size: 2, cost: 800,  cat: 'logistik',   desc: 'Rolltor an der Außenwand. Kauft Material ein und gibt es vorne aus.', wall: true, rate: 1 },
+  versand:    { name: 'Versand',          kind: 'outbound', size: 2, cost: 800,  cat: 'logistik',   desc: 'Rolltor an der Außenwand. Verkauft alles oder bedient Aufträge.', wall: true },
 
-  bohrer:      { name: 'Bohrer',        kind: 'miner',     size: 2, cost: 250,   cat: 'gewinnung',  power: 25, desc: 'Fördert Erz, Kohle oder Sand. Je mehr Vorkommen unter ihm, desto schneller.' },
-  holzfaeller: { name: 'Holzfäller',    kind: 'lumber',    size: 2, cost: 200,   cat: 'gewinnung',  power: 10, desc: 'Fällt Bäume im Umkreis von 3 Feldern. Neben einen Wald stellen.' },
+  saege:      { name: 'Bandsäge',         kind: 'machine',  size: 2, cost: 400,  cat: 'fertigung',  power: 20,  desc: 'Sägt Rundstahl in Rohlinge.' },
+  drehbank:   { name: 'Drehbank',         kind: 'machine',  size: 2, cost: 600,  cat: 'fertigung',  power: 30,  desc: 'Dreht Wellen aus Rohlingen und Stiele aus Holz.' },
+  schmiede:   { name: 'Gesenkschmiede',   kind: 'machine',  size: 2, cost: 1500, cat: 'fertigung',  power: 80,  desc: 'Schmiedet Rohlinge unter dem Fallhammer.', unlock: 'schmieden' },
+  haerteofen: { name: 'Härteofen',        kind: 'machine',  size: 2, cost: 1800, cat: 'fertigung',  power: 110, desc: 'Härtet Schmiedeteile.', unlock: 'schmieden' },
+  schleifen:  { name: 'Schleifmaschine',  kind: 'machine',  size: 2, cost: 900,  cat: 'fertigung',  power: 25,  desc: 'Schleift gehärtete Teile zu Schraubenschlüsseln.', unlock: 'schmieden' },
+  stanze:     { name: 'Stanze',           kind: 'machine',  size: 2, cost: 1200, cat: 'fertigung',  power: 45,  desc: 'Stanzt Blechteile aus Stahlblech.', unlock: 'blech' },
+  kantbank:   { name: 'Abkantpresse',     kind: 'machine',  size: 2, cost: 1400, cat: 'fertigung',  power: 40,  desc: 'Kantet Blechteile zu Gehäusen.', unlock: 'blech' },
+  spritzguss: { name: 'Spritzguss',       kind: 'machine',  size: 2, cost: 2200, cat: 'fertigung',  power: 70,  desc: 'Spritzt Griffe aus Granulat.', unlock: 'kunststoff' },
+  fraese:     { name: 'CNC-Fräse',        kind: 'machine',  size: 2, cost: 2600, cat: 'fertigung',  power: 55,  desc: 'Fräst Zahnräder aus Rohlingen.', unlock: 'cnc' },
+  wickel:     { name: 'Wickelmaschine',   kind: 'machine',  size: 2, cost: 2400, cat: 'fertigung',  power: 35,  desc: 'Wickelt Spulen aus Kupferdraht.', unlock: 'elektro' },
+  werkbank:   { name: 'Montagetisch',     kind: 'machine',  size: 2, cost: 700,  cat: 'montage',    power: 10,  desc: 'Handmontage: Hammerkopf und Stiel werden zum Hammer.', unlock: 'schmieden' },
+  montage:    { name: 'Montagezelle',     kind: 'machine',  size: 3, cost: 6000, cat: 'montage',    power: 90,  desc: 'Roboterzelle für Baugruppen mit vielen Teilen.', unlock: 'montagezelle' },
 
-  schmelzofen: { name: 'Schmelzofen',   kind: 'machine',   size: 2, cost: 400,   cat: 'produktion', power: 50,  desc: 'Verhüttet Erz zu Platten und Sand zu Glas.' },
-  saegewerk:   { name: 'Sägewerk',      kind: 'machine',   size: 2, cost: 300,   cat: 'produktion', power: 30,  desc: 'Sägt Holz zu Brettern.' },
-  presse:      { name: 'Presse',        kind: 'machine',   size: 2, cost: 500,   cat: 'produktion', power: 45,  desc: 'Presst Zahnräder und zieht Draht.', unlock: 'mechanik' },
-  hochofen:    { name: 'Hochofen',      kind: 'machine',   size: 3, cost: 2500,  cat: 'produktion', power: 120, desc: 'Veredelt Eisen mit Kohle zu Stahl.', unlock: 'stahl' },
-  montage:     { name: 'Montagehalle',  kind: 'machine',   size: 3, cost: 3000,  cat: 'produktion', power: 90,  desc: 'Baut komplexe Bauteile aus mehreren Zutaten.', unlock: 'montage' },
+  trafo:      { name: 'Trafostation',     kind: 'grid',     size: 2, cost: 2500, cat: 'energie',    supply: 300, desc: 'Anschluss ans Stadtnetz (300 kW). Strom kostet laufend Geld.' },
 
-  netz:        { name: 'Netzanschluss', kind: 'grid',      size: 2, cost: 2000,  cat: 'energie',    supply: 250, desc: 'Bezieht Strom aus dem Stadtnetz (250 kW). Kostet laufend Geld.' },
-  windrad:     { name: 'Windrad',       kind: 'generator', size: 1, cost: 700,   cat: 'energie',    supply: 40,  desc: 'Kostenloser Strom, schwankt mit dem Wind.', unlock: 'energie' },
-  kraftwerk:   { name: 'Kohlekraftwerk',kind: 'generator', size: 3, cost: 3500,  cat: 'energie',    supply: 450, desc: 'Verbrennt 1 Kohle alle 4 s für 450 kW.', unlock: 'energie', fuel: 'kohle', burnTime: 4 },
-  solar:       { name: 'Solarfeld',     kind: 'generator', size: 2, cost: 1200,  cat: 'energie',    supply: 70,  desc: 'Liefert tagsüber bis zu 70 kW.', unlock: 'solar' },
+  // Altbestand in der Halle – kann gegen Entsorgungskosten entfernt werden
+  altregal:   { name: 'Altes Regal',      kind: 'decor',    size: 2, cost: 0, removeCost: 120, desc: 'Altbestand. Abriss kostet Entsorgung.' },
+  altbuero:   { name: 'Meisterbüro',      kind: 'decor',    size: 3, cost: 0, removeCost: 400, desc: 'Altbestand. Abriss kostet Entsorgung.' },
+  palette:    { name: 'Palette',          kind: 'decor',    size: 1, cost: 0, removeCost: 20,  desc: 'Altbestand. Abriss kostet Entsorgung.' },
+  stapler:    { name: 'Gabelstapler',     kind: 'decor',    size: 1, cost: 0, removeCost: 0,   desc: 'Steht im Weg. Kann weggefahren werden.' },
 };
 
 export const CATEGORIES = [
-  { id: 'logistik',   name: 'Logistik' },
-  { id: 'gewinnung',  name: 'Gewinnung' },
-  { id: 'produktion', name: 'Produktion' },
-  { id: 'energie',    name: 'Energie' },
+  { id: 'logistik',  name: 'Logistik' },
+  { id: 'fertigung', name: 'Fertigung' },
+  { id: 'montage',   name: 'Montage' },
+  { id: 'energie',   name: 'Energie' },
 ];
 
-// Vorkommen auf der Karte
-export const DEPOSITS = {
-  1: { id: 'wald',     item: 'holz',      name: 'Wald' },
-  2: { id: 'eisen',    item: 'eisenerz',  name: 'Eisenerz',  color: 0x9a5b48 },
-  3: { id: 'kupfer',   item: 'kupfererz', name: 'Kupfererz', color: 0xd27a3c },
-  4: { id: 'kohle',    item: 'kohle',     name: 'Kohle',     color: 0x2c2c32 },
-  5: { id: 'sand',     item: 'sand',      name: 'Sand',      color: 0xe8cf94 },
-};
-
 export const RESEARCH = [
-  { id: 'mechanik',  name: 'Mechanik',             cost: 800,   req: { eisenplatte: 30 },  prereq: [],                       desc: 'Presse: Zahnräder & Kupferdraht.' },
-  { id: 'glas',      name: 'Glasherstellung',      cost: 1200,  req: { eisenplatte: 60 },  prereq: [],                       desc: 'Schmelzofen kann Sand zu Glas schmelzen.' },
-  { id: 'netz2',     name: 'Netzausbau',           cost: 2000,  req: { kupferplatte: 60 }, prereq: [],                       desc: 'Netzanschlüsse liefern doppelte Leistung.', effect: { gridMul: 2 } },
-  { id: 'band2',     name: 'Schnellbänder',        cost: 1500,  req: { zahnrad: 40 },      prereq: ['mechanik'],             desc: 'Alle Förderbänder +60 % schneller.', effect: { beltMul: 1.6 } },
-  { id: 'energie',   name: 'Energietechnik',       cost: 2500,  req: { draht: 100 },       prereq: ['mechanik'],             desc: 'Windräder und Kohlekraftwerke.' },
-  { id: 'stahl',     name: 'Stahlverhüttung',      cost: 3000,  req: { zahnrad: 60 },      prereq: ['mechanik'],             desc: 'Hochofen: Stahlträger aus Eisen und Kohle.' },
-  { id: 'tiefbohr',  name: 'Tiefbohrung',          cost: 4000,  req: { eisenplatte: 400 }, prereq: ['mechanik'],             desc: 'Bohrer und Holzfäller +50 % Förderleistung.', effect: { minerMul: 1.5 } },
-  { id: 'montage',   name: 'Fließbandmontage',     cost: 5000,  req: { draht: 200 },       prereq: ['mechanik'],             desc: 'Montagehalle: Schaltkreise und Möbel.' },
-  { id: 'motorbau',  name: 'Motorenbau',           cost: 9000,  req: { stahl: 60 },        prereq: ['stahl', 'montage'],     desc: 'Montagehalle kann Motoren bauen.' },
-  { id: 'solar',     name: 'Photovoltaik',         cost: 6000,  req: { schaltkreis: 40 },  prereq: ['energie', 'montage'],   desc: 'Solarfelder – kostenloser Strom bei Tag.' },
-  { id: 'lean',      name: 'Lean Production',      cost: 12000, req: { moebel: 25 },       prereq: ['montage', 'glas'],      desc: 'Alle Maschinen arbeiten 25 % schneller.', effect: { machineMul: 1.25 } },
-  { id: 'band3',     name: 'Hochleistungsbänder',  cost: 10000, req: { schaltkreis: 80 },  prereq: ['band2', 'montage'],     desc: 'Förderbänder nochmals +40 % schneller.', effect: { beltMul: 1.4 } },
+  { id: 'schmieden',    name: 'Gesenkschmieden',     cost: 1500,  req: { welle: 40 },      prereq: [],                         desc: 'Schmiede, Härteofen, Schleifmaschine und Montagetisch: Hämmer und Schraubenschlüssel.' },
+  { id: 'blech',        name: 'Blechbearbeitung',    cost: 2000,  req: { rohling: 120 },   prereq: [],                         desc: 'Stanze und Abkantpresse, Stahlblech im Einkauf.' },
+  { id: 'band2',        name: 'Schnellere Rollenbahnen', cost: 2500, req: { welle: 120 },  prereq: [],                         desc: 'Alle Bahnen +60 % schneller.', effect: { beltMul: 1.6 } },
+  { id: 'netz2',        name: 'Netzausbau',          cost: 3000,  req: { hammer: 40 },     prereq: ['schmieden'],              desc: 'Trafostationen liefern doppelte Leistung.', effect: { gridMul: 2 } },
+  { id: 'kunststoff',   name: 'Kunststofftechnik',   cost: 4000,  req: { schluessel: 40 }, prereq: ['schmieden'],              desc: 'Spritzguss, Granulat im Einkauf: Kunststoffgriffe.' },
+  { id: 'cnc',          name: 'CNC-Fertigung',       cost: 5000,  req: { gehaeuse: 40 },   prereq: ['blech'],                  desc: 'CNC-Fräse für Zahnräder.' },
+  { id: 'montagezelle', name: 'Roboter-Montage',     cost: 8000,  req: { hammer: 80, gehaeuse: 60 }, prereq: ['schmieden', 'blech', 'kunststoff'], desc: 'Montagezelle: Zangen, Getriebe, Werkzeugkoffer.' },
+  { id: 'lean',         name: 'Lean Production',     cost: 12000, req: { zange: 40 },      prereq: ['montagezelle'],           desc: 'Alle Maschinen arbeiten 25 % schneller.', effect: { machineMul: 1.25 } },
+  { id: 'elektro',      name: 'Elektromotoren',      cost: 15000, req: { getriebe: 30 },   prereq: ['montagezelle', 'cnc'],    desc: 'Wickelmaschine und Kupferdraht: Elektromotoren.' },
+  { id: 'band3',        name: 'Hochleistungsbahnen', cost: 12000, req: { koffer: 20 },     prereq: ['band2', 'montagezelle'],  desc: 'Bahnen nochmals +40 % schneller.', effect: { beltMul: 1.4 } },
+  { id: 'akku',         name: 'Akkuwerkzeuge',       cost: 30000, req: { motor: 40 },      prereq: ['elektro'],                desc: 'Akkuschrauber: das Spitzenprodukt der Halle.' },
 ];
 export const RESEARCH_BY_ID = Object.fromEntries(RESEARCH.map(r => [r.id, r]));
 
-// Tutorial-/Kampagnenziele, nacheinander
+// Material, das am Wareneingang bestellt werden kann, je nach Forschung
+export const BUY_UNLOCK = { stahlblech: 'blech', granulat: 'kunststoff', kupfer: 'elektro' };
+
 export const GOALS = [
-  { id: 'g1', text: 'Baue einen Bohrer auf ein Eisenerz-Vorkommen', reward: 200,  check: g => g.countBuildings(e => e.type === 'bohrer' && e.res === 'eisenerz') > 0 },
-  { id: 'g2', text: 'Verbinde ihn per Förderband mit dem Handelsdepot', reward: 200, check: g => (g.stats.sold.eisenerz || 0) >= 1 },
-  { id: 'g3', text: 'Baue einen Schmelzofen und liefere 10 Eisenplatten', reward: 400, check: g => (g.stats.sold.eisenplatte || 0) >= 10 },
-  { id: 'g4', text: 'Erforsche „Mechanik“ (Menü Forschung)', reward: 500,  check: g => g.research.has('mechanik') },
-  { id: 'g5', text: 'Liefere 20 Zahnräder', reward: 800, check: g => (g.stats.sold.zahnrad || 0) >= 20 },
-  { id: 'g6', text: 'Schließe einen Auftrag ab', reward: 1000, check: g => g.stats.contractsDone >= 1 },
-  { id: 'g7', text: 'Erforsche „Stahlverhüttung“', reward: 1500, check: g => g.research.has('stahl') },
-  { id: 'g8', text: 'Liefere 10 Motoren', reward: 5000, check: g => (g.stats.sold.motor || 0) >= 10 },
+  { id: 'g1', text: 'Stell eine Bandsäge auf und führ ihr Rundstahl vom Wareneingang zu', reward: 300,  check: g => (g.stats.produced.rohling || 0) >= 1 },
+  { id: 'g2', text: 'Liefere 20 Stahlrohlinge an den Versand', reward: 300, check: g => (g.stats.sold.rohling || 0) >= 20 },
+  { id: 'g3', text: 'Bau eine Drehbank und liefere 20 Wellen', reward: 600, check: g => (g.stats.sold.welle || 0) >= 20 },
+  { id: 'g4', text: 'Erforsche „Gesenkschmieden“', reward: 800, check: g => g.research.has('schmieden') },
+  { id: 'g5', text: 'Liefere 15 Hämmer', reward: 1200, check: g => (g.stats.sold.hammer || 0) >= 15 },
+  { id: 'g6', text: 'Schließe einen Auftrag ab', reward: 1500, check: g => g.stats.contractsDone >= 1 },
+  { id: 'g7', text: 'Erforsche „Roboter-Montage“', reward: 3000, check: g => g.research.has('montagezelle') },
+  { id: 'g8', text: 'Liefere 5 Werkzeugkoffer', reward: 6000, check: g => (g.stats.sold.koffer || 0) >= 5 },
+  { id: 'g9', text: 'Liefere 10 Akkuschrauber', reward: 20000, check: g => (g.stats.sold.akkuschrauber || 0) >= 10 },
 ];
 
 export const EVENTS = [
-  { id: 'bauboom',  title: 'Bauboom',        text: 'Bretter & Glas +60 %',        duration: 90, price: { bretter: 1.6, glas: 1.6 } },
-  { id: 'stahl',    title: 'Stahlknappheit', text: 'Stahlträger +80 %',            duration: 90, price: { stahl: 1.8 } },
-  { id: 'messe',    title: 'Möbelmesse',     text: 'Möbel +100 %',                 duration: 90, price: { moebel: 2 } },
-  { id: 'elektro',  title: 'Elektronikboom', text: 'Schaltkreise & Draht +50 %',   duration: 90, price: { schaltkreis: 1.5, draht: 1.5 } },
-  { id: 'krise',    title: 'Energiekrise',   text: 'Netzstrom kostet das Dreifache', duration: 60, gridCost: 3 },
-  { id: 'sturm',    title: 'Sturmfront',     text: 'Windräder liefern doppelt',     duration: 75, wind: 2 },
-  { id: 'foerder',  title: 'Förderprogramm', text: 'Die Stadt Remscheid zahlt dir einen Zuschuss', duration: 0, grant: true },
-  { id: 'flaute',   title: 'Marktflaute',    text: 'Alle Preise −20 %',             duration: 60, priceAll: 0.8 },
+  { id: 'baumarkt',  title: 'Baumarkt-Aktion',  text: 'Hämmer & Schlüssel +60 %',      duration: 90, price: { hammer: 1.6, schluessel: 1.6 } },
+  { id: 'stahl',     title: 'Stahlpreis steigt', text: 'Rundstahl & Blech kosten 50 % mehr', duration: 90, buy: { rundstahl: 1.5, stahlblech: 1.5 } },
+  { id: 'messe',     title: 'Eisenwarenmesse',  text: 'Werkzeugkoffer +80 %',          duration: 90, price: { koffer: 1.8 } },
+  { id: 'krise',     title: 'Energiekrise',     text: 'Netzstrom kostet das Dreifache', duration: 60, gridCost: 3 },
+  { id: 'foerder',   title: 'Förderprogramm',   text: 'Die Stadt Remscheid zahlt dir einen Zuschuss', duration: 0, grant: true },
+  { id: 'flaute',    title: 'Auftragsflaute',   text: 'Alle Verkaufspreise −20 %',      duration: 60, priceAll: 0.8 },
+  { id: 'industrie', title: 'Industrieboom',    text: 'Getriebe & Motoren +50 %',       duration: 90, price: { getriebe: 1.5, motor: 1.5 } },
 ];
 
 export const CONFIG = {
-  mapSize: 72,
-  startMoney: 4000,
-  beltSpeed: 1.25,        // Felder pro Sekunde
+  hallW: 40,
+  hallH: 26,
+  columnEvery: 8,          // Hallenstützen in diesem Raster (blockieren Felder)
+  startMoney: 6000,
+  tickRate: 30,            // feste Simulationsrate
+  beltSpeed: 1.2,          // Felder pro Sekunde
   beltSpacing: 0.25,
-  minerRate: 0.22,        // Items/s pro Vorkommensfeld
-  lumberRate: 0.06,       // Items/s pro Waldfeld im Umkreis
-  gridCostPerKWs: 0.012,  // € pro kW·s Netzstrom
-  dayLength: 360,         // Sekunden pro Tag
+  beltHeight: 0.5,         // Auflagehöhe der Rollenbahn
+  gridCostPerKWs: 0.012,
+  dayLength: 480,
   refund: 0.8,
+  saveVersion: 3,
 };

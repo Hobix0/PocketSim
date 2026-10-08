@@ -2,14 +2,17 @@
 import { BUILDINGS } from './data.js';
 import { DX, DZ } from './sim.js';
 
+const ISO_PITCH = Math.atan(1 / Math.SQRT2); // echte Isometrie: 35,26°
+const MIN_D = 6, MAX_D = 60;
+
 export class Controls {
   constructor(canvas, game, renderer, hooks) {
     this.canvas = canvas;
     this.game = game;
     this.r = renderer;
     this.hooks = hooks; // { onSelect, onTool, onHover, sound }
-    this.cam = { target: { x: game.W / 2, z: game.H / 2 + 2 }, dist: 30, yaw: Math.PI / 4, pitch: 0.95, showGrid: false };
-    this.camGoal = { dist: 30, yaw: Math.PI / 4 };
+    this.cam = { target: { x: game.W / 2, z: game.H / 2 + 1 }, dist: 44, yaw: Math.PI / 5, pitch: 0.95, showGrid: false, iso: false };
+    this.camGoal = { dist: 44, yaw: Math.PI / 5 };
     this.tool = 'select';
     this.buildType = null;
     this.buildRot = 0;
@@ -62,7 +65,24 @@ export class Controls {
   }
 
   // ───────────────────────── Kamera
-  zoom(f) { this.camGoal.dist = Math.min(90, Math.max(7, this.camGoal.dist * f)); }
+  zoom(f) { this.camGoal.dist = Math.min(MAX_D, Math.max(MIN_D, this.camGoal.dist * f)); }
+
+  // Isometrische Ansicht: orthografische Kamera, Drehung in 90°-Schritten
+  setIso(on) {
+    this.cam.iso = on;
+    if (on) {
+      const step = Math.PI / 2;
+      this.camGoal.yaw = Math.round((this.camGoal.yaw - Math.PI / 4) / step) * step + Math.PI / 4;
+    }
+    this.hooks.onIso?.(on);
+  }
+
+  turn(dir) {
+    if (this.cam.iso) this.camGoal.yaw += dir * Math.PI / 2;
+    else this.camGoal.yaw += dir * Math.PI / 4;
+  }
+
+  pitchFor(dist) { return this.cam.iso ? ISO_PITCH : 0.62 + 0.45 * Math.min(1, (dist - MIN_D) / 40); }
 
   update(dt) {
     const c = this.cam, g = this.camGoal;
@@ -73,14 +93,14 @@ export class Controls {
     if (this.keys.has('a') || this.keys.has('arrowleft')) fx -= 1;
     if (this.keys.has('d') || this.keys.has('arrowright')) fx += 1;
     if (fx || fz) this.panBy(fx * pan, fz * pan);
-    if (this.keys.has('q')) g.yaw += dt * 1.6;
-    if (this.keys.has('e')) g.yaw -= dt * 1.6;
+    if (!c.iso && this.keys.has('q')) g.yaw += dt * 1.6;
+    if (!c.iso && this.keys.has('e')) g.yaw -= dt * 1.6;
     const k = 1 - Math.exp(-dt * 12);
     c.dist += (g.dist - c.dist) * k;
     c.yaw += (g.yaw - c.yaw) * k;
-    c.pitch = 0.62 + 0.5 * Math.min(1, (c.dist - 7) / 60);
-    c.target.x = Math.max(0, Math.min(this.game.W, c.target.x));
-    c.target.z = Math.max(0, Math.min(this.game.H, c.target.z));
+    c.pitch += (this.pitchFor(c.dist) - c.pitch) * k;
+    c.target.x = Math.max(-2, Math.min(this.game.W + 2, c.target.x));
+    c.target.z = Math.max(-2, Math.min(this.game.H + 2, c.target.z));
   }
 
   // Verschiebung in Kamerakoordinaten (x = rechts, z = zum Betrachter)
@@ -131,6 +151,7 @@ export class Controls {
       if (d.mode === 'click' && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 6) d.mode = 'pan';
       if (d.mode === 'pan') { this.grabPan(e, d.grab); return; }
       if (d.mode === 'orbit') {
+        if (this.cam.iso) return;
         this.camGoal.yaw -= (e.clientX - d.x) * 0.008;
         this.cam.yaw = this.camGoal.yaw;
         d.x = e.clientX; d.y = e.clientY;
@@ -190,13 +211,13 @@ export class Controls {
     if (!gs) return;
     const [a, b] = [...this.pointers.values()];
     const d = Math.hypot(a.x - b.x, a.y - b.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
-    if (d > 10) { this.camGoal.dist = Math.min(90, Math.max(7, this.camGoal.dist * gs.d / d)); this.cam.dist = this.camGoal.dist; }
+    if (d > 10) { this.camGoal.dist = Math.min(MAX_D, Math.max(MIN_D, this.camGoal.dist * gs.d / d)); this.cam.dist = this.camGoal.dist; }
     let da = ang - gs.ang;
     if (da > Math.PI) da -= Math.PI * 2;
     if (da < -Math.PI) da += Math.PI * 2;
-    this.camGoal.yaw -= da; this.cam.yaw = this.camGoal.yaw;
+    if (!this.cam.iso) { this.camGoal.yaw -= da; this.cam.yaw = this.camGoal.yaw; }
     gs.d = d; gs.ang = ang;
-    this.cam.pitch = 0.62 + 0.5 * Math.min(1, (this.cam.dist - 7) / 60);
+    this.cam.pitch = this.pitchFor(this.cam.dist);
     this.grabPanXY((a.x + b.x) / 2, (a.y + b.y) / 2, gs.grab);
   }
 
@@ -225,7 +246,16 @@ export class Controls {
   anchor(tile) {
     const s = BUILDINGS[this.buildType].size;
     if (s === 1) return { x: tile.x, z: tile.z };
-    return { x: Math.round(tile.fx - s / 2), z: Math.round(tile.fz - s / 2) };
+    const g = this.game;
+    let x = Math.max(0, Math.min(g.W - s, Math.round(tile.fx - s / 2)));
+    let z = Math.max(0, Math.min(g.H - s, Math.round(tile.fz - s / 2)));
+    // Rolltore rasten an der nächsten Außenwand ein
+    if (BUILDINGS[this.buildType].wall) {
+      const d = [z, g.W - s - x, g.H - s - z, x];
+      const m = d.indexOf(Math.min(...d));
+      if (m === 0) z = 0; else if (m === 1) x = g.W - s; else if (m === 2) z = g.H - s; else x = 0;
+    }
+    return { x, z };
   }
 
   refreshGhost() {
@@ -257,7 +287,7 @@ export class Controls {
   beltOk(p) {
     const ent = this.game.at(p.x, p.z);
     if (ent) return ent.type === 'band';
-    return this.game.inBounds(p.x, p.z) && this.game.terrain[this.game.idx(p.x, p.z)] !== 1;
+    return this.game.inBounds(p.x, p.z) && this.game.terrain[this.game.idx(p.x, p.z)] === 0;
   }
 
   beltPath(a, b) {
@@ -311,6 +341,8 @@ export class Controls {
     this.keys.add(k);
     if (e.repeat) return;
     if (k === 'r') this.rotate();
+    else if (k === 'i') this.setIso(!this.cam.iso);
+    else if (this.cam.iso && (k === 'q' || k === 'e')) this.turn(k === 'q' ? 1 : -1);
     else if (k === 'x' || k === 'delete') this.setTool(this.tool === 'delete' ? 'select' : 'delete');
     else if (k === 'escape') { if (this.tool !== 'select') this.setTool('select'); else this.select(null); this.hooks.onEscape?.(); }
     else if (k === 'c' && this.selected != null) {

@@ -1,7 +1,7 @@
 {
   "name": "PocketSim Factory",
   "short_name": "PocketSim",
-  "description": "Baue in 3D eine Fabrik – vom ersten Bohrer bis zur durchgetakteten Fertigung.",
+  "description": "Übernimm eine Fabrikhalle in Remscheid und fertige Werkzeuge.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "any",

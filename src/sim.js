@@ -1,11 +1,12 @@
-// Simulation: Welt, Gebäude, Förderbänder, Strom, Markt, Aufträge, Forschung.
-import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, DEPOSITS, RESEARCH, RESEARCH_BY_ID, GOALS, EVENTS, CONFIG } from './data.js';
+// Simulation: Fabrikhalle, Gebäude mit festen Ein-/Ausgängen, Rollenbahnen, Strom,
+// Einkauf, Markt, Aufträge, Forschung. Läuft mit fester Tickrate und ohne DOM/Three.js.
+import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, RESEARCH, RESEARCH_BY_ID, GOALS, EVENTS, CONFIG, BUY_UNLOCK } from './data.js';
 
 export const DX = [0, 1, 0, -1];
 export const DZ = [-1, 0, 1, 0];
-const MINABLE = new Set([2, 3, 4, 5]);
-const LUMBER_RADIUS = 3;
 const MAX_LEVEL = 5;
+const OUT_CAP = 8;
+export const TILE_FLOOR = 0, TILE_COLUMN = 2;
 
 export function rng(seed) {
   let a = seed >>> 0;
@@ -18,24 +19,9 @@ export function rng(seed) {
   };
 }
 
-function makeNoise(seed) {
-  const hash = (x, z) => {
-    let h = (x * 374761393 + z * 668265263 + seed * 1442695041) | 0;
-    h = Math.imul(h ^ (h >>> 13), 1274126177);
-    return ((h ^ (h >>> 16)) >>> 0) / 4294967296 * 2 - 1;
-  };
-  const smooth = t => t * t * (3 - 2 * t);
-  const value = (x, z) => {
-    const x0 = Math.floor(x), z0 = Math.floor(z);
-    const fx = smooth(x - x0), fz = smooth(z - z0);
-    const a = hash(x0, z0), b = hash(x0 + 1, z0), c = hash(x0, z0 + 1), d = hash(x0 + 1, z0 + 1);
-    return a + (b - a) * fx + (c - a) * fz + (a - b - c + d) * fx * fz;
-  };
-  return (x, z) => value(x, z) * 0.55 + value(x * 2.1, z * 2.1) * 0.3 + value(x * 4.3, z * 4.3) * 0.15;
-}
-
 export const levelMul = lvl => 1 + 0.35 * (lvl - 1);
 export const upgradeCost = e => Math.round(BUILDINGS[e.type].cost * 0.6 * e.level);
+const PORTED = new Set(['machine', 'storage', 'inbound']);
 
 export class Game {
   constructor() { this.listeners = {}; }
@@ -44,13 +30,13 @@ export class Game {
   emit(ev, data) { (this.listeners[ev] || []).forEach(fn => fn(data)); }
   toast(text, kind = 'info') { this.emit('toast', { text, kind }); }
 
-  // ───────────────────────── Neues Spiel / Weltgenerierung
+  // ───────────────────────── Neues Spiel / Halle
   newGame(seed = Math.floor(Math.random() * 1e9)) {
     this.seed = seed;
-    this.W = this.H = CONFIG.mapSize;
+    this.W = CONFIG.hallW;
+    this.H = CONFIG.hallH;
     const N = this.W * this.H;
     this.terrain = new Uint8Array(N);
-    this.deposit = new Uint8Array(N);
     this.grid = new Int32Array(N).fill(-1);
     this.entities = new Map();
     this.nextId = 1;
@@ -59,59 +45,46 @@ export class Game {
     this.research = new Set();
     this.market = Object.fromEntries(ITEM_IDS.map(id => [id, 1]));
     this.contracts = [];
-    this.contractTimer = 20;
+    this.contractTimer = 25;
     this.event = null;
-    this.eventTimer = 180;
+    this.eventTimer = 200;
     this.goalIndex = 0;
-    this.stats = { sold: {}, produced: {}, earned: 0, spent: 0, powerCost: 0, contractsDone: 0, history: [], snaps: [] };
-    this._acc = { earned: 0, power: 0, snap: 0, goal: 0 };
-    this.generate();
-    const c = Math.floor(this.W / 2);
-    this.place('depot', c - 1, c - 1, 0, true);
-    this.place('netz', c + 3, c - 1, 0, true);
+    this.stats = { sold: {}, produced: {}, bought: {}, earned: 0, spent: 0, powerCost: 0, buyCost: 0, contractsDone: 0, history: [], snaps: [] };
+    this._acc = { earned: 0, power: 0, buy: 0, snap: 0, goal: 0 };
+    this.layoutHall();
     this.recomputeMods();
     this.rebuild();
   }
 
-  generate() {
-    const { W, H } = this;
-    const r = rng(this.seed);
-    const nWater = makeNoise(this.seed + 11), nForest = makeNoise(this.seed + 23), nShape = makeNoise(this.seed + 37);
-    const cx = W / 2, cz = H / 2;
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      const i = z * W + x, d = Math.hypot(x - cx, z - cz);
-      if (nWater(x * 0.055, z * 0.055) < -0.3 && d > 9) this.terrain[i] = 1;
-      else if (nForest(x * 0.09, z * 0.09) > 0.16 && d > 7) this.deposit[i] = 1;
+  layoutHall() {
+    const { W, H } = this, r = rng(this.seed);
+    // Stützenraster
+    const ce = CONFIG.columnEvery;
+    this.columns = [];
+    for (let x = ce; x < W - 2; x += ce) for (const z of [Math.round(H / 3), Math.round(H * 2 / 3)]) {
+      this.terrain[this.idx(x, z)] = TILE_COLUMN;
+      this.columns.push([x, z]);
     }
-    const patch = (type, px, pz, rad) => {
-      for (let z = Math.floor(pz - rad - 2); z <= pz + rad + 2; z++) for (let x = Math.floor(px - rad - 2); x <= px + rad + 2; x++) {
-        if (!this.inBounds(x, z)) continue;
-        const d = Math.hypot(x - px, z - pz);
-        if (d <= rad * (0.75 + 0.5 * (nShape(x * 0.4, z * 0.4) + 0.5))) {
-          const i = z * W + x;
-          this.terrain[i] = 0;
-          this.deposit[i] = type;
-        }
-      }
-    };
-    // Garantierte Startvorkommen rund um das Depot
-    const startTypes = [2, 3, 4, 5, 2];
-    const off = r() * Math.PI * 2;
-    startTypes.forEach((t, k) => {
-      const a = off + k / startTypes.length * Math.PI * 2;
-      const dist = 9 + r() * 4;
-      patch(t, cx + Math.cos(a) * dist, cz + Math.sin(a) * dist, 2.2 + r() * 0.8);
-    });
-    // Weitere Vorkommen auf der Karte
-    for (let k = 0; k < 22; k++) {
-      const t = [2, 3, 4, 5, 2, 3, 4][k % 7];
-      const x = 4 + r() * (W - 8), z = 4 + r() * (H - 8);
-      if (Math.hypot(x - cx, z - cz) < 16) continue;
-      patch(t, x, z, 2 + r() * 2.5);
+    // Tore gegenüber in einer stützenfreien Reihe, damit eine gerade Linie möglich ist
+    const mid = Math.floor(H / 2) - 1;
+    const inb = this.place('eingang', 0, mid, 1, true);
+    inb.item = 'rundstahl';
+    this.place('versand', W - 2, mid, 3, true);
+    this.place('trafo', 0, H - 2, 0, true);
+    // Altbestand: Meisterbüro, Regale an der Nordwand, Paletten, ein Stapler
+    this.place('altbuero', W - 3, 0, 2, true);
+    for (let x = 4; x < W - 6; x += 2 + Math.floor(r() * 3)) {
+      if (r() < 0.55) this.place('altregal', x, 0, 2, true);
     }
-    // Startbereich freiräumen
-    for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-      if (Math.hypot(x - cx, z - cz) < 6) { const i = z * W + x; this.terrain[i] = 0; this.deposit[i] = 0; }
+    for (let k = 0; k < 9; k++) {
+      const x = 3 + Math.floor(r() * (W - 6)), z = 3 + Math.floor(r() * (H - 6));
+      if (Math.abs(z - mid - 0.5) < 3) continue; // Hauptgang frei lassen
+      if (this.isFree(x, z, 1)) this.place('palette', x, z, Math.floor(r() * 4), true);
+    }
+    for (let k = 0; k < 10; k++) {
+      const x = 4 + Math.floor(r() * (W - 8)), z = 4 + Math.floor(r() * (H - 8));
+      if (Math.abs(z - mid - 0.5) < 3) continue;
+      if (this.isFree(x, z, 1)) { this.place('stapler', x, z, Math.floor(r() * 4), true); break; }
     }
   }
 
@@ -123,6 +96,12 @@ export class Game {
     const id = this.grid[z * this.W + x];
     return id >= 0 ? this.entities.get(id) : null;
   }
+  isFree(x, z, s) {
+    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
+      if (!this.inBounds(x + dx, z + dz) || this.terrain[this.idx(x + dx, z + dz)] !== TILE_FLOOR || this.at(x + dx, z + dz)) return false;
+    }
+    return true;
+  }
   countBuildings(fn) { let n = 0; for (const e of this.entities.values()) if (fn(e)) n++; return n; }
   isUnlocked(type) { const u = BUILDINGS[type].unlock; return !u || this.research.has(u); }
   recipeUnlocked(rid) {
@@ -130,23 +109,31 @@ export class Game {
     return (!r.unlock || this.research.has(r.unlock)) && this.isUnlocked(r.building);
   }
   recipesFor(type) { return Object.keys(RECIPES).filter(rid => RECIPES[rid].building === type); }
+  buyUnlocked(item) { return !!ITEMS[item].buy && (!BUY_UNLOCK[item] || this.research.has(BUY_UNLOCK[item])); }
+
+  // Wandgebäude zeigen automatisch in die Halle
+  wallRotation(x, z, s) {
+    if (x === 0) return 1;
+    if (x + s === this.W) return 3;
+    if (z === 0) return 2;
+    if (z + s === this.H) return 0;
+    return -1;
+  }
 
   // ───────────────────────── Bauen
   canPlace(type, x, z) {
     const B = BUILDINGS[type];
+    if (B.kind === 'decor') return { ok: false, reason: 'Nicht baubar' };
     if (!this.isUnlocked(type)) return { ok: false, reason: 'Noch nicht erforscht' };
     const s = B.size;
-    let ore = 0;
     for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
       const tx = x + dx, tz = z + dz;
-      if (!this.inBounds(tx, tz)) return { ok: false, reason: 'Außerhalb der Karte' };
-      const i = this.idx(tx, tz);
-      if (this.terrain[i] === 1) return { ok: false, reason: 'Kein Bauen auf Wasser' };
+      if (!this.inBounds(tx, tz)) return { ok: false, reason: 'Außerhalb der Halle' };
+      if (this.terrain[this.idx(tx, tz)] === TILE_COLUMN) return { ok: false, reason: 'Hallenstütze im Weg' };
       const occ = this.at(tx, tz);
-      if (occ && !(occ.type === 'band' && type !== 'band')) return { ok: false, reason: 'Feld belegt' };
-      if (MINABLE.has(this.deposit[i])) ore++;
+      if (occ && !(occ.type === 'band' && type !== 'band')) return { ok: false, reason: occ.type in BUILDINGS && BUILDINGS[occ.type].kind === 'decor' ? `${BUILDINGS[occ.type].name} im Weg` : 'Feld belegt' };
     }
-    if (B.kind === 'miner' && ore === 0) return { ok: false, reason: 'Muss auf einem Vorkommen stehen' };
+    if (B.wall && this.wallRotation(x, z, s) < 0) return { ok: false, reason: 'Muss an der Außenwand stehen' };
     if (this.money < B.cost) return { ok: false, reason: 'Zu wenig Geld' };
     return { ok: true };
   }
@@ -159,14 +146,11 @@ export class Game {
       const occ = this.at(x + dx, z + dz);
       if (occ) this.remove(occ.id, true, true);
     }
+    if (B.wall) rot = this.wallRotation(x, z, s);
     const e = { id: this.nextId++, type, x, z, rot, level: 1 };
     this.initEntity(e);
     this.entities.set(e.id, e);
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
-      const i = this.idx(x + dx, z + dz);
-      this.grid[i] = e.id;
-      if (this.deposit[i] === 1) this.deposit[i] = 0; // Rodung
-    }
+    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(x + dx, z + dz)] = e.id;
     if (!free) { this.money -= B.cost; this.stats.spent += B.cost; }
     this.dirty = true;
     return e;
@@ -178,42 +162,36 @@ export class Game {
       case 'belt': e.items = []; break;
       case 'splitter': e.buf = null; e.rr = 0; break;
       case 'junction': e.bufs = [null, null]; break;
-      case 'miner': {
-        const counts = {};
-        for (let dz = 0; dz < 2; dz++) for (let dx = 0; dx < 2; dx++) {
-          const d = this.deposit[this.idx(e.x + dx, e.z + dz)];
-          if (MINABLE.has(d)) counts[d] = (counts[d] || 0) + 1;
-        }
-        const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-        e.res = DEPOSITS[best[0]].item; e.tiles = best[1];
-        e.progress = 0; e.out = 0; e.rr = 0;
-        break;
-      }
-      case 'lumber': e.progress = 0; e.out = 0; e.rr = 0; break;
       case 'machine': {
         const rs = this.recipesFor(e.type).filter(r => this.recipeUnlocked(r));
         e.recipe = rs[0] || this.recipesFor(e.type)[0];
         e.inBuf = {}; e.outBuf = {}; e.progress = 0; e.crafting = false; e.rr = 0;
         break;
       }
+      case 'inbound': e.item = 'rundstahl'; e.on = true; e.progress = 0; e.out = 0; e.rr = 0; break;
       case 'storage': e.inv = {}; e.total = 0; e.rr = 0; break;
-      case 'generator': e.fuel = 0; e.burn = 0; e.output = 0; break;
     }
   }
 
   remove(id, refund = true, silent = false) {
     const e = this.entities.get(id);
-    if (!e) return;
+    if (!e) return false;
     const B = BUILDINGS[e.type];
-    if (B.kind === 'depot' && this.countBuildings(o => o.type === 'depot') <= 1) {
-      if (!silent) this.toast('Das letzte Handelsdepot kann nicht abgerissen werden', 'warn');
+    if (B.kind === 'outbound' && this.countBuildings(o => o.type === 'versand') <= 1) {
+      if (!silent) this.toast('Der letzte Versand kann nicht abgerissen werden', 'warn');
       return false;
+    }
+    if (B.kind === 'decor' && !silent) {
+      if (this.money < B.removeCost) { this.toast(`Entsorgung kostet ${fmtMoney(B.removeCost)}`, 'warn'); return false; }
+      this.money -= B.removeCost; this.stats.spent += B.removeCost;
+      refund = false;
     }
     const s = B.size;
     for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(e.x + dx, e.z + dz)] = -1;
     this.entities.delete(id);
-    if (refund) {
-      const total = B.cost + (e.level > 1 ? Array.from({ length: e.level - 1 }, (_, k) => Math.round(B.cost * 0.6 * (k + 1))).reduce((a, b) => a + b, 0) : 0);
+    if (refund && B.cost) {
+      let total = B.cost;
+      for (let k = 1; k < e.level; k++) total += Math.round(B.cost * 0.6 * k);
       this.money += Math.round(total * (B.kind === 'belt' ? 1 : CONFIG.refund));
     }
     this.dirty = true;
@@ -223,6 +201,8 @@ export class Game {
   rotate(id) {
     const e = this.entities.get(id);
     if (!e) return;
+    const B = BUILDINGS[e.type];
+    if (B.wall || B.kind === 'decor' && e.type !== 'stapler') return;
     e.rot = (e.rot + 1) % 4;
     if (e.type === 'band') e.items.forEach(it => { it.f = 0; });
     this.dirty = true;
@@ -234,9 +214,10 @@ export class Game {
     return false;
   }
 
+  canUpgrade(e) { return ['machine', 'inbound'].includes(BUILDINGS[e.type].kind) && e.level < MAX_LEVEL; }
   upgrade(id) {
     const e = this.entities.get(id);
-    if (!e || e.level >= MAX_LEVEL) return false;
+    if (!e || !this.canUpgrade(e)) return false;
     const cost = upgradeCost(e);
     if (this.money < cost) { this.toast('Zu wenig Geld für das Upgrade', 'warn'); return false; }
     this.money -= cost; this.stats.spent += cost;
@@ -244,14 +225,24 @@ export class Game {
     this.emit('entityChanged', e);
     return true;
   }
-  canUpgrade(e) { return ['machine', 'miner', 'lumber'].includes(BUILDINGS[e.type].kind) && e.level < MAX_LEVEL; }
 
   setRecipe(id, rid) {
     const e = this.entities.get(id);
-    if (!e || !this.recipeUnlocked(rid)) return;
-    if (e.recipe === rid) return;
+    if (!e || !this.recipeUnlocked(rid) || e.recipe === rid) return;
     e.recipe = rid; e.inBuf = {}; e.progress = 0; e.crafting = false;
     this.emit('entityChanged', e);
+  }
+
+  setInbound(id, item) {
+    const e = this.entities.get(id);
+    if (!e || !this.buyUnlocked(item)) return;
+    e.item = item; e.out = 0; e.progress = 0;
+    this.emit('entityChanged', e);
+  }
+
+  toggleInbound(id) {
+    const e = this.entities.get(id);
+    if (e) { e.on = !e.on; this.emit('entityChanged', e); }
   }
 
   // Nach Änderungen am Grid: Nachbarschaften, Bandreihenfolge, Formen
@@ -263,15 +254,14 @@ export class Game {
       if (e.type === 'band') { belts.push(e); continue; }
       const per = [];
       for (let i = 0; i < s; i++) {
-        per.push({ nx: e.x + i, nz: e.z - 1, tx: e.x + i, tz: e.z });
-        per.push({ nx: e.x + s, nz: e.z + i, tx: e.x + s - 1, tz: e.z + i });
-        per.push({ nx: e.x + i, nz: e.z + s, tx: e.x + i, tz: e.z + s - 1 });
-        per.push({ nx: e.x - 1, nz: e.z + i, tx: e.x, tz: e.z + i });
+        per.push({ nx: e.x + i, nz: e.z - 1, tx: e.x + i, tz: e.z, side: 0 });
+        per.push({ nx: e.x + s, nz: e.z + i, tx: e.x + s - 1, tz: e.z + i, side: 1 });
+        per.push({ nx: e.x + i, nz: e.z + s, tx: e.x + i, tz: e.z + s - 1, side: 2 });
+        per.push({ nx: e.x - 1, nz: e.z + i, tx: e.x, tz: e.z + i, side: 3 });
       }
-      e._perim = per;
-      if (e.type === 'holzfaeller') e._forest = this.countForest(e);
+      // Gebäude mit Ports geben nur nach vorne ab
+      e._perim = PORTED.has(BUILDINGS[e.type].kind) ? per.filter(p => p.side === e.rot) : per;
     }
-    // Bandformen (gerade / Kurve)
     for (const b of belts) {
       const d = b.rot;
       const neighbour = side => {
@@ -279,7 +269,7 @@ export class Game {
         const n = this.at(b.x + DX[s], b.z + DZ[s]);
         if (!n) return 0;
         if (n.type === 'band') return n.rot === (s + 2) % 4 ? 2 : 0;
-        return 1;
+        return BUILDINGS[n.type].kind === 'decor' ? 0 : 1;
       };
       const back = neighbour(2), left = neighbour(3) === 2, right = neighbour(1) === 2;
       b._shape = 0;
@@ -288,7 +278,7 @@ export class Game {
         else if (right && !left) b._shape = 2;
       }
     }
-    // Downstream zuerst simulieren, damit Bänder lückenlos laufen
+    // Downstream zuerst simulieren, damit Bahnen lückenlos laufen
     const seen = new Set(), order = [];
     for (const b of belts) {
       if (seen.has(b.id)) continue;
@@ -304,24 +294,25 @@ export class Game {
     this.emit('world');
   }
 
-  countForest(e) {
-    let n = 0;
-    const s = 2, R = LUMBER_RADIUS;
-    for (let z = e.z - R; z < e.z + s + R; z++) for (let x = e.x - R; x < e.x + s + R; x++) {
-      if (this.inBounds(x, z) && this.deposit[this.idx(x, z)] === 1) n++;
-    }
-    return n;
-  }
-
-  // ───────────────────────── Itemfluss
+  // ───────────────────────── Teilefluss
   dirTo(x, z, sx, sz) {
     for (let d = 0; d < 4; d++) if (x + DX[d] === sx && z + DZ[d] === sz) return d;
     return -1;
   }
 
-  // Versucht ein Item in ein Gebäude zu schieben. (sx,sz) = Feld der Quelle.
+  // Seite eines Mehrfeld-Gebäudes, an der das Quellfeld liegt
+  sideOf(e, sx, sz) {
+    const s = BUILDINGS[e.type].size;
+    if (sz < e.z) return 0;
+    if (sx >= e.x + s) return 1;
+    if (sz >= e.z + s) return 2;
+    return 3;
+  }
+
+  // Versucht ein Teil in ein Gebäude zu schieben. (sx,sz) = Feld der Quelle.
   insert(e, t, sx, sz, dry = false) {
     const B = BUILDINGS[e.type];
+    if (PORTED.has(B.kind) && this.sideOf(e, sx, sz) === e.rot) return false; // Ausgangsseite nimmt nichts an
     switch (B.kind) {
       case 'belt': {
         const s = this.dirTo(e.x, e.z, sx, sz), d = e.rot;
@@ -353,31 +344,24 @@ export class Game {
         if (!dry) e.inBuf[t] = (e.inBuf[t] || 0) + 1;
         return true;
       }
-      case 'depot':
+      case 'outbound':
         if (!dry) { this.deliver(t); e._sold = (e._sold || 0) + 1; }
         return true;
       case 'storage':
         if (e.total >= B.capacity) return false;
         if (!dry) { e.inv[t] = (e.inv[t] || 0) + 1; e.total++; }
         return true;
-      case 'generator':
-        if (B.fuel !== t || e.fuel >= 5) return false;
-        if (!dry) e.fuel++;
-        return true;
     }
     return false;
   }
 
-  // Gibt ein Item an ein benachbartes Gebäude ab (reihum)
-  dump(e, t, beltsOnly = false) {
+  // Gibt ein Teil an ein benachbartes Gebäude ab (reihum über die Ausgangsfelder)
+  dump(e, t) {
     const per = e._perim, n = per.length;
     for (let k = 0; k < n; k++) {
       const i = (e.rr + k) % n, p = per[i];
       const tgt = this.at(p.nx, p.nz);
       if (!tgt || tgt === e) continue;
-      const kind = BUILDINGS[tgt.type].kind;
-      if (beltsOnly && kind !== 'belt' && kind !== 'splitter' && kind !== 'junction') continue;
-      if (kind === 'storage' && BUILDINGS[e.type].kind === 'storage') continue;
       if (this.insert(tgt, t, p.tx, p.tz)) { e.rr = i + 1; return true; }
     }
     return false;
@@ -412,20 +396,15 @@ export class Game {
     return m;
   }
 
+  buyPrice(t) { return ITEMS[t].buy * (this.event?.buy?.[t] || 1); }
+
   // ───────────────────────── Simulation
-  get daylight() {
-    const d = this.dayFrac;
-    return Math.max(0, Math.sin((d - 0.25) * Math.PI * 2));
-  }
+  get daylight() { return Math.max(0, Math.sin((this.dayFrac - 0.25) * Math.PI * 2)); }
   get dayFrac() { return (this.time / CONFIG.dayLength + 0.32) % 1; }
   get day() { return Math.floor(this.time / CONFIG.dayLength + 0.32) + 1; }
-  get wind() {
-    const w = 0.6 + 0.3 * Math.sin(this.time * 0.031) + 0.15 * Math.sin(this.time * 0.17 + 1.3);
-    return Math.max(0.15, Math.min(1, w)) * (this.event?.wind || 1);
-  }
 
   recomputeMods() {
-    const m = { beltMul: 1, minerMul: 1, machineMul: 1, gridMul: 1 };
+    const m = { beltMul: 1, machineMul: 1, gridMul: 1 };
     for (const id of this.research) {
       const ef = RESEARCH_BY_ID[id]?.effect;
       if (ef) for (const k in ef) m[k] *= ef[k];
@@ -439,24 +418,27 @@ export class Game {
     const mods = this.mods;
     const ratio = this.power?.ratio ?? 1;
     const beltV = CONFIG.beltSpeed * mods.beltMul;
-
-    let demand = 0, renewable = 0, gridCap = 0;
-    const thermal = [];
+    let demand = 0, gridCap = 0;
 
     for (const e of this.entities.values()) {
       const B = BUILDINGS[e.type];
       switch (B.kind) {
-        case 'miner':
-        case 'lumber': {
-          const base = B.kind === 'miner' ? e.tiles * CONFIG.minerRate : (e._forest || 0) * CONFIG.lumberRate;
-          const want = e.out < 6 && base > 0;
-          e._active = want;
-          if (want) {
-            demand += B.power;
-            e.progress += base * mods.minerMul * levelMul(e.level) * ratio * dt;
-            while (e.progress >= 1 && e.out < 6) { e.progress -= 1; e.out++; this.count('produced', B.kind === 'miner' ? e.res : 'holz'); }
+        case 'inbound': {
+          e._active = false;
+          if (e.on && e.out < 4) {
+            e.progress += B.rate * levelMul(e.level) * dt;
+            if (e.progress >= 1) {
+              const cost = this.buyPrice(e.item);
+              if (this.money >= cost) {
+                e.progress -= 1; e.out++;
+                this.money -= cost; this.stats.buyCost += cost; this._acc.buy += cost;
+                this.count('bought', e.item);
+                e._active = true;
+              } else { e.progress = 1; e._poor = true; }
+            }
+            if (e.progress < 1) e._poor = false;
           }
-          if (e.out > 0 && this.dump(e, B.kind === 'miner' ? e.res : 'holz')) e.out--;
+          if (e.out > 0 && this.dump(e, e.item)) e.out--;
           break;
         }
         case 'machine': {
@@ -464,7 +446,7 @@ export class Game {
           if (!r) break;
           let outTotal = 0;
           for (const k in e.outBuf) outTotal += e.outBuf[k];
-          if (!e.crafting && outTotal < 8 && this.recipeUnlocked(e.recipe)) {
+          if (!e.crafting && outTotal < OUT_CAP && this.recipeUnlocked(e.recipe)) {
             let ok = true;
             for (const k in r.in) if ((e.inBuf[k] || 0) < r.in[k]) { ok = false; break; }
             if (ok) {
@@ -484,18 +466,12 @@ export class Game {
           for (const k in e.outBuf) if (e.outBuf[k] > 0 && this.dump(e, k)) e.outBuf[k]--;
           break;
         }
-        case 'storage': {
+        case 'storage':
           for (const k in e.inv) {
-            if (e.inv[k] > 0 && this.dump(e, k, true)) { e.inv[k]--; e.total--; break; }
+            if (e.inv[k] > 0 && this.dump(e, k)) { e.inv[k]--; e.total--; break; }
           }
           break;
-        }
         case 'grid': gridCap += B.supply * mods.gridMul; break;
-        case 'generator':
-          if (e.type === 'windrad') { e.output = B.supply * this.wind; renewable += e.output; }
-          else if (e.type === 'solar') { e.output = B.supply * this.daylight; renewable += e.output; }
-          else thermal.push(e);
-          break;
         case 'splitter': {
           const b = e.buf;
           if (!b) break;
@@ -530,7 +506,7 @@ export class Game {
       }
     }
 
-    // Bänder
+    // Rollenbahnen
     const SP = CONFIG.beltSpacing, step = beltV * dt;
     for (const e of this._beltOrder) {
       const items = e.items;
@@ -548,25 +524,11 @@ export class Game {
     }
 
     // Strom
-    const thermalCap = thermal.reduce((s, e) => s + ((e.burn > 0 || e.fuel > 0) ? BUILDINGS[e.type].supply : 0), 0);
-    const need = Math.max(0, demand - renewable);
-    const load = thermalCap > 0 ? Math.min(1, need / thermalCap) : 0;
-    let thermalOut = 0;
-    for (const e of thermal) {
-      const B = BUILDINGS[e.type];
-      if (e.burn <= 0 && e.fuel > 0 && load > 0) { e.fuel--; e.burn = B.burnTime; }
-      if (e.burn > 0) { e.output = B.supply * load; e.burn -= dt * load; thermalOut += e.output; }
-      else e.output = 0;
-      e._active = e.output > 0;
-    }
-    const own = renewable + thermalOut;
-    const gridDraw = Math.max(0, Math.min(gridCap, demand - own));
-    const supply = own + gridCap;
+    const gridDraw = Math.min(gridCap, demand);
     const cost = gridDraw * CONFIG.gridCostPerKWs * (this.event?.gridCost || 1) * dt;
     this.money -= cost; this.stats.powerCost += cost; this._acc.power += cost;
-    this.power = { demand, supply, own, gridCap, gridDraw, ratio: demand > 0 ? Math.min(1, supply / demand) : 1 };
+    this.power = { demand, supply: gridCap, gridDraw, ratio: demand > 0 ? Math.min(1, gridCap / demand) : 1 };
 
-    // Markt erholt sich
     for (const k in this.market) this.market[k] += (1 - this.market[k]) * 0.015 * dt;
 
     this.tickContracts(dt);
@@ -578,7 +540,7 @@ export class Game {
 
   // ───────────────────────── Aufträge
   producible() {
-    const set = new Set(['eisenerz', 'kupfererz', 'kohle', 'sand', 'holz']);
+    const set = new Set();
     for (const rid in RECIPES) if (this.recipeUnlocked(rid)) for (const k in RECIPES[rid].out) set.add(k);
     return [...set];
   }
@@ -610,7 +572,7 @@ export class Game {
     let qty = Math.max(1, Math.round(value / price));
     if (qty > 20) qty = Math.round(qty / 5) * 5;
     qty = Math.min(qty, 400);
-    const time = Math.min(720, Math.max(240, 150 + qty * 1.5 + price * 0.1));
+    const time = Math.min(720, Math.max(240, 150 + qty * 1.5 + price * 0.5));
     this.contracts.push({ id: Math.random().toString(36).slice(2, 8), item, qty, delivered: 0, time, total: time, reward: Math.round(qty * price * 1.8 + 120) });
     this.emit('contracts');
   }
@@ -632,7 +594,6 @@ export class Game {
         this.toast(`${ev.title}: ${ev.text} (+${fmtMoney(amount)})`, 'success');
         return;
       }
-      if (ev.wind && !this.countBuildings(e => e.type === 'windrad')) return;
       this.event = { ...ev, left: ev.duration };
       this.emit('event');
       this.toast(`${ev.title}: ${ev.text}`, 'event');
@@ -646,9 +607,9 @@ export class Game {
     if (a.snap >= 5) {
       a.snap -= 5;
       const h = this.stats.history;
-      h.push({ t: Math.round(this.time), money: Math.round(this.money), earned: Math.round(a.earned), power: Math.round(a.power) });
+      h.push({ t: Math.round(this.time), money: Math.round(this.money), earned: Math.round(a.earned), power: Math.round(a.power), buy: Math.round(a.buy) });
       if (h.length > 360) h.shift();
-      a.earned = 0; a.power = 0;
+      a.earned = 0; a.power = 0; a.buy = 0;
       const s = this.stats.snaps;
       s.push({ produced: { ...this.stats.produced }, sold: { ...this.stats.sold } });
       if (s.length > 13) s.shift();
@@ -666,12 +627,12 @@ export class Game {
     }
   }
 
-  // Einnahmen pro Minute (aus den letzten 60 s)
+  // Ergebnis pro Minute: Umsatz minus Strom und Einkauf (letzte 60 s)
   incomePerMin() {
     const h = this.stats.history, n = Math.min(12, h.length);
     if (!n) return 0;
     let s = 0;
-    for (let i = h.length - n; i < h.length; i++) s += h[i].earned - h[i].power;
+    for (let i = h.length - n; i < h.length; i++) s += h[i].earned - h[i].power - (h[i].buy || 0);
     return s * 60 / (n * 5);
   }
 
@@ -687,8 +648,7 @@ export class Game {
     const r = RESEARCH_BY_ID[id];
     if (this.research.has(id)) return 'done';
     if (!r.prereq.every(p => this.research.has(p))) return 'locked';
-    const reqOk = Object.entries(r.req).every(([k, n]) => (this.stats.sold[k] || 0) >= n);
-    if (!reqOk) return 'req';
+    if (!Object.entries(r.req).every(([k, n]) => (this.stats.sold[k] || 0) >= n)) return 'req';
     if (this.money < r.cost) return 'money';
     return 'ready';
   }
@@ -699,7 +659,6 @@ export class Game {
     this.money -= r.cost; this.stats.spent += r.cost;
     this.research.add(id);
     this.recomputeMods();
-    // Maschinen ohne gültiges Rezept bekommen jetzt eines
     for (const e of this.entities.values()) {
       if (BUILDINGS[e.type].kind === 'machine' && !this.recipeUnlocked(e.recipe)) {
         const rs = this.recipesFor(e.type).filter(x => this.recipeUnlocked(x));
@@ -720,22 +679,23 @@ export class Game {
       ents.push(o);
     }
     return {
-      v: 2, seed: this.seed, W: this.W, money: this.money, time: this.time,
-      terrain: b64(this.terrain), deposit: b64(this.deposit),
-      research: [...this.research], market: this.market, contracts: this.contracts,
+      v: CONFIG.saveVersion, seed: this.seed, W: this.W, H: this.H, money: this.money, time: this.time,
+      terrain: b64(this.terrain), research: [...this.research], market: this.market, contracts: this.contracts,
       contractTimer: this.contractTimer, event: this.event, eventTimer: this.eventTimer,
       goalIndex: this.goalIndex, stats: this.stats, nextId: this.nextId, entities: ents,
     };
   }
 
-  load(d) {
-    if (!d || d.v !== 2) throw new Error('Unbekanntes Spielstandformat');
-    this.seed = d.seed; this.W = this.H = d.W;
-    this.terrain = unb64(d.terrain); this.deposit = unb64(d.deposit);
+  load(raw) {
+    const d = migrate(raw);
+    this.seed = d.seed; this.W = d.W; this.H = d.H;
+    this.terrain = unb64(d.terrain);
     this.grid = new Int32Array(this.W * this.H).fill(-1);
     this.entities = new Map();
+    this.columns = [];
+    for (let i = 0; i < this.terrain.length; i++) if (this.terrain[i] === TILE_COLUMN) this.columns.push([i % this.W, Math.floor(i / this.W)]);
     for (const e of d.entities) {
-      if (!BUILDINGS[e.type]) continue; // entfernte Gebäudetypen (z. B. Fahrzeugwerk)
+      if (!BUILDINGS[e.type]) continue;
       if (e.items) e.items = e.items.filter(it => ITEMS[it.t]);
       if (e.recipe && !RECIPES[e.recipe]) { e.recipe = this.recipesFor(e.type)[0]; e.inBuf = {}; e.outBuf = {}; e.crafting = false; }
       this.entities.set(e.id, e);
@@ -743,15 +703,32 @@ export class Game {
       for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(e.x + dx, e.z + dz)] = e.id;
     }
     Object.assign(this, {
-      money: d.money, time: d.time, research: new Set(d.research.filter(id => RESEARCH_BY_ID[id])), market: { ...Object.fromEntries(ITEM_IDS.map(id => [id, 1])), ...d.market },
+      money: d.money, time: d.time, research: new Set(d.research.filter(id => RESEARCH_BY_ID[id])),
+      market: { ...Object.fromEntries(ITEM_IDS.map(id => [id, 1])), ...d.market },
       contracts: d.contracts.filter(c => ITEMS[c.item]), contractTimer: d.contractTimer, event: d.event, eventTimer: d.eventTimer,
       goalIndex: Math.min(d.goalIndex, GOALS.length), stats: d.stats, nextId: d.nextId,
     });
-    this._acc = { earned: 0, power: 0, snap: 0, goal: 0 };
+    this.stats.bought ||= {};
+    this._acc = { earned: 0, power: 0, buy: 0, snap: 0, goal: 0 };
     this.power = null;
     this.recomputeMods();
     this.rebuild();
   }
+}
+
+// Spielstand-Migrationen: jede Funktion hebt eine Version um eins an.
+const MIGRATIONS = {
+  // v3 = Fabrikhalle. Ältere Außenkarten-Spielstände sind nicht übertragbar.
+};
+export function migrate(d) {
+  if (!d || typeof d.v !== 'number') throw new Error('Unbekanntes Spielstandformat');
+  if (d.v < 3) throw new Error('Spielstand aus einer älteren Version (Außenkarte) – nicht kompatibel');
+  while (d.v < CONFIG.saveVersion) {
+    const m = MIGRATIONS[d.v];
+    if (!m) throw new Error(`Keine Migration für Version ${d.v}`);
+    d = m(d);
+  }
+  return d;
 }
 
 function b64(arr) {

@@ -4,10 +4,11 @@ import { Renderer } from './render.js';
 import { Controls } from './input.js';
 import { UI } from './ui.js';
 import { sound, audio } from './audio.js';
-import { BUILDINGS, ITEM_IDS } from './data.js';
+import { BUILDINGS, ITEM_IDS, CONFIG } from './data.js';
+import { loadLibrary } from './models.js';
 
-const SAVE_KEY = 'pocketsim.factory.save';
-const SETTINGS_KEY = 'pocketsim.factory.settings';
+const SAVE_KEY = 'pocketsim.hall.save';
+const SETTINGS_KEY = 'pocketsim.hall.settings';
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -19,11 +20,14 @@ const game = new Game();
 game.speed = 1;
 game.paused = true;
 
-let hasSave = false;
+// Eigene Modelle aus models/ laden (falls vorhanden), bevor Szene und Vorschaubilder entstehen
+await loadLibrary();
+
+let hasSave = false, loadError = null;
 try {
   const raw = store.get(SAVE_KEY);
   if (raw) { game.load(JSON.parse(raw)); hasSave = true; }
-} catch (err) { console.warn('Spielstand konnte nicht geladen werden', err); }
+} catch (err) { loadError = err; console.warn('Spielstand konnte nicht geladen werden', err); }
 if (!hasSave) game.newGame();
 
 const canvas = document.getElementById('scene');
@@ -40,6 +44,7 @@ const controls = new Controls(canvas, game, renderer, {
   onHover: t => ui?.onHover(t),
   onKey: (k, e) => { if (k === 'tab') e.preventDefault(); ui?.onKey(k); },
   onEscape: () => ui?.onEscape(),
+  onIso: on => ui?.onIso(on),
   sound,
 });
 
@@ -50,7 +55,7 @@ const api = {
     renderer._initialSync = true;
     renderer.syncWorld();
     controls.select(null);
-    controls.focus(game.W / 2, game.H / 2 + 2);
+    controls.focus(game.W / 2, game.H / 2 + 1);
     ui.renderGoal(); ui.renderContracts(); ui.renderBuild();
     api.save();
   },
@@ -71,16 +76,22 @@ const api = {
     api.save();
   },
   saveSettings() {
-    store.set(SETTINGS_KEY, JSON.stringify({ ...renderer.quality, sound: audio.enabled }));
+    store.set(SETTINGS_KEY, JSON.stringify({ ...renderer.quality, sound: audio.enabled, iso: controls.cam.iso }));
   },
 };
 
 try {
   const s = JSON.parse(store.get(SETTINGS_KEY) || 'null');
-  if (s) { renderer.setQuality({ shadows: s.shadows, bloom: s.bloom }); audio.enabled = s.sound !== false; }
+  if (s) {
+    renderer.setQuality({ shadows: s.shadows ?? true, bloom: s.bloom ?? true, ao: s.ao ?? renderer.quality.ao, trusses: s.trusses ?? true });
+    audio.enabled = s.sound !== false;
+    if (s.iso) controls.cam.iso = true;
+  }
 } catch { /* Standardwerte */ }
 
 ui = new UI(game, controls, renderer, thumbs, api);
+if (controls.cam.iso) controls.setIso(true);
+if (loadError) setTimeout(() => ui.toast(`${loadError.message}. Es startet ein neues Spiel.`, 'warn'), 600);
 game.on('money', () => sound('money'));
 
 // ───────────────────────── Titelbildschirm
@@ -107,22 +118,20 @@ document.getElementById('btnNew').addEventListener('click', () => {
 });
 
 // ───────────────────────── Schleife
-let last = performance.now(), saveTimer = 0;
+const STEP = 1 / CONFIG.tickRate;
+let last = performance.now(), saveTimer = 0, acc = 0;
 function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   if (!game.paused) {
-    let sim = dt * game.speed;
-    while (sim > 1e-6) {
-      const step = Math.min(sim, 1 / 30);
-      game.tick(step);
-      sim -= step;
-    }
+    // Feste Tickrate: gleichmäßige, reproduzierbare Simulation unabhängig von der Bildrate
+    acc = Math.min(acc + dt * game.speed, 0.5);
+    while (acc >= STEP) { game.tick(STEP); acc -= STEP; }
     saveTimer += dt;
     if (saveTimer > 30) { saveTimer = 0; api.save(); }
   } else if (game.dirty) game.rebuild();
-  if (attract) controls.camGoal.yaw += dt * 0.06;
+  if (attract && !controls.cam.iso) controls.camGoal.yaw += dt * 0.05;
   controls.update(dt);
   renderer.render(dt, controls.cam);
   ui.frame(dt);

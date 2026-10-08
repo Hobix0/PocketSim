@@ -69,6 +69,8 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .menu { display: flex; gap: 8px; pointer-events: auto; }
 .menu button { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 52px; border-radius: var(--r-btn); background: var(--panel); border: 1px solid var(--lift); font-size: 14px; transition: border-color .15s, color .15s; color: var(--bone); }
 .menu button:hover { border-color: var(--stroke); }
+.menu button.on { background: var(--chalk); color: var(--ink); }
+.menu button.on svg { color: var(--ink); }
 .menu svg { width: 17px; height: 17px; color: var(--stone); }
 .badge { position: absolute; top: 8px; right: 8px; font: 400 10px/1 var(--mono); font-style: normal; color: var(--signal); display: flex; align-items: center; gap: 4px; }
 .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
@@ -142,7 +144,9 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 13px; }
 .kv span:nth-child(odd) { color: #6b6562; }
 .kv span:nth-child(even) { font-family: var(--mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
-.actions { display: flex; gap: 6px; margin-top: 20px; flex-wrap: wrap; }
+.ports { display: flex; align-items: center; gap: 8px; margin-top: 16px; font: 400 11px var(--mono); text-transform: uppercase; color: #6b6562; }
+.ports i { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--signal); }
+.actions { display: flex; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
 
 /* Buttons: neutral, niemals in Akzentfarbe gefüllt */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: var(--r-btn); background: var(--fill); color: var(--bone); font-size: 14px; transition: background .15s, color .15s; border: 1px solid transparent; }
