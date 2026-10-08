@@ -1,6 +1,7 @@
 // HUD, Baumenü, Inspektor, Aufträge, Forschung, Statistik, Menü.
 import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, CATEGORIES, RESEARCH, RESEARCH_BY_ID, GOALS, CONFIG, BUYABLE } from './data.js';
 import { fmtMoney, levelMul, upgradeCost } from './sim.js';
+import { forkliftStatus, shippable } from './logistics.js';
 import { sound, audio } from './audio.js';
 
 const $ = s => document.querySelector(s);
@@ -280,14 +281,37 @@ export class UI {
         body += `<div class="sect">Leistung</div><div class="kv">${Object.entries(r.out).map(([k, n]) => `<span>${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}${Object.entries(r.in).map(([k, n]) => `<span>Bedarf ${ITEMS[k].name}</span><span>${fmt(per * n, 1)}/min</span>`).join('')}<span>Strom</span><span>${B.power} kW</span></div>`;
       }
     } else if (B.kind === 'inbound') {
-      const price = g.buyPrice(e.item), rate = B.rate * levelMul(e.level) * 60;
-      status = !e.on ? ['idle', 'Bestellung pausiert'] : e._poor ? ['bad', 'Zu wenig Geld für den Einkauf'] : e.out >= 4 ? ['bad', 'Rückstau – Ausgang vorne frei machen'] : ['ok', 'Liefert an'];
-      progress = Math.min(1, e.progress);
-      body += `<div class="sect">Material bestellen</div><div class="recipes">${BUYABLE.map(id => {
+      const price = g.buyPrice(e.order) * CONFIG.palletQty, perMin = 60 / (CONFIG.palletInterval / levelMul(e.level));
+      status = !e.on ? ['idle', 'Bestellung pausiert'] : e._poor ? ['bad', 'Zu wenig Geld für die nächste Palette'] : e.dock.length >= CONFIG.dockSlots ? ['bad', 'Tor voll – Stapler fehlt oder Regal voll'] : ['ok', 'Nächster LKW kommt'];
+      progress = e.on && e.dock.length < CONFIG.dockSlots ? Math.min(1, e.timer / CONFIG.palletInterval) : null;
+      body += `<div class="sect">Material bestellen · Palette à ${CONFIG.palletQty}</div><div class="recipes">${BUYABLE.map(id => {
         const ok = g.buyUnlocked(id);
-        return `<button class="recipe ${id === e.item ? 'on' : ''}" data-buy="${id}" ${ok ? '' : 'disabled style="opacity:.4"'}><span class="chip">${this.itemImg(id)}</span>${ITEMS[id].name}<span class="t">${ok ? fmtMoney(g.buyPrice(id)) : 'GESPERRT'}</span></button>`;
+        return `<button class="recipe ${id === e.order ? 'on' : ''}" data-buy="${id}" ${ok ? '' : 'disabled style="opacity:.4"'}><span class="chip">${this.itemImg(id)}</span>${ITEMS[id].name}<span class="t">${ok ? fmtMoney(g.buyPrice(id) * CONFIG.palletQty) : 'GESPERRT'}</span></button>`;
       }).join('')}</div>
-        <div class="sect">Lieferung</div><div class="kv"><span>Rate</span><span>${fmt(rate, 0)}/min</span><span>Kosten</span><span>${fmtMoney(price * rate)}/min</span><span>Im Tor</span><span>${e.out} / 4</span></div>`;
+        <div class="sect">Am Tor</div>${this.palletsHtml(e.dock, CONFIG.dockSlots)}
+        <div class="kv" style="margin-top:10px"><span>Lieferung</span><span>${fmt(perMin, 1)} Paletten/min</span><span>Kosten</span><span>${fmtMoney(price * perMin)}/min</span></div>`;
+    } else if (B.kind === 'rack') {
+      const used = e.slots.filter(Boolean).length;
+      status = used >= B.slots ? ['bad', 'Regal voll'] : ['ok', `${used} / ${B.slots} Plätze belegt`];
+      body += `<div class="sect">Lagerplätze</div>${this.palletsHtml(e.slots, B.slots)}
+        <div class="kv" style="margin-top:10px"><span>Unterwegs hierher</span><span>${e.incoming || 0}</span></div>`;
+    } else if (B.kind === 'feeder') {
+      const p = e.pallets[0];
+      status = p ? ['ok', `Gibt ${ITEMS[p.item].name} aufs Band`] : ['bad', `Wartet auf eine Palette ${ITEMS[e.want].name}`];
+      const opts = this.feederOptions();
+      body += `<div class="sect">Angefordertes Material</div><div class="itemgrid">${opts.map(id => `<button class="ichip ${id === e.want ? 'on' : ''}" data-want="${id}" title="${esc(ITEMS[id].name)}">${this.itemImg(id, false)}</button>`).join('')}</div>
+        <div class="sect">Paletten</div>${this.palletsHtml(e.pallets, 2)}
+        <div class="kv" style="margin-top:10px"><span>Unterwegs hierher</span><span>${e.incoming || 0}</span><span>Im Lager verfügbar</span><span>${g.palletsIn('rack', e.want)}</span></div>`;
+    } else if (B.kind === 'collector') {
+      const filling = e.pallets.find(p => !p.ready), ready = e.pallets.filter(p => p.ready).length;
+      status = ready >= 2 ? ['bad', 'Beide Paletten voll – Stapler fehlt'] : filling?.qty ? ['ok', `Palettiert ${ITEMS[filling.item].name}`] : ['idle', 'Wartet auf Teile vom Band'];
+      const dest = filling?.qty ? (shippable(g, filling.item) ? 'Lager, danach Versand' : 'Lager / Aufgabestation') : '–';
+      body += `<div class="sect">Paletten</div>${this.palletsHtml(e.pallets, 2)}
+        <div class="kv" style="margin-top:10px"><span>Ziel</span><span>${dest}</span><span>Teilpalette nach</span><span>${CONFIG.partialPickup} s ohne Nachschub</span></div>`;
+    } else if (B.kind === 'parking') {
+      const fl = g.forklifts.filter(f => f.home === e.id);
+      status = ['ok', `${fl.length} Gabelstapler`];
+      body += `<div class="sect">Stapler</div><div class="kv">${fl.map((f, i) => `<span>Stapler ${i + 1}</span><span>${forkliftStatus(f)}</span>`).join('')}</div>`;
     } else if (B.kind === 'outbound') {
       status = ['ok', 'Nimmt alle Teile von jeder Seite an'];
       const top = ITEM_IDS.filter(k => g.stats.sold[k]).sort((a, b) => g.ratePerMin('sold', b) * ITEMS[b].price - g.ratePerMin('sold', a) * ITEMS[a].price).slice(0, 6);
@@ -295,10 +319,6 @@ export class UI {
     } else if (B.kind === 'decor') {
       status = ['idle', 'Altbestand'];
       body += `<div class="kv"><span>Entsorgung</span><span>${B.removeCost ? fmtMoney(B.removeCost) : 'kostenlos'}</span></div>`;
-    } else if (B.kind === 'storage') {
-      status = e.total >= B.capacity ? ['bad', 'Voll'] : ['ok', `${e.total} / ${B.capacity} belegt`];
-      const inv = Object.entries(e.inv).filter(([, n]) => n > 0);
-      body += `<div class="sect">Inhalt</div><div class="bufs">${inv.length ? inv.map(([k, n]) => `<span class="buf">${this.itemImg(k)}${n}</span>`).join('') : '<span class="empty">leer</span>'}</div>`;
     } else if (B.kind === 'grid') {
       const p = g.power;
       status = ['ok', 'Verbunden mit dem Stadtnetz'];
@@ -317,10 +337,14 @@ export class UI {
       <div class="status ${status[0]}">${status[1]}</div>
       ${progress != null ? `<div class="progress"><i id="inspProg" style="width:${progress * 100}%"></i></div>` : ''}
       ${body}
-      ${['machine', 'storage', 'inbound'].includes(B.kind) ? '<div class="ports"><i></i>Ausgang vorne (Pfeil) · Eingänge hinten und seitlich</div>' : ''}
+      ${B.kind === 'machine' ? '<div class="ports"><i></i>Ausgang vorne (Pfeil) · Eingänge hinten und seitlich</div>' : ''}
+      ${B.kind === 'feeder' ? '<div class="ports"><i></i>Bandseite vorne (Pfeil) · Stapler von hinten oder seitlich</div>' : ''}
+      ${B.kind === 'collector' ? '<div class="ports"><i></i>Band kommt vorne an (Pfeil) · Stapler von hinten oder seitlich</div>' : ''}
       <div class="actions">
         ${canUp ? `<button class="btn primary" data-act="upgrade" ${g.money < cost ? 'disabled' : ''}>${icon('up')} Stufe ${e.level + 1} · ${fmtMoney(cost)}</button>` : ''}
         ${B.kind === 'inbound' ? `<button class="btn" data-act="toggle">${e.on ? 'Pausieren' : 'Fortsetzen'}</button>` : ''}
+        ${B.kind === 'collector' && e.pallets.some(p => !p.ready && p.qty > 0) ? '<button class="btn" data-act="release">Abholen lassen</button>' : ''}
+        ${B.kind === 'parking' && g.forklifts.filter(f => f.home === e.id).length < B.maxForklifts ? `<button class="btn primary" data-act="forklift" ${g.money < B.forkliftCost ? 'disabled' : ''}>+ Stapler · ${fmtMoney(B.forkliftCost)}</button>` : ''}
         ${B.kind === 'decor' ? `<button class="btn danger" data-act="delete" ${g.money < B.removeCost ? 'disabled' : ''}>${icon('trash')} ${B.removeCost ? `Entsorgen · ${fmtMoney(B.removeCost)}` : 'Wegfahren'}</button>` : `
         ${B.wall ? '' : `<button class="btn" data-act="rotate" title="R">${icon('rotate')}</button>`}
         ${g.isUnlocked(e.type) ? `<button class="btn" data-act="copy" title="Kopieren (C)">${icon('copy')}</button>` : ''}
@@ -336,20 +360,39 @@ export class UI {
     this.lastHtml.inspKey = key;
     el.innerHTML = html;
     el.onpointerdown = ev => {
-      const b = ev.target.closest('[data-act],[data-recipe],[data-buy]');
+      const b = ev.target.closest('[data-act],[data-recipe],[data-buy],[data-want]');
       if (!b || b.disabled) return;
       ev.preventDefault();
       if (b.dataset.recipe) { g.setRecipe(e.id, b.dataset.recipe); sound('click'); return; }
       if (b.dataset.buy) { g.setInbound(e.id, b.dataset.buy); sound('click'); return; }
+      if (b.dataset.want) { g.setFeeder(e.id, b.dataset.want); sound('click'); return; }
       const a = b.dataset.act;
       if (a === 'close') this.controls.select(null);
       if (a === 'upgrade' && g.upgrade(e.id)) sound('money');
       if (a === 'rotate') { g.rotate(e.id); sound('rotate'); }
       if (a === 'toggle') { g.toggleInbound(e.id); sound('click'); }
+      if (a === 'release') { g.releaseCollector(e.id); sound('click'); }
+      if (a === 'forklift' && g.buyForklift(e.id)) sound('money');
       if (a === 'copy') { this.controls.buildRot = e.rot; this.controls.setTool('build', e.type); }
       if (a === 'delete') { if (g.remove(e.id)) { sound('delete'); this.controls.select(null); } }
       this.renderSelected(true);
     };
+  }
+
+  // Palettenplätze als Kacheln
+  palletsHtml(list, slots) {
+    const cells = Array.from({ length: slots }, (_, i) => {
+      const p = list[i];
+      if (!p) return '<span class="pslot empty"></span>';
+      return `<span class="pslot ${p.ready ? 'ready' : ''} ${p.res ? 'res' : ''}" title="${esc(ITEMS[p.item].name)}">${this.itemImg(p.item, false)}<b>${p.qty}</b></span>`;
+    }).join('');
+    return `<div class="pslots">${cells}</div>`;
+  }
+
+  // Material, das eine Aufgabestation anfordern kann: Einkaufsware und alles, was gefertigt werden kann
+  feederOptions() {
+    const g = this.game;
+    return ITEM_IDS.filter(id => (ITEMS[id].buy && g.buyUnlocked(id)) || g.producible().includes(id));
   }
 
   // ───────────────────────── Modals
@@ -480,7 +523,10 @@ export class UI {
           <kbd>Leertaste</kbd><span>Pause</span>
         </div></section>
         <section><h4>So funktioniert's</h4><div class="keys" style="grid-template-columns:1fr">
-          <span>Der Wareneingang kauft Material ein. Wähle im Inspektor, was bestellt wird.</span>
+          <span>Am Wareneingang kommen Paletten per LKW an. Gabelstapler lagern sie ins Regal ein.</span>
+          <span>Eine Aufgabestation fordert Material an, der Stapler bringt die Palette, die Teile laufen aufs Band.</span>
+          <span>Die Abnahmestation palettiert Teile vom Band. Volle Paletten gehen ins Lager, zur nächsten Aufgabestation oder zum Versand.</span>
+          <span>Stapler fahren nur über freie Hallenfelder. Rollenbahnen sind für sie Wände, also Gänge freilassen.</span>
           <span>Maschinen geben nur vorne ab (oranger Pfeil am Boden) und nehmen hinten und seitlich an.</span>
           <span>Die Signalsäule zeigt den Zustand: grün läuft, orange blockiert, aus wartet.</span>
           <span>Alles, was im Versand ankommt, wird verkauft oder für einen Auftrag gezählt.</span>

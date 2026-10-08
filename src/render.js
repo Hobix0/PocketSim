@@ -7,7 +7,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { BUILDINGS, ITEM_IDS, CONFIG } from './data.js';
 import { DX, DZ } from './sim.js';
-import { buildModel, beltGeometries, beltPathPoint, itemSource, MAT, mat } from './models.js';
+import { buildModel, buildForklift, setPallet, beltGeometries, beltPathPoint, itemSource, MAT, mat } from './models.js';
 
 const ROT = [[1, 0], [0, -1], [-1, 0], [0, 1]]; // [cos, sin] für Drehung um −dir·90°
 function rotLocal(d, lx, lz, out) {
@@ -16,7 +16,7 @@ function rotLocal(d, lx, lz, out) {
   out.z = -lx * s + lz * c;
   return out;
 }
-const PORTED = new Set(['machine', 'storage', 'inbound']);
+const PORTED = new Set(['machine', 'feeder', 'collector']);
 const WALL_H = 3.4;
 const BG = 0x101010;
 
@@ -56,6 +56,7 @@ export class Renderer {
     this.hallGroup = new THREE.Group();
     scene.add(this.worldGroup, this.hallGroup);
     this.buildingMeshes = new Map();
+    this.forkliftMeshes = new Map();
     this.beltGeo = beltGeometries();
     this.beltFrameMat = mat(0x9aa2ab, { metalness: 0.5, roughness: 0.4 });
     this.beltRollerMat = mat(0xd5dade, { metalness: 0.7, roughness: 0.25 });
@@ -297,8 +298,10 @@ export class Renderer {
     const obj = buildModel(type, e);
     const B = BUILDINGS[type];
     if (PORTED.has(B.kind)) {
+      // Bandseite markieren: Ausgang zeigt nach außen, Abnahmestation nach innen
       const arrow = new THREE.Mesh(arrowGeometry(), MAT.orange);
       arrow.position.set(0, 0.07, -B.size / 2 + 0.16);
+      if (B.kind === 'collector') arrow.rotation.y = Math.PI;
       arrow.receiveShadow = true;
       obj.add(arrow);
     }
@@ -550,6 +553,7 @@ export class Renderer {
         this.sparks(wp.x, wp.y, wp.z, 2);
       }
     }
+    this.updateForklifts(t);
     this.updateItems();
     this.updateParticles(dt);
     if (cam.showGrid) this.ensureGridLines();
@@ -557,6 +561,23 @@ export class Renderer {
 
     if (this.quality.ao || this.quality.bloom) this.composerFor(this.camera).render();
     else this.renderer.render(this.scene, this.camera);
+  }
+
+  // Gabelstapler: Position, Richtung, Hubhöhe und geladene Palette
+  updateForklifts(t) {
+    const g = this.game, alive = new Set();
+    for (const f of g.forklifts) {
+      alive.add(f.id);
+      let m = this.forkliftMeshes.get(f.id);
+      if (!m) { m = buildForklift(); this.forkliftMeshes.set(f.id, m); this.worldGroup.add(m); }
+      m.position.set(f.x, 0, f.z);
+      m.rotation.y = f.h + Math.PI;
+      m.userData.forks.position.y = f.fork;
+      setPallet(m.userData.carried, f.carry);
+      const moving = f.path.length > 0 || f.state === 'load' || f.state === 'unload';
+      m.userData.light.material.emissiveIntensity = moving ? 1.5 + Math.sin(t * 10) * 1.2 : 0.2;
+    }
+    for (const [id, m] of this.forkliftMeshes) if (!alive.has(id)) { this.worldGroup.remove(m); this.forkliftMeshes.delete(id); }
   }
 
   updateItems() {
@@ -660,7 +681,16 @@ export class Renderer {
         im.position.set(0, CONFIG.beltHeight, 0.1);
         obj.add(im);
         obj.rotation.y = Math.PI / 2;
-      } else obj = buildModel(t, { level: 1, total: 120 });
+      } else if (t === 'station') {
+        obj = buildModel(t);
+        const fl = buildForklift();
+        fl.position.set(0.2, 0, -0.1);
+        fl.rotation.y = 0.5;
+        obj.add(fl);
+      } else {
+        obj = buildModel(t);
+        obj.userData.update?.(0, null, 0, null);
+      }
       out.buildings[t] = shoot(obj);
     }
     for (const id of items) {
@@ -682,6 +712,8 @@ export function statusOf(e, g) {
     return out >= 8 ? 'block' : 'idle';
   }
   if (kind === 'inbound') return e._poor ? 'block' : e.on ? 'run' : 'idle';
+  if (kind === 'feeder') return e.pallets.length ? 'run' : 'block';
+  if (kind === 'collector') return e.pallets.filter(p => p.ready).length >= 2 ? 'block' : e._active ? 'run' : 'idle';
   return 'idle';
 }
 

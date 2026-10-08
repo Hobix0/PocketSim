@@ -141,6 +141,18 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; background: 
 .buf img { width: 26px; height: 26px; }
 .buf.low { color: var(--signal); }
 .inspector .empty { color: #6b6562; }
+.pslots { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 4px; }
+.pslot { position: relative; height: 52px; border-radius: var(--r-btn); border: 1px solid #d6d3d1; display: grid; place-items: center; }
+.pslot.empty { border-style: dashed; }
+.pslot img { width: 30px; height: 30px; }
+.pslot b { position: absolute; right: 4px; bottom: 2px; font: 400 10px var(--mono); }
+.pslot.ready { border-color: var(--ink); }
+.pslot.res::after { content: ''; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); }
+.itemgrid { display: flex; flex-wrap: wrap; gap: 4px; }
+.ichip { width: 38px; height: 38px; border-radius: var(--r-btn); border: 1px solid #d6d3d1; display: grid; place-items: center; }
+.ichip img { width: 28px; height: 28px; }
+.ichip:hover { border-color: var(--graphite); }
+.ichip.on { border-color: var(--ink); background: #e4e2e0; }
 .kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 13px; }
 .kv span:nth-child(odd) { color: #6b6562; }
 .kv span:nth-child(even) { font-family: var(--mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }

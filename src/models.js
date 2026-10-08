@@ -368,22 +368,47 @@ const BUILDERS = {
     g.userData.sparks = [new THREE.Vector3(0, 0.7, 0.2)];
   },
 
-  lager(g) {
-    for (const x of [-0.85, 0.85]) for (const z of [-0.4, 0.4]) box(g, 0.07, 2.2, 0.07, MAT.blue, x, 0, z);
-    for (const y of [0.1, 0.95, 1.8]) for (const z of [-0.4, 0.4]) box(g, 1.76, 0.08, 0.05, MAT.orange, 0, y, z);
-    const boxes = [];
-    for (let lvl = 0; lvl < 3; lvl++) for (let k = 0; k < 2; k++) {
-      const b = new THREE.Group();
-      box(b, 0.75, 0.1, 0.7, MAT.wood);
-      rbox(b, 0.7, 0.5, 0.65, MAT.cardboard, 0, 0.1, 0, 0.02);
-      b.position.set(-0.42 + k * 0.84, 0.18 + lvl * 0.85, 0);
-      g.add(b);
-      boxes.push(b);
+  // Palettenregal: 3 Ebenen × 2 Plätze, zeigt die eingelagerten Paletten
+  regal(g) {
+    for (const x of [-0.92, 0.92]) for (const z of [-0.42, 0.42]) box(g, 0.07, 2.5, 0.07, MAT.blue, x, 0, z);
+    for (const y of [0.02, 0.87, 1.72]) for (const z of [-0.42, 0.42]) box(g, 1.9, 0.08, 0.05, MAT.orange, 0, y, z);
+    for (const x of [-0.92, 0.92]) for (const y of [0.5, 1.3, 2.1]) {
+      const d = box(g, 0.03, 0.03, 0.84, MAT.blue, x, y, 0);
+      d.rotation.x = 0.6;
+    }
+    const slots = [];
+    for (let i = 0; i < 6; i++) {
+      const p = makePallet();
+      p.position.set(i % 2 ? 0.45 : -0.45, [0.1, 0.95, 1.8][Math.floor(i / 2)], 0);
+      g.add(p);
+      slots.push(p);
     }
     g.userData.update = (t, e) => {
-      const n = e ? Math.ceil(e.total / 200 * 6) : 3;
-      boxes.forEach((b, i) => { b.visible = i < n; });
+      slots.forEach((p, i) => setPallet(p, e ? e.slots[i] : (i < 3 ? { item: 'rundstahl', qty: 20 } : null)));
     };
+  },
+
+  // Aufgabestation: Paletten hinten, Pickplatz mit Rollenbahn vorne (Bandseite)
+  aufgabe(g) { station2(g, 'feeder'); },
+  abnahme(g) { station2(g, 'collector'); },
+
+  // Staplerstation: Parkfläche mit Ladesäule
+  station(g) {
+    const mark = new THREE.MeshStandardMaterial({ map: hazardTexture(), roughness: 0.7 });
+    for (const [x, z, w, d] of [[0, -0.95, 1.9, 0.08], [0, 0.95, 1.9, 0.08], [-0.95, 0, 0.08, 1.9], [0.95, 0, 0.08, 1.9]]) box(g, w, 0.01, d, mark, x, 0, z);
+    box(g, 0.04, 0.008, 1.7, mat(0xeeeeee), 0, 0, 0);
+    const post = new THREE.Group();
+    rbox(post, 0.3, 1.3, 0.22, MAT.light, 0, 0, 0, 0.04);
+    const screen = new THREE.MeshStandardMaterial({ color: 0x0c1218, emissive: 0x3ddc84, emissiveIntensity: 0.6 });
+    box(post, 0.18, 0.12, 0.01, screen, 0, 1.0, -0.115);
+    box(post, 0.05, 0.4, 0.05, MAT.dark, 0.08, 0.5, -0.13);
+    post.position.set(0, 0, 0.82);
+    g.add(post);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({ map: letterTexture('P') }));
+    sign.position.set(0, 1.5, 0.82); sign.rotation.y = Math.PI;
+    g.add(sign);
+    const back = sign.clone(); back.rotation.y = 0; back.position.z = 0.84;
+    g.add(back);
   },
 
   // Rolltore: Rückseite (+z) liegt an der Außenwand
@@ -457,19 +482,6 @@ const BUILDERS = {
     box(g, 0.82, 0.04, 0.82, mat(0xdde3ea, { transparent: true, opacity: 0.6 }), 0, 0.5, 0);
   },
 
-  stapler(g) {
-    const s = new THREE.Group();
-    rbox(s, 0.55, 0.45, 0.8, MAT.yellow, 0, 0.12, 0.1, 0.06);
-    rbox(s, 0.5, 0.3, 0.3, MAT.dark, 0, 0.12, 0.45, 0.04);
-    for (const [x, z] of [[-0.28, -0.2], [0.28, -0.2], [-0.28, 0.35], [0.28, 0.35]]) hcyl(s, 0.12, 0.1, MAT.rubber, x, 0.12, z, 'x', 14);
-    for (const x of [-0.24, 0.24]) for (const z of [-0.12, 0.3]) box(s, 0.03, 0.75, 0.03, MAT.dark, x, 0.57, z);
-    box(s, 0.55, 0.03, 0.5, MAT.dark, 0, 1.3, 0.09);
-    box(s, 0.06, 1.3, 0.06, MAT.dark, -0.18, 0.12, -0.3);
-    box(s, 0.06, 1.3, 0.06, MAT.dark, 0.18, 0.12, -0.3);
-    for (const x of [-0.14, 0.14]) box(s, 0.08, 0.03, 0.55, MAT.steel, x, 0.06, -0.6);
-    rbox(s, 0.3, 0.06, 0.3, MAT.dark, 0, 0.6, 0.12, 0.02);
-    g.add(s);
-  },
 };
 
 function legs(g) {
@@ -490,25 +502,156 @@ function dock(g, label, accent) {
   box(g, 1.78, 0.2, 0.3, MAT.gray, 0, 2.6, 0.95);
   box(g, 1.8, 0.05, 1.0, MAT.steel, 0, 0, 0.45);
   for (const x of [-0.85, 0.85]) box(g, 0.08, 0.051, 0.9, MAT.yellow, x, 0, 0.45);
-  const pallet = new THREE.Group();
-  box(pallet, 0.8, 0.12, 0.8, MAT.wood);
-  rbox(pallet, 0.75, 0.4, 0.75, MAT.cardboard, 0, 0.12, 0, 0.03);
-  pallet.position.set(-0.45, 0.05, 0.35);
-  g.add(pallet);
-  const stub = new THREE.Group();
-  legs(stub);
-  rbox(stub, 0.9, 0.08, 1.0, MAT.light, 0, BH - 0.13, 0, 0.02);
-  for (let i = 0; i < 5; i++) hcyl(stub, 0.03, 0.8, MAT.steel, 0, BH - 0.03, -0.4 + i * 0.2, 'x', 8);
-  stub.position.set(0.45, 0, -0.45);
-  g.add(stub);
+  const pallets = [];
+  for (let i = 0; i < 3; i++) {
+    const p = makePallet();
+    p.position.set(-0.55 + i * 0.55, 0.05, i === 1 ? -0.45 : 0.3);
+    p.scale.setScalar(0.62);
+    g.add(p);
+    pallets.push(p);
+  }
+  if (label === 'VERSAND') {
+    const stub = new THREE.Group();
+    legs(stub);
+    rbox(stub, 0.9, 0.08, 1.0, MAT.light, 0, BH - 0.13, 0, 0.02);
+    for (let i = 0; i < 5; i++) hcyl(stub, 0.03, 0.8, MAT.steel, 0, BH - 0.03, -0.4 + i * 0.2, 'x', 8);
+    stub.position.set(0.45, 0, -0.45);
+    g.add(stub);
+  }
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.28), new THREE.MeshBasicMaterial({ map: signTexture(label) }));
   sign.position.set(0, 3.0, 0.77);
   g.add(sign);
   box(g, 0.3, 0.05, 0.02, accent, 0.55, 2.82, 0.77);
   g.userData.update = (t, e) => {
-    const open = e?._active || e?._recent > 0;
+    const open = e?._recent > 0 || e?._active;
     door.position.y += ((open ? 2.05 : 1.6) - door.position.y) * 0.05;
+    pallets.forEach((p, i) => setPallet(p, label === 'VERSAND' ? null : e ? e.dock[i] : (i === 0 ? { item: 'rundstahl', qty: 20 } : null)));
   };
+}
+
+// Aufgabe-/Abnahmestation (2 × 2): hinten zwei Palettenplätze, vorne Pickplatz an der Bandseite
+function station2(g, kind) {
+  plinth(g, 2);
+  const spot = new THREE.MeshStandardMaterial({ color: kind === 'feeder' ? 0x4f9a5a : 0x2f5fa8, roughness: 0.8 });
+  for (const x of [-0.45, 0.45]) box(g, 0.86, 0.004, 0.86, spot, x, 0.06, 0.45);
+  const pallets = [];
+  for (const x of [-0.45, 0.45]) {
+    const p = makePallet();
+    p.position.set(x, 0.065, 0.45);
+    p.scale.setScalar(0.95);
+    g.add(p);
+    pallets.push(p);
+  }
+  // Pickplatz: kurze Rollenbahn quer zur Vorderkante
+  const table = new THREE.Group();
+  for (const x of [-0.7, 0.7]) box(table, 0.05, BH - 0.1, 0.05, MAT.gray, x, 0, 0);
+  rbox(table, 1.7, 0.06, 0.7, MAT.light, 0, BH - 0.12, 0, 0.02);
+  for (let i = 0; i < 7; i++) hcyl(table, 0.028, 0.66, MAT.steel, -0.72 + i * 0.24, BH - 0.03, 0, 'z', 8);
+  table.position.set(0, 0, -0.5);
+  g.add(table);
+  const wk = worker(g, 0.75, 0.0, kind === 'feeder' ? -Math.PI / 2 : -Math.PI / 2, kind === 'feeder' ? MAT.green : MAT.blue);
+  wk.w.scale.setScalar(0.9);
+  const part = rbox(g, 0.16, 0.08, 0.14, MAT.steel, 0, BH, -0.5, 0.02);
+  g.userData.update = (t, e) => {
+    const list = e ? e.pallets : [{ item: 'rundstahl', qty: 14 }];
+    pallets.forEach((p, i) => setPallet(p, list[i]));
+    const a = e?._active;
+    wk.armR.rotation.x = -0.6 - (a ? Math.abs(Math.sin(t * 3)) * 0.8 : 0);
+    wk.w.rotation.y = -Math.PI / 2 + (a ? Math.sin(t * 1.5) * 0.6 : 0);
+    part.visible = !!a;
+    if (a && list[0]) part.material = palletLoadMat(list[0].item);
+  };
+}
+
+// ───────────────────────── Paletten
+const loadMats = new Map();
+export function palletLoadMat(item) {
+  if (!loadMats.has(item)) {
+    const c = new THREE.Color(ITEMS[item].color).lerp(new THREE.Color(0xc9a26b), 0.35);
+    loadMats.set(item, new THREE.MeshStandardMaterial({ color: c, roughness: 0.75 }));
+  }
+  return loadMats.get(item);
+}
+const itemTopCache = new Map();
+
+export function makePallet() {
+  const p = new THREE.Group();
+  box(p, 0.82, 0.12, 0.82, MAT.wood);
+  for (const x of [-0.3, 0, 0.3]) box(p, 0.1, 0.02, 0.82, mat(0x8f6a40), x, 0.12, 0);
+  const load = rbox(p, 0.76, 0.44, 0.76, MAT.cardboard, 0, 0.14, 0, 0.03);
+  const label = box(p, 0.3, 0.2, 0.005, mat(0xf4f4f0), 0, 0.26, -0.385);
+  p.userData = { load, label, item: null };
+  p.visible = false;
+  return p;
+}
+
+export function setPallet(p, pallet) {
+  if (!pallet) { p.visible = false; return; }
+  p.visible = true;
+  const ud = p.userData;
+  const h = 0.06 + 0.4 * Math.min(1, pallet.qty / CONFIG.palletQty);
+  ud.load.scale.y = h / 0.44;
+  ud.load.position.y = 0.14 + h / 2;
+  ud.label.position.y = 0.14 + h * 0.55;
+  ud.label.visible = pallet.qty > 4;
+  if (ud.item !== pallet.item) {
+    ud.item = pallet.item;
+    ud.load.material = palletLoadMat(pallet.item);
+    if (ud.top) p.remove(ud.top);
+    let src = itemTopCache.get(pallet.item);
+    if (!src) { src = itemSource(pallet.item); itemTopCache.set(pallet.item, src); }
+    ud.top = new THREE.Mesh(src.geometry, src.material);
+    ud.top.castShadow = true;
+    p.add(ud.top);
+  }
+  ud.top.position.y = 0.14 + h;
+  ud.top.visible = pallet.qty > 0;
+}
+
+// ───────────────────────── Gabelstapler (fahrendes Fahrzeug, kein Gebäude)
+export function buildForklift() {
+  const g = new THREE.Group();
+  const body = new THREE.Group();
+  rbox(body, 0.55, 0.45, 0.8, MAT.yellow, 0, 0.12, 0.1, 0.06);
+  rbox(body, 0.5, 0.32, 0.28, MAT.dark, 0, 0.12, 0.47, 0.04);
+  for (const [x, z] of [[-0.28, -0.2], [0.28, -0.2], [-0.28, 0.35], [0.28, 0.35]]) hcyl(body, 0.12, 0.1, MAT.rubber, x, 0.12, z, 'x', 14);
+  for (const x of [-0.24, 0.24]) for (const z of [-0.12, 0.3]) box(body, 0.03, 0.75, 0.03, MAT.dark, x, 0.57, z);
+  box(body, 0.55, 0.03, 0.5, MAT.dark, 0, 1.3, 0.09);
+  rbox(body, 0.3, 0.06, 0.3, MAT.dark, 0, 0.6, 0.12, 0.02);
+  const light = cyl(body, 0.04, 0.04, 0.05, 10, new THREE.MeshStandardMaterial({ color: 0x663300, emissive: 0xee6018, emissiveIntensity: 2 }), 0, 1.33, 0.2);
+  for (const x of [-0.18, 0.18]) box(body, 0.06, 1.6, 0.06, MAT.dark, x, 0.12, -0.32);
+  box(body, 0.42, 0.05, 0.05, MAT.dark, 0, 1.67, -0.32);
+  const drv = worker(body, 0, 0.12, 0, MAT.orange);
+  drv.w.scale.setScalar(0.75);
+  drv.w.position.y = 0.32;
+  g.add(body);
+  // Hubschlitten mit Gabeln und Palettenplatz
+  const forks = new THREE.Group();
+  box(forks, 0.44, 0.35, 0.04, MAT.dark, 0, 0, -0.36);
+  for (const x of [-0.14, 0.14]) box(forks, 0.08, 0.03, 0.62, MAT.steel, x, 0, -0.68);
+  const carried = makePallet();
+  carried.position.set(0, 0.03, -0.7);
+  carried.scale.setScalar(0.92);
+  forks.add(carried);
+  g.add(forks);
+  g.userData = { forks, carried, light };
+  g.scale.setScalar(1.1);
+  return g;
+}
+
+let _letters = new Map();
+function letterTexture(ch) {
+  if (_letters.has(ch)) return _letters.get(ch);
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = '#2f5fa8'; x.fillRect(0, 0, 128, 128);
+  x.fillStyle = '#ffffff'; x.font = '500 96px "Geist", sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(ch, 64, 70);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  _letters.set(ch, t);
+  return t;
 }
 
 let _hazard = null;

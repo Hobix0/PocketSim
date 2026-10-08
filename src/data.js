@@ -51,15 +51,19 @@ export const RECIPES = {
   r_akku:      { building: 'montage',    time: 8,   in: { motor: 1, getriebe: 1, griff: 2 }, out: { akkuschrauber: 1 }, unlock: 'akku' },
 };
 
-// kind: belt | splitter | junction | machine | inbound | outbound | storage | grid | decor
-// ports: Ausgang immer vorne (Drehrichtung), Eingänge hinten und seitlich.
+// kind: belt | splitter | junction | machine | inbound | outbound | rack | feeder | collector | parking | grid | decor
+// Maschinen: Ausgang vorne (Drehrichtung), Eingänge hinten und seitlich.
+// Aufgabe-/Abnahmestation: vorne ist die Bandseite, der Stapler kommt von hinten oder seitlich.
 export const BUILDINGS = {
   band:       { name: 'Rollenbahn',       kind: 'belt',     size: 1, cost: 10,   cat: 'logistik',   desc: 'Transportiert Teile. Ziehen zum Verlegen, R zum Drehen.' },
   verteiler:  { name: 'Verteiler',        kind: 'splitter', size: 1, cost: 40,   cat: 'logistik',   desc: 'Verteilt Teile reihum auf alle anderen Seiten.' },
   kreuzung:   { name: 'Kreuzung',         kind: 'junction', size: 1, cost: 30,   cat: 'logistik',   desc: 'Zwei Bahnen kreuzen sich, ohne sich zu vermischen.' },
-  lager:      { name: 'Palettenregal',    kind: 'storage',  size: 2, cost: 300,  cat: 'logistik',   desc: 'Puffert bis zu 200 Teile. Nimmt hinten und seitlich an, gibt vorne ab.', capacity: 200 },
-  eingang:    { name: 'Wareneingang',     kind: 'inbound',  size: 2, cost: 800,  cat: 'logistik',   desc: 'Rolltor an der Außenwand. Kauft Material ein und gibt es vorne aus.', wall: true, rate: 1 },
-  versand:    { name: 'Versand',          kind: 'outbound', size: 2, cost: 800,  cat: 'logistik',   desc: 'Rolltor an der Außenwand. Verkauft alles oder bedient Aufträge.', wall: true },
+  regal:      { name: 'Palettenregal',    kind: 'rack',     size: 2, cost: 400,  cat: 'lager',      desc: 'Lagert bis zu 6 Paletten. Gabelstapler lagern ein und aus.', slots: 6 },
+  aufgabe:    { name: 'Aufgabestation',   kind: 'feeder',   size: 2, cost: 350,  cat: 'lager',      desc: 'Eingangspunkt: Der Stapler bringt Paletten, die Teile laufen vorne auf die Rollenbahn.' },
+  abnahme:    { name: 'Abnahmestation',   kind: 'collector', size: 2, cost: 350, cat: 'lager',      desc: 'Abgabepunkt: Teile vom Band (vorne) werden palettiert, der Stapler holt volle Paletten ab.' },
+  station:    { name: 'Staplerstation',   kind: 'parking',  size: 2, cost: 1500, cat: 'lager',      desc: 'Parkplatz und Ladestation. Enthält einen Gabelstapler, bis zu drei möglich.', maxForklifts: 3, forkliftCost: 1200 },
+  eingang:    { name: 'Wareneingang',     kind: 'inbound',  size: 2, cost: 800,  cat: 'lager',      desc: 'Rolltor an der Außenwand. Hier kommen bestellte Paletten per LKW an.', wall: true },
+  versand:    { name: 'Versand',          kind: 'outbound', size: 2, cost: 800,  cat: 'lager',      desc: 'Rolltor an der Außenwand. Verkauft Paletten vom Stapler und Teile vom Band.', wall: true },
 
   saege:      { name: 'Bandsäge',         kind: 'machine',  size: 2, cost: 400,  cat: 'fertigung',  power: 20,  desc: 'Sägt Rundstahl in Rohlinge.' },
   drehbank:   { name: 'Drehbank',         kind: 'machine',  size: 2, cost: 600,  cat: 'fertigung',  power: 30,  desc: 'Dreht Wellen aus Rohlingen und Stiele aus Holz.' },
@@ -79,12 +83,12 @@ export const BUILDINGS = {
   // Altbestand in der Halle – kann gegen Entsorgungskosten entfernt werden
   altregal:   { name: 'Altes Regal',      kind: 'decor',    size: 2, cost: 0, removeCost: 120, desc: 'Altbestand. Abriss kostet Entsorgung.' },
   altbuero:   { name: 'Meisterbüro',      kind: 'decor',    size: 3, cost: 0, removeCost: 400, desc: 'Altbestand. Abriss kostet Entsorgung.' },
-  palette:    { name: 'Palette',          kind: 'decor',    size: 1, cost: 0, removeCost: 20,  desc: 'Altbestand. Abriss kostet Entsorgung.' },
-  stapler:    { name: 'Gabelstapler',     kind: 'decor',    size: 1, cost: 0, removeCost: 0,   desc: 'Steht im Weg. Kann weggefahren werden.' },
+  palette:    { name: 'Alte Palette',     kind: 'decor',    size: 1, cost: 0, removeCost: 20,  desc: 'Altbestand. Abriss kostet Entsorgung.' },
 };
 
 export const CATEGORIES = [
-  { id: 'logistik',  name: 'Logistik' },
+  { id: 'lager',     name: 'Lager & Stapler' },
+  { id: 'logistik',  name: 'Fördertechnik' },
   { id: 'fertigung', name: 'Fertigung' },
   { id: 'montage',   name: 'Montage' },
   { id: 'energie',   name: 'Energie' },
@@ -109,15 +113,16 @@ export const RESEARCH_BY_ID = Object.fromEntries(RESEARCH.map(r => [r.id, r]));
 export const BUY_UNLOCK = { stahlblech: 'blech', granulat: 'kunststoff', kupfer: 'elektro' };
 
 export const GOALS = [
-  { id: 'g1', text: 'Stell eine Bandsäge auf und führ ihr Rundstahl vom Wareneingang zu', reward: 300,  check: g => (g.stats.produced.rohling || 0) >= 1 },
-  { id: 'g2', text: 'Liefere 20 Stahlrohlinge an den Versand', reward: 300, check: g => (g.stats.sold.rohling || 0) >= 20 },
-  { id: 'g3', text: 'Bau eine Drehbank und liefere 20 Wellen', reward: 600, check: g => (g.stats.sold.welle || 0) >= 20 },
-  { id: 'g4', text: 'Erforsche „Gesenkschmieden“', reward: 800, check: g => g.research.has('schmieden') },
-  { id: 'g5', text: 'Liefere 15 Hämmer', reward: 1200, check: g => (g.stats.sold.hammer || 0) >= 15 },
-  { id: 'g6', text: 'Schließe einen Auftrag ab', reward: 1500, check: g => g.stats.contractsDone >= 1 },
-  { id: 'g7', text: 'Erforsche „Roboter-Montage“', reward: 3000, check: g => g.research.has('montagezelle') },
-  { id: 'g8', text: 'Liefere 5 Werkzeugkoffer', reward: 6000, check: g => (g.stats.sold.koffer || 0) >= 5 },
-  { id: 'g9', text: 'Liefere 10 Akkuschrauber', reward: 20000, check: g => (g.stats.sold.akkuschrauber || 0) >= 10 },
+  { id: 'g1', text: 'Der Stapler lagert die erste Palette Rundstahl ins Regal ein', reward: 300, check: g => g.palletsIn('rack') >= 1 },
+  { id: 'g2', text: 'Stell eine Aufgabestation für Rundstahl auf und führ das Band zu einer Bandsäge', reward: 400, check: g => (g.stats.produced.rohling || 0) >= 1 },
+  { id: 'g3', text: 'Sammle Rohlinge an einer Abnahmestation – der Stapler bringt sie ins Lager', reward: 500, check: g => g.palletsIn('rack', 'rohling') >= 1 },
+  { id: 'g4', text: 'Versende 40 Wellen (Drehbank, Rohlinge aus dem Lager)', reward: 800, check: g => (g.stats.sold.welle || 0) >= 40 },
+  { id: 'g5', text: 'Erforsche „Gesenkschmieden“', reward: 800, check: g => g.research.has('schmieden') },
+  { id: 'g6', text: 'Versende 20 Hämmer', reward: 1500, check: g => (g.stats.sold.hammer || 0) >= 20 },
+  { id: 'g7', text: 'Schließe einen Auftrag ab', reward: 1500, check: g => g.stats.contractsDone >= 1 },
+  { id: 'g8', text: 'Erforsche „Roboter-Montage“', reward: 3000, check: g => g.research.has('montagezelle') },
+  { id: 'g9', text: 'Versende 5 Werkzeugkoffer', reward: 6000, check: g => (g.stats.sold.koffer || 0) >= 5 },
+  { id: 'g10', text: 'Versende 10 Akkuschrauber', reward: 20000, check: g => (g.stats.sold.akkuschrauber || 0) >= 10 },
 ];
 
 export const EVENTS = [
@@ -134,7 +139,13 @@ export const CONFIG = {
   hallW: 40,
   hallH: 26,
   columnEvery: 8,          // Hallenstützen in diesem Raster (blockieren Felder)
-  startMoney: 6000,
+  startMoney: 9000,
+  palletQty: 20,           // Teile pro Palette
+  palletInterval: 14,      // Sekunden pro LKW-Palette am Wareneingang (Stufe 1)
+  dockSlots: 3,            // Paletten, die am Tor warten können
+  forkliftSpeed: 2.4,      // Felder pro Sekunde
+  forkliftHandling: 1.2,   // Sekunden zum Auf- und Abladen
+  partialPickup: 25,       // Teilpalette wird nach so vielen Sekunden ohne Nachschub abgeholt
   tickRate: 30,            // feste Simulationsrate
   beltSpeed: 1.2,          // Felder pro Sekunde
   beltSpacing: 0.25,
@@ -142,5 +153,5 @@ export const CONFIG = {
   gridCostPerKWs: 0.012,
   dayLength: 480,
   refund: 0.8,
-  saveVersion: 3,
+  saveVersion: 4,
 };

@@ -1,6 +1,8 @@
 # PocketSim Factory
 
-> Du übernimmst eine leere Fabrikhalle in Remscheid. Rundstahl kommt über das Rolltor herein, über Rollenbahnen geht es durch Säge, Schmiede und Härteofen, und hinten verlassen Hämmer, Werkzeugkoffer und Akkuschrauber die Halle.
+> Du übernimmst eine leere Fabrikhalle in Remscheid. LKW liefern Paletten mit Rundstahl ans Rolltor, Gabelstapler lagern sie ins Regal ein und bringen sie an die Linien. Über Rollenbahnen geht es durch Säge, Schmiede und Härteofen, und am Ende verlassen Hämmer, Werkzeugkoffer und Akkuschrauber die Halle.
+
+![Die Fabrikhalle mit Regallager, Gabelstaplern und drei Fertigungslinien](docs/screenshots/halle.jpg)
 
 **Live spielen:** [herosrs.github.io/PocketSim](https://herosrs.github.io/PocketSim/)
 
@@ -8,19 +10,62 @@ PocketSim Factory ist ein Fabrik-Aufbauspiel im Browser, inspiriert von **Factor
 
 ---
 
+## Materialfluss
+
+Teile bewegen sich auf zwei Ebenen: **Paletten** fahren per Gabelstapler durch die Halle, **einzelne Teile** laufen über Rollenbahnen durch die Maschinen. Aufgabe- und Abnahmestationen sind die Übergabepunkte zwischen beiden Ebenen.
+
+```mermaid
+flowchart LR
+    LKW([LKW]) -->|Palette| WE[Wareneingang]
+    WE -->|Stapler| R[(Palettenregal)]
+    R -->|Stapler| A1[Aufgabestation]
+    A1 -->|Rollenbahn| M1[Bandsäge] -->|Rollenbahn| AB1[Abnahmestation]
+    AB1 -->|Stapler| R
+    R -->|Stapler| A2[Aufgabestation]
+    A2 -->|Rollenbahn| M2[Schmiede → Härteofen → Schleifen] -->|Rollenbahn| AB2[Abnahmestation]
+    AB2 -->|Stapler| R
+    R -->|Stapler| V[Versand]
+    V --> Kunde([Kunde])
+```
+
+| Station | Aufgabe |
+|---|---|
+| **Wareneingang** | Rolltor an der Außenwand. Bestellt Paletten (à 20 Teile) des gewählten Materials, die per LKW ankommen. |
+| **Palettenregal** | 6 Plätze auf 3 Ebenen. Einkaufsware lässt immer einen Platz für Fertigware frei. |
+| **Aufgabestation** (Eingangspunkt) | Fordert ein Material an. Der Stapler stellt die Palette hinten ab, ein Werker legt die Teile vorne aufs Band. |
+| **Abnahmestation** (Abgabepunkt) | Palettiert Teile vom Band. Volle Paletten (oder Teilpaletten nach 25 s) holt der Stapler ab. |
+| **Staplerstation** | Parkplatz und Ladestation, bis zu 3 Stapler je Station. |
+| **Versand** | Rolltor an der Außenwand. Verkauft Paletten und auch Teile direkt vom Band. |
+
+**Wer fährt wohin?** Ein Disponent vergibt die Fahraufträge nach Dringlichkeit:
+1. Eine Aufgabestation braucht Material → passende Palette aus dem Lager oder direkt vom Wareneingang bzw. von einer Abnahmestation.
+2. Volle Paletten an Abnahmestationen → ins Regal.
+3. Neue Paletten am Wareneingang → ins Regal.
+4. Fertigware im Regal, die keine Aufgabestation anfordert → zum Versand. Einkaufsware wird nie verkauft.
+
+Stapler fahren nur über **freie Hallenfelder**. Rollenbahnen und Maschinen sind für sie Wände, also müssen Gänge frei bleiben. Ist ein Ziel zugebaut, meldet der Inspektor das.
+
+![Regallager mit Wareneingang, Gabelstapler und Aufgabestation](docs/screenshots/lager.jpg)
+
+![Fertigungslinie: Aufgabestation, Gesenkschmiede, Härteofen, Schleifmaschine und Abnahmestation](docs/screenshots/linie.jpg)
+
+---
+
 ## Spielprinzip
 
-1. **Einkaufen**: Der Wareneingang (Rolltor an der Außenwand) bestellt Rundstahl, Stahlblech, Holz, Granulat oder Kupferdraht.
-2. **Fördern**: Rollenbahnen verbinden die Maschinen. Verteiler und Kreuzungen helfen beim Routing, Palettenregale puffern.
+1. **Einkaufen**: Am Wareneingang bestellst du Rundstahl, Stahlblech, Holz, Granulat oder Kupferdraht als Paletten.
+2. **Lagern und bereitstellen**: Gabelstapler bringen Paletten ins Regal und von dort an die Aufgabestationen.
 3. **Fertigen**: Jede Maschine gibt **nur vorne** ab (oranger Pfeil am Boden) und nimmt **hinten und seitlich** an. Das Layout ist damit Teil des Rätsels.
 4. **Verkaufen**: Was im Versand ankommt, wird verkauft oder für einen Auftrag gezählt. Viel vom selben Teil drückt den Preis.
 5. **Forschen**: Neue Maschinen und Boni kosten Geld und verlangen, dass bestimmte Teile bereits geliefert wurden.
 
 ### Die Halle
 - 40 × 26 Felder, mit **Hallenstützen** im 8-Meter-Raster, die nicht überbaut werden können.
-- **Altbestand** (Meisterbüro, alte Regale, Paletten, ein Gabelstapler) steht im Weg und kostet Entsorgung.
+- **Altbestand** (Meisterbüro, alte Regale, Paletten) steht im Weg und kostet Entsorgung.
 - **Signalsäulen** an jeder Maschine: grün läuft, orange blockiert, aus wartet.
 - Die Wände zur Kamera hin werden automatisch abgesenkt, damit man in die Halle schaut.
+
+![Isometrische Ansicht der Halle](docs/screenshots/iso.jpg)
 
 ### Produktionsketten (Werkzeugindustrie)
 
@@ -38,6 +83,8 @@ PocketSim Factory ist ein Fabrik-Aufbauspiel im Browser, inspiriert von **Factor
 - **Tag- und Nachtschicht**: Tagsüber fällt Licht durch die Fenster, nachts leuchten die Hallenlampen.
 - **Statistik**: Umsatz, Einkauf, Strom, Produktion pro Minute, Marktpreise.
 - **Speichern**: automatisch alle 30 s, dazu Export/Import als JSON.
+
+![Nachtschicht: Die Hallenlampen übernehmen](docs/screenshots/nacht.jpg)
 
 ---
 
@@ -74,6 +121,7 @@ index.html          Einstieg, Import-Map für Three.js (CDN)
 css/style.css       Leitstand-UI nach dem „Factory“-Stil (Refero Styles)
 src/data.js         Inhalte: Teile, Rezepte, Gebäude, Forschung, Ziele, Ereignisse
 src/sim.js          Simulation: Halle, Ports, Rollenbahnen, Strom, Markt, Spielstände mit Migrationen
+src/logistics.js    Paletten, Gabelstapler, Wegfindung (A*) und Disponent
 src/models.js       Prozedurale Modelle und GLB-Lader für eigene Modelle
 src/render.js       Szene: Halle, Instancing, Partikel, Licht, AO/Bloom, Perspektive und Iso-Kamera
 src/input.js        Kamera, Maus/Touch/Tastatur, Bauwerkzeuge
@@ -82,6 +130,7 @@ src/audio.js        Synthesizer-Sounds über WebAudio
 src/main.js         Verdrahtung, feste Tickrate (30/s), Spielschleife
 tests/sim.test.mjs  Headless-Tests der Simulation
 models/             Eigene GLB-Modelle + manifest.json
+docs/screenshots/   Bilder für diese README
 ```
 
 ### Lokal starten
