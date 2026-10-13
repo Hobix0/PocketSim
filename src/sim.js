@@ -1,825 +1,931 @@
-// Simulation: Fabrikhalle, Gebäude mit festen Ein-/Ausgängen, Rollenbahnen, Strom,
-// Einkauf, Markt, Aufträge, Forschung. Läuft mit fester Tickrate und ohne DOM/Three.js.
-import { ITEMS, ITEM_IDS, RECIPES, BUILDINGS, RESEARCH, RESEARCH_BY_ID, GOALS, EVENTS, CONFIG, BUY_UNLOCK } from './data.js';
-import { tickLogistics, afterRebuild, createForklift, palletsOf } from './logistics.js';
+// Wirtschaftssimulation des Gebäudes – ohne Grafik, damit sie auch unter Node läuft.
+// Koordinaten: jede Etage ist ein Raster W × D (1 Feld = 1 m). x läuft nach rechts,
+// z nach vorn zur Straße. Außerhalb des Gebäudes (z ≥ D) liegen Gehweg und Straße.
+import {
+  CONFIG, FLOORS, SHOP_TYPES, FURNITURE, PRODUCTS, SUPPLIES, DEMAND_CURVE,
+  productsFor, suppliesFor,
+} from './data.js';
+import { findPath, reachable } from './path.js';
 
-export const DX = [0, 1, 0, -1];
-export const DZ = [-1, 0, 1, 0];
-const MAX_LEVEL = 5;
-const OUT_CAP = 8;
-export const TILE_FLOOR = 0, TILE_COLUMN = 2;
+export const SAVE_VERSION = 1;
+const { W, D } = CONFIG;
 
-export function rng(seed) {
+export function makeRng(seed) {
   let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+  const f = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+  f.state = () => a;
+  f.set = (s) => { a = s >>> 0; };
+  return f;
 }
 
-export const levelMul = lvl => 1 + 0.35 * (lvl - 1);
-export const upgradeCost = e => Math.round(BUILDINGS[e.type].cost * 0.6 * e.level);
-const PORTED = new Set(['machine', 'feeder']);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const round2 = (v) => Math.round(v * 100) / 100;
+
+// Größe auf dem Raster nach Drehung
+export const footprint = (type, rot) => {
+  const f = FURNITURE[type];
+  return rot % 2 ? [f.d, f.w] : [f.w, f.d];
+};
+
+// Blickrichtung (Vorderseite) eines gedrehten Möbels als Rastervektor
+export const facing = (rot) => [[0, 1], [1, 0], [0, -1], [-1, 0]][rot & 3];
+
+// Punkt im unrotierten Möbel (lx, lz in Metern ab Ecke) → Etagenkoordinaten
+export function localToFloor(item, lx, lz) {
+  const def = FURNITURE[item.type];
+  const [w, d] = footprint(item.type, item.rot);
+  const cx = lx - def.w / 2, cz = lz - def.d / 2;
+  const [s, c] = facing(item.rot);
+  return [item.x + w / 2 + cx * c + cz * s, item.z + d / 2 - cx * s + cz * c];
+}
+
+export const isStairs = (x, z) => {
+  const s = CONFIG.stairs;
+  return x >= s.x && x < s.x + s.w && z >= s.z && z < s.z + s.d;
+};
+const doorCell = () => [CONFIG.doorX, D - 1];
+
+// Felder, auf die nichts gebaut werden darf (Eingang, Treppenpodeste)
+export function isReserved(f, x, z) {
+  const [ux, uz] = CONFIG.stairUp, [dx, dz] = CONFIG.stairDown;
+  if ((x === ux && z === uz) || (x === dx && z === dz)) return true;
+  if (f === 0) {
+    const [ex, ez] = doorCell();
+    if (x === ex && (z === ez || z === ez - 1)) return true;
+  }
+  return false;
+}
+
+// Wegpunkte über die Podesttreppe von Etage f nach f+1
+function stairWaypoints(f) {
+  const H = CONFIG.floorHeight, b = f * H;
+  return [
+    { f, x: 0.5, z: 2.95, y: b, stair: true },
+    { f, x: 0.5, z: 0.95, y: b + H / 2, stair: true },
+    { f, x: 0.5, z: 0.45, y: b + H / 2, stair: true },
+    { f: f + 1, x: 1.5, z: 0.45, y: b + H / 2, stair: true },
+    { f: f + 1, x: 1.5, z: 0.95, y: b + H / 2, stair: true },
+    { f: f + 1, x: 1.5, z: 2.95, y: b + H, stair: true },
+  ];
+}
+
+const AGENT_LOOKS = {
+  skin: ['#f1c9a5', '#e0ac87', '#c68863', '#8d5a3b', '#5c3a26', '#f6d7bf'],
+  shirt: ['#3f6e8c', '#b8483d', '#4f7d4f', '#d9a441', '#6b4f8a', '#2f3a4a', '#e8e1d5', '#c76f9a', '#3a8a87', '#8a5a3c'],
+  pants: ['#2b2f3a', '#3b4a63', '#5a4a3a', '#1e1e22', '#6b6f78', '#7a6650'],
+  hair: ['#1f1712', '#3b2a1d', '#6d4a2c', '#b98a4b', '#d8c39a', '#8a8a8a', '#a3402b'],
+};
 
 export class Game {
-  constructor() { this.listeners = {}; }
+  constructor(seed = 1) {
+    this.newGame(seed);
+  }
 
-  on(ev, fn) { (this.listeners[ev] ||= []).push(fn); }
-  emit(ev, data) { (this.listeners[ev] || []).forEach(fn => fn(data)); }
-  toast(text, kind = 'info') { this.emit('toast', { text, kind }); }
-
-  // ───────────────────────── Neues Spiel / Halle
-  newGame(seed = Math.floor(Math.random() * 1e9)) {
+  newGame(seed = (Math.random() * 1e9) | 0) {
     this.seed = seed;
-    this.W = CONFIG.hallW;
-    this.H = CONFIG.hallH;
-    const N = this.W * this.H;
-    this.terrain = new Uint8Array(N);
-    this.grid = new Int32Array(N).fill(-1);
-    this.entities = new Map();
-    this.nextId = 1;
-    this.forklifts = [];
-    this.nextForkliftId = 1;
-    this.nextPalletId = 1;
+    this.rng = makeRng(seed);
     this.money = CONFIG.startMoney;
+    this.day = 1;
+    this.clock = CONFIG.dayStart;
+    this.rep = CONFIG.startRep;
+    this.nextId = 1;
     this.time = 0;
-    this.research = new Set();
-    this.market = Object.fromEntries(ITEM_IDS.map(id => [id, 1]));
-    this.contracts = [];
-    this.contractTimer = 25;
-    this.event = null;
-    this.eventTimer = 200;
-    this.goalIndex = 0;
-    this.stats = { sold: {}, produced: {}, bought: {}, earned: 0, spent: 0, powerCost: 0, buyCost: 0, contractsDone: 0, history: [], snaps: [] };
-    this._acc = { earned: 0, power: 0, buy: 0, snap: 0, goal: 0 };
-    this.layoutHall();
-    this.recomputeMods();
+    this.floors = FLOORS.map((_, i) => ({ index: i, unlocked: i === 0, shop: 0 }));
+    this.items = new Map();
+    this.shops = new Map();
+    this.agents = new Map();
+    this.history = [];
+    this.fx = [];
+    this.layoutVersion = 0;
+    this.pedAcc = 0;
+    this.autoAcc = 0;
+    this.seatTaken = new Map();
+    this.regState = new Map();
+    this.resetToday();
     this.rebuild();
+    const shop = this.openShop(0, 'cafe');
+    // Startausstattung im Lager
+    shop.stock.bohnen = 100; shop.stock.milch = 40; shop.stock.tee = 50;
   }
 
-  layoutHall() {
-    const { W, H } = this, r = rng(this.seed);
-    // Stützenraster
-    const ce = CONFIG.columnEvery;
-    this.columns = [];
-    for (let x = ce; x < W - 2; x += ce) for (const z of [Math.round(H / 3), Math.round(H * 2 / 3)]) {
-      this.terrain[this.idx(x, z)] = TILE_COLUMN;
-      this.columns.push([x, z]);
-    }
-    // Tore gegenüber in einer stützenfreien Reihe, damit eine gerade Linie möglich ist
-    const mid = Math.floor(H / 2) - 1;
-    this.place('eingang', 0, mid, 1, true);
-    this.place('versand', W - 2, mid, 3, true);
-    this.place('trafo', 0, H - 2, 0, true);
-    // Erstausstattung: ein Regal und eine Staplerstation neben dem Wareneingang
-    this.place('regal', 3, mid - 4, 0, true);
-    this.place('station', 3, mid + 4, 0, true);
-    // Altbestand: Meisterbüro, Regale an der Nordwand, Paletten, ein Stapler
-    this.place('altbuero', W - 3, 0, 2, true);
-    for (let x = 4; x < W - 6; x += 2 + Math.floor(r() * 3)) {
-      if (r() < 0.55) this.place('altregal', x, 0, 2, true);
-    }
-    for (let k = 0; k < 9; k++) {
-      const x = 3 + Math.floor(r() * (W - 6)), z = 3 + Math.floor(r() * (H - 6));
-      if (Math.abs(z - mid - 0.5) < 3 || x < 8) continue; // Hauptgang und Lagerzone frei lassen
-      if (this.isFree(x, z, 1)) this.place('palette', x, z, Math.floor(r() * 4), true);
-    }
-  }
-
-  // ───────────────────────── Grid-Helfer
-  inBounds(x, z) { return x >= 0 && z >= 0 && x < this.W && z < this.H; }
-  idx(x, z) { return z * this.W + x; }
-  at(x, z) {
-    if (!this.inBounds(x, z)) return null;
-    const id = this.grid[z * this.W + x];
-    return id >= 0 ? this.entities.get(id) : null;
-  }
-  isFree(x, z, s) {
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
-      if (!this.inBounds(x + dx, z + dz) || this.terrain[this.idx(x + dx, z + dz)] !== TILE_FLOOR || this.at(x + dx, z + dz)) return false;
-    }
-    return true;
-  }
-  countBuildings(fn) { let n = 0; for (const e of this.entities.values()) if (fn(e)) n++; return n; }
-  isUnlocked(type) { const u = BUILDINGS[type].unlock; return !u || this.research.has(u); }
-  recipeUnlocked(rid) {
-    const r = RECIPES[rid];
-    return (!r.unlock || this.research.has(r.unlock)) && this.isUnlocked(r.building);
-  }
-  recipesFor(type) { return Object.keys(RECIPES).filter(rid => RECIPES[rid].building === type); }
-  buyUnlocked(item) { return !!ITEMS[item].buy && (!BUY_UNLOCK[item] || this.research.has(BUY_UNLOCK[item])); }
-
-  // Wandgebäude zeigen automatisch in die Halle
-  wallRotation(x, z, s) {
-    if (x === 0) return 1;
-    if (x + s === this.W) return 3;
-    if (z === 0) return 2;
-    if (z + s === this.H) return 0;
-    return -1;
-  }
-
-  // ───────────────────────── Bauen
-  canPlace(type, x, z) {
-    const B = BUILDINGS[type];
-    if (B.kind === 'decor') return { ok: false, reason: 'Nicht baubar' };
-    if (!this.isUnlocked(type)) return { ok: false, reason: 'Noch nicht erforscht' };
-    const s = B.size;
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
-      const tx = x + dx, tz = z + dz;
-      if (!this.inBounds(tx, tz)) return { ok: false, reason: 'Außerhalb der Halle' };
-      if (this.terrain[this.idx(tx, tz)] === TILE_COLUMN) return { ok: false, reason: 'Hallenstütze im Weg' };
-      const occ = this.at(tx, tz);
-      if (occ && !(occ.type === 'band' && type !== 'band')) return { ok: false, reason: occ.type in BUILDINGS && BUILDINGS[occ.type].kind === 'decor' ? `${BUILDINGS[occ.type].name} im Weg` : 'Feld belegt' };
-    }
-    if (B.wall && this.wallRotation(x, z, s) < 0) return { ok: false, reason: 'Muss an der Außenwand stehen' };
-    if (this.money < B.cost) return { ok: false, reason: 'Zu wenig Geld' };
-    return { ok: true };
-  }
-
-  place(type, x, z, rot = 0, free = false) {
-    const B = BUILDINGS[type];
-    if (!free && !this.canPlace(type, x, z).ok) return null;
-    const s = B.size;
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) {
-      const occ = this.at(x + dx, z + dz);
-      if (occ) this.remove(occ.id, true, true);
-    }
-    if (B.wall) rot = this.wallRotation(x, z, s);
-    const e = { id: this.nextId++, type, x, z, rot, level: 1 };
-    this.initEntity(e);
-    this.entities.set(e.id, e);
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(x + dx, z + dz)] = e.id;
-    if (!free) { this.money -= B.cost; this.stats.spent += B.cost; }
-    if (B.kind === 'parking') createForklift(this, e);
-    this.dirty = true;
-    return e;
-  }
-
-  initEntity(e) {
-    const B = BUILDINGS[e.type];
-    switch (B.kind) {
-      case 'belt': e.items = []; break;
-      case 'splitter': e.buf = null; e.rr = 0; break;
-      case 'junction': e.bufs = [null, null]; break;
-      case 'machine': {
-        const rs = this.recipesFor(e.type).filter(r => this.recipeUnlocked(r));
-        e.recipe = rs[0] || this.recipesFor(e.type)[0];
-        e.inBuf = {}; e.outBuf = {}; e.progress = 0; e.crafting = false; e.rr = 0;
-        break;
-      }
-      case 'inbound': e.order = 'rundstahl'; e.on = true; e.timer = CONFIG.palletInterval * 0.7; e.dock = []; break;
-      case 'rack': e.slots = Array(B.slots).fill(null); e.incoming = 0; break;
-      case 'feeder': e.want = 'rundstahl'; e.pallets = []; e.incoming = 0; e.rr = 0; break;
-      case 'collector': e.pallets = []; e.idle = 0; break;
-    }
-  }
-
-  remove(id, refund = true, silent = false) {
-    const e = this.entities.get(id);
-    if (!e) return false;
-    const B = BUILDINGS[e.type];
-    if (B.kind === 'outbound' && this.countBuildings(o => o.type === 'versand') <= 1) {
-      if (!silent) this.toast('Der letzte Versand kann nicht abgerissen werden', 'warn');
-      return false;
-    }
-    if (B.kind === 'decor' && !silent) {
-      if (this.money < B.removeCost) { this.toast(`Entsorgung kostet ${fmtMoney(B.removeCost)}`, 'warn'); return false; }
-      this.money -= B.removeCost; this.stats.spent += B.removeCost;
-      refund = false;
-    }
-    const lost = palletsOf(e).length;
-    if (lost && !silent) this.toast(`${lost} Palette${lost > 1 ? 'n' : ''} beim Abriss verloren`, 'warn');
-    if (B.kind === 'parking') this.forklifts = this.forklifts.filter(f => f.home !== e.id);
-    const s = B.size;
-    for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(e.x + dx, e.z + dz)] = -1;
-    this.entities.delete(id);
-    if (refund && B.cost) {
-      let total = B.cost;
-      for (let k = 1; k < e.level; k++) total += Math.round(B.cost * 0.6 * k);
-      this.money += Math.round(total * (B.kind === 'belt' ? 1 : CONFIG.refund));
-    }
-    this.dirty = true;
-    return true;
-  }
-
-  rotate(id) {
-    const e = this.entities.get(id);
-    if (!e) return;
-    const B = BUILDINGS[e.type];
-    if (B.wall || B.kind === 'decor' && e.type !== 'stapler') return;
-    e.rot = (e.rot + 1) % 4;
-    if (e.type === 'band') e.items.forEach(it => { it.f = 0; });
-    this.dirty = true;
-  }
-
-  setBeltDir(x, z, dir) {
-    const e = this.at(x, z);
-    if (e && e.type === 'band' && e.rot !== dir) { e.rot = dir; e.items.forEach(it => { it.f = 0; }); this.dirty = true; return true; }
-    return false;
-  }
-
-  canUpgrade(e) { return ['machine', 'inbound'].includes(BUILDINGS[e.type].kind) && e.level < MAX_LEVEL; }
-
-  buyForklift(stationId) {
-    const e = this.entities.get(stationId), B = e && BUILDINGS[e.type];
-    if (!e || B.kind !== 'parking') return false;
-    if (this.forklifts.filter(f => f.home === e.id).length >= B.maxForklifts) return false;
-    if (this.money < B.forkliftCost) { this.toast('Zu wenig Geld für einen Stapler', 'warn'); return false; }
-    this.money -= B.forkliftCost; this.stats.spent += B.forkliftCost;
-    createForklift(this, e);
-    this.emit('entityChanged', e);
-    return true;
-  }
-
-  palletsIn(kind, item) {
-    let n = 0;
-    for (const e of this.entities.values()) {
-      if (BUILDINGS[e.type].kind !== kind) continue;
-      n += palletsOf(e).filter(p => !item || p.item === item).length;
-    }
-    return n;
-  }
-
-  newPallet(item, qty) { return { id: this.nextPalletId++, item, qty, t: this.time, res: 0 }; }
-  upgrade(id) {
-    const e = this.entities.get(id);
-    if (!e || !this.canUpgrade(e)) return false;
-    const cost = upgradeCost(e);
-    if (this.money < cost) { this.toast('Zu wenig Geld für das Upgrade', 'warn'); return false; }
-    this.money -= cost; this.stats.spent += cost;
-    e.level++;
-    this.emit('entityChanged', e);
-    return true;
-  }
-
-  setRecipe(id, rid) {
-    const e = this.entities.get(id);
-    if (!e || !this.recipeUnlocked(rid) || e.recipe === rid) return;
-    e.recipe = rid; e.inBuf = {}; e.progress = 0; e.crafting = false;
-    this.emit('entityChanged', e);
-  }
-
-  setInbound(id, item) {
-    const e = this.entities.get(id);
-    if (!e || !this.buyUnlocked(item)) return;
-    e.order = item;
-    this.emit('entityChanged', e);
-  }
-
-  setFeeder(id, item) {
-    const e = this.entities.get(id);
-    if (!e || !ITEMS[item]) return;
-    e.want = item;
-    this.emit('entityChanged', e);
-  }
-
-  // Teilpalette an der Abnahmestation sofort zur Abholung freigeben
-  releaseCollector(id) {
-    const e = this.entities.get(id);
-    const p = e?.pallets.find(p => !p.ready && p.qty > 0);
-    if (p) { p.ready = true; this.emit('entityChanged', e); }
-  }
-
-  toggleInbound(id) {
-    const e = this.entities.get(id);
-    if (e) { e.on = !e.on; this.emit('entityChanged', e); }
-  }
-
-  // Nach Änderungen am Grid: Nachbarschaften, Bandreihenfolge, Formen
-  rebuild() {
-    this.dirty = false;
-    const belts = [];
-    for (const e of this.entities.values()) {
-      const s = BUILDINGS[e.type].size;
-      if (e.type === 'band') { belts.push(e); continue; }
-      const per = [];
-      for (let i = 0; i < s; i++) {
-        per.push({ nx: e.x + i, nz: e.z - 1, tx: e.x + i, tz: e.z, side: 0 });
-        per.push({ nx: e.x + s, nz: e.z + i, tx: e.x + s - 1, tz: e.z + i, side: 1 });
-        per.push({ nx: e.x + i, nz: e.z + s, tx: e.x + i, tz: e.z + s - 1, side: 2 });
-        per.push({ nx: e.x - 1, nz: e.z + i, tx: e.x, tz: e.z + i, side: 3 });
-      }
-      // Gebäude mit Ports geben nur nach vorne ab
-      e._perim = PORTED.has(BUILDINGS[e.type].kind) ? per.filter(p => p.side === e.rot) : per;
-    }
-    for (const b of belts) {
-      const d = b.rot;
-      const neighbour = side => {
-        const s = (d + side) % 4;
-        const n = this.at(b.x + DX[s], b.z + DZ[s]);
-        if (!n) return 0;
-        if (n.type === 'band') return n.rot === (s + 2) % 4 ? 2 : 0;
-        return BUILDINGS[n.type].kind === 'decor' ? 0 : 1;
-      };
-      const back = neighbour(2), left = neighbour(3) === 2, right = neighbour(1) === 2;
-      b._shape = 0;
-      if (!back) {
-        if (left && !right) b._shape = 1;
-        else if (right && !left) b._shape = 2;
-      }
-    }
-    // Downstream zuerst simulieren, damit Bahnen lückenlos laufen
-    const seen = new Set(), order = [];
-    for (const b of belts) {
-      if (seen.has(b.id)) continue;
-      const chain = [];
-      let cur = b;
-      while (cur && cur.type === 'band' && !seen.has(cur.id)) {
-        seen.add(cur.id); chain.push(cur);
-        cur = this.at(cur.x + DX[cur.rot], cur.z + DZ[cur.rot]);
-      }
-      for (let i = chain.length - 1; i >= 0; i--) order.push(chain[i]);
-    }
-    this._beltOrder = order;
-    afterRebuild(this);
-    this.emit('world');
-  }
-
-  // ───────────────────────── Teilefluss
-  dirTo(x, z, sx, sz) {
-    for (let d = 0; d < 4; d++) if (x + DX[d] === sx && z + DZ[d] === sz) return d;
-    return -1;
-  }
-
-  // Seite eines Mehrfeld-Gebäudes, an der das Quellfeld liegt
-  sideOf(e, sx, sz) {
-    const s = BUILDINGS[e.type].size;
-    if (sz < e.z) return 0;
-    if (sx >= e.x + s) return 1;
-    if (sz >= e.z + s) return 2;
-    return 3;
-  }
-
-  // Versucht ein Teil in ein Gebäude zu schieben. (sx,sz) = Feld der Quelle.
-  insert(e, t, sx, sz, dry = false) {
-    const B = BUILDINGS[e.type];
-    if (PORTED.has(B.kind) && this.sideOf(e, sx, sz) === e.rot) return false; // Ausgangsseite nimmt nichts an
-    switch (B.kind) {
-      case 'belt': {
-        const s = this.dirTo(e.x, e.z, sx, sz), d = e.rot;
-        if (s < 0 || s === d) return false;
-        const last = e.items[e.items.length - 1];
-        if (last && last.p < CONFIG.beltSpacing) return false;
-        if (!dry) e.items.push({ t, p: 0, f: s === (d + 2) % 4 ? 0 : s === (d + 3) % 4 ? 1 : 2 });
-        return true;
-      }
-      case 'splitter': {
-        if (e.buf) return false;
-        const s = this.dirTo(e.x, e.z, sx, sz);
-        if (s < 0) return false;
-        if (!dry) e.buf = { t, from: s, timer: 0, out: -1 };
-        return true;
-      }
-      case 'junction': {
-        const s = this.dirTo(e.x, e.z, sx, sz);
-        if (s < 0) return false;
-        const out = (s + 2) % 4, axis = out % 2;
-        if (e.bufs[axis]) return false;
-        if (!dry) e.bufs[axis] = { t, from: s, out, timer: 0 };
-        return true;
-      }
-      case 'machine': {
-        const r = RECIPES[e.recipe];
-        if (!r || !r.in[t]) return false;
-        if ((e.inBuf[t] || 0) >= r.in[t] * 2 + 1) return false;
-        if (!dry) e.inBuf[t] = (e.inBuf[t] || 0) + 1;
-        return true;
-      }
-      case 'outbound':
-        if (!dry) { this.deliver(t); e._sold = (e._sold || 0) + 1; }
-        return true;
-      case 'collector': {
-        if (this.sideOf(e, sx, sz) !== e.rot) return false;   // Teile nur von der Bandseite
-        let p = e.pallets.find(p => !p.ready);
-        if (p && p.qty > 0 && p.item !== t) return false;      // eine Palette = eine Teileart
-        if (!p && e.pallets.length >= 2) return false;
-        if (!dry) {
-          if (!p) { p = this.newPallet(t, 0); e.pallets.push(p); }
-          p.item = t; p.qty++;
-          if (p.qty >= CONFIG.palletQty) p.ready = true;
-          e.idle = 0;
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // Gibt ein Teil an ein benachbartes Gebäude ab (reihum über die Ausgangsfelder)
-  dump(e, t) {
-    const per = e._perim, n = per.length;
-    for (let k = 0; k < n; k++) {
-      const i = (e.rr + k) % n, p = per[i];
-      const tgt = this.at(p.nx, p.nz);
-      if (!tgt || tgt === e) continue;
-      if (this.insert(tgt, t, p.tx, p.tz)) { e.rr = i + 1; return true; }
-    }
-    return false;
-  }
-
-  deliver(t) {
-    this.stats.sold[t] = (this.stats.sold[t] || 0) + 1;
-    const c = this.contracts.find(c => c.item === t && c.delivered < c.qty);
-    if (c) {
-      c.delivered++;
-      if (c.delivered >= c.qty) {
-        this.money += c.reward; this.stats.earned += c.reward; this._acc.earned += c.reward;
-        this.stats.contractsDone++;
-        this.contracts.splice(this.contracts.indexOf(c), 1);
-        this.toast(`Auftrag erfüllt: +${fmtMoney(c.reward)}`, 'success');
-        this.emit('money', c.reward);
-        this.emit('contracts');
-      }
-      return;
-    }
-    const p = this.price(t);
-    this.money += p; this.stats.earned += p; this._acc.earned += p;
-    this.market[t] = Math.max(0.35, this.market[t] * 0.9985);
-  }
-
-  price(t) {
-    let m = ITEMS[t].price * this.market[t];
-    if (this.event) {
-      if (this.event.price?.[t]) m *= this.event.price[t];
-      if (this.event.priceAll) m *= this.event.priceAll;
-    }
-    return m;
-  }
-
-  buyPrice(t) { return ITEMS[t].buy * (this.event?.buy?.[t] || 1); }
-
-  // ───────────────────────── Simulation
-  get daylight() { return Math.max(0, Math.sin((this.dayFrac - 0.25) * Math.PI * 2)); }
-  get dayFrac() { return (this.time / CONFIG.dayLength + 0.32) % 1; }
-  get day() { return Math.floor(this.time / CONFIG.dayLength + 0.32) + 1; }
-
-  recomputeMods() {
-    const m = { beltMul: 1, machineMul: 1, gridMul: 1 };
-    for (const id of this.research) {
-      const ef = RESEARCH_BY_ID[id]?.effect;
-      if (ef) for (const k in ef) m[k] *= ef[k];
-    }
-    this.mods = m;
-  }
-
-  tick(dt) {
-    if (this.dirty) this.rebuild();
-    this.time += dt;
-    const mods = this.mods;
-    const ratio = this.power?.ratio ?? 1;
-    const beltV = CONFIG.beltSpeed * mods.beltMul;
-    let demand = 0, gridCap = 0;
-
-    for (const e of this.entities.values()) {
-      const B = BUILDINGS[e.type];
-      switch (B.kind) {
-        case 'inbound': {
-          e._active = false; e._poor = false;
-          if (e.on && e.dock.length < CONFIG.dockSlots) {
-            e.timer += dt * levelMul(e.level);
-            if (e.timer >= CONFIG.palletInterval) {
-              const cost = this.buyPrice(e.order) * CONFIG.palletQty;
-              if (this.money >= cost) {
-                e.timer = 0;
-                e.dock.push(this.newPallet(e.order, CONFIG.palletQty));
-                this.money -= cost; this.stats.buyCost += cost; this._acc.buy += cost;
-                this.count('bought', e.order, CONFIG.palletQty);
-                e._recent = 2;
-              } else { e.timer = CONFIG.palletInterval; e._poor = true; }
-            }
-          }
-          e._active = e.dock.length > 0;
-          break;
-        }
-        case 'feeder': {
-          const p = e.pallets[0];
-          e._active = !!p;
-          if (p && this.dump(e, p.item)) { p.qty--; if (p.qty <= 0) e.pallets.shift(); }
-          break;
-        }
-        case 'collector': {
-          e.idle += dt;
-          const p = e.pallets.find(p => !p.ready);
-          if (p && p.qty > 0 && e.idle > CONFIG.partialPickup) p.ready = true;
-          e._active = !!p && p.qty > 0;
-          break;
-        }
-        case 'machine': {
-          const r = RECIPES[e.recipe];
-          if (!r) break;
-          let outTotal = 0;
-          for (const k in e.outBuf) outTotal += e.outBuf[k];
-          if (!e.crafting && outTotal < OUT_CAP && this.recipeUnlocked(e.recipe)) {
-            let ok = true;
-            for (const k in r.in) if ((e.inBuf[k] || 0) < r.in[k]) { ok = false; break; }
-            if (ok) {
-              for (const k in r.in) e.inBuf[k] -= r.in[k];
-              e.crafting = true;
-            }
-          }
-          e._active = e.crafting;
-          if (e.crafting) {
-            demand += B.power;
-            e.progress += dt * mods.machineMul * levelMul(e.level) * ratio / r.time;
-            if (e.progress >= 1) {
-              e.progress = 0; e.crafting = false;
-              for (const k in r.out) { e.outBuf[k] = (e.outBuf[k] || 0) + r.out[k]; this.count('produced', k, r.out[k]); }
-            }
-          }
-          for (const k in e.outBuf) if (e.outBuf[k] > 0 && this.dump(e, k)) e.outBuf[k]--;
-          break;
-        }
-        case 'grid': gridCap += B.supply * mods.gridMul; break;
-        case 'splitter': {
-          const b = e.buf;
-          if (!b) break;
-          b.timer = Math.min(1, b.timer + dt * beltV);
-          if (b.timer >= 0.5 && b.out < 0) {
-            for (let k = 1; k <= 4; k++) {
-              const d = (e.rr + k) % 4;
-              if (d === b.from) continue;
-              const tgt = this.at(e.x + DX[d], e.z + DZ[d]);
-              if (tgt && this.insert(tgt, b.t, e.x, e.z, true)) { b.out = d; e.rr = d; break; }
-            }
-            if (b.out < 0) b.timer = 0.5;
-          }
-          if (b.timer >= 1 && b.out >= 0) {
-            const tgt = this.at(e.x + DX[b.out], e.z + DZ[b.out]);
-            if (tgt && this.insert(tgt, b.t, e.x, e.z)) e.buf = null;
-            else { b.out = -1; b.timer = 0.5; }
-          }
-          break;
-        }
-        case 'junction':
-          for (let a = 0; a < 2; a++) {
-            const b = e.bufs[a];
-            if (!b) continue;
-            b.timer = Math.min(1, b.timer + dt * beltV);
-            if (b.timer >= 1) {
-              const tgt = this.at(e.x + DX[b.out], e.z + DZ[b.out]);
-              if (tgt && this.insert(tgt, b.t, e.x, e.z)) e.bufs[a] = null;
-            }
-          }
-          break;
-      }
-    }
-
-    // Rollenbahnen
-    const SP = CONFIG.beltSpacing, step = beltV * dt;
-    for (const e of this._beltOrder) {
-      const items = e.items;
-      if (!items.length) continue;
-      for (let i = 0; i < items.length; i++) {
-        const it = items[i];
-        const lim = i === 0 ? 1 : items[i - 1].p - SP;
-        const np = Math.min(it.p + step, lim);
-        if (np > it.p) it.p = np;
-      }
-      if (items[0].p >= 1) {
-        const tgt = this.at(e.x + DX[e.rot], e.z + DZ[e.rot]);
-        if (tgt && this.insert(tgt, items[0].t, e.x, e.z)) items.shift();
-      }
-    }
-
-    tickLogistics(this, dt);
-
-    // Strom
-    const gridDraw = Math.min(gridCap, demand);
-    const cost = gridDraw * CONFIG.gridCostPerKWs * (this.event?.gridCost || 1) * dt;
-    this.money -= cost; this.stats.powerCost += cost; this._acc.power += cost;
-    this.power = { demand, supply: gridCap, gridDraw, ratio: demand > 0 ? Math.min(1, gridCap / demand) : 1 };
-
-    for (const k in this.market) this.market[k] += (1 - this.market[k]) * 0.015 * dt;
-
-    this.tickContracts(dt);
-    this.tickEvents(dt);
-    this.tickStats(dt);
-  }
-
-  count(kind, t, n = 1) { this.stats[kind][t] = (this.stats[kind][t] || 0) + n; }
-
-  // ───────────────────────── Aufträge
-  producible() {
-    const set = new Set();
-    for (const rid in RECIPES) if (this.recipeUnlocked(rid)) for (const k in RECIPES[rid].out) set.add(k);
-    return [...set];
-  }
-
-  tickContracts(dt) {
-    for (const c of [...this.contracts]) {
-      c.time -= dt;
-      if (c.time <= 0) {
-        this.contracts.splice(this.contracts.indexOf(c), 1);
-        this.toast(`Auftrag „${c.qty}× ${ITEMS[c.item].name}“ ist verfallen`, 'warn');
-        this.emit('contracts');
-      }
-    }
-    this.contractTimer -= dt;
-    if (this.contractTimer <= 0) {
-      this.contractTimer = 50 + Math.random() * 30;
-      if (this.contracts.length < 3) this.addContract();
-    }
-  }
-
-  addContract() {
-    const pool = this.producible().filter(t => !this.contracts.some(c => c.item === t));
-    if (!pool.length) return;
-    const weights = pool.map(t => Math.sqrt(ITEMS[t].price));
-    let r = Math.random() * weights.reduce((a, b) => a + b, 0), item = pool[0];
-    for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { item = pool[i]; break; } }
-    const value = 350 + Math.min(40000, this.stats.earned * 0.04);
-    const price = ITEMS[item].price;
-    let qty = Math.max(1, Math.round(value / price));
-    if (qty > 20) qty = Math.round(qty / 5) * 5;
-    qty = Math.min(qty, 400);
-    const time = Math.min(720, Math.max(240, 150 + qty * 1.5 + price * 0.5));
-    this.contracts.push({ id: Math.random().toString(36).slice(2, 8), item, qty, delivered: 0, time, total: time, reward: Math.round(qty * price * 1.8 + 120) });
-    this.emit('contracts');
-  }
-
-  // ───────────────────────── Ereignisse
-  tickEvents(dt) {
-    if (this.event) {
-      this.event.left -= dt;
-      if (this.event.left <= 0) { this.event = null; this.emit('event'); }
-    }
-    this.eventTimer -= dt;
-    if (this.eventTimer <= 0) {
-      this.eventTimer = 150 + Math.random() * 120;
-      if (this.event) return;
-      const ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-      if (ev.grant) {
-        const amount = Math.round(500 + Math.min(20000, this.stats.earned * 0.03));
-        this.money += amount;
-        this.toast(`${ev.title}: ${ev.text} (+${fmtMoney(amount)})`, 'success');
-        return;
-      }
-      this.event = { ...ev, left: ev.duration };
-      this.emit('event');
-      this.toast(`${ev.title}: ${ev.text}`, 'event');
-    }
-  }
-
-  // ───────────────────────── Statistik & Ziele
-  tickStats(dt) {
-    const a = this._acc;
-    a.snap += dt;
-    if (a.snap >= 5) {
-      a.snap -= 5;
-      const h = this.stats.history;
-      h.push({ t: Math.round(this.time), money: Math.round(this.money), earned: Math.round(a.earned), power: Math.round(a.power), buy: Math.round(a.buy) });
-      if (h.length > 360) h.shift();
-      a.earned = 0; a.power = 0; a.buy = 0;
-      const s = this.stats.snaps;
-      s.push({ produced: { ...this.stats.produced }, sold: { ...this.stats.sold } });
-      if (s.length > 13) s.shift();
-    }
-    a.goal += dt;
-    if (a.goal >= 0.5) {
-      a.goal = 0;
-      const g = GOALS[this.goalIndex];
-      if (g && g.check(this)) {
-        this.money += g.reward;
-        this.goalIndex++;
-        this.toast(`Ziel erreicht: ${g.text} (+${fmtMoney(g.reward)})`, 'success');
-        this.emit('goal', g);
-      }
-    }
-  }
-
-  // Ergebnis pro Minute: Umsatz minus Strom und Einkauf (letzte 60 s)
-  incomePerMin() {
-    const h = this.stats.history, n = Math.min(12, h.length);
-    if (!n) return 0;
-    let s = 0;
-    for (let i = h.length - n; i < h.length; i++) s += h[i].earned - h[i].power - (h[i].buy || 0);
-    return s * 60 / (n * 5);
-  }
-
-  ratePerMin(kind, t) {
-    const s = this.stats.snaps;
-    if (s.length < 2) return 0;
-    const old = s[0][kind][t] || 0, now = this.stats[kind][t] || 0;
-    return (now - old) * 60 / ((s.length - 1) * 5 + this._acc.snap);
-  }
-
-  // ───────────────────────── Forschung
-  researchState(id) {
-    const r = RESEARCH_BY_ID[id];
-    if (this.research.has(id)) return 'done';
-    if (!r.prereq.every(p => this.research.has(p))) return 'locked';
-    if (!Object.entries(r.req).every(([k, n]) => (this.stats.sold[k] || 0) >= n)) return 'req';
-    if (this.money < r.cost) return 'money';
-    return 'ready';
-  }
-
-  doResearch(id) {
-    if (this.researchState(id) !== 'ready') return false;
-    const r = RESEARCH_BY_ID[id];
-    this.money -= r.cost; this.stats.spent += r.cost;
-    this.research.add(id);
-    this.recomputeMods();
-    for (const e of this.entities.values()) {
-      if (BUILDINGS[e.type].kind === 'machine' && !this.recipeUnlocked(e.recipe)) {
-        const rs = this.recipesFor(e.type).filter(x => this.recipeUnlocked(x));
-        if (rs[0]) e.recipe = rs[0];
-      }
-    }
-    this.toast(`Forschung abgeschlossen: ${r.name}`, 'success');
-    this.emit('research', id);
-    return true;
-  }
-
-  // ───────────────────────── Speichern / Laden
-  serialize() {
-    const ents = [];
-    for (const e of this.entities.values()) {
-      const o = {};
-      for (const k in e) if (k[0] !== '_') o[k] = e[k];
-      ents.push(o);
-    }
-    return {
-      v: CONFIG.saveVersion, seed: this.seed, W: this.W, H: this.H, money: this.money, time: this.time,
-      terrain: b64(this.terrain), research: [...this.research], market: this.market, contracts: this.contracts,
-      contractTimer: this.contractTimer, event: this.event, eventTimer: this.eventTimer,
-      goalIndex: this.goalIndex, stats: this.stats, nextId: this.nextId, entities: ents,
-      forklifts: this.forklifts, nextForkliftId: this.nextForkliftId, nextPalletId: this.nextPalletId,
+  resetToday() {
+    this.today = {
+      revenue: 0, supplies: 0, build: 0, served: 0, entered: 0,
+      lostPrice: 0, lostWait: 0, lostFull: 0, lostStock: 0,
+      satSum: 0, satN: 0, sold: {}, repStart: this.rep,
     };
   }
 
-  load(raw) {
-    const d = migrate(raw);
-    this.seed = d.seed; this.W = d.W; this.H = d.H;
-    this.terrain = unb64(d.terrain);
-    this.grid = new Int32Array(this.W * this.H).fill(-1);
-    this.entities = new Map();
-    this.columns = [];
-    for (let i = 0; i < this.terrain.length; i++) if (this.terrain[i] === TILE_COLUMN) this.columns.push([i % this.W, Math.floor(i / this.W)]);
-    for (const e of d.entities) {
-      if (!BUILDINGS[e.type]) continue;
-      if (e.items) e.items = e.items.filter(it => ITEMS[it.t]);
-      if (e.recipe && !RECIPES[e.recipe]) { e.recipe = this.recipesFor(e.type)[0]; e.inBuf = {}; e.outBuf = {}; e.crafting = false; }
-      this.entities.set(e.id, e);
-      const s = BUILDINGS[e.type].size;
-      for (let dz = 0; dz < s; dz++) for (let dx = 0; dx < s; dx++) this.grid[this.idx(e.x + dx, e.z + dz)] = e.id;
-    }
-    Object.assign(this, {
-      money: d.money, time: d.time, research: new Set(d.research.filter(id => RESEARCH_BY_ID[id])),
-      market: { ...Object.fromEntries(ITEM_IDS.map(id => [id, 1])), ...d.market },
-      contracts: d.contracts.filter(c => ITEMS[c.item]), contractTimer: d.contractTimer, event: d.event, eventTimer: d.eventTimer,
-      goalIndex: Math.min(d.goalIndex, GOALS.length), stats: d.stats, nextId: d.nextId,
-      forklifts: d.forklifts || [], nextForkliftId: d.nextForkliftId || 1, nextPalletId: d.nextPalletId || 1,
+  // ───────────────────────── Raster & abgeleitete Daten ─────────────────────────
+
+  rebuild() {
+    this.grid = this.floors.map(() => ({ occ: new Int32Array(W * D), carpet: new Int32Array(W * D) }));
+    for (const it of this.items.values()) this.stamp(it, it.id);
+    this.refresh();
+  }
+
+  cellsOf(type, x, z, rot) {
+    const [w, d] = footprint(type, rot);
+    const out = [];
+    for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) out.push([x + i, z + k]);
+    return out;
+  }
+
+  stamp(it, val) {
+    const layer = FURNITURE[it.type].floorLayer ? 'carpet' : 'occ';
+    for (const [x, z] of this.cellsOf(it.type, it.x, it.z, it.rot)) this.grid[it.floor][layer][z * W + x] = val;
+  }
+
+  blockedFn(f) {
+    const occ = this.grid[f].occ;
+    return (x, z) => isStairs(x, z) || occ[z * W + x] !== 0;
+  }
+
+  itemAt(f, x, z) {
+    if (x < 0 || z < 0 || x >= W || z >= D) return null;
+    const id = this.grid[f].occ[z * W + x] || this.grid[f].carpet[z * W + x];
+    return id ? this.items.get(id) : null;
+  }
+
+  // Theken, Sitzplätze, Ausstattung und Ambiente neu berechnen (nach jeder Umbaumaßnahme)
+  refresh() {
+    this.layoutVersion++;
+    this.derived = this.floors.map((fl, f) => {
+      const items = [...this.items.values()].filter((it) => it.floor === f);
+      const registers = items.filter((it) => FURNITURE[it.type].register).sort((a, b) => a.id - b.id).map((it) => {
+        let st = this.regState.get(it.id);
+        if (!st) { st = { id: it.id, queue: [], serving: 0, timer: 0 }; this.regState.set(it.id, st); }
+        const spot = localToFloor(it, 0.5, 2.5).map(Math.floor);
+        st.item = it;
+        st.spot = spot;
+        st.queueSpots = this.queueSpots(f, spot, facing(it.rot));
+        return st;
+      });
+      const seats = [];
+      for (const it of items) {
+        const def = FURNITURE[it.type];
+        if (def.seat === 'chair') {
+          const [s, c] = facing(it.rot);
+          const dirs = [[s, c], [1, 0], [-1, 0], [0, 1], [0, -1]];
+          for (const [dx, dz] of dirs) {
+            const t = this.itemAt(f, it.x + dx, it.z + dz);
+            if (t && FURNITURE[t.type].table && !FURNITURE[t.type].floorLayer) {
+              seats.push({
+                id: `${it.id}:0`, item: it.id, floor: f, cell: [it.x, it.z],
+                x: it.x + 0.5 - dx * 0.08, z: it.z + 0.5 - dz * 0.08, yaw: Math.atan2(dx, dz),
+              });
+              break;
+            }
+          }
+        } else if (def.seat === 'free') {
+          const yaw = it.rot * Math.PI / 2;
+          for (let k = 0; k < def.w; k++) {
+            const [x, z] = localToFloor(it, k + 0.5, 0.45);
+            seats.push({ id: `${it.id}:${k}`, item: it.id, floor: f, cell: [Math.floor(x), Math.floor(z)], x, z, yaw });
+          }
+        }
+      }
+      const machines = items.filter((it) => FURNITURE[it.type].machine);
+      const displays = items.filter((it) => FURNITURE[it.type].display);
+      const decor = items.reduce((sum, it) => sum + (FURNITURE[it.type].decor || 0), 0);
+      const appeal = Math.round(clamp(decor * 1.6, 0, 70) + clamp(seats.length * 2.5, 0, 30));
+      return { registers, seats, machines, displays, decor, appeal };
     });
-    this.forklifts = this.forklifts.filter(f => this.entities.has(f.home));
-    this.stats.bought ||= {};
-    this._acc = { earned: 0, power: 0, buy: 0, snap: 0, goal: 0 };
-    this.power = null;
-    this.recomputeMods();
+    // Sitzplätze, die es nicht mehr gibt, freigeben
+    const valid = new Set(this.derived.flatMap((d) => d.seats.map((s) => s.id)));
+    for (const [sid, aid] of [...this.seatTaken]) {
+      if (!valid.has(sid)) {
+        this.seatTaken.delete(sid);
+        const a = this.agents.get(aid);
+        if (a) { a.seat = null; this.leave(a); }
+      }
+    }
+    // Entfernte Theken: Warteschlangen auflösen
+    const regIds = new Set(this.derived.flatMap((d) => d.registers.map((r) => r.id)));
+    for (const [id, st] of [...this.regState]) {
+      if (regIds.has(id)) continue;
+      this.regState.delete(id);
+      for (const aid of st.queue) {
+        const a = this.agents.get(aid);
+        if (a) { a.register = 0; a.sat -= 20; this.leave(a); }
+      }
+    }
+    for (const r of this.derived.flatMap((d) => d.registers)) this.requeue(r);
+    // Laufende Gäste neu routen, falls ihr Weg verbaut wurde
+    for (const a of this.agents.values()) {
+      if (!a.route.length || a.route[0].stair || a.z >= D) continue;
+      if (a.state === 'leaving') this.exitRoute(a);
+      else if (a.goal) this.routeTo(a, a.goal);
+    }
+  }
+
+  // Warteschlange: gerade Linie vor der Theke, biegt an Hindernissen ab
+  queueSpots(f, spot, dir) {
+    const blocked = this.blockedFn(f);
+    const ok = (x, z) => x >= 0 && z >= 0 && x < W && z < D && !blocked(x, z) && !isReserved(f, x, z);
+    if (!ok(spot[0], spot[1])) return [];
+    const spots = [spot];
+    const used = new Set([spot[1] * W + spot[0]]);
+    let [x, z] = spot, [dx, dz] = dir;
+    for (let k = 0; k < 7; k++) {
+      let moved = false;
+      for (const [cx, cz] of [[dx, dz], [-dz, dx], [dz, -dx]]) {
+        const nx = x + cx, nz = z + cz;
+        if (!ok(nx, nz) || used.has(nz * W + nx)) continue;
+        x = nx; z = nz; dx = cx; dz = cz;
+        used.add(nz * W + nx);
+        spots.push([nx, nz]);
+        moved = true;
+        break;
+      }
+      if (!moved) break;
+    }
+    return spots;
+  }
+
+  // ───────────────────────── Bauen ─────────────────────────
+
+  canPlace(type, f, x, z, rot, ignoreId = 0) {
+    const def = FURNITURE[type];
+    const fl = this.floors[f];
+    if (!def || !fl) return { ok: false, reason: 'Unbekannt' };
+    if (!fl.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
+    const shop = this.shops.get(fl.shop);
+    if (!shop) return { ok: false, reason: 'Erst einen Laden auf dieser Etage eröffnen' };
+    if (def.shops !== '*' && !def.shops.includes(shop.type)) return { ok: false, reason: `Passt nicht in ${SHOP_TYPES[shop.type].name}` };
+    const layer = def.floorLayer ? 'carpet' : 'occ';
+    const cells = this.cellsOf(type, x, z, rot);
+    for (const [cx, cz] of cells) {
+      if (cx < 0 || cz < 0 || cx >= W || cz >= D) return { ok: false, reason: 'Außerhalb der Etage' };
+      if (isStairs(cx, cz)) return { ok: false, reason: 'Treppenhaus' };
+      if (!def.floorLayer && isReserved(f, cx, cz)) return { ok: false, reason: 'Laufweg muss frei bleiben' };
+      const o = this.grid[f][layer][cz * W + cx];
+      if (o && o !== ignoreId) return { ok: false, reason: 'Platz belegt' };
+    }
+    if (def.floorLayer) return { ok: true };
+
+    // Probehalber eintragen und Erreichbarkeit prüfen
+    const occ = this.grid[f].occ;
+    const backup = cells.map(([cx, cz]) => occ[cz * W + cx]);
+    const ignored = ignoreId ? this.cellsOf(this.items.get(ignoreId).type, this.items.get(ignoreId).x, this.items.get(ignoreId).z, this.items.get(ignoreId).rot) : [];
+    for (const [cx, cz] of ignored) occ[cz * W + cx] = 0;
+    for (const [cx, cz] of cells) occ[cz * W + cx] = -1;
+    let reason = '';
+    try {
+      const blocked = this.blockedFn(f);
+      const entry = f === 0 ? doorCell() : CONFIG.stairDown;
+      const reach = reachable(W, D, blocked, entry[0], entry[1]);
+      const need = [];
+      if (f < this.floors.length - 1) need.push(['Treppe', CONFIG.stairUp]);
+      const regs = [...this.items.values()].filter((it) => it.floor === f && it.id !== ignoreId && FURNITURE[it.type].register);
+      if (def.register) regs.push({ type, x, z, rot, floor: f });
+      for (const r of regs) need.push(['Theke', localToFloor(r, 0.5, 2.5).map(Math.floor)]);
+      for (const [what, [nx, nz]] of need) {
+        if (nx < 0 || nz < 0 || nx >= W || nz >= D || blocked(nx, nz)) { reason = what === 'Theke' ? 'Vor der Theke muss Platz für Gäste sein' : 'Treppe wäre verbaut'; break; }
+        if (!reach.has(nz * W + nx)) { reason = what === 'Theke' ? 'Theke wäre vom Eingang nicht erreichbar' : 'Treppe wäre vom Eingang nicht erreichbar'; break; }
+      }
+    } finally {
+      cells.forEach(([cx, cz], i) => { occ[cz * W + cx] = backup[i]; });
+      for (const [cx, cz] of ignored) occ[cz * W + cx] = ignoreId;
+    }
+    return reason ? { ok: false, reason } : { ok: true };
+  }
+
+  place(type, f, x, z, rot = 0, free = false) {
+    const def = FURNITURE[type];
+    const check = this.canPlace(type, f, x, z, rot);
+    if (!check.ok) return { ok: false, reason: check.reason };
+    if (!free && this.money < def.cost) return { ok: false, reason: 'Nicht genug Geld' };
+    if (!free) { this.money -= def.cost; this.today.build += def.cost; }
+    const it = { id: this.nextId++, type, floor: f, x, z, rot: rot & 3 };
+    this.items.set(it.id, it);
+    this.stamp(it, it.id);
+    this.refresh();
+    return { ok: true, item: it };
+  }
+
+  move(id, x, z, rot) {
+    const it = this.items.get(id);
+    if (!it) return { ok: false, reason: 'Unbekannt' };
+    const check = this.canPlace(it.type, it.floor, x, z, rot, id);
+    if (!check.ok) return check;
+    this.stamp(it, 0);
+    Object.assign(it, { x, z, rot: rot & 3 });
+    this.stamp(it, id);
+    this.refresh();
+    return { ok: true, item: it };
+  }
+
+  remove(id, refund = true) {
+    const it = this.items.get(id);
+    if (!it) return 0;
+    this.stamp(it, 0);
+    this.items.delete(id);
+    const back = refund ? Math.round(FURNITURE[it.type].cost * CONFIG.sellRefund) : 0;
+    this.money += back;
+    this.refresh();
+    return back;
+  }
+
+  // ───────────────────────── Etagen & Läden ─────────────────────────
+
+  canUnlock(f) {
+    const fl = this.floors[f];
+    if (!fl || fl.unlocked) return { ok: false, reason: 'Schon angemietet' };
+    if (!this.floors[f - 1].unlocked) return { ok: false, reason: 'Erst die Etage darunter anmieten' };
+    if (this.money < FLOORS[f].unlockCost) return { ok: false, reason: 'Nicht genug Geld' };
+    return { ok: true };
+  }
+
+  unlockFloor(f) {
+    const c = this.canUnlock(f);
+    if (!c.ok) return c;
+    this.money -= FLOORS[f].unlockCost;
+    this.today.build += FLOORS[f].unlockCost;
+    this.floors[f].unlocked = true;
+    this.refresh();
+    return { ok: true };
+  }
+
+  openShop(f, type, name) {
+    const fl = this.floors[f];
+    const st = SHOP_TYPES[type];
+    if (!fl || !fl.unlocked || fl.shop || !st || !st.available) return null;
+    const shop = {
+      id: this.nextId++, type, floor: f, name: name || (f ? `${st.defaultName} ${FLOORS[f].short}` : st.defaultName),
+      open: true, staff: 0, menu: {}, stock: {}, auto: {}, demandAcc: 0,
+      day: { revenue: 0, served: 0, satSum: 0, satN: 0, sold: {} },
+    };
+    for (const p of productsFor(type)) shop.menu[p] = { price: PRODUCTS[p].price, on: true };
+    for (const s of suppliesFor(type)) { shop.stock[s] = 0; shop.auto[s] = true; }
+    this.shops.set(shop.id, shop);
+    fl.shop = shop.id;
+    this.refresh();
+    return shop;
+  }
+
+  shopOnFloor(f) { return this.shops.get(this.floors[f]?.shop) || null; }
+
+  hire(shopId) {
+    const s = this.shops.get(shopId);
+    if (!s || s.staff >= CONFIG.maxStaff) return false;
+    s.staff++;
+    return true;
+  }
+
+  fire(shopId) {
+    const s = this.shops.get(shopId);
+    if (!s || s.staff <= 0) return false;
+    s.staff--;
+    return true;
+  }
+
+  setPrice(shopId, pid, price) {
+    const s = this.shops.get(shopId);
+    if (!s?.menu[pid]) return;
+    s.menu[pid].price = round2(clamp(Math.round(price * 10) / 10, 0.5, 30));
+  }
+
+  toggleProduct(shopId, pid, on) {
+    const s = this.shops.get(shopId);
+    if (s?.menu[pid]) s.menu[pid].on = on ?? !s.menu[pid].on;
+  }
+
+  buy(shopId, sid, packs = 1, auto = false) {
+    const s = this.shops.get(shopId);
+    const sup = SUPPLIES[sid];
+    if (!s || !sup || !(sid in s.stock)) return false;
+    const cost = round2(sup.cost * packs * (auto ? 1 + CONFIG.autoFee : 1));
+    if (this.money < cost) return false;
+    this.money = round2(this.money - cost);
+    this.today.supplies = round2(this.today.supplies + cost);
+    s.stock[sid] += sup.pack * packs;
+    return true;
+  }
+
+  // Ist das Produkt grundsätzlich im Angebot (Karte + Ausstattung)?
+  offerable(shop, pid) {
+    const p = PRODUCTS[pid];
+    if (!shop.menu[pid]?.on) return false;
+    const d = this.derived[shop.floor];
+    if (p.needs === 'machine' && !d.machines.length) return false;
+    if (p.needs === 'display' && !d.displays.length) return false;
+    return true;
+  }
+
+  inStock(shop, pid) {
+    return Object.entries(PRODUCTS[pid].uses).every(([s, n]) => shop.stock[s] >= n);
+  }
+
+  // Gründe, warum ein Laden (noch) nicht verkauft
+  shopStatus(shop) {
+    const reasons = [];
+    const d = this.derived[shop.floor];
+    if (!d.registers.length) reasons.push('Theke mit Kasse fehlt');
+    if (!shop.staff) reasons.push('Keine Barista eingestellt');
+    if (!productsFor(shop.type).some((p) => this.offerable(shop, p))) reasons.push('Siebträger oder Vitrine fehlt');
+    if (!shop.open) reasons.push('Laden ist geschlossen');
+    const ready = reasons.length === 0;
+    const hours = this.clock >= CONFIG.openFrom && this.clock < CONFIG.openUntil;
+    return { ready, serving: ready && hours, reasons, hours };
+  }
+
+  staffedRegisters(shop) {
+    return this.derived[shop.floor].registers.slice(0, shop.staff);
+  }
+
+  // Arbeitsgeschwindigkeit: zusätzliche Baristas helfen an der Maschine
+  serviceSpeed(shop) {
+    const regs = Math.max(1, Math.min(shop.staff, this.derived[shop.floor].registers.length));
+    const helpers = Math.max(0, shop.staff - regs);
+    return 1.6 * (1 + 0.5 * Math.min(helpers / regs, 2));
+  }
+
+  // Positionen der Baristas für die Darstellung
+  staffSpots(f) {
+    const shop = this.shopOnFloor(f);
+    if (!shop || !shop.staff) return [];
+    const d = this.derived[f];
+    const out = [];
+    const regs = d.registers.slice(0, shop.staff);
+    for (const r of regs) {
+      const [x, z] = localToFloor(r.item, 0.5, 0.5);
+      out.push({ x, z, yaw: r.item.rot * Math.PI / 2, busy: !!r.serving, role: 'kasse' });
+    }
+    const helpers = shop.staff - regs.length;
+    for (let k = 0; k < helpers; k++) {
+      const m = d.machines[k % Math.max(1, d.machines.length)];
+      if (m) {
+        const [x, z] = localToFloor(m, 0.5 + (k >= d.machines.length ? 0.35 : 0), 1.35);
+        out.push({ x, z, yaw: m.rot * Math.PI / 2 + Math.PI, busy: true, role: 'maschine' });
+      } else if (d.registers[0]) {
+        const [x, z] = localToFloor(d.registers[0].item, 1.5, 0.5);
+        out.push({ x, z, yaw: d.registers[0].item.rot * Math.PI / 2, busy: false, role: 'hilfe' });
+      }
+    }
+    return out;
+  }
+
+  // ───────────────────────── Zeit ─────────────────────────
+
+  tick(dt) {
+    this.time += dt;
+    this.clock += dt * CONFIG.minutesPerSecond;
+
+    this.spawn(dt);
+    for (const d of this.derived) for (const r of d.registers) this.updateRegister(r, dt);
+    for (const a of [...this.agents.values()]) this.updateAgent(a, dt);
+
+    this.autoAcc += dt;
+    if (this.autoAcc >= 1) { this.autoAcc = 0; this.autoReorder(); }
+
+    if (this.clock >= CONFIG.openUntil) {
+      const inside = [...this.agents.values()].some((a) => a.kind === 'customer');
+      if (!inside || this.clock >= CONFIG.openUntil + 90) this.endDay();
+      else if (this.clock >= CONFIG.openUntil + 45) {
+        // Ladenschluss: wer noch wartet, geht
+        for (const a of [...this.agents.values()]) if (a.kind === 'customer' && (a.state === 'queue' || a.state === 'toQueue')) this.leave(a);
+      }
+    }
+  }
+
+  spawn(dt) {
+    const hour = Math.floor(this.clock / 60);
+    // Passanten auf dem Gehweg (nur Kulisse)
+    const pedRate = hour >= 7 && hour < 20 ? 0.12 : 0.03;
+    if (this.rng() < pedRate * dt) this.spawnPedestrian();
+
+    const repMult = 0.3 + 1.4 * this.rep / 100;
+    for (const shop of this.shops.values()) {
+      if (!this.shopStatus(shop).serving) continue;
+      const appeal = this.derived[shop.floor].appeal;
+      const perHour = CONFIG.baseCustomersPerHour * (DEMAND_CURVE[hour] ?? 0) * repMult * (0.6 + 0.9 * appeal / 100)
+        * (shop.floor > 0 ? 0.85 : 1);
+      const perSecond = perHour / 60 * CONFIG.minutesPerSecond;
+      const count = [...this.agents.values()].filter((a) => a.shop === shop.id).length;
+      if (count < 40 && this.rng() < perSecond * dt) this.spawnCustomer(shop);
+    }
+  }
+
+  newLook() {
+    const pick = (arr) => arr[Math.floor(this.rng() * arr.length)];
+    return {
+      skin: pick(AGENT_LOOKS.skin), shirt: pick(AGENT_LOOKS.shirt), pants: pick(AGENT_LOOKS.pants),
+      hair: pick(AGENT_LOOKS.hair), hairStyle: Math.floor(this.rng() * 3), height: 0.92 + this.rng() * 0.16,
+    };
+  }
+
+  spawnPedestrian() {
+    const left = this.rng() < 0.5;
+    const z = D + 1.5 + this.rng() * 1.4;
+    const a = {
+      id: this.nextId++, kind: 'ped', floor: 0, x: left ? -9 : W + 9, z, y: 0, yaw: 0, state: 'pass',
+      look: this.newLook(), speed: CONFIG.walkSpeed * (0.85 + this.rng() * 0.3),
+      route: [{ f: 0, x: left ? W + 9 : -9, z: z + (this.rng() - 0.5) * 0.4, y: 0 }],
+    };
+    this.agents.set(a.id, a);
+  }
+
+  spawnCustomer(shop) {
+    const left = this.rng() < 0.5;
+    const z = D + 1.6 + this.rng() * 0.8;
+    const a = {
+      id: this.nextId++, kind: 'customer', shop: shop.id, floor: 0, x: left ? -9 : W + 9, z, y: 0, yaw: 0,
+      state: 'approach', look: this.newLook(), speed: CONFIG.walkSpeed * (0.9 + this.rng() * 0.2),
+      route: [
+        { f: 0, x: CONFIG.doorX + 0.5 + (this.rng() - 0.5) * 0.6, z: D + 1.7, y: 0 },
+        { f: 0, x: CONFIG.doorX + 0.5, z: D + 0.6, y: 0 },
+      ],
+      wants: [], sat: 72, wait: 0, patience: 55 + this.rng() * 60, timer: 0, seat: null, register: 0, qIndex: -1,
+      cup: false, goal: null, done: false, paid: 0,
+    };
+    this.agents.set(a.id, a);
+  }
+
+  bubble(a, icon) { this.fx.push({ kind: 'bubble', agent: a.id, icon }); }
+
+  // Gast steht vor der Tür und liest die Karte
+  decide(a) {
+    const shop = this.shops.get(a.shop);
+    if (!shop || !this.shopStatus(shop).serving) return this.turnAway(a, '🔒');
+    this.today.entered++;
+    const offer = productsFor(shop.type).filter((p) => this.offerable(shop, p));
+    const pick = (kind) => {
+      const list = offer.filter((p) => PRODUCTS[p].kind === kind);
+      if (!list.length) return null;
+      const total = list.reduce((s, p) => s + PRODUCTS[p].pop, 0);
+      let r = this.rng() * total;
+      for (const p of list) { r -= PRODUCTS[p].pop; if (r <= 0) return p; }
+      return list[list.length - 1];
+    };
+    const wish = [];
+    if (this.rng() < 0.88) { const p = pick('drink'); if (p) wish.push(p); }
+    if (this.rng() < 0.42) { const p = pick('snack'); if (p) wish.push(p); }
+    // Wer nichts Passendes findet, nimmt irgendetwas von der Karte
+    if (!wish.length) { const p = pick('drink') || pick('snack'); if (p) wish.push(p); }
+    const willing = 0.85 + this.rng() * 0.55 + (this.rep - 50) / 500;
+    a.wants = wish.filter((p) => shop.menu[p].price <= PRODUCTS[p].fair * willing);
+    if (!a.wants.length) {
+      this.today.lostPrice++;
+      a.sat = 30;
+      return this.turnAway(a, '💸');
+    }
+    if (a.wants.length < wish.length) a.sat -= 8;
+
+    // Kürzeste Schlange an einer besetzten Kasse
+    const regs = this.staffedRegisters(shop).filter((r) => r.queueSpots.length);
+    regs.sort((r1, r2) => r1.queue.length - r2.queue.length);
+    const r = regs[0];
+    if (!r || r.queue.length >= r.queueSpots.length) {
+      this.today.lostFull++;
+      a.sat = 35;
+      return this.turnAway(a, '😤');
+    }
+    r.queue.push(a.id);
+    a.register = r.id;
+    a.qIndex = r.queue.length - 1;
+    a.state = 'toQueue';
+    this.routeTo(a, { f: shop.floor, x: r.queueSpots[Math.min(a.qIndex, r.queueSpots.length - 1)][0], z: r.queueSpots[Math.min(a.qIndex, r.queueSpots.length - 1)][1] });
+  }
+
+  turnAway(a, icon) {
+    if (icon) this.bubble(a, icon);
+    this.finish(a);
+    a.state = 'exit';
+    a.goal = null;
+    const left = a.x < CONFIG.doorX;
+    a.route = [{ f: 0, x: left ? -9 : W + 9, z: D + 1.8 + this.rng() * 0.6, y: 0 }];
+  }
+
+  // Wegeplanung über Etagen hinweg; goal = { f, x, z, allowBlocked }
+  routeTo(a, goal) {
+    a.goal = goal;
+    const pts = [];
+    let f = a.floor;
+    let cx = clamp(Math.floor(a.x), 0, W - 1), cz = Math.floor(a.z);
+    if (a.z >= D) {
+      // Noch draußen: durch die Tür hinein
+      const [ex, ez] = doorCell();
+      pts.push({ f: 0, x: ex + 0.5, z: D + 0.4, y: 0 }, { f: 0, x: ex + 0.5, z: ez + 0.5, y: 0 });
+      f = 0; cx = ex; cz = ez;
+    }
+    cz = clamp(cz, 0, D - 1);
+    const cellPts = (fl, cells) => cells.map(([x, z]) => ({ f: fl, x: x + 0.5, z: z + 0.5, y: fl * CONFIG.floorHeight }));
+    let guard = 0;
+    while (f !== goal.f && guard++ < 8) {
+      const up = goal.f > f;
+      const [lx, lz] = up ? CONFIG.stairUp : CONFIG.stairDown;
+      const path = findPath(W, D, this.blockedFn(f), cx, cz, lx, lz) || [[lx, lz]];
+      pts.push(...cellPts(f, path));
+      pts.push(...(up ? stairWaypoints(f) : stairWaypoints(f - 1).reverse()));
+      f += up ? 1 : -1;
+      [cx, cz] = up ? CONFIG.stairDown : CONFIG.stairUp;
+      pts.push(...cellPts(f, [[cx, cz]]));
+    }
+    const path = findPath(W, D, this.blockedFn(f), cx, cz, goal.x, goal.z, goal.allowBlocked)
+      || [[goal.x, goal.z]]; // notfalls direkt (z. B. eingebaut) – niemand bleibt stecken
+    pts.push(...cellPts(f, path));
+    if (goal.exact) pts.push({ f, x: goal.exact[0], z: goal.exact[1], y: f * CONFIG.floorHeight });
+    a.route = pts;
+    return true;
+  }
+
+  requeue(r) {
+    r.queue = r.queue.filter((id) => this.agents.has(id));
+    r.queue.forEach((id, i) => {
+      const a = this.agents.get(id);
+      const spot = r.queueSpots[Math.min(i, r.queueSpots.length - 1)];
+      if (!spot) return;
+      if (a.state === 'ordering') return;
+      if (a.qIndex !== i || (a.goal && (a.goal.x !== spot[0] || a.goal.z !== spot[1]))) {
+        a.qIndex = i;
+        a.state = 'toQueue';
+        this.routeTo(a, { f: r.item.floor, x: spot[0], z: spot[1] });
+      }
+    });
+  }
+
+  updateRegister(r, dt) {
+    const shop = this.shopOnFloor(r.item.floor);
+    if (!shop) return;
+    const staffed = this.staffedRegisters(shop).includes(r);
+    if (r.serving) {
+      if (!staffed) return; // Barista fehlt – Bestellung wartet
+      r.timer -= dt * this.serviceSpeed(shop);
+      if (r.timer <= 0) this.completeOrder(r, shop);
+      return;
+    }
+    if (!staffed) return;
+    const front = this.agents.get(r.queue[0]);
+    if (!front || front.state !== 'queue' || front.qIndex !== 0) return;
+    // Bestellung aufnehmen
+    const d = this.derived[shop.floor];
+    const items = [];
+    for (const p of front.wants) {
+      if (this.offerable(shop, p) && this.inStock(shop, p)) items.push(p);
+      else { front.sat -= 14; this.today.lostStock++; }
+    }
+    if (front.wait > 25) front.sat -= (front.wait - 25) * 0.35;
+    if (!items.length) {
+      this.bubble(front, '❌');
+      r.queue.shift();
+      this.leave(front);
+      this.requeue(r);
+      return;
+    }
+    if (items.length < front.wants.length) this.bubble(front, '😕');
+    for (const p of items) for (const [s, n] of Object.entries(PRODUCTS[p].uses)) shop.stock[s] -= n;
+    const coffee = 1 / (1 + 0.35 * Math.max(0, d.machines.length - 1));
+    r.timer = 2 + items.reduce((t, p) => t + PRODUCTS[p].prep * (PRODUCTS[p].kind === 'drink' ? coffee : 1), 0);
+    r.serving = front.id;
+    front.items = items;
+    front.state = 'ordering';
+  }
+
+  completeOrder(r, shop) {
+    const a = this.agents.get(r.serving);
+    r.serving = 0;
+    r.queue.shift();
+    if (!a) { this.requeue(r); return; }
+    let total = 0;
+    for (const p of a.items) {
+      const price = shop.menu[p].price;
+      total += price;
+      this.today.sold[p] = (this.today.sold[p] || 0) + 1;
+      shop.day.sold[p] = (shop.day.sold[p] || 0) + 1;
+      a.sat += clamp((PRODUCTS[p].fair - price) / PRODUCTS[p].fair * 40, -20, 8);
+    }
+    total = round2(total);
+    a.paid = total;
+    this.money = round2(this.money + total);
+    this.today.revenue = round2(this.today.revenue + total);
+    this.today.served++;
+    shop.day.revenue = round2(shop.day.revenue + total);
+    shop.day.served++;
+    a.cup = a.items.some((p) => PRODUCTS[p].kind === 'drink') ? 'cup' : 'bag';
+    this.fx.push({ kind: 'money', floor: shop.floor, x: r.spot[0] + 0.5, z: r.spot[1] + 0.5, amount: total });
+    this.requeue(r);
+
+    // Hinsetzen – ab und zu
+    const d = this.derived[shop.floor];
+    const chance = (SHOP_TYPES[shop.type].sitChance || 0) + d.appeal * 0.002;
+    if (this.rng() < chance) {
+      const free = d.seats.filter((s) => !this.seatTaken.has(s.id));
+      if (free.length) {
+        const seat = free[Math.floor(this.rng() * free.length)];
+        this.seatTaken.set(seat.id, a.id);
+        a.seat = seat.id;
+        a.state = 'toSeat';
+        this.routeTo(a, { f: seat.floor, x: seat.cell[0], z: seat.cell[1], allowBlocked: true, exact: [seat.x, seat.z] });
+        return;
+      }
+      a.sat -= 10;
+      this.bubble(a, '🪑');
+    } else this.bubble(a, a.sat >= 70 ? '😊' : a.sat >= 45 ? '🙂' : '😐');
+    this.leave(a);
+  }
+
+  seatById(id) {
+    for (const d of this.derived) for (const s of d.seats) if (s.id === id) return s;
+    return null;
+  }
+
+  leave(a) {
+    if (a.state === 'exit' || a.state === 'leaving') return;
+    if (a.register) {
+      const r = this.regState.get(a.register);
+      if (r) {
+        if (r.serving === a.id) r.serving = 0;
+        const i = r.queue.indexOf(a.id);
+        if (i >= 0) { r.queue.splice(i, 1); this.requeue(r); }
+      }
+      a.register = 0;
+    }
+    if (a.seat) { this.seatTaken.delete(a.seat); a.seat = null; }
+    this.finish(a);
+    if (a.z >= D) return this.turnAway(a, '');
+    a.state = 'leaving';
+    a.side = this.rng() < 0.5 ? -1 : 1;
+    this.exitRoute(a);
+  }
+
+  exitRoute(a) {
+    const [ex, ez] = doorCell();
+    this.routeTo(a, { f: 0, x: ex, z: ez });
+    a.route.push(
+      { f: 0, x: ex + 0.5, z: D + 0.6, y: 0 },
+      { f: 0, x: ex + 0.5 + a.side, z: D + 1.9, y: 0 },
+      { f: 0, x: a.side < 0 ? -9 : W + 9, z: D + 1.7 + (a.id % 7) * 0.12, y: 0 },
+    );
+    a.goal = null;
+  }
+
+  // Zufriedenheit verbuchen (einmal je Gast)
+  finish(a) {
+    if (a.done || a.kind !== 'customer') return;
+    a.done = true;
+    const shop = this.shops.get(a.shop);
+    if (a.paid && shop) a.sat += this.derived[shop.floor].appeal * 0.12;
+    a.sat = clamp(a.sat, 0, 100);
+    this.today.satSum += a.sat;
+    this.today.satN++;
+    if (shop) { shop.day.satSum += a.sat; shop.day.satN++; }
+    const weight = a.paid ? 0.035 : 0.02;
+    this.rep = clamp(this.rep + (a.sat - this.rep) * weight, 0, 100);
+  }
+
+  updateAgent(a, dt) {
+    // Warten in der Schlange kostet Geduld
+    if (a.kind === 'customer' && (a.state === 'queue' || a.state === 'toQueue')) {
+      a.wait += dt;
+      if (a.wait > a.patience) {
+        a.sat -= 35;
+        this.today.lostWait++;
+        this.bubble(a, '😠');
+        return this.leave(a);
+      }
+    }
+    if (a.state === 'sitting') {
+      a.timer -= dt;
+      if (a.timer <= 0) { this.bubble(a, a.sat >= 70 ? '😊' : '🙂'); this.leave(a); }
+      return;
+    }
+    if (!a.route.length) return;
+    let step = a.speed * dt;
+    while (step > 0 && a.route.length) {
+      const w = a.route[0];
+      const dx = w.x - a.x, dz = w.z - a.z, dy = w.y - a.y;
+      const dist = Math.hypot(dx, dz, dy * 0.6);
+      const sp = w.stair ? CONFIG.climbSpeed / CONFIG.walkSpeed : 1;
+      if (dist <= step * sp) {
+        a.x = w.x; a.z = w.z; a.y = w.y; a.floor = w.f;
+        step -= dist / sp;
+        a.route.shift();
+      } else {
+        const k = step * sp / dist;
+        a.x += dx * k; a.z += dz * k; a.y += dy * k;
+        if (Math.abs(dx) + Math.abs(dz) > 1e-3) a.yaw = Math.atan2(dx, dz);
+        step = 0;
+      }
+    }
+    if (!a.route.length) this.arrive(a);
+  }
+
+  arrive(a) {
+    switch (a.state) {
+      case 'approach': return this.decide(a);
+      case 'toQueue': {
+        a.state = 'queue';
+        const r = this.regState.get(a.register);
+        if (r) a.yaw = Math.atan2(r.spot[0] + 0.5 - a.x, r.spot[1] + 0.5 - a.z) || a.yaw;
+        if (r && a.qIndex === 0) { const [s, c] = facing(r.item.rot); a.yaw = Math.atan2(-s, -c); }
+        return;
+      }
+      case 'toSeat': {
+        const seat = this.seatById(a.seat);
+        if (!seat) return this.leave(a);
+        a.state = 'sitting';
+        a.x = seat.x; a.z = seat.z; a.yaw = seat.yaw;
+        a.timer = 25 + this.rng() * 50;
+        a.sat += 6;
+        return;
+      }
+      case 'leaving': case 'exit': case 'pass':
+        this.agents.delete(a.id);
+        return;
+      default:
+    }
+  }
+
+  autoReorder() {
+    if (this.clock < CONFIG.dayStart || this.clock >= CONFIG.openUntil - 30) return;
+    for (const shop of this.shops.values()) {
+      if (!this.shopStatus(shop).ready) continue;
+      const used = new Set();
+      for (const p of productsFor(shop.type)) if (this.offerable(shop, p)) for (const s of Object.keys(PRODUCTS[p].uses)) used.add(s);
+      for (const s of used) {
+        if (shop.auto[s] && shop.stock[s] < SUPPLIES[s].pack * 0.25) this.buy(shop.id, s, 1, true);
+      }
+    }
+  }
+
+  endDay() {
+    const t = this.today;
+    let staff = 0;
+    for (const s of this.shops.values()) staff += s.staff;
+    const wages = staff * CONFIG.wage;
+    const rent = this.floors.reduce((sum, fl, i) => sum + (fl.unlocked ? FLOORS[i].rent : 0), 0);
+    let spoiled = 0;
+    for (const s of this.shops.values()) {
+      for (const sid of Object.keys(s.stock)) {
+        if (!SUPPLIES[sid].fresh) continue;
+        spoiled += s.stock[sid] * SUPPLIES[sid].cost / SUPPLIES[sid].pack;
+        s.stock[sid] = 0;
+      }
+    }
+    this.money = round2(this.money - wages - rent);
+    const report = {
+      day: this.day, revenue: t.revenue, supplies: t.supplies, wages, rent, spoiled: round2(spoiled), build: t.build,
+      profit: round2(t.revenue - t.supplies - wages - rent),
+      served: t.served, entered: t.entered, lostPrice: t.lostPrice, lostWait: t.lostWait, lostFull: t.lostFull, lostStock: t.lostStock,
+      sat: t.satN ? Math.round(t.satSum / t.satN) : null, rep: Math.round(this.rep), repDelta: Math.round(this.rep - t.repStart),
+      sold: { ...t.sold }, money: this.money,
+    };
+    this.history.push(report);
+    if (this.history.length > 120) this.history.shift();
+    // Neuer Tag: Gebäude leeren
+    for (const a of [...this.agents.values()]) this.agents.delete(a.id);
+    this.seatTaken.clear();
+    for (const r of this.regState.values()) { r.queue = []; r.serving = 0; r.timer = 0; }
+    this.day++;
+    this.clock = CONFIG.dayStart;
+    this.resetToday();
+    for (const s of this.shops.values()) s.day = { revenue: 0, served: 0, satSum: 0, satN: 0, sold: {} };
+    this.fx.push({ kind: 'dayEnd', report });
+    return report;
+  }
+
+  // ───────────────────────── Speichern ─────────────────────────
+
+  serialize() {
+    return {
+      v: SAVE_VERSION, seed: this.seed, rng: this.rng.state(), money: this.money, day: this.day, clock: this.clock,
+      rep: this.rep, nextId: this.nextId,
+      floors: this.floors.map((f) => ({ unlocked: f.unlocked, shop: f.shop })),
+      items: [...this.items.values()],
+      shops: [...this.shops.values()].map((s) => ({ ...s, demandAcc: 0 })),
+      history: this.history, today: this.today,
+    };
+  }
+
+  load(data) {
+    if (!data || data.v !== SAVE_VERSION) throw new Error('Spielstand passt nicht zu dieser Version');
+    this.seed = data.seed;
+    this.rng = makeRng(data.seed);
+    this.rng.set(data.rng);
+    this.money = data.money; this.day = data.day; this.clock = data.clock; this.rep = data.rep; this.nextId = data.nextId;
+    this.floors = FLOORS.map((_, i) => ({ index: i, unlocked: !!data.floors[i]?.unlocked, shop: data.floors[i]?.shop || 0 }));
+    this.items = new Map(data.items.map((it) => [it.id, { ...it }]));
+    this.shops = new Map(data.shops.map((s) => [s.id, { ...s, menu: { ...s.menu }, stock: { ...s.stock }, auto: { ...s.auto } }]));
+    // Neue Produkte/Waren späterer Versionen ergänzen
+    for (const s of this.shops.values()) {
+      for (const p of productsFor(s.type)) if (!s.menu[p]) s.menu[p] = { price: PRODUCTS[p].price, on: true };
+      for (const sid of suppliesFor(s.type)) if (!(sid in s.stock)) { s.stock[sid] = 0; s.auto[sid] = true; }
+      s.day = { revenue: 0, served: 0, satSum: 0, satN: 0, sold: {}, ...s.day };
+    }
+    this.history = data.history || [];
+    this.today = { ...data.today };
+    this.agents = new Map();
+    this.seatTaken = new Map();
+    this.regState = new Map();
+    this.fx = [];
+    this.time = 0;
     this.rebuild();
   }
-}
-
-// Spielstand-Migrationen: jede Funktion hebt eine Version um eins an.
-const MIGRATIONS = {
-  // v3 → v4: Palettenlogistik. Bandlager und Deko-Stapler entfallen, Wareneingang liefert Paletten.
-  3: d => {
-    d.entities = d.entities.filter(e => e.type !== 'lager' && e.type !== 'stapler');
-    for (const e of d.entities) {
-      if (e.type === 'eingang') { e.order = e.item || 'rundstahl'; e.dock = []; e.timer = 0; delete e.item; delete e.out; delete e.progress; }
-    }
-    d.goalIndex = 0;
-    d.forklifts = []; d.nextForkliftId = 1; d.nextPalletId = 1;
-    d.v = 4;
-    return d;
-  },
-};
-export function migrate(d) {
-  if (!d || typeof d.v !== 'number') throw new Error('Unbekanntes Spielstandformat');
-  if (d.v < 3) throw new Error('Spielstand aus einer älteren Version (Außenkarte) – nicht kompatibel');
-  while (d.v < CONFIG.saveVersion) {
-    const m = MIGRATIONS[d.v];
-    if (!m) throw new Error(`Keine Migration für Version ${d.v}`);
-    d = m(d);
-  }
-  return d;
-}
-
-function b64(arr) {
-  let s = '';
-  for (let i = 0; i < arr.length; i += 0x8000) s += String.fromCharCode.apply(null, arr.subarray(i, i + 0x8000));
-  return btoa(s);
-}
-function unb64(s) {
-  const bin = atob(s), arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return arr;
-}
-
-export function fmtMoney(v) {
-  const a = Math.abs(v);
-  const s = a >= 1e6 ? (a / 1e6).toFixed(2).replace('.', ',') + ' Mio' : Math.round(a).toLocaleString('de-DE');
-  return (v < 0 ? '−' : '') + s + ' €';
 }

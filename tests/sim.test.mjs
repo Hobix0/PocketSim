@@ -1,168 +1,224 @@
-// Headless-Tests der Simulation: node --test tests/
+// Headless-Tests der Simulation: node --test tests/*.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Game, migrate } from '../src/sim.js';
-import { findPath } from '../src/logistics.js';
+import { Game } from '../src/sim.js';
+import { findPath } from '../src/path.js';
 import { CONFIG } from '../src/data.js';
 
 const STEP = 1 / CONFIG.tickRate;
-const run = (g, seconds) => { for (let i = 0; i < seconds * CONFIG.tickRate; i++) g.tick(STEP); };
+const run = (g, seconds, until) => {
+  for (let i = 0; i < seconds * CONFIG.tickRate; i++) {
+    g.tick(STEP);
+    if (until && until()) return true;
+  }
+  return false;
+};
 
-// Leere Halle (nur Trafo) mit Versand an der Ostwand in Zeile z0
-function line(z0 = 4) {
-  const g = new Game();
-  g.newGame(42);
-  for (const e of [...g.entities.values()]) if (e.type !== 'trafo') g.remove(e.id, false, true);
+// Funktionierendes Mini-Café im Erdgeschoss
+function cafe(seed = 7) {
+  const g = new Game(seed);
   g.money = 1e6;
-  g.place('versand', g.W - 2, z0, 0, true);
-  return { g };
+  const shop = g.shopOnFloor(0);
+  assert.ok(g.place('theke', 0, 6, 2, 0).ok);
+  assert.ok(g.place('kaffeemaschine', 0, 8, 2, 2).ok);
+  assert.ok(g.place('vitrine', 0, 4, 2, 0).ok);
+  assert.ok(g.place('tisch', 0, 3, 7, 0).ok);
+  assert.ok(g.place('stuhl', 0, 2, 7, 0).ok);
+  assert.ok(g.place('stuhl', 0, 4, 7, 0).ok);
+  g.hire(shop.id);
+  g.clock = CONFIG.openFrom;
+  return { g, shop };
 }
 
-// Starthalle ohne Altbestand, sonst wie im Spiel (Eingang, Versand, Regal, Staplerstation)
-function hall() {
-  const g = new Game();
-  g.newGame(42);
-  for (const e of [...g.entities.values()]) if (e.type === 'altregal' || e.type === 'altbuero' || e.type === 'palette') g.remove(e.id, false, true);
-  g.money = 1e6;
-  return g;
-}
-
-test('neue Halle: Tore, Trafo, Regal, Stapler, Stützen blockieren Felder', () => {
-  const g = new Game();
-  g.newGame(1);
-  assert.equal(g.countBuildings(e => e.type === 'eingang'), 1);
-  assert.equal(g.countBuildings(e => e.type === 'regal'), 1);
-  assert.equal(g.forklifts.length, 1);
-  assert.equal(g.countBuildings(e => e.type === 'versand'), 1);
-  assert.ok(g.columns.length > 0);
-  const [cx, cz] = g.columns[0];
-  assert.equal(g.canPlace('band', cx, cz).ok, false);
+test('Wegfindung umgeht Hindernisse und schneidet keine Ecken', () => {
+  const wall = new Set(['2,0', '2,1', '2,2', '2,3']);
+  const p = findPath(5, 5, (x, z) => wall.has(`${x},${z}`), 0, 0, 4, 0);
+  assert.ok(p && p.length);
+  for (const [x, z] of p) assert.ok(!wall.has(`${x},${z}`));
+  assert.ok(p.some(([, z]) => z === 4), 'muss unten herum laufen');
+  assert.equal(findPath(3, 1, (x) => x === 1, 0, 0, 2, 0), null);
 });
 
-test('Wandtore nur an der Außenwand und automatisch nach innen gedreht', () => {
-  const g = new Game();
-  g.newGame(2);
-  g.money = 1e6;
-  assert.equal(g.canPlace('eingang', 10, 5).reason, 'Muss an der Außenwand stehen');
-  assert.equal(g.wallRotation(0, 5, 2), 1);
-  assert.equal(g.wallRotation(g.W - 2, 5, 2), 3);
-  assert.equal(g.wallRotation(5, 0, 2), 2);
+test('neues Spiel: Erdgeschoss mit Café, obere Etagen gesperrt', () => {
+  const g = new Game(1);
+  assert.equal(g.floors[0].unlocked, true);
+  assert.equal(g.shopOnFloor(0).type, 'cafe');
+  assert.equal(g.floors[1].unlocked, false);
+  const st = g.shopStatus(g.shopOnFloor(0));
+  assert.equal(st.ready, false);
+  assert.ok(st.reasons.includes('Theke mit Kasse fehlt'));
 });
 
-test('Palettenfluss: Eingang → Regal → Aufgabe → Säge → Abnahme → Regal → Versand', () => {
-  const g = hall();
-  const feeder = g.place('aufgabe', 8, 4, 1);      // Bandseite Osten
-  feeder.want = 'rundstahl';
-  for (let x = 10; x < 12; x++) g.place('band', x, 4, 1);
-  g.place('saege', 12, 4, 1);
-  for (let x = 14; x < 17; x++) g.place('band', x, 4, 1);
-  g.place('abnahme', 17, 4, 3);                    // Bandseite Westen
-  run(g, 300);
-  assert.ok((g.stats.bought.rundstahl || 0) >= 20, 'Paletten wurden eingekauft');
-  assert.ok((g.stats.produced.rohling || 0) >= 40, `Säge hat produziert (${g.stats.produced.rohling || 0})`);
-  assert.ok((g.stats.sold.rohling || 0) >= 20, `Rohlinge wurden per Palette versendet (${g.stats.sold.rohling || 0})`);
-  assert.equal(g.stats.sold.rundstahl || 0, 0, 'Einkaufsware wird nicht versendet');
-});
-
-test('Rohlinge bleiben im Lager, wenn eine Aufgabestation sie anfordert', () => {
-  const g = hall();
-  const f = g.place('aufgabe', 20, 4, 1);
-  f.want = 'rohling';
-  const rack = [...g.entities.values()].find(e => e.type === 'regal');
-  rack.slots[0] = g.newPallet('rohling', 20);
-  run(g, 60);
-  assert.equal(g.stats.sold.rohling || 0, 0);
-  assert.ok(f.pallets.length > 0 || g.forklifts.some(fl => fl.carry?.item === 'rohling'), 'Palette ging zur Aufgabestation');
-});
-
-test('Abnahmestation gibt Teilpaletten nach Wartezeit frei', () => {
-  const g = hall();
-  const c = g.place('abnahme', 20, 4, 3);
-  g.rebuild();
-  for (let i = 0; i < 5; i++) assert.ok(g.insert(c, 'welle', 19, 4));
-  assert.equal(g.insert(c, 'welle', 22, 4), false, 'nur von der Bandseite');
-  assert.equal(c.pallets[0].ready, undefined);
-  run(g, CONFIG.partialPickup + 1);
-  assert.ok(c.pallets.length === 0 || c.pallets[0].ready || g.forklifts.some(f => f.carry), 'Teilpalette freigegeben');
-});
-
-test('Stapler finden Wege um Hindernisse und erkennen zugebaute Ziele', () => {
-  const g = hall();
-  for (let z = 2; z < 10; z++) g.place('band', 12, z, 0);
-  const path = findPath(g, 10, 5, [{ x: 14, z: 5 }]);
-  assert.ok(path && path.length > 4, 'Umweg um die Bahn');
-  for (let z = 0; z < g.H; z++) if (!g.at(12, z) && g.terrain[g.idx(12, z)] === 0) g.place('band', 12, z, 0);
-  assert.equal(findPath(g, 10, 5, [{ x: 14, z: 5 }]), null, 'durchgehende Bahn trennt die Halle');
-});
-
-test('Maschinen nehmen an der Ausgangsseite nichts an', () => {
-  const { g } = line();
-  const saw = g.place('saege', 10, 10, 1);       // Ausgang Osten (x = 12)
-  g.rebuild();
-  assert.equal(g.insert(saw, 'rundstahl', 12, 10, true), false, 'Vorderseite');
-  assert.equal(g.insert(saw, 'rundstahl', 9, 10, true), true, 'Rückseite');
-  assert.equal(g.insert(saw, 'rundstahl', 10, 9, true), true, 'Seite');
-});
-
-test('Maschinen geben nur nach vorne ab', () => {
-  const { g } = line();
-  const saw = g.place('saege', 10, 10, 1);
-  saw.outBuf = { rohling: 4 };
-  g.place('band', 9, 10, 3);                      // hinten, zeigt weg
-  g.place('band', 12, 10, 1);                     // vorne, zeigt weg
-  g.rebuild();
-  g.tick(STEP);
-  assert.equal(g.at(9, 10).items.length, 0);
-  assert.equal(g.at(12, 10).items.length, 1);
-});
-
-test('Rollenbahn-Durchsatz entspricht Geschwindigkeit / Abstand', () => {
-  const { g } = line();
-  for (let x = 2; x < g.W - 2; x++) g.place('band', x, 4, 1);
-  g.rebuild();
-  const first = g.at(2, 4);
-  const feed = seconds => { for (let i = 0; i < seconds * CONFIG.tickRate; i++) { g.insert(first, 'rundstahl', 1, 4); g.tick(STEP); } };
-  feed(40);                                        // Bahn vollständig füllen
-  const before = g.stats.sold.rundstahl || 0;
-  feed(30);
-  const perSec = ((g.stats.sold.rundstahl || 0) - before) / 30;
-  const max = CONFIG.beltSpeed / CONFIG.beltSpacing;
-  assert.ok(perSec > max * 0.85 && perSec <= max * 1.02, `Durchsatz ${perSec.toFixed(2)}/s, erwartet ≈ ${max}`);
-});
-
-test('Altbestand kostet Entsorgung', () => {
-  const g = new Game();
-  g.newGame(3);
-  const office = [...g.entities.values()].find(e => e.type === 'altbuero');
+test('Platzieren: belegt, Treppenhaus, Eingang und Kosten', () => {
+  const g = new Game(1);
+  const m0 = g.money;
+  assert.ok(g.place('tisch', 0, 5, 5, 0).ok);
+  assert.equal(g.money, m0 - 140);
+  assert.equal(g.place('stuhl', 0, 5, 5, 0).reason, 'Platz belegt');
+  assert.equal(g.place('stuhl', 0, 0, 0, 0).reason, 'Treppenhaus');
+  assert.equal(g.place('stuhl', 0, CONFIG.doorX, CONFIG.D - 1, 0).reason, 'Laufweg muss frei bleiben');
+  assert.equal(g.place('stuhl', 1, 5, 5, 0).reason, 'Etage noch nicht angemietet');
+  // Teppich liegt unter Möbeln
+  assert.ok(g.place('teppich', 0, 5, 5, 0).ok);
+  assert.ok(g.place('pflanze', 0, 6, 6, 0).ok);
+  // Verkaufen gibt die Hälfte zurück
+  const id = g.itemAt(0, 6, 6).id;
   const before = g.money;
-  assert.ok(g.remove(office.id));
-  assert.equal(g.money, before - 400);
+  g.remove(id);
+  assert.equal(g.money, before + 30);
 });
 
-test('Speichern und Laden erhalten den Zustand', () => {
-  const g = hall();
-  const feeder = g.place('aufgabe', 8, 4, 1);
-  for (let x = 10; x < 12; x++) g.place('band', x, 4, 1);
-  g.place('saege', 12, 4, 1);
-  for (let x = 14; x < 17; x++) g.place('band', x, 4, 1);
-  g.place('abnahme', 17, 4, 3);
+test('Theke braucht Platz davor und darf nicht vom Eingang abgeschnitten werden', () => {
+  const g = new Game(1);
+  g.money = 1e6;
+  // Vorderseite zur Rückwand gedreht → kein Platz für Gäste
+  assert.equal(g.place('theke', 0, 6, 0, 2).ok, false);
+  assert.ok(g.place('theke', 0, 6, 0, 0).ok);
+  // Feld vor der Kasse zubauen geht nicht
+  assert.equal(g.place('pflanze', 0, 6, 2, 0).reason, 'Vor der Theke muss Platz für Gäste sein');
+});
+
+test('Sitzplätze: Stuhl zählt nur mit Tisch daneben, Sofa hat zwei', () => {
+  const g = new Game(1);
+  g.money = 1e6;
+  g.place('stuhl', 0, 5, 5, 0);
+  assert.equal(g.derived[0].seats.length, 0);
+  g.place('tisch', 0, 6, 5, 0);
+  assert.equal(g.derived[0].seats.length, 1);
+  assert.ok(Math.abs(g.derived[0].seats[0].yaw - Math.PI / 2) < 1e-6, 'Stuhl schaut zum Tisch');
+  g.place('sofa', 0, 8, 5, 0);
+  assert.equal(g.derived[0].seats.length, 3);
+});
+
+test('Gäste kommen, stellen sich an, kaufen und zahlen', () => {
+  const { g, shop } = cafe();
+  assert.equal(g.shopStatus(shop).serving, true);
+  const m0 = g.money;
+  run(g, 240);
+  assert.ok(g.today.served >= 3, `nur ${g.today.served} bedient`);
+  assert.ok(g.today.revenue > 0);
+  assert.ok(g.money > m0 - 200, 'Umsatz gleicht Nachbestellungen aus');
+  assert.ok(Object.keys(g.today.sold).length > 0);
+});
+
+test('manche Gäste setzen sich hin', () => {
+  const { g } = cafe(3);
+  let sat = false;
+  run(g, 600, () => {
+    sat = [...g.agents.values()].some((a) => a.state === 'sitting');
+    return sat;
+  });
+  assert.ok(sat, 'niemand hat sich gesetzt');
+});
+
+test('zu teuer: Gäste drehen an der Tür um', () => {
+  const { g, shop } = cafe();
+  for (const p of Object.keys(shop.menu)) g.setPrice(shop.id, p, 25);
+  run(g, 240);
+  assert.equal(g.today.served, 0);
+  assert.ok(g.today.lostPrice > 0);
+});
+
+test('ohne Barista wird nicht verkauft', () => {
+  const { g, shop } = cafe();
+  g.fire(shop.id);
   run(g, 120);
-  const json = JSON.parse(JSON.stringify(g.serialize()));
-  const h = new Game();
-  h.load(json);
-  assert.equal(h.entities.size, g.entities.size);
-  assert.equal(Math.round(h.money), Math.round(g.money));
-  assert.equal(h.forklifts.length, g.forklifts.length);
-  const before = h.stats.produced.rohling || 0;
-  run(h, 60);
-  assert.ok((h.stats.produced.rohling || 0) > before, 'Produktion läuft nach dem Laden weiter');
+  assert.equal(g.today.served, 0);
+  assert.equal(g.shopStatus(shop).serving, false);
 });
 
-test('Spielstände: v2 abgelehnt, v3 wird migriert', () => {
-  assert.throws(() => migrate({ v: 2 }), /älteren Version/);
-  const m = migrate({ v: 3, entities: [{ type: 'lager' }, { type: 'eingang', item: 'stahlblech' }], goalIndex: 4 });
-  assert.equal(m.v, 4);
-  assert.equal(m.entities.length, 1);
-  assert.equal(m.entities[0].order, 'stahlblech');
-  assert.throws(() => migrate(null));
+test('Tagesende: Lohn und Miete, frische Ware verdirbt, neuer Tag beginnt', () => {
+  const { g, shop } = cafe();
+  g.buy(shop.id, 'croissant', 2);
+  const day = g.day;
+  run(g, (CONFIG.openUntil - g.clock) + 200, () => g.day > day);
+  assert.equal(g.day, day + 1);
+  assert.equal(g.clock, CONFIG.dayStart);
+  const r = g.history.at(-1);
+  assert.equal(r.wages, CONFIG.wage);
+  assert.equal(r.rent, 95);
+  assert.equal(shop.stock.croissant, 0);
+  assert.equal(g.agents.size, 0);
+});
+
+test('Etage anmieten, Café oben eröffnen, Gäste nehmen die Treppe', () => {
+  const g = new Game(5);
+  g.money = 1e6;
+  assert.equal(g.openShop(1, 'cafe'), null, 'gesperrt');
+  assert.ok(g.unlockFloor(1).ok);
+  assert.equal(g.openShop(1, 'buchladen'), null, 'Buchladen noch nicht verfügbar');
+  const shop = g.openShop(1, 'cafe');
+  assert.ok(shop);
+  assert.ok(g.place('theke', 1, 7, 2, 0).ok);
+  assert.ok(g.place('kaffeemaschine', 1, 9, 2, 0).ok);
+  g.hire(shop.id);
+  g.clock = CONFIG.openFrom;
+  let up = false, back = false;
+  run(g, 400, () => {
+    for (const a of g.agents.values()) {
+      if (a.shop === shop.id && a.floor === 1 && a.state === 'queue') up = true;
+      if (up && a.shop === shop.id && a.state === 'leaving' && a.floor === 0) back = true;
+    }
+    return up && back;
+  });
+  assert.ok(up, 'kein Gast oben angekommen');
+  assert.ok(back, 'kein Gast wieder herunter gekommen');
+  assert.ok(g.today.served > 0);
+});
+
+test('Treppe darf nicht verbaut werden', () => {
+  const g = new Game(1);
+  g.money = 1e6;
+  // Riegel quer durch die Etage zwischen Eingang und Treppe
+  for (let z = 0; z < CONFIG.D; z++) {
+    const r = g.place('pflanze', 0, 3, z, 0);
+    if (z < CONFIG.D - 1) assert.ok(r.ok, `z=${z} ${r.reason}`);
+    else assert.equal(r.reason, 'Treppe wäre vom Eingang nicht erreichbar');
+  }
+});
+
+test('Umbau während Betrieb: Theke entfernen schickt Wartende heim', () => {
+  const { g } = cafe();
+  run(g, 120, () => [...g.regState.values()].some((r) => r.queue.length > 0));
+  const reg = g.derived[0].registers[0];
+  g.remove(reg.id);
+  for (const a of g.agents.values()) if (a.kind === 'customer') assert.ok(['leaving', 'exit', 'approach', 'toSeat', 'sitting'].includes(a.state), a.state);
+  run(g, 60);
+});
+
+test('Speichern und Laden', () => {
+  const { g, shop } = cafe();
+  run(g, 100);
+  const data = JSON.parse(JSON.stringify(g.serialize()));
+  const h = new Game(99);
+  h.load(data);
+  assert.equal(h.items.size, g.items.size);
+  assert.equal(h.money, g.money);
+  assert.equal(h.shopOnFloor(0).staff, shop.staff);
+  assert.equal(h.derived[0].seats.length, g.derived[0].seats.length);
+  run(h, 60);
+});
+
+test('Ein ganzer Tag läuft stabil durch', () => {
+  const { g } = cafe(11);
+  const day = g.day;
+  run(g, 900, () => g.day > day);
+  const r = g.history.at(-1);
+  assert.ok(r.served > 20, `nur ${r.served} Gäste`);
+  assert.ok(r.revenue > 100);
+  for (const v of [g.money, g.rep]) assert.ok(Number.isFinite(v));
+});
+
+test('ohne Vitrine: Snack-Wunsch zählt nicht als „zu teuer“', () => {
+  const g = new Game(4);
+  g.money = 1e6;
+  const shop = g.shopOnFloor(0);
+  g.place('theke', 0, 6, 2, 0);
+  g.place('kaffeemaschine', 0, 8, 2, 2);
+  g.hire(shop.id);
+  for (const p of Object.keys(shop.menu)) g.setPrice(shop.id, p, 1);
+  g.clock = CONFIG.openFrom;
+  run(g, 300);
+  assert.ok(g.today.served > 0);
+  assert.equal(g.today.lostPrice, 0);
 });

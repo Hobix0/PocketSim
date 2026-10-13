@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>PocketSim Factory</title>
-  <meta name="description" content="Übernimm eine Fabrikhalle in Remscheid und fertige Werkzeuge – vom ersten Rohling bis zum Akkuschrauber.">
-  <meta name="theme-color" content="#101010">
+  <title>PocketSim Café</title>
+  <meta name="description" content="Richte dein eigenes Café ein, verkaufe Kaffee und Snacks und baue Etage für Etage aus.">
+  <meta name="theme-color" content="#2f4a42">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
@@ -13,7 +13,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
     {
@@ -29,57 +29,44 @@
 
   <div id="ui">
     <header class="topbar">
-      <div class="brand"><span class="pulse"></span><span>POCKETSIM <small>/ FACTORY</small></span></div>
-      <div class="hud">
-        <div class="stat"><label>Kapital</label><b id="money">–</b><span id="income" class="delta"></span></div>
-        <div class="stat power"><label>Strom</label><div class="meter"><i id="powerBar"></i></div><span id="powerText"></span></div>
-        <div class="stat clock"><label id="dayLabel">Tag 1</label><b id="clock">08:00</b><span id="weather"></span></div>
-        <div class="speed" id="speed"></div>
+      <div class="brand">PocketSim <em>Café</em></div>
+      <div class="stats">
+        <div class="stat"><label>Kasse</label><b id="money">–</b></div>
+        <div class="stat"><label id="dayLabel">Tag 1</label><b id="clock">07:00</b></div>
+        <div class="stat"><label>Ruf</label><b id="rep" class="stars"></b></div>
       </div>
-      <nav class="menu">
-        <button id="isoBtn" title="Ansicht umschalten (I)"><i data-icon="cube"></i><span>Perspektive</span></button>
-        <button data-open="research" title="Forschung (F)"><i data-icon="flask"></i><span>Forschung</span><em id="researchBadge" class="badge hidden"></em></button>
-        <button data-open="stats" title="Statistik (T)"><i data-icon="chart"></i><span>Statistik</span></button>
-        <button data-open="menu" title="Menü (Esc)"><i data-icon="menu"></i><span>Menü</span></button>
-      </nav>
+      <div class="speed" id="speed"></div>
+      <nav class="menu" id="menu"></nav>
     </header>
 
-    <div id="eventBanner" class="event hidden"></div>
-
-    <aside class="sidebar">
-      <section id="goal" class="card goal"></section>
-      <section class="card contracts">
-        <h3>Aufträge <span id="contractCount"></span></h3>
-        <div id="contracts"></div>
-      </section>
+    <aside class="side">
+      <section class="card shop" id="shopCard"></section>
+      <section class="card steps" id="steps"></section>
     </aside>
 
-    <section id="inspector" class="card inspector hidden"></section>
-    <div id="hoverInfo" class="hover-info"></div>
-    <div id="tooltip" class="tooltip hidden"></div>
+    <nav class="floors" id="floors"></nav>
+
+    <section class="card inspector hidden" id="inspector"></section>
 
     <footer class="dock">
       <div class="tools" id="tools"></div>
-      <div class="build">
+      <div class="catalog hidden" id="catalog">
         <div class="cats" id="cats"></div>
-        <div class="items" id="buildItems"></div>
+        <div class="items" id="items"></div>
       </div>
+      <div class="hint" id="hint"></div>
     </footer>
 
     <div id="toasts"></div>
-    <div id="modal" class="modal hidden"><div class="modal-card"><button class="close" data-close>&times;</button><div id="modalBody"></div></div></div>
+    <div id="modal" class="modal hidden"><div class="sheet"><button class="close" data-close aria-label="Schließen">×</button><div id="modalBody"></div></div></div>
   </div>
 
-  <div id="title" class="title-screen">
+  <div id="title" class="title">
     <div class="title-card">
-      <div class="eyebrow"><span class="pulse"></span>Factory · Remscheid</div>
-      <h1>PocketSim</h1>
-      <p>Sägen, schmieden, härten, montieren. Du übernimmst eine leere Halle in Remscheid und baust eine Werkzeugfertigung auf, vom ersten Rohling bis zum Akkuschrauber.</p>
+      <div class="eyebrow">Wirtschaftssimulation</div>
+      <h1>PocketSim <em>Café</em></h1>
+      <p>Ein leeres Ladenlokal in der Altstadt, drei Etagen und ein Startkapital. Richte dein Café ein, stell Baristas ein, finde die richtigen Preise – und miete später die oberen Etagen dazu.</p>
       <div class="title-actions" id="titleActions"></div>
-      <details class="seed">
-        <summary>Eigene Welt</summary>
-        <label>Seed <input id="seedInput" inputmode="numeric" placeholder="zufällig"></label>
-      </details>
       <div class="loading" id="loading">Lade 3D-Engine …</div>
     </div>
   </div>

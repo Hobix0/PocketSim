@@ -1,159 +1,92 @@
-# PocketSim Factory
+# PocketSim Café
 
-> Du übernimmst eine leere Fabrikhalle in Remscheid. LKW liefern Paletten mit Rundstahl ans Rolltor, Gabelstapler lagern sie ins Regal ein und bringen sie an die Linien. Über Rollenbahnen geht es durch Säge, Schmiede und Härteofen, und am Ende verlassen Hämmer, Werkzeugkoffer und Akkuschrauber die Halle.
+> Du übernimmst ein leeres Ladenlokal in der Altstadt. Stell eine Theke auf, kauf eine Siebträgermaschine, stell Baristas ein und finde die richtigen Preise. Gäste kommen von der Straße herein, stellen sich an der Kasse an, bezahlen und setzen sich ab und zu an einen freien Tisch. Wenn das Café läuft, mietest du die oberen Etagen dazu.
 
-![Die Fabrikhalle mit Regallager, Gabelstaplern und drei Fertigungslinien](docs/screenshots/halle.jpg)
+![Das Café im Erdgeschoss mit Gästen an der Theke und an den Tischen](docs/screenshots/cafe.jpg)
 
-**Live spielen:** [herosrs.github.io/PocketSim](https://herosrs.github.io/PocketSim/)
+PocketSim Café ist eine Wirtschaftssimulation im Browser. Die 3D-Grafik läuft mit Three.js. Es gibt keinen Build-Schritt und keinen Login, und das Spiel läuft am Desktop genauso wie auf dem Handy.
 
-PocketSim Factory ist ein Fabrik-Aufbauspiel im Browser, inspiriert von **Factorio**, **shapez** und **Satisfactory**. Die 3D-Grafik läuft mit Three.js, in Perspektive oder isometrisch. Es gibt keinen Build-Schritt und keinen Login, und das Spiel läuft auf dem Desktop genauso wie auf dem Handy.
+## Spielen
 
----
-
-## Materialfluss
-
-Teile bewegen sich auf zwei Ebenen: **Paletten** fahren per Gabelstapler durch die Halle, **einzelne Teile** laufen über Rollenbahnen durch die Maschinen. Aufgabe- und Abnahmestationen sind die Übergabepunkte zwischen beiden Ebenen.
-
-```mermaid
-flowchart LR
-    LKW([LKW]) -->|Palette| WE[Wareneingang]
-    WE -->|Stapler| R[(Palettenregal)]
-    R -->|Stapler| A1[Aufgabestation]
-    A1 -->|Rollenbahn| M1[Bandsäge] -->|Rollenbahn| AB1[Abnahmestation]
-    AB1 -->|Stapler| R
-    R -->|Stapler| A2[Aufgabestation]
-    A2 -->|Rollenbahn| M2[Schmiede → Härteofen → Schleifen] -->|Rollenbahn| AB2[Abnahmestation]
-    AB2 -->|Stapler| R
-    R -->|Stapler| V[Versand]
-    V --> Kunde([Kunde])
-```
-
-| Station | Aufgabe |
-|---|---|
-| **Wareneingang** | Rolltor an der Außenwand. Bestellt Paletten (à 20 Teile) des gewählten Materials, die per LKW ankommen. |
-| **Palettenregal** | 6 Plätze auf 3 Ebenen. Einkaufsware lässt immer einen Platz für Fertigware frei. |
-| **Aufgabestation** (Eingangspunkt) | Fordert ein Material an. Der Stapler stellt die Palette hinten ab, ein Werker legt die Teile vorne aufs Band. |
-| **Abnahmestation** (Abgabepunkt) | Palettiert Teile vom Band. Volle Paletten (oder Teilpaletten nach 25 s) holt der Stapler ab. |
-| **Staplerstation** | Parkplatz und Ladestation, bis zu 3 Stapler je Station. |
-| **Versand** | Rolltor an der Außenwand. Verkauft Paletten und auch Teile direkt vom Band. |
-
-**Wer fährt wohin?** Ein Disponent vergibt die Fahraufträge nach Dringlichkeit:
-1. Eine Aufgabestation braucht Material → passende Palette aus dem Lager oder direkt vom Wareneingang bzw. von einer Abnahmestation.
-2. Volle Paletten an Abnahmestationen → ins Regal.
-3. Neue Paletten am Wareneingang → ins Regal.
-4. Fertigware im Regal, die keine Aufgabestation anfordert → zum Versand. Einkaufsware wird nie verkauft.
-
-Stapler fahren nur über **freie Hallenfelder**. Rollenbahnen und Maschinen sind für sie Wände, also müssen Gänge frei bleiben. Ist ein Ziel zugebaut, meldet der Inspektor das.
-
-![Regallager mit Wareneingang, Gabelstapler und Aufgabestation](docs/screenshots/lager.jpg)
-
-![Fertigungslinie: Aufgabestation, Gesenkschmiede, Härteofen, Schleifmaschine und Abnahmestation](docs/screenshots/linie.jpg)
-
----
-
-## Spielprinzip
-
-1. **Einkaufen**: Am Wareneingang bestellst du Rundstahl, Stahlblech, Holz, Granulat oder Kupferdraht als Paletten.
-2. **Lagern und bereitstellen**: Gabelstapler bringen Paletten ins Regal und von dort an die Aufgabestationen.
-3. **Fertigen**: Jede Maschine gibt **nur vorne** ab (oranger Pfeil am Boden) und nimmt **hinten und seitlich** an. Das Layout ist damit Teil des Rätsels.
-4. **Verkaufen**: Was im Versand ankommt, wird verkauft oder für einen Auftrag gezählt. Viel vom selben Teil drückt den Preis.
-5. **Forschen**: Neue Maschinen und Boni kosten Geld und verlangen, dass bestimmte Teile bereits geliefert wurden.
-
-### Die Halle
-- 40 × 26 Felder, mit **Hallenstützen** im 8-Meter-Raster, die nicht überbaut werden können.
-- **Altbestand** (Meisterbüro, alte Regale, Paletten) steht im Weg und kostet Entsorgung.
-- **Signalsäulen** an jeder Maschine: grün läuft, orange blockiert, aus wartet.
-- Die Wände zur Kamera hin werden automatisch abgesenkt, damit man in die Halle schaut.
-
-![Isometrische Ansicht der Halle](docs/screenshots/iso.jpg)
-
-### Produktionsketten (Werkzeugindustrie)
-
-| Stufe | Teile |
-|---|---|
-| Einkauf | Rundstahl, Stahlblech, Kantholz, Kunststoffgranulat, Kupferdraht |
-| Halbzeuge | Stahlrohling, Welle, Holzstiel, Schmiederohling, gehärtetes Teil, Blechteil, Blechgehäuse, Griff, Zahnrad, Spule |
-| Produkte | Hammer, Schraubenschlüssel, Zange, Getriebe, Elektromotor |
-| Spitzenprodukte | **Werkzeugkoffer**, **Akkuschrauber** |
-
-### Weitere Systeme
-- **Strom** über Trafostationen, mit laufenden Kosten. Bei Überlast arbeiten alle Maschinen langsamer.
-- **Aufträge** mit Zeitlimit und Bonus, **Ereignisse** wie Baumarkt-Aktion, Stahlpreis oder Energiekrise.
-- **Upgrades** für Maschinen und Wareneingang bis Stufe 5.
-- **Tag- und Nachtschicht**: Tagsüber fällt Licht durch die Fenster, nachts leuchten die Hallenlampen.
-- **Statistik**: Umsatz, Einkauf, Strom, Produktion pro Minute, Marktpreise.
-- **Speichern**: automatisch alle 30 s, dazu Export/Import als JSON.
-
-![Nachtschicht: Die Hallenlampen übernehmen](docs/screenshots/nacht.jpg)
-
----
-
-## Steuerung
-
-| Eingabe | Aktion |
-|---|---|
-| Linksklick | Auswählen / Bauen · Ziehen verschiebt die Ansicht |
-| Rechte Maustaste ziehen | Ansicht verschieben |
-| Mittlere Maustaste ziehen, `Q` / `E` | Kamera drehen (isometrisch in 90°-Schritten) |
-| `I` oder Würfel-Button | Isometrische Ansicht ein/aus |
-| Mausrad | Zoomen |
-| `WASD` / Pfeiltasten | Kamera bewegen |
-| `R` | Maschine bzw. Rollenbahn drehen |
-| `X` | Abrisswerkzeug |
-| `C` | Gebäude unter der Maus kopieren |
-| `1`–`9`, `Tab` | Gebäude wählen, Kategorie wechseln |
-| `F` / `T` | Forschung / Statistik |
-| Leertaste | Pause |
-| Touch | Ein Finger baut bzw. verschiebt, zwei Finger bewegen und zoomen |
-
----
-
-## Eigene 3D-Modelle
-
-Alle Gebäude und Teile haben prozedurale Platzhalter. Eigene Modelle aus Blender legst du als GLB in `models/` ab und trägst sie in `models/manifest.json` ein. Maßstab, Ausrichtung und die Namenskonventionen für Animationen stehen in [models/README.md](models/README.md).
-
----
-
-## Technik
-
-```
-index.html          Einstieg, Import-Map für Three.js (CDN)
-css/style.css       Leitstand-UI nach dem „Factory“-Stil (Refero Styles)
-src/data.js         Inhalte: Teile, Rezepte, Gebäude, Forschung, Ziele, Ereignisse
-src/sim.js          Simulation: Halle, Ports, Rollenbahnen, Strom, Markt, Spielstände mit Migrationen
-src/logistics.js    Paletten, Gabelstapler, Wegfindung (A*) und Disponent
-src/models.js       Prozedurale Modelle und GLB-Lader für eigene Modelle
-src/render.js       Szene: Halle, Instancing, Partikel, Licht, AO/Bloom, Perspektive und Iso-Kamera
-src/input.js        Kamera, Maus/Touch/Tastatur, Bauwerkzeuge
-src/ui.js           HUD, Baumenü, Inspektor, Aufträge, Forschung, Statistik, Menü
-src/audio.js        Synthesizer-Sounds über WebAudio
-src/main.js         Verdrahtung, feste Tickrate (30/s), Spielschleife
-tests/sim.test.mjs  Headless-Tests der Simulation
-models/             Eigene GLB-Modelle + manifest.json
-docs/screenshots/   Bilder für diese README
-```
-
-### Lokal starten
+ES-Module brauchen einen kleinen Webserver, ein Doppelklick auf `index.html` reicht also nicht:
 
 ```bash
 python3 -m http.server 8080
+# dann http://localhost:8080 öffnen
 ```
 
-Danach `http://localhost:8080` öffnen. `server.py` funktioniert weiterhin, zum Beispiel in Pythonista auf dem iPhone.
+Auf dem iPhone geht das mit Pythonista und `server.py` (inklusive Live-Reload).
 
-### Tests
+| Aktion | Maus / Tastatur | Touch |
+|---|---|---|
+| Kamera drehen | linke Maustaste ziehen | ein Finger |
+| Verschieben / Zoomen | rechte Maustaste / Mausrad | zwei Finger |
+| Möbel platzieren | Klick | antippen (Vorschau), nochmal antippen |
+| Möbel drehen | `R` | ⟳-Knopf |
+| Etage wechseln | `Bild ↑` / `Bild ↓` | Etagenleiste rechts |
+| Pause / Tempo | Leertaste, `1` `2` `3` | Knöpfe oben |
+
+## So läuft ein Tag
+
+```mermaid
+flowchart LR
+    S([Straße]) -->|liest die Karte| T{zu teuer?}
+    T -->|ja| W([geht weiter])
+    T -->|nein| Q[Schlange an der Kasse]
+    Q -->|zu lange gewartet| A([geht verärgert])
+    Q --> B[bestellt & bezahlt]
+    B -->|ab und zu| P[setzt sich an einen freien Platz]
+    B --> L([geht mit Becher])
+    P --> L
+```
+
+- **Öffnungszeiten** 8–19 Uhr. Der Tag beginnt um 7 Uhr, nach Ladenschluss gibt es die Tagesabrechnung.
+- **Kosten**: Wareneinkauf, Löhne (75 € je Barista und Tag) und Miete je Etage.
+- **Theke mit Kasse**: Ohne Theke kann niemand bestellen. Jede Kasse braucht eine Barista. Zusätzliche Baristas helfen an der Maschine und machen den Service schneller.
+- **Siebträger-Station** ist Pflicht für Kaffee und Tee, die **Kuchenvitrine** für Croissants, Kuchen, Muffins und Sandwiches.
+- **Sitzplätze**: Ein Stuhl zählt nur mit einem Tisch daneben und dreht sich automatisch zu ihm. Sofa und Sessel brauchen keinen Tisch.
+- **Ambiente**: Pflanzen, Lampen, Regale, Teppiche und die Musikbox machen das Café attraktiver. Das lockt mehr Gäste an und hebt die Laune.
+- **Preise**: Jedes Produkt hat einen fairen Preis. Wer deutlich darüber liegt, verdient pro Tasse mehr, verliert aber Gäste und Laune.
+- **Lager**: Backwaren verderben abends. Die Auto-Bestellung kauft nach, wenn ein Vorrat zur Neige geht, kostet aber 10 % Liefergebühr.
+- **Ruf**: Die Laune jedes Gastes fließt in deinen Ruf ein, und der Ruf bestimmt, wie viele Leute hereinkommen.
+
+![Zweites Café im 1. Obergeschoss, Gäste kommen über das Treppenhaus](docs/screenshots/obergeschoss.jpg)
+
+## Mehrere Etagen
+
+Das Gebäude hat drei Etagen. Das Erdgeschoss gehört dir von Anfang an, das 1. und 2. Obergeschoss kannst du unter **Etagen** anmieten und dort einen eigenen Laden eröffnen. Jeder Laden hat eigene Speisekarte, eigenes Lager und eigenes Personal. Gäste der oberen Etagen gehen durch den Eingang im Erdgeschoss und nehmen das Treppenhaus. Das Treppenhaus und die Wege dorthin dürfen nicht zugebaut werden.
+
+Spielbar ist bisher nur das **Café**. Bäckerei, Buchladen und Boutique sind schon vorgesehen und als „bald verfügbar“ markiert.
+
+![Außenansicht des Gebäudes](docs/screenshots/aussen.jpg)
+
+## Aufbau des Codes
+
+| Datei | Inhalt |
+|---|---|
+| `src/data.js` | Alle Zahlen: Etagen, Ladentypen, Möbel, Produkte, Waren, Nachfragekurve |
+| `src/sim.js` | Die Simulation ohne Grafik: Raster, Bauen, Gäste, Kassen, Wirtschaft, Speichern |
+| `src/path.js` | A*-Wegfindung auf dem Etagenraster |
+| `src/models.js` | Prozedurale Low-Poly-Modelle für Möbel und Figuren |
+| `src/render.js` | Three.js-Szene: Straße, Gebäude mit Schnittansicht, Figuren, Effekte |
+| `src/ui.js` | HUD, Baukatalog, Fenster (Speisekarte, Lager, Personal, Etagen, Bilanz) |
+| `src/main.js` | Spielschleife, Eingabe, Speichern im Browser |
+
+### Einen neuen Ladentyp ergänzen
+
+Alles Ladenspezifische steht in `src/data.js`:
+
+1. In `SHOP_TYPES` den Typ auf `available: true` setzen und `defaultName` und `sitChance` angeben.
+2. Produkte in `PRODUCTS` mit `shop: '<typ>'` anlegen und die verbrauchten Waren in `SUPPLIES` eintragen.
+3. Einrichtung in `FURNITURE` mit `shops: ['<typ>']` anlegen. `register: true` macht ein Möbel zur Kasse. Für neue Ausstattungspflichten (wie `machine` oder `display` beim Café) muss `offerable()` in `sim.js` die Eigenschaft kennen.
+4. In `src/models.js` ein Modell für jedes neue Möbel ergänzen.
+
+Gäste, Schlangen, Sitzplätze, Treppen, Lager, Personal und Abrechnung funktionieren dann ohne weitere Änderungen.
+
+## Tests
+
+Die Simulation läuft ohne Browser und ist mit Node getestet:
 
 ```bash
-node --test tests/*.test.mjs
+npm test
 ```
-
----
-
-## Entwicklung
-
-Entwickelt von **Luca** (HerosRS) mit Unterstützung von Claude (Anthropic).
-
-## Lizenz
-
-Privates Projekt, kein Open Source.
-© 2025 HerosRS

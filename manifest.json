@@ -1,12 +1,12 @@
 {
-  "name": "PocketSim Factory",
+  "name": "PocketSim Café",
   "short_name": "PocketSim",
-  "description": "Übernimm eine Fabrikhalle in Remscheid und fertige Werkzeuge.",
+  "description": "Richte dein eigenes Café ein, verkaufe Kaffee und Snacks und baue Etage für Etage aus.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "any",
-  "background_color": "#101010",
-  "theme_color": "#101010",
+  "background_color": "#2f4a42",
+  "theme_color": "#2f4a42",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
