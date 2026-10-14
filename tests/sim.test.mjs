@@ -360,3 +360,14 @@ test('Ein ganzer Tag läuft stabil durch', () => {
   assert.ok(r.revenue > 100);
   for (const v of [g.money, g.rep]) assert.ok(Number.isFinite(v));
 });
+
+test('Preise: unter 20 € in 10-Cent-, darüber in Euro-Schritten', () => {
+  const g = new Game(1);
+  const s = g.shopOnLot(0);
+  g.setPrice(s.id, 'espresso', 2.34);
+  assert.equal(s.menu.espresso.price, 2.3);
+  g.setPrice(s.id, 'espresso', 89.4);
+  assert.equal(s.menu.espresso.price, 89);
+  g.setPrice(s.id, 'espresso', 90);
+  assert.equal(s.menu.espresso.price, 90);
+});

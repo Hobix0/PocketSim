@@ -54,7 +54,7 @@ export const SHOP_TYPES = {
     start: { sirup: 80, fritten: 60 },
   },
   boutique: {
-    name: 'Boutique', icon: '👗', available: false, mode: 'browse', traffic: 0.28,
+    name: 'Boutique', icon: '👗', available: true, mode: 'browse', traffic: 0.28,
     desc: 'Mode für den Herbst. Kund:innen stöbern, probieren an und kaufen.',
     sitChance: 0, defaultName: 'Laubwerk Mode', staff: 'Verkäufer:in', staffPlural: 'Verkäufer:innen', register: 'b_kasse',
     needsText: 'Kleiderstange oder Regal fehlt',

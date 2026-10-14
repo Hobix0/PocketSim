@@ -125,7 +125,9 @@ const actions = {
       case 'tab': state.panelShop = shopId; break;
       case 'price': {
         const s = game.shops.get(shopId);
-        game.setPrice(shopId, args[1], s.menu[args[1]].price + Number(args[2]));
+        const cur = s.menu[args[1]].price;
+        const step = cur >= 20 || (cur >= 19.95 && Number(args[2]) > 0) ? 1 : 0.1;
+        game.setPrice(shopId, args[1], cur + Math.sign(Number(args[2])) * step);
         break;
       }
       case 'product': game.toggleProduct(shopId, args[1], args[2]); break;

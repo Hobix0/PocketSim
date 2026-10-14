@@ -681,6 +681,114 @@ const BUILDERS = {
     }
   },
 
+
+  // ── Boutique ──
+  b_kasse(g, c) {
+    box(g, 2.0, 0.95, 0.7, c, 0, 0, 0.48, { r: 0.6 });
+    box(g, 2.06, 0.05, 0.78, '#2b2b2e', 0, 0.95, 0.46, { r: 0.4 });
+    box(g, 0.3, 0.08, 0.24, C.black, -0.55, 1.0, 0.42);
+    box(g, 0.26, 0.18, 0.03, '#7fd4c1', -0.55, 1.08, 0.36, { e: '#3aa08a', ei: 0.5 }).rotation.x = -0.35;
+    // Einkaufstüten und Seidenpapier
+    for (let i = 0; i < 3; i++) box(g, 0.22, 0.28, 0.1, ['#e8dcc8', '#2b2b2e', '#c8652f'][i], 0.25 + i * 0.25, 1.0, 0.5);
+    box(g, 0.3, 0.02, 0.22, '#f2e6e8', -0.1, 1.0, 0.55);
+    // Rückregal mit gefalteter Ware
+    box(g, 2.0, 1.8, 0.34, shade(c, -0.1), 0, 0, -0.84);
+    for (let r = 0; r < 3; r++) for (let i = 0; i < 4; i++) box(g, 0.32, 0.12, 0.26, ['#c8652f', '#2c3a50', '#e8dcc8', '#7a2e35', '#a5b596', '#d0a03e'][(r * 4 + i) % 6], -0.66 + i * 0.44, 0.2 + r * 0.55, -0.8);
+    for (let r = 0; r < 3; r++) box(g, 1.94, 0.03, 0.3, shade(c, 0.1), 0, 0.15 + r * 0.55, -0.82);
+  },
+  kleiderstange(g, c) {
+    const m = mat(c, { m: 0.7, r: 0.3 });
+    for (const x of [-0.92, 0.92]) {
+      cyl(g, 0.02, 0.02, 1.62, m, x, 0.03, 0);
+      box(g, 0.05, 0.03, 0.5, m, x, 0, 0);
+    }
+    const rod = cyl(g, 0.016, 0.016, 1.84, m, 0, 1.6, 0);
+    rod.rotation.z = Math.PI / 2;
+    rod.position.y = 1.6;
+    const cols = ['#c8652f', '#2c3a50', '#7a2e35', '#e8dcc8', '#365648', '#d0a03e', '#5c3c53', '#8a5a36'];
+    for (let i = 0; i < 9; i++) {
+      const x = -0.8 + i * 0.2;
+      box(g, 0.02, 0.1, 0.04, '#2b2b2e', x, 1.5, 0);
+      const jacket = i % 3 === 0;
+      const sh = box(g, 0.05, jacket ? 0.85 : 0.6, jacket ? 0.46 : 0.4, mat(cols[i % cols.length], { r: 0.9 }), x, jacket ? 0.62 : 0.88, 0);
+      sh.rotation.y = 0.04 * (i - 4);
+    }
+  },
+  kleidertisch(g, c) {
+    box(g, 1.8, 0.06, 0.8, c, 0, 0.78, 0);
+    for (const x of [-0.8, 0.8]) box(g, 0.08, 0.78, 0.7, shade(c, -0.15), x, 0, 0);
+    box(g, 1.5, 0.04, 0.6, shade(c, 0.1), 0, 0.25, 0);
+    const cols = ['#c8652f', '#e8dcc8', '#2c3a50', '#7a2e35', '#a5b596', '#d0a03e'];
+    for (let i = 0; i < 6; i++) for (let k = 0; k < 3; k++) box(g, 0.4, 0.06, 0.3, mat(cols[(i + k) % cols.length], { r: 0.95 }), -0.6 + (i % 3) * 0.6, 0.84 + k * 0.065, -0.17 + Math.floor(i / 3) * 0.36);
+    for (let i = 0; i < 4; i++) box(g, 0.38, 0.05, 0.28, mat(['#3b4a63', '#2b2f3a', '#5a6a80', '#3b4a63'][i], { r: 0.9 }), -0.5 + i * 0.33, 0.29, 0);
+    // Schild und kleine Pflanze
+    box(g, 0.16, 0.1, 0.01, '#f4ece0', 0.75, 0.84, 0.36);
+  },
+  schuhregal(g, c) {
+    box(g, 1.9, 1.6, 0.38, c, 0, 0, -0.26);
+    const cols = ['#e8e1d5', '#2b2b2e', '#8a5a36', '#c8652f', '#3b4a63', '#7a2e35'];
+    for (let r = 0; r < 4; r++) {
+      box(g, 1.84, 0.03, 0.34, shade(c, 0.15), 0, 0.1 + r * 0.38, -0.22);
+      for (let i = 0; i < 4; i++) {
+        for (const dx of [-0.06, 0.06]) {
+          box(g, 0.1, 0.09, 0.26, mat(cols[(r * 4 + i) % cols.length], { r: 0.6 }), -0.66 + i * 0.44 + dx, 0.13 + r * 0.38, -0.22);
+        }
+      }
+    }
+    box(g, 0.6, 0.38, 0.4, '#d9cfc2', 0.6, 0, 0.25, { r: 0.8 });
+  },
+  accessoires(g, c) {
+    const m = mat(c, { m: 0.7, r: 0.3 });
+    cyl(g, 0.22, 0.25, 0.04, m, 0, 0, 0);
+    cyl(g, 0.02, 0.02, 1.7, m, 0, 0.04, 0);
+    for (let k = 0; k < 6; k++) {
+      const a = k / 6 * Math.PI * 2;
+      const arm = box(g, 0.32, 0.02, 0.02, m, Math.cos(a) * 0.16, 1.2 + (k % 2) * 0.32, Math.sin(a) * 0.16);
+      arm.rotation.y = -a;
+      const scarf = box(g, 0.06, 0.5, 0.12, mat(['#c8652f', '#7a2e35', '#d0a03e', '#365648', '#e8dcc8', '#5c3c53'][k], { r: 1 }), Math.cos(a) * 0.3, 0.72 + (k % 2) * 0.32, Math.sin(a) * 0.3);
+      scarf.rotation.y = -a;
+    }
+    for (let k = 0; k < 3; k++) sph(g, 0.08, ['#c8652f', '#2c3a50', '#e8dcc8'][k], Math.cos(k * 2.1) * 0.12, 1.78, Math.sin(k * 2.1) * 0.12);
+    box(g, 0.26, 0.2, 0.08, '#8a5a36', 0.18, 0.04, 0.12);
+  },
+  umkleide(g, c) {
+    const fr = mat('#2b2b2e', { m: 0.5, r: 0.4 });
+    for (const [x, z] of [[-0.46, -0.46], [0.46, -0.46], [-0.46, 0.46], [0.46, 0.46]]) box(g, 0.04, 2.2, 0.04, fr, x, 0, z);
+    for (const z of [-0.46, 0.46]) box(g, 0.96, 0.04, 0.04, fr, 0, 2.18, z);
+    for (const x of [-0.46, 0.46]) box(g, 0.04, 0.04, 0.96, fr, x, 2.18, 0);
+    box(g, 0.92, 2.05, 0.03, '#e8e1d5', 0, 0.05, -0.45, { r: 0.9 });
+    for (const x of [-0.45, 0.45]) box(g, 0.03, 2.05, 0.9, '#e8e1d5', x, 0.05, 0, { r: 0.9 });
+    // Vorhang mit Falten, halb offen
+    for (let i = 0; i < 5; i++) {
+      const p = box(g, 0.1, 1.95, 0.05, mat(c, { r: 1 }), -0.38 + i * 0.09, 0.15, 0.45 + (i % 2) * 0.03);
+      p.castShadow = true;
+    }
+    box(g, 0.3, 0.6, 0.02, '#cfdde3', 0.25, 1.1, -0.43, { m: 0.8, r: 0.05 });
+    cyl(g, 0.12, 0.12, 0.42, '#8a5a36', 0.22, 0, -0.2);
+  },
+  puppe(g, c) {
+    const skin = mat('#e8e1d5', { r: 0.5 });
+    cyl(g, 0.18, 0.2, 0.03, '#2b2b2e', 0, 0, 0);
+    cyl(g, 0.015, 0.015, 0.75, '#2b2b2e', 0, 0.03, 0);
+    box(g, 0.34, 0.6, 0.2, mat(c, { r: 0.9 }), 0, 0.8, 0);
+    box(g, 0.36, 0.42, 0.22, mat(c, { r: 0.9 }), 0, 0.98, 0);
+    const sc = mesh(cached('scarf', () => new THREE.TorusGeometry(0.1, 0.045, 6, 14)), mat('#d0a03e', { r: 1 }), 0, 1.42, 0, g);
+    sc.rotation.x = Math.PI / 2;
+    cyl(g, 0.05, 0.06, 0.1, skin, 0, 1.4, 0);
+    sph(g, 0.11, skin, 0, 1.6, 0);
+    for (const s of [-1, 1]) {
+      const arm = box(g, 0.08, 0.5, 0.1, mat(c, { r: 0.9 }), s * 0.22, 0.92, 0);
+      arm.rotation.z = s * 0.12;
+    }
+    box(g, 0.22, 0.2, 0.08, '#8a5a36', 0.28, 0.65, 0.05);
+  },
+  standspiegel(g, c) {
+    const m = mat(c, { m: 0.7, r: 0.3 });
+    box(g, 0.66, 1.8, 0.05, m, 0, 0.05, 0);
+    box(g, 0.58, 1.72, 0.01, '#cfdde3', 0, 0.09, 0.03, { m: 0.9, r: 0.05 }).castShadow = false;
+    for (const x of [-0.25, 0.25]) box(g, 0.05, 0.05, 0.5, m, x, 0, -0.1);
+  },
+
   // ── Wand (Rückkante bei z = -0.5) ──
   akustik(g, c) {
     box(g, 0.9, 2.1, 0.03, '#2b2b2e', 0, 0.35, -0.48, { r: 1 });

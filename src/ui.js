@@ -252,7 +252,7 @@ export class UI {
       ${reasons.length ? `<ul class="reasons">${reasons.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
       <div class="kpis">
         <div class="kpi"><label>Umsatz</label><b>${money(shop.day.revenue)}</b></div>
-        <div class="kpi"><label>Gäste</label><b>${shop.day.served}</b></div>
+        <div class="kpi"><label>${SHOP_TYPES[shop.type].mode === 'counter' ? 'Gäste' : 'Kunden'}</label><b>${shop.day.served}</b></div>
         <div class="kpi"><label>Laune</label><b>${satToday}</b></div>
         <div class="kpi"><label>Im Laden</label><b>${guests}</b></div>
         <div class="kpi"><label>Schlange</label><b>${queue}</b></div>
