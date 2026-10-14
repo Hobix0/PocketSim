@@ -1,8 +1,8 @@
 # PocketSim Straße
 
-> Oktober in der Altstadt. Du kaufst Grundstücke an einer herbstlichen Straße und baust darauf deine eigenen Läden: ein gemütliches Café, einen Burgerladen, eine Boutique, einen Supermarkt. Jeder Laden ist ein kleines Schnittmodell, in das du hineinschauen und das du bis ins Detail einrichten kannst.
+> Oktober in der Altstadt. Entlang der herbstlichen Lindenstraße stehen Ladenlokale in den Erdgeschossen der Altbauten leer. Du übernimmst sie nach und nach und machst daraus deine eigenen Läden: ein gemütliches Café, einen Burgerladen, eine Boutique, einen Supermarkt. Jeder Laden ist ein kleines Schnittmodell, in das du hineinschauen und das du bis ins Detail einrichten kannst.
 
-![Die Ladenstraße am Abend mit Café, Fast Food, Boutique und Supermarkt](docs/screenshots/strasse.jpg)
+![Die Lindenstraße am Abend: vier eigene Läden zwischen Altbauten mit Bäckerei, Apotheke und Antiquariat](docs/screenshots/strasse.jpg)
 
 PocketSim ist eine gemütliche Wirtschaftssimulation im Browser. Die 3D-Grafik läuft mit Three.js. Es gibt keinen Build-Schritt und keinen Login, und das Spiel läuft am Desktop genauso wie auf dem Handy.
 
@@ -29,7 +29,7 @@ Auf dem iPhone geht das mit Pythonista und `server.py` (inklusive Live-Reload).
 
 ## Die Läden
 
-Zu Beginn wählst du, mit welchem Laden du anfängst. Weitere Grundstücke kaufst du im Fenster **Straße** (🏘️) und eröffnest dort einen beliebigen Laden.
+Zu Beginn wählst du, mit welchem Laden du anfängst. Weitere Ladenlokale übernimmst du im Fenster **Straße** (🏘️) und eröffnest dort einen beliebigen Laden. Die Läden liegen verstreut an der Straße, dazwischen stehen Wohnhäuser mit kleinen Nachbarläden. Passant:innen kommen aus den Haustüren und gehen nach dem Einkauf oft wieder nach Hause.
 
 | Laden | So kaufen die Leute ein | Was du brauchst |
 |---|---|---|
@@ -49,7 +49,7 @@ Die Läden spielen sich unterschiedlich: Das Café lebt von Ambiente und Sitzpl�
 ## So läuft ein Tag
 
 - **Öffnungszeiten** 8–19 Uhr. Abends gibt es eine Abrechnung je Laden, mit Wettervorhersage für morgen.
-- **Kosten**: Wareneinkauf, Löhne (75 € pro Person und Tag) und laufende Kosten je Grundstück.
+- **Kosten**: Wareneinkauf, Löhne (75 € pro Person und Tag) und Miete je Ladenlokal.
 - **Personal**: Jede Kasse braucht eine Person. Wer übrig ist, hilft bei der Zubereitung oder beim Einpacken und macht alles schneller.
 - **Preise**: Jedes Produkt hat einen fairen Preis. Wer deutlich darüber liegt, verdient pro Verkauf mehr, verliert aber Kundschaft und Laune.
 - **Lager**: Frische Ware (Backwaren, Brot, Obst) verdirbt abends. Die Auto-Bestellung kauft nach, kostet aber 10 % Aufschlag.
@@ -57,6 +57,7 @@ Die Läden spielen sich unterschiedlich: Das Café lebt von Ambiente und Sitzpl�
 
 ## Herbst und Gemütlichkeit
 
+- **Abends** gehen in den Wohnungen über den Läden die Lichter an.
 - **Wetter**: Sonne, Wolken, Regen (mit Regenschirmen), Nebel und Herbststurm. Bei Schmuddelwetter zieht es mehr Leute ins Café und zum Imbiss, und sie bleiben länger sitzen. An kalten Tagen sind warme Produkte gefragt.
 - **Herbst-Specials** wie Kürbis-Latte, Apfelkuchen, Kürbis-Burger oder Bratapfel-Shake schaltest du einzeln frei.
 - **Stammkundschaft**: 16 Nachbar:innen mit Namen und Lieblingsprodukt. Mit jedem schönen Besuch wachsen die Herzen, und mit vielen Herzen gibt es mehr Trinkgeld.
@@ -76,11 +77,11 @@ Die Läden spielen sich unterschiedlich: Das Café lebt von Ambiente und Sitzpl�
 
 | Datei | Inhalt |
 |---|---|
-| `src/data.js` | Alle Zahlen: Grundstücke, Ladentypen, Möbel, Produkte, Waren, Farben, Wetter, Aufgaben |
+| `src/data.js` | Alle Zahlen: Ladenlokale, Straße und Nachbarhäuser, Ladentypen, Möbel, Produkte, Waren, Farben, Wetter, Aufgaben |
 | `src/sim.js` | Die Simulation ohne Grafik: Raster, Bauen, Kundschaft (Theke und Stöbern), Kassen, Wirtschaft, Speichern |
 | `src/path.js` | A*-Wegfindung auf dem Ladenraster |
 | `src/models.js` | Prozedurale Low-Poly-Modelle, Texturen, Figuren und Katze |
-| `src/render.js` | Three.js-Szene: Straße, Läden als Schnittmodelle, Figuren, Wetter, Licht |
+| `src/render.js` | Three.js-Szene: Straße mit Altbauten, Läden als Schnittmodelle im Erdgeschoss, Figuren, Wetter, Licht |
 | `src/ui.js` | HUD, Baukatalog, Fenster (Karte, Lager, Team, Gestalten, Gäste, Straße, Bilanz) |
 | `src/audio.js` | Kleine Klangkulisse (Kasse, Regen, Schnurren) |
 | `src/main.js` | Spielschleife, Eingabe, Speichern im Browser |

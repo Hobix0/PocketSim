@@ -76,7 +76,7 @@ test('Platzieren: belegt, Eingang und Kosten', () => {
   assert.equal(g.place('stuhl', 0, 5, 5, 0).reason, 'Platz belegt');
   assert.ok(g.place('stuhl', 0, 0, 0, 0).ok);
   assert.equal(g.place('stuhl', 0, CONFIG.doorX, CONFIG.D - 1, 0).reason, 'Laufweg an der Tür muss frei bleiben');
-  assert.equal(g.place('stuhl', 1, 5, 5, 0).reason, 'Grundstück gehört dir noch nicht');
+  assert.equal(g.place('stuhl', 1, 5, 5, 0).reason, 'Ladenlokal gehört dir noch nicht');
   assert.equal(g.place('grill', 0, 2, 2, 0).reason, 'Passt nicht in Café');
   assert.ok(g.place('teppich', 0, 5, 5, 0).ok);
   assert.ok(g.place('pflanze', 0, 6, 6, 0).ok);

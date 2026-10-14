@@ -168,7 +168,7 @@ export class UI {
     if (!shop) {
       this.set('cats', '');
       this.set('variants', '');
-      this.set('items', '<div style="padding:10px;color:var(--ink-2)">Auf diesem Grundstück gibt es noch keinen Laden. <button class="btn small primary" data-open="building">Zur Straße</button></div>');
+      this.set('items', '<div style="padding:10px;color:var(--ink-2)">In diesem Ladenlokal gibt es noch keinen Laden. <button class="btn small primary" data-open="building">Zur Straße</button></div>');
       return;
     }
     const types = furnitureFor(shop.type);
@@ -195,7 +195,7 @@ export class UI {
     const rows = [['out', '🏘️', 'Straße']];
     g.lots.forEach((lt, i) => {
       const shop = g.shops.get(lt.shop);
-      rows.push([String(i), shop ? SHOP_TYPES[shop.type].icon : lt.owned ? '🏗️' : '🪧', shop ? shop.name : lt.owned ? 'leer' : 'zu kaufen', !lt.owned]);
+      rows.push([String(i), shop ? SHOP_TYPES[shop.type].icon : lt.owned ? '🏗️' : '🪧', shop ? shop.name : lt.owned ? 'leer' : 'zu vermieten', !lt.owned]);
     });
     this.set('lots', rows.map(([id, ico, sub, locked]) => `<button data-view="${id}" class="${String(v) === id ? 'on' : ''} ${locked ? 'locked' : ''}" title="${esc(sub)}"><span>${ico}</span><small>${esc(sub)}</small></button>`).join(''));
   }
@@ -233,9 +233,9 @@ export class UI {
     const shop = g.shopOnLot(v);
     if (!shop) {
       const fl = g.lots[v];
-      this.set('shopCard', `<div class="head"><h3>${LOTS[v].name}</h3><span class="pill wait">${fl.owned ? 'leer' : 'zu verkaufen'}</span></div>
-        <div class="sub">${fl.owned ? 'Hier kannst du einen neuen Laden bauen.' : `Kaufen für ${money(LOTS[v].cost)} · laufende Kosten ${money(LOTS[v].rent)}/Tag`}</div>
-        <div class="row" style="margin-top:10px"><button class="btn primary small" data-open="building">${fl.owned ? 'Laden bauen' : 'Grundstück ansehen'}</button></div>`);
+      this.set('shopCard', `<div class="head"><h3>${LOTS[v].name}</h3><span class="pill wait">${fl.owned ? 'leer' : 'zu vermieten'}</span></div>
+        <div class="sub">${fl.owned ? 'Hier kannst du einen neuen Laden bauen.' : `Ablöse ${money(LOTS[v].cost)} · Miete ${money(LOTS[v].rent)}/Tag`}</div>
+        <div class="row" style="margin-top:10px"><button class="btn primary small" data-open="building">${fl.owned ? 'Laden bauen' : 'Ladenlokal ansehen'}</button></div>`);
       return;
     }
     const st = g.shopStatus(shop);
@@ -291,7 +291,7 @@ export class UI {
       ['Ambiente auf 50 bringen', d.appeal >= 50],
       ['Eine Ladenkatze aufnehmen', [...g.items.values()].some((it) => FURNITURE[it.type].pet)],
       ['150 Kund:innen bedienen', servedTotal >= 150],
-      ['Zweites Grundstück kaufen', g.lots[1].owned],
+      ['Zweites Ladenlokal übernehmen', g.lots[1].owned],
       ['Zweiten Laden eröffnen', !!g.lots[1].shop],
     ];
   }
@@ -623,7 +623,7 @@ export class UI {
       let right = '', extra = '';
       if (!lt.owned) {
         const c = g.canBuyLot(i);
-        right = `<button class="btn primary small" data-do="buyLot:${i}" ${c.ok ? '' : 'disabled'} title="${c.reason || ''}">Kaufen · ${money(LOTS[i].cost)}</button>`;
+        right = `<button class="btn primary small" data-do="buyLot:${i}" ${c.ok ? '' : 'disabled'} title="${c.reason || ''}">Übernehmen · ${money(LOTS[i].cost)}</button>`;
       } else if (!shop) {
         extra = `<div class="shoptypes">${Object.entries(SHOP_TYPES).map(([id, t]) => `<button class="shoptype" data-do="openShop:${i}:${id}" ${t.available ? '' : 'disabled'}><b>${t.icon} ${t.name}</b><small>${t.desc}</small>${t.available ? '' : '<span class="soon">bald verfügbar</span>'}</button>`).join('')}</div>`;
       } else {
@@ -631,10 +631,10 @@ export class UI {
         extra = `<div style="margin-top:8px"><input class="text" data-change="rename:${shop.id}" value="${esc(shop.name)}" maxlength="24" aria-label="Name"></div>`;
       }
       return `<div class="floorrow ${lt.owned ? '' : 'locked'}" style="flex-wrap:wrap"><div class="lvl">${shop ? SHOP_TYPES[shop.type].icon : LOTS[i].short}</div>
-        <div class="info"><b>${shop ? esc(shop.name) : LOTS[i].name}</b><small>${lt.owned ? (shop ? `${SHOP_TYPES[shop.type].name} · ${LOTS[i].name} · ${money(LOTS[i].rent)}/Tag` : 'Gekauft – noch kein Laden') : `${money(LOTS[i].rent)}/Tag laufende Kosten nach dem Kauf`}</small></div>
+        <div class="info"><b>${shop ? esc(shop.name) : LOTS[i].name}</b><small>${lt.owned ? (shop ? `${SHOP_TYPES[shop.type].name} · ${LOTS[i].name} · ${money(LOTS[i].rent)}/Tag Miete` : 'Übernommen – noch kein Laden') : `${LOTS[i].floors} Wohngeschosse darüber · danach ${money(LOTS[i].rent)}/Tag Miete`}</small></div>
         ${right}<div style="flex-basis:100%">${extra}</div></div>`;
     });
-    return `<h2>Deine Straße</h2><p class="lead">Kauf Grundstücke und bau darauf eigene Läden. Jeder Laden hat eigene Kundschaft, eigenes Personal, eigenes Lager und eine eigene Gestaltung.</p>${rows.join('')}`;
+    return `<h2>Deine Straße</h2><p class="lead">Entlang der Lindenstraße stehen Ladenlokale in den Erdgeschossen der Altbauten leer. Übernimm sie und mach daraus eigene Läden. Jeder Laden hat eigene Kundschaft, eigenes Personal, eigenes Lager und eine eigene Gestaltung.</p>${rows.join('')}`;
   }
 
   panel_stats() {

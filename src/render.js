@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
-  CONFIG, LOTS, FURNITURE, SHOP_TYPES, FACADES, AWNINGS, FRAMES, paintHex, lotX, streetLength,
+  CONFIG, LOTS, FURNITURE, SHOP_TYPES, FACADES, AWNINGS, FRAMES, paintHex, lotX, streetLength, streetCenter, FILLERS, STREET,
 } from './data.js';
 import { footprint, isReserved, wallSideOf } from './sim.js';
 import {
@@ -13,7 +13,8 @@ import {
 
 const { W, D, floorHeight: H } = CONFIG;
 const WALL = 0.22;
-const OX = -streetLength() / 2, OZ = -D / 2;     // globale Ladenkoordinate → Welt (Straße mittig)
+const OX = -streetCenter(), OZ = -D / 2;        // globale Ladenkoordinate → Welt (Straße mittig)
+const STOREY = 3.2;                                // Höhe eines Wohngeschosses
 const toWorld = (gx, z) => [gx + OX, z + OZ];
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const smooth = (a, b, v) => { const t = clamp01((v - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -53,7 +54,7 @@ export class Renderer {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.12;
     this.controls.minDistance = 6;
-    this.controls.maxDistance = 140;
+    this.controls.maxDistance = 200;
     this.controls.maxPolarAngle = 1.38;
     this.controls.minPolarAngle = 0.15;
     this.controls.screenSpacePanning = false;
@@ -67,7 +68,7 @@ export class Renderer {
     this.sun = new THREE.DirectionalLight('#ffe6c4', 2.4);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(this.sun.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24, near: 1, far: 100 });
+    Object.assign(this.sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, near: 1, far: 120 });
     this.sun.shadow.bias = -0.0004;
     this.sun.shadow.normalBias = 0.03;
     this.scene.add(this.sun, this.sun.target);
@@ -79,7 +80,7 @@ export class Renderer {
       return l;
     });
 
-    this.view = 0;                 // betrachteter Laden (Grundstück) oder 'out' für die Straßenansicht
+    this.view = 0;                 // betrachteter Laden (Ladenlokal) oder 'out' für die Straßenansicht
     this.lotGroups = [];
     this.wallGroups = [];
     this.frontDeco = LOTS.map(() => []);
@@ -158,38 +159,9 @@ export class Renderer {
       m.position.set(x, -0.115, front + 6.9);
       w.add(m);
     }
-    // Altbauten an beiden Enden der Ladenzeile
-    const bx0 = OX - 3, bx1 = OX + streetLength() + 3;
-    const facade = (floors, color, x0, x1) => {
-      const h = floors * 3.4 + 0.6;
-      const c = document.createElement('canvas');
-      c.width = 128; c.height = 128;
-      const g = c.getContext('2d');
-      g.fillStyle = color; g.fillRect(0, 0, 128, 128);
-      g.fillStyle = '#e9e3d6'; g.fillRect(28, 26, 72, 86);
-      g.fillStyle = '#4b5a66'; g.fillRect(34, 32, 60, 74);
-      g.fillStyle = '#6f8394'; g.fillRect(34, 32, 60, 30);
-      g.fillStyle = '#e9e3d6'; g.fillRect(62, 32, 4, 74);
-      g.fillStyle = '#b84a2f'; g.fillRect(30, 104, 68, 10);
-      g.fillStyle = '#d9772f'; for (let i = 0; i < 6; i++) g.fillRect(34 + i * 11, 98, 7, 7);
-      const tx = new THREE.CanvasTexture(c);
-      tx.colorSpace = THREE.SRGBColorSpace;
-      tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
-      tx.repeat.set(Math.round((x1 - x0) / 2.6), floors);
-      const sideMat = mat(color, { r: 0.9 });
-      const frontMat = new THREE.MeshStandardMaterial({ map: tx, roughness: 0.85 });
-      const b = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, h, D + 2), [sideMat, sideMat, mat('#6e6a66'), sideMat, frontMat, sideMat]);
-      b.position.set((x0 + x1) / 2, h / 2, -0.4);
-      b.castShadow = true; b.receiveShadow = true;
-      w.add(b);
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 + 0.3, 0.3, D + 2.3), mat('#d8d2c6'));
-      cap.position.set((x0 + x1) / 2, h, -0.4);
-      w.add(cap);
-    };
-    facade(4, '#c9b48f', bx0 - 11, bx0);
-    facade(5, '#b98f7a', bx0 - 22.2, bx0 - 11.2);
-    facade(3, '#9fb3b0', bx1, bx1 + 12);
-    facade(4, '#8fa3b9', bx1 + 12.2, bx1 + 24);
+    // Altbauten zwischen den Ladenlokalen
+    this.uppers = [];
+    for (const f of FILLERS) this.buildFiller(f);
     // Park gegenüber
     plane(L, 18, new THREE.MeshStandardMaterial({ map: texture('wiese', [30, 5]), roughness: 1 }), 0, -0.13, front + 22.4);
     for (const [x, z, sx] of [[-14, front + 17, 12], [6, front + 18.5, 9], [26, front + 17.5, 10]]) {
@@ -226,8 +198,12 @@ export class Renderer {
       this.treeX.push([x, z]);
       ti++;
     };
-    for (let i = 0; i <= LOTS.length; i++) tree(OX + lotX(i) - CONFIG.lotGap / 2, front + 2.9, 0.9 + (i % 2) * 0.15);
-    tree(bx0 - 6, front + 2.9); tree(bx1 + 6, front + 2.9);
+    // Straßenbäume, nicht vor Türen
+    const doors = [...LOTS.map((l) => l.x + CONFIG.doorX + 0.5), ...FILLERS.map((f) => f.door)];
+    for (let gx = STREET.x0 + 4; gx < STREET.x1; gx += 9) {
+      if (doors.some((d) => Math.abs(d - gx) < 2.2)) continue;
+      tree(OX + gx, front + 2.9, 0.85 + (ti % 3) * 0.1);
+    }
     for (let x = -L / 2 + 8; x < L / 2; x += 11) tree(x + (ti % 3), front + 17.5 + (ti % 4) * 1.4, 1.1 + (ti % 3) * 0.1);
     // Laub auf Gehweg, Rinnstein und im Park
     const leafGeo = new THREE.PlaneGeometry(0.2, 0.13);
@@ -252,9 +228,9 @@ export class Renderer {
     }
     leaves.receiveShadow = true;
     w.add(leaves);
-    // Laternen zwischen den Läden
-    for (let i = 0; i <= LOTS.length; i++) {
-      const x = OX + lotX(i) - CONFIG.lotGap / 2 + 1.2;
+    // Laternen entlang des Gehwegs
+    for (let gx = STREET.x0 + 8.5; gx < STREET.x1; gx += 18) {
+      const x = OX + gx;
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 4.2, 8), mat('#2c3035', { m: 0.6, r: 0.5 }));
       pole.position.set(x, 2.1, front + 3.05);
       pole.castShadow = true;
@@ -294,6 +270,116 @@ export class Renderer {
       w.add(car);
       this.cars.push(car);
     }
+  }
+
+  // Fensterfront eines Wohngeschosses als Textur (Fenster, Gesims, Blumenkästen)
+  storeyTexture(color, cols, light) {
+    const key = `${color}|${cols}|${light}`;
+    this.storeyTex ||= new Map();
+    if (this.storeyTex.has(key)) return this.storeyTex.get(key);
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = color; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = 'rgba(0,0,0,0.12)'; g.fillRect(0, 118, 128, 10);
+    g.fillStyle = light ? '#efe6d6' : '#2b2b2e'; g.fillRect(30, 20, 68, 84);
+    g.fillStyle = '#4b5a66'; g.fillRect(36, 26, 56, 72);
+    g.fillStyle = '#6f8394'; g.fillRect(36, 26, 56, 26);
+    g.fillStyle = light ? '#efe6d6' : '#2b2b2e'; g.fillRect(62, 26, 4, 72);
+    g.fillStyle = '#7a4f2e'; g.fillRect(32, 100, 64, 9);
+    for (let i = 0; i < 6; i++) { g.fillStyle = ['#d9772f', '#c8452f', '#e0a530'][i % 3]; g.fillRect(36 + i * 10, 94, 7, 7); }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(cols, 1);
+    this.storeyTex.set(key, t);
+    return t;
+  }
+
+  // Abends leuchten einzelne Wohnungen: Leuchtmaske mit zufällig hellen Fenstern
+  windowGlow(cols, seed) {
+    const c = document.createElement('canvas');
+    c.width = 64 * cols; c.height = 64;
+    const g = c.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, c.width, 64);
+    for (let k = 0; k < cols; k++) {
+      seed = (seed * 9301 + 49297) % 233280;
+      if (seed / 233280 > 0.45) continue;
+      g.fillStyle = seed % 3 ? '#ffc477' : '#ffe0a8';
+      g.fillRect(k * 64 + 18, 13, 28, 36);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  // Wohngeschosse über einem Erdgeschoss (Breite w, Tiefe d)
+  upperFloors(w, d, floors, color, sideMat, light = false) {
+    const grp = new THREE.Group();
+    const cols = Math.max(2, Math.round(w / 2.6));
+    this.homeMats ||= [];
+    for (let k = 0; k < floors; k++) {
+      const front = new THREE.MeshStandardMaterial({ map: this.storeyTexture(color, cols, light), roughness: 0.85, emissive: '#ffffff', emissiveMap: this.windowGlow(cols, Math.round(w * 37 + d + k * 101 + color.length * 13 + parseInt(color.slice(1), 16) % 997)), emissiveIntensity: 0 });
+      front.userData.filler = light;
+      this.homeMats.push(front);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(w, STOREY, d), [sideMat, sideMat, sideMat, sideMat, front, sideMat]);
+      box.position.set(w / 2, k * STOREY + STOREY / 2, d / 2);
+      box.castShadow = true; box.receiveShadow = true;
+      grp.add(box);
+      const band = new THREE.Mesh(new THREE.BoxGeometry(w + 0.12, 0.12, 0.14), mat('#e8e0d2'));
+      band.position.set(w / 2, k * STOREY + 0.06, d + 0.05);
+      grp.add(band);
+    }
+    const top = floors * STOREY;
+    const cornice = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.32, d + 0.3), mat('#e8e0d2'));
+    cornice.position.set(w / 2, top + 0.16, d / 2);
+    cornice.castShadow = true;
+    grp.add(cornice);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, d), mat('#6e6a66'));
+    roof.position.set(w / 2, top + 0.34, d / 2);
+    grp.add(roof);
+    return grp;
+  }
+
+  // Altbau mit kleinem Laden oder Haustür im Erdgeschoss (nicht bespielbar)
+  buildFiller(f) {
+    const w = f.x1 - f.x0, d = D + 1.4;
+    const g = new THREE.Group();
+    g.position.set(OX + f.x0, 0, OZ - 1.2);
+    const wall = mat(f.color, { r: 0.9 });
+    const ground = new THREE.Mesh(new THREE.BoxGeometry(w, H, d), [wall, wall, mat('#77716a', { r: 0.95 }), wall, wall, wall]);
+    ground.position.set(w / 2, H / 2, d / 2);
+    ground.castShadow = true; ground.receiveShadow = true;
+    g.add(ground);
+    const zf = d + 0.01;
+    const add = (geo, m, x, y, z = zf) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
+    const frame = mat('#2b2b2e', { r: 0.5 });
+    const doorX = f.door - f.x0;
+    // Haustür
+    add(new THREE.BoxGeometry(1.2, 2.4, 0.08), frame, doorX, 1.2);
+    add(new THREE.BoxGeometry(1.0, 2.2, 0.1), mat('#5e4532', { r: 0.7 }), doorX, 1.12);
+    add(new THREE.BoxGeometry(0.3, 0.3, 0.12), mat('#fff2d0', { e: '#ffcf80', ei: 1, g: true }), doorX, 2.6);
+    if (f.shop) {
+      // Kleines Schaufenster mit Schild
+      const sx = doorX > w / 2 ? w * 0.3 : w * 0.7;
+      const sw = Math.min(5, w * 0.45);
+      add(new THREE.BoxGeometry(sw + 0.16, 2.3, 0.08), frame, sx, 1.45);
+      add(new THREE.BoxGeometry(sw, 2.1, 0.1), this.fillerGlass ||= new THREE.MeshStandardMaterial({ color: '#d8c49a', emissive: '#ffb866', emissiveIntensity: 0.25, roughness: 0.2 }), sx, 1.45);
+      const sign = add(new THREE.PlaneGeometry(Math.min(4, sw), 0.5), new THREE.MeshStandardMaterial({ map: labelTexture(f.shop, { w: 512, h: 64, bg: '#2b2b2e', fg: '#f4e6c8', font: '600 38px Georgia, serif' }) }), sx, 2.95, zf + 0.06);
+      sign.castShadow = false;
+      const aw = add(new THREE.BoxGeometry(sw + 0.4, 0.05, 0.9), new THREE.MeshStandardMaterial({ map: texture('markise', [4, 1], `${['#7a2e35', '#2f5d50', '#c8952f', '#2c3a50'][Math.round(f.x0) & 3]}|#f4ece0`) }), sx, 2.62, zf + 0.45);
+      aw.rotation.x = 0.3;
+    } else {
+      for (const sx of [w * 0.25, w * 0.75]) if (Math.abs(sx - doorX) > 1.6) {
+        add(new THREE.BoxGeometry(1.4, 1.6, 0.08), frame, sx, 1.7);
+        add(new THREE.BoxGeometry(1.25, 1.45, 0.1), mat('#4b5a66', { r: 0.2 }), sx, 1.7);
+      }
+    }
+    const upper = this.upperFloors(w, d, f.floors, f.color, wall, true);
+    upper.position.y = H;
+    g.add(upper);
+    this.uppers.push(upper);
+    this.world.add(g);
   }
 
   // ───────────── Fallendes Laub und Regen ─────────────
@@ -377,6 +463,7 @@ export class Renderer {
     this.lotGroups = [];
     this.wallGroups = [];
     this.roofs = [];
+    this.homeMats = (this.homeMats || []).filter((m) => m.userData.filler);
     this.frontDeco = LOTS.map(() => []);
     this.glassLit = new THREE.MeshStandardMaterial({ color: '#b9cfd6', roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.22, depthWrite: false, emissive: '#ffb866', emissiveIntensity: 0 });
     this.signMats = [];
@@ -386,25 +473,18 @@ export class Renderer {
       root.add(g);
       this.lotGroups[i] = g;
       this.buildPlinth(i, g);
-      const lt = this.game.lots[i];
-      if (!lt.owned) this.buildForSale(i, g);
-      else this.buildStore(i, g);
+      this.buildStore(i, g);
     }
     this.applyView();
   }
 
   // Sockel mit Pflaster, Rasenstreifen und Pflanzkübeln wie bei einem Architekturmodell
   buildPlinth(i, g) {
-    const pave = new THREE.MeshStandardMaterial({ map: texture('gehweg', [8, 6]), color: '#efe6d8', roughness: 0.9 });
-    const base = new THREE.Mesh(new THREE.BoxGeometry(W + CONFIG.lotGap - 0.4, 0.14, D + 2.6), [mat(EDGE), mat(EDGE), pave, mat(EDGE), mat('#b7ad9f'), mat(EDGE)]);
-    base.position.set(W / 2, -0.07, OZ + D / 2 + 0.5);
-    base.receiveShadow = true;
-    g.add(base);
     const grass = mat('#7d8f4e', { r: 1 });
     const box = mat('#bdb3a5', { r: 0.9 });
     // Beete links und rechts der Tür
     const lot = this.game.lots[i];
-    const beds = lot.owned && lot.shop ? [[1.2, 3.6], [CONFIG.doorX + 1.6, W - 0.3]] : [[0.4, W - 0.4]];
+    const beds = lot.owned && lot.shop ? [[1.2, 3.6], [CONFIG.doorX + 1.6, W - 0.3]] : [];
     for (const [a, b] of beds) {
       if (b - a < 0.8) continue;
       const bed = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.32, 0.8), box);
@@ -421,35 +501,6 @@ export class Renderer {
         g.add(bush);
       }
     }
-    // Rasenstreifen hinter dem Laden
-    const back = new THREE.Mesh(new THREE.BoxGeometry(W + CONFIG.lotGap - 1, 0.04, 0.9), grass);
-    back.position.set(W / 2, 0.02, OZ - 0.85);
-    g.add(back);
-  }
-
-  buildForSale(i, g) {
-    const grass = new THREE.Mesh(new THREE.BoxGeometry(W - 0.4, 0.04, D - 0.4), new THREE.MeshStandardMaterial({ map: texture('wiese', [4, 3]), roughness: 1 }));
-    grass.position.set(W / 2, 0.02, OZ + D / 2);
-    grass.receiveShadow = true;
-    g.add(grass);
-    const sign = new THREE.Group();
-    for (const x of [-0.9, 0.9]) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.6, 0.08), mat('#5e4532'));
-      post.position.set(x, 0.8, 0);
-      sign.add(post);
-    }
-    const board = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 0.05), [mat(EDGE), mat(EDGE), mat(EDGE), mat(EDGE),
-      new THREE.MeshStandardMaterial({ map: labelTexture(`ZU VERKAUFEN · ${LOTS[i].cost.toLocaleString('de-DE')} €`, { w: 512, h: 220, bg: '#f4ece0', fg: '#8a2e25', font: '600 40px Georgia, serif', border: '#8a2e25' }) }), mat(EDGE)]);
-    board.position.set(0, 1.4, 0.05);
-    sign.add(board);
-    sign.position.set(W / 2, 0, OZ + D - 1.5);
-    g.add(sign);
-    for (const [x, z] of [[3, 3], [10, 6], [6, 2]]) {
-      const heap = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), mat('#c8652f', { r: 1 }));
-      heap.scale.set(1.3, 0.35, 1);
-      heap.position.set(x, 0.02, OZ + z);
-      g.add(heap);
-    }
   }
 
   buildStore(i, g) {
@@ -465,6 +516,7 @@ export class Renderer {
     const wallH = H;
     const ceilMat = mat(paintHex(ds.ceiling), { r: 0.95 });
     const empty = !shop;
+    const forRent = !lot.owned;
 
     // Boden
     const floorMat = empty ? floorMaterial('beton') : floorMaterial(ds.floor);
@@ -545,7 +597,7 @@ export class Renderer {
     makeWall('back', W, CONFIG.windows.back.map(([a, b]) => win(a, b)), wallOpts('back'));
     makeWall('left', D + WALL * 2, [], { ...wallOpts('left'), x0: -WALL });
     makeWall('right', D + WALL * 2, CONFIG.windows.right.map(([a, b]) => win(a, b)), { ...wallOpts('right'), x0: -WALL });
-    this.buildStorefront(i, g, { frameMat, edgeMat, facadeMat, shop, ext, wallOpts: wallOpts('front') });
+    this.buildStorefront(i, g, { frameMat, edgeMat, facadeMat, shop, ext, wallOpts: wallOpts('front'), forRent });
 
     // Flachdach mit dunkler Attika
     const roof = new THREE.Group();
@@ -560,17 +612,17 @@ export class Renderer {
       p.castShadow = true;
       roof.add(p);
     }
-    const ac = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.8, 1), mat('#b9bec4', { m: 0.4, r: 0.5 }));
-    ac.position.set(3 + i, 0.6, OZ + 3);
-    ac.castShadow = true;
-    roof.add(ac);
+    // Wohngeschosse über dem Laden (gleiche Fassade wie das Erdgeschoss)
+    const upper = this.upperFloors(W + WALL * 2, D + WALL * 2, LOTS[i].floors, fac.hex, facadeMat, false);
+    upper.position.set(-WALL, 0.2, OZ - WALL);
+    roof.add(upper);
     g.add(roof);
     this.roofs[i] = roof;
     if (shop) this.buildOutdoor(i, g, shop);
   }
 
   // Schaufensterfront: Glas mit Stahlsprossen, Tür, Blende mit Leuchtschrift, Vordach
-  buildStorefront(i, g, { frameMat, edgeMat, facadeMat, shop, ext, wallOpts }) {
+  buildStorefront(i, g, { frameMat, edgeMat, facadeMat, shop, ext, wallOpts, forRent }) {
     const wg = new THREE.Group();
     const inner = new THREE.Group();
     wg.add(inner);
@@ -598,7 +650,7 @@ export class Renderer {
       bar((a + b) / 2, glassTop - 0.04, b - a, 0.08);
       bar((a + b) / 2, 2.1, b - a, 0.06);                       // Kämpfer
       for (let k = 0; k <= n; k++) bar(a + (b - a) * k / n, (glassTop + 0.4) / 2, 0.07, glassTop - 0.4);
-      const gl = add(new THREE.BoxGeometry(b - a, glassTop - 0.44, 0.03), this.glassLit, (a + b) / 2, 0.4 + (glassTop - 0.44) / 2);
+      const gl = add(new THREE.BoxGeometry(b - a, glassTop - 0.44, 0.03), forRent ? mat('#56707f', { r: 0.1, o: 0.8 }) : this.glassLit, (a + b) / 2, 0.4 + (glassTop - 0.44) / 2);
       gl.castShadow = false;
     }
     // Tür mit Rahmen, leicht geöffnet
@@ -623,7 +675,14 @@ export class Renderer {
     this.wallGroups.push({ lot: i, side: 'front', group: wg, inner, normal: [0, 1], mid: [OX + lotX(i) + W / 2, OZ + D] });
 
     // Schriftzug: dunkle Tafel mit warm leuchtenden Buchstaben
-    const name = shop ? shop.name : 'Demnächst';
+    const name = shop ? shop.name : forRent ? 'Zu vermieten' : 'Demnächst';
+    if (forRent) {
+      // Aushang im Schaufenster
+      const note = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.1), new THREE.MeshStandardMaterial({ map: labelTexture(`${LOTS[i].cost.toLocaleString('de-DE')} €`, { w: 256, h: 176, bg: '#f4ece0', fg: '#8a2e25', font: '700 44px Georgia, serif', border: '#8a2e25' }) }));
+      note.position.set(3, 1.5, OZ + D + WALL + 0.08);
+      g.add(note);
+      this.frontDeco[i].push(note);
+    }
     const signHex = paintHex(ext.sign);
     const light = new THREE.Color(signHex).getHSL({}).l > 0.6;
     const tex = labelTexture(name, { w: 1024, h: 160, bg: signHex, fg: light ? '#2b211b' : '#ffe2b0', font: `600 ${name.length > 16 ? 78 : 96}px Georgia, serif` });
@@ -790,10 +849,10 @@ export class Renderer {
 
   setView(v) {
     this.view = v;
-    if (v === 'out') this.focus.set(-6, 2, 0.5);
+    if (v === 'out') this.focus.set(0, 3, 0.5);   // Mitte der Ladenzeile
     else this.focus.set(OX + lotX(v) + W / 2, 0.8, 0.5);
     // Kurz nach dem Wechsel auf passenden Abstand zoomen (Straße weit, Laden nah)
-    this.zoomTo = v === 'out' ? (this.camera.aspect < 1 ? 130 : 84) : (this.camera.aspect < 1 ? 34 : 26);
+    this.zoomTo = v === 'out' ? (this.camera.aspect < 1 ? 190 : 125) : (this.camera.aspect < 1 ? 34 : 26);
     this.zoomUntil = this.time + 1.6;
     this.applyView();
   }
@@ -801,6 +860,7 @@ export class Renderer {
   applyView() {
     const v = this.view;
     for (const r of this.roofs || []) if (r) r.visible = v === 'out';
+    for (const u of this.uppers || []) u.visible = v === 'out';
     this.grid.visible = this.buildMode && v !== 'out';
     if (v !== 'out') this.grid.position.x = OX + lotX(v);
     this.updateReservedMarks();
@@ -1009,11 +1069,13 @@ export class Renderer {
     const sky = day.clone().lerp(new THREE.Color('#f0a86a'), golden * (1 - gloomy * 0.6) * 0.8).lerp(new THREE.Color('#2e3450'), dusk).lerp(new THREE.Color('#e7b48a'), morning * 0.5);
     this.scene.background.copy(sky);
     this.scene.fog.color.copy(sky);
-    this.scene.fog.near = wx === 'nebel' ? 10 : wx === 'regen' ? 35 : 60;
-    this.scene.fog.far = wx === 'nebel' ? 60 : wx === 'regen' ? 110 : 150;
+    const fogK = Math.max(1, this.camera.position.distanceTo(this.controls.target) / 70);   // Übersicht weiter weg
+    this.scene.fog.near = (wx === 'nebel' ? 10 : wx === 'regen' ? 35 : 60) * fogK;
+    this.scene.fog.far = (wx === 'nebel' ? 60 : wx === 'regen' ? 110 : 150) * fogK;
     this.rain.visible = wx === 'regen';
     for (const m of this.groundMats) m.roughness = wx === 'regen' ? 0.35 : 0.95;
     for (const m of this.lampMats) m.emissiveIntensity = this.dark * 2.2 + gloomy * 0.3;
+    for (const m of this.homeMats || []) m.emissiveIntensity = this.dark * 1.1;
     if (this.glassLit) this.glassLit.emissiveIntensity = this.dark * 0.45 + gloomy * 0.08;
     for (const m of this.signMats || []) m.emissiveIntensity = 0.15 + this.dark * 1.1;
     const glow = 0.35 + Math.max(this.dark, gloomy * 0.5) * 1.1;
@@ -1039,11 +1101,11 @@ export class Renderer {
     return { x, z, inside: x >= 0 && z >= 0 && x < W && z < D };
   }
 
-  // Welches Grundstück liegt unter dem Zeiger? (für die Straßenansicht)
+  // Welches Ladenlokal liegt unter dem Zeiger? (für die Straßenansicht)
   pickLot(clientX, clientY) {
     this.raycaster.setFromCamera(this.ndc(clientX, clientY), this.camera);
     const p = new THREE.Vector3();
-    if (!this.raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -1), p)) return null;
+    if (!this.raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.5), p)) return null;
     const gx = p.x - OX;
     for (let i = 0; i < LOTS.length; i++) if (gx >= lotX(i) - 1 && gx < lotX(i) + W + 1 && p.z - OZ < D + 2) return i;
     return null;

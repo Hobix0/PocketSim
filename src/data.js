@@ -24,15 +24,40 @@ export const CONFIG = {
   baseCustomersPerHour: 10,
 };
 
-// Grundstücke an der Straße. Das erste gehört dir, die anderen kannst du kaufen.
+// Ladenlokale im Erdgeschoss von Stadthäusern, verstreut entlang der Straße.
+// Das erste gehört dir, die anderen kannst du kaufen. floors = Wohngeschosse darüber.
 export const LOTS = [
-  { name: 'Grundstück 1', short: '1', cost: 0, rent: 95 },
-  { name: 'Grundstück 2', short: '2', cost: 12000, rent: 95 },
-  { name: 'Grundstück 3', short: '3', cost: 24000, rent: 105 },
-  { name: 'Grundstück 4', short: '4', cost: 38000, rent: 115 },
+  { name: 'Lindenstraße 3', short: '3', x: 0, cost: 0, rent: 95, floors: 2 },
+  { name: 'Lindenstraße 11', short: '11', x: 28, cost: 12000, rent: 95, floors: 3 },
+  { name: 'Lindenstraße 17', short: '17', x: 55, cost: 24000, rent: 105, floors: 2 },
+  { name: 'Lindenstraße 25', short: '25', x: 84, cost: 38000, rent: 115, floors: 3 },
 ];
-export const lotX = (i) => i * (CONFIG.W + CONFIG.lotGap);
-export const streetLength = () => lotX(LOTS.length - 1) + CONFIG.W;
+export const lotX = (i) => LOTS[i].x;
+// Sichtbarer Straßenabschnitt (globale x-Koordinaten)
+export const STREET = { x0: -26, x1: 124 };
+export const streetLength = () => STREET.x1 - STREET.x0;
+export const streetCenter = () => (STREET.x0 + STREET.x1) / 2;
+
+// Nachbarhäuser zwischen den Ladenlokalen: Altbauten mit kleinen Läden und Haustüren.
+// Aus den Haustüren kommen Kundschaft und Passanten.
+const FILLER_SHOPS = ['Bäckerei Korn', 'Blumen Lotte', '', 'Apotheke', 'Antiquariat', '', 'Feinkost', 'Uhrmacher', '', 'Eisdiele'];
+const FILLER_COLORS = ['#c9b48f', '#b98f7a', '#9fb3b0', '#d4c2a0', '#8fa3b9', '#c79a7a', '#a9a48a', '#d8c9b4', '#b07d6a', '#9aa7a0'];
+export const FILLERS = (() => {
+  const gaps = [];
+  let x = STREET.x0;
+  for (const l of LOTS) { gaps.push([x, l.x - 0.6]); x = l.x + CONFIG.W + 0.6; }
+  gaps.push([x, STREET.x1]);
+  const out = [];
+  for (const [a, b] of gaps) {
+    const n = Math.max(1, Math.round((b - a) / 11));
+    for (let k = 0; k < n; k++) {
+      const x0 = a + (b - a) * k / n + (k ? 0.15 : 0), x1 = a + (b - a) * (k + 1) / n - (k < n - 1 ? 0.15 : 0);
+      const i = out.length;
+      out.push({ x0, x1, floors: 3 + (i * 7) % 3, color: FILLER_COLORS[i % FILLER_COLORS.length], shop: FILLER_SHOPS[i % FILLER_SHOPS.length], door: (x0 + x1) / 2 + ((i % 2) ? 1.5 : -1.5) });
+    }
+  }
+  return out;
+})();
 
 // Ladentypen. mode: 'counter' = an der Theke bestellen (ggf. hinsetzen),
 // 'browse' = durch die Regale stöbern und an der Kasse zahlen.

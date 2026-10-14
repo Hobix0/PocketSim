@@ -138,7 +138,7 @@ const actions = {
       case 'buyLot': {
         const f = Number(args[0]);
         const r = game.buyLot(f);
-        if (r.ok) { ui.toast(`${LOTS[f].name} gekauft – such dir einen Laden aus!`, 'good'); sound.chime(); actions.setView(f); ui.openPanel('building'); }
+        if (r.ok) { ui.toast(`Ladenlokal ${LOTS[f].name} übernommen – such dir einen Laden aus!`, 'good'); sound.chime(); actions.setView(f); ui.openPanel('building'); }
         else ui.toast(r.reason, 'bad');
         break;
       }

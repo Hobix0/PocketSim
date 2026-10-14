@@ -1,18 +1,31 @@
 // Wirtschaftssimulation der Ladenstraße – ohne Grafik, damit sie auch unter Node läuft.
-// Koordinaten: Jeder Laden steht auf einem Grundstück mit eigenem Raster W × D (1 Feld = 1 m).
+// Koordinaten: Jeder Laden steht in einem Ladenlokal mit eigenem Raster W × D (1 Feld = 1 m).
 // Die Läden reihen sich entlang x auf (lotX), z läuft nach vorn zur Straße (z ≥ D = Gehweg).
-// Figuren haben globale Koordinaten (x über die ganze Straße), Möbel lokale je Grundstück.
+// Figuren haben globale Koordinaten (x über die ganze Straße), Möbel lokale je Ladenlokal.
 import {
   CONFIG, LOTS, SHOP_TYPES, FURNITURE, PRODUCTS, SUPPLIES, DEMAND_CURVE, WEATHER, REGULARS,
   PET_NAMES, PET_COLORS, QUESTS, DESIGN_COST, PAINT, WALL_PATTERNS, FLOOR_MATS, FACADES, AWNINGS, FRAMES,
-  productsFor, suppliesFor, defaultDesign, calendar, lotX, streetLength,
+  productsFor, suppliesFor, defaultDesign, calendar, lotX, STREET, FILLERS,
 } from './data.js';
 import { findPath, reachable } from './path.js';
 
 export const SAVE_VERSION = 3;
 const { W, D } = CONFIG;
 const LAYERS = ['floor', 'rug', 'wall', 'ceil'];
-const EDGE_L = -14, edgeR = () => streetLength() + 12;
+const EDGE_L = STREET.x0 - 6, EDGE_R = STREET.x1 + 6;
+const HOME_Z = D + 0.35;   // direkt vor einer Haustür
+
+// Ausgangs- bzw. Zielpunkt eines Weges: meist eine Haustür in der Nähe, sonst das Straßenende
+function streetSpot(rng, nearX) {
+  const doors = FILLERS.filter((f) => nearX == null || Math.abs(f.door - nearX) < 45);
+  if (doors.length && rng() < 0.7) return { x: doors[Math.floor(rng() * doors.length)].door, home: true };
+  const left = nearX == null ? rng() < 0.5 : (nearX - EDGE_L < EDGE_R - nearX ? rng() < 0.7 : rng() < 0.3);
+  return { x: left ? EDGE_L : EDGE_R, home: false };
+}
+// Wegpunkte vom Gehweg zu einem Zielpunkt
+const toSpot = (lot, spot, z) => (spot.home
+  ? [{ lot, x: spot.x, z }, { lot, x: spot.x, z: HOME_Z }]
+  : [{ lot, x: spot.x, z }]);
 
 export function makeRng(seed) {
   let a = seed >>> 0;
@@ -278,7 +291,7 @@ export class Game {
     }
   }
 
-  // Steht die Figur im Laden ihres Grundstücks?
+  // Steht die Figur im Laden ihres Ladenlokals?
   inside(a) {
     const lx = a.x - lotX(a.lot);
     return a.z < D && lx >= 0 && lx < W;
@@ -324,7 +337,7 @@ export class Game {
     const def = FURNITURE[type];
     const lt = this.lots[lot];
     if (!def || !lt) return { ok: false, reason: 'Unbekannt' };
-    if (!lt.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     const shop = this.shops.get(lt.shop);
     if (!shop) return { ok: false, reason: 'Erst einen Laden eröffnen' };
     if (def.shops !== '*' && !def.shops.includes(shop.type)) return { ok: false, reason: `Passt nicht in ${SHOP_TYPES[shop.type].name}` };
@@ -432,7 +445,7 @@ export class Game {
   // patch: { color?, pattern? }, side: 'back' | 'left' | 'right' | 'front' | 'all'
   paintWalls(lot, side, patch) {
     const lt = this.lots[lot];
-    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt?.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     if (patch.color && !PAINT.some((p) => p.id === patch.color)) return { ok: false, reason: 'Unbekannte Farbe' };
     if (patch.pattern && !WALL_PATTERNS.some((p) => p.id === patch.pattern)) return { ok: false, reason: 'Unbekanntes Muster' };
     const sides = side === 'all' ? ['back', 'left', 'right', 'front'] : [side];
@@ -447,7 +460,7 @@ export class Game {
 
   setWainscot(lot, patch) {
     const lt = this.lots[lot];
-    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt?.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     if (!Object.entries(patch).some(([k, v]) => lt.design.wainscot[k] !== v)) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.wainscot)) return { ok: false, reason: 'Nicht genug Geld' };
     Object.assign(lt.design.wainscot, patch);
@@ -457,7 +470,7 @@ export class Game {
 
   setFloorMat(lot, id) {
     const lt = this.lots[lot];
-    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt?.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     if (!FLOOR_MATS.some((m) => m.id === id)) return { ok: false, reason: 'Unbekannter Boden' };
     if (lt.design.floor === id) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.floor)) return { ok: false, reason: 'Nicht genug Geld' };
@@ -468,7 +481,7 @@ export class Game {
 
   setCeiling(lot, color) {
     const lt = this.lots[lot];
-    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt?.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     if (lt.design.ceiling === color) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.ceiling)) return { ok: false, reason: 'Nicht genug Geld' };
     lt.design.ceiling = color;
@@ -479,7 +492,7 @@ export class Game {
   // Außengestaltung je Laden: facade, awning, sign, frames
   setExterior(lot, key, value) {
     const lt = this.lots[lot];
-    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!lt?.owned) return { ok: false, reason: 'Ladenlokal gehört dir noch nicht' };
     const lists = { facade: FACADES, awning: AWNINGS, sign: PAINT, frames: FRAMES };
     if (!lists[key]?.some((o) => o.id === value)) return { ok: false, reason: 'Unbekannt' };
     if (lt.design.ext[key] === value) return { ok: true, cost: 0 };
@@ -501,7 +514,7 @@ export class Game {
     this.refresh();
   }
 
-  // ───────────────────────── Grundstücke & Läden ─────────────────────────
+  // ───────────────────────── Ladenlokale & Läden ─────────────────────────
 
   canBuyLot(l) {
     const lt = this.lots[l];
@@ -719,18 +732,18 @@ export class Game {
   }
 
   spawnPedestrian() {
-    const left = this.rng() < 0.5;
+    const from = streetSpot(this.rng), to = streetSpot(this.rng);
+    if (Math.abs(from.x - to.x) < 8) return;
     const z = D + 1.5 + this.rng() * 1.4;
     const a = {
-      id: this.nextId++, kind: 'ped', lot: 0, x: left ? EDGE_L : edgeR(), z, y: 0, yaw: 0, state: 'pass',
+      id: this.nextId++, kind: 'ped', lot: 0, x: from.x, z: from.home ? HOME_Z : z, y: 0, yaw: 0, state: 'pass',
       look: this.newLook(), speed: CONFIG.walkSpeed * (0.85 + this.rng() * 0.3),
-      route: [{ lot: 0, x: left ? edgeR() : EDGE_L, z: z + (this.rng() - 0.5) * 0.4 }],
+      route: [...(from.home ? [{ lot: 0, x: from.x, z }] : []), ...toSpot(0, to, z + (this.rng() - 0.5) * 0.4)],
     };
     this.agents.set(a.id, a);
   }
 
   spawnCustomer(shop) {
-    const left = this.rng() < 0.5;
     const z = D + 1.6 + this.rng() * 0.8;
     let reg = null;
     if (this.rng() < 0.3) {
@@ -739,15 +752,18 @@ export class Game {
       if (pool.length) reg = pool[Math.floor(this.rng() * pool.length)];
     }
     const x0 = doorFront(shop.lot);
+    const from = streetSpot(this.rng, x0);
     const a = {
-      id: this.nextId++, kind: 'customer', shop: shop.id, lot: shop.lot, x: left ? EDGE_L : edgeR(), z, y: 0, yaw: 0,
+      id: this.nextId++, kind: 'customer', shop: shop.id, lot: shop.lot, x: from.x, z: from.home ? HOME_Z : z, y: 0, yaw: 0,
       state: 'approach', look: reg ? reg.look : this.newLook(), speed: CONFIG.walkSpeed * (0.9 + this.rng() * 0.2),
       route: [
+        ...(from.home ? [{ lot: shop.lot, x: from.x, z }] : []),
         { lot: shop.lot, x: x0 + (this.rng() - 0.5) * 0.6, z: D + 1.7 },
         { lot: shop.lot, x: x0, z: D + 0.6 },
       ],
       wants: [], basket: [], todo: [], sat: 72, wait: 0, patience: 55 + this.rng() * 60, timer: 0, seat: null, register: 0, qIndex: -1,
       cup: false, goal: null, done: false, paid: 0, regular: reg ? reg.i : -1,
+      home: from.home && this.rng() < 0.7 ? from : null,   // oft geht es danach wieder nach Hause
     };
     if (reg) { reg.lastDay = this.day; a.patience += 25; }
     this.agents.set(a.id, a);
@@ -877,8 +893,7 @@ export class Game {
     this.finish(a);
     a.state = 'exit';
     a.goal = null;
-    const left = this.rng() < 0.5;
-    a.route = [{ lot: a.lot, x: a.x, z: D + 1.8 }, { lot: a.lot, x: left ? EDGE_L : edgeR(), z: D + 1.8 + this.rng() * 0.6 }];
+    a.route = [{ lot: a.lot, x: a.x, z: D + 1.8 }, ...toSpot(a.lot, streetSpot(this.rng, a.x), D + 1.8 + this.rng() * 0.6)];
   }
 
   // Wegeplanung zu einem Feld im eigenen Laden; goal = { lot, x, z, allowBlocked, exact } (lokal)
@@ -1062,10 +1077,8 @@ export class Game {
       pts.push(...[...inPath(l)].reverse());
     }
     const x0 = doorFront(l);
-    pts.push(
-      { lot: l, x: x0 + a.side, z: D + 1.9 },
-      { lot: l, x: a.side < 0 ? EDGE_L : edgeR(), z: D + 1.7 + (a.id % 7) * 0.12 },
-    );
+    a.home ||= streetSpot(this.rng, x0);
+    pts.push({ lot: l, x: x0 + a.side, z: D + 1.9 }, ...toSpot(l, a.home, D + 1.7 + (a.id % 7) * 0.12));
     a.route = pts;
     a.goal = null;
   }
@@ -1415,7 +1428,7 @@ export function migrate(data) {
   if (!data || typeof data !== 'object') throw new Error('Kein Spielstand');
   if (data.v === SAVE_VERSION) return data;
   if (data.v === 1 || data.v === 2) {
-    // v1/v2: Etagen eines Hauses → jetzt eigene Läden auf Grundstücken nebeneinander
+    // v1/v2: Etagen eines Hauses → jetzt eigene Läden in Ladenlokalen
     let refund = 0;
     const items = data.items.filter((it) => {
       if (!FURNITURE[it.type]) return false;
