@@ -189,10 +189,10 @@ export const FURNITURE = {
   obststand: { name: 'Obst & Gemüse', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 520, provides: 'produce', decor: 2, v: WOOD, desc: 'Holzkisten mit Äpfeln, Kürbissen und Kohl.' },
   brotregal: { name: 'Brotregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 480, provides: 'bread', v: WOOD, desc: 'Brot und Brötchen vom Bäcker.' },
   kuehlregal: { name: 'Kühlregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 1100, provides: 'dairy', glow: true, v: ['#e7e3db', '#2b2b2e'], desc: 'Milch, Käse, Joghurt.' },
-  getraenkeregal: { name: 'Getränkeregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 520, provides: 'bev', v: ['#26262a', '#e7e3db'], desc: 'Wasser, Saft und Limo.' },
-  suessregal: { name: 'Süßwarenregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 480, provides: 'sweets', v: ['#26262a', '#e7e3db'], desc: 'Schokolade, Chips und Kekse.' },
+  getraenkeregal: { name: 'Getränkeregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 520, provides: 'bev', v: ['#e7e3db', '#2f5d50', '#26262a'], desc: 'Wasser, Saft und Limo.' },
+  suessregal: { name: 'Süßwarenregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 480, provides: 'sweets', v: ['#e7e3db', '#2f5d50', '#26262a'], desc: 'Schokolade, Chips und Kekse.' },
   tiefkuehl: { name: 'Tiefkühltruhe', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 1200, provides: 'frozen', glow: true, v: ['#e7e3db', '#2c3a50'], desc: 'Pizza, Gemüse und Eis.' },
-  drogerie: { name: 'Drogerieregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 500, provides: 'drug', v: ['#e7e3db', '#26262a'], desc: 'Seife, Zahnpasta und Co.' },
+  drogerie: { name: 'Drogerieregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 500, provides: 'drug', v: ['#e7e3db', '#2f5d50', '#26262a'], desc: 'Seife, Zahnpasta und Co.' },
   wagenbox: { name: 'Einkaufswagen', cat: 'room', shops: ['supermarkt'], w: 1, d: 1, cost: 160, decor: 1, v: ['#c9ccd1', '#2f5d50'], desc: 'Ein paar Wagen am Eingang.' },
 
   // Sitzen

@@ -1,7 +1,7 @@
 {
-  "name": "PocketSim Café",
+  "name": "PocketSim Straße",
   "short_name": "PocketSim",
-  "description": "Richte dein eigenes Café ein, verkaufe Kaffee und Snacks und baue Etage für Etage aus.",
+  "description": "Gemütliche Ladenstraße im Herbst: Café, Fast Food, Boutique und Supermarkt bauen und führen.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "any",
