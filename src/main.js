@@ -1,10 +1,12 @@
 // Einstiegspunkt: Simulation, Darstellung und Oberfläche verdrahten; Eingabe und Spielschleife.
-import { Game, SAVE_VERSION } from './sim.js';
+import { Game, SAVE_VERSION, footprint } from './sim.js';
 import { Renderer } from './render.js';
 import { UI, money } from './ui.js';
-import { CONFIG, FLOORS, FURNITURE } from './data.js';
+import { CONFIG, FLOORS, FURNITURE, PRODUCTS } from './data.js';
+import { sound, audio } from './audio.js';
 
 const SAVE_KEY = 'pocketsim.cafe.save';
+const SETTINGS_KEY = 'pocketsim.cafe.settings';
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
@@ -17,13 +19,18 @@ try {
   const raw = store.get(SAVE_KEY);
   if (raw) {
     const data = JSON.parse(raw);
-    if (data.v === SAVE_VERSION) { game.load(data); hasSave = true; }
+    if (data.v <= SAVE_VERSION) { game.load(data); hasSave = true; }
   }
 } catch (err) { console.warn('Spielstand konnte nicht geladen werden', err); }
 
+let settings = {};
+try { settings = JSON.parse(store.get(SETTINGS_KEY) || '{}'); } catch { /* egal */ }
+audio.on = settings.sound !== false;
+
 const state = {
-  tool: 'select', buildType: null, rot: 0, moveId: 0, selected: null,
+  tool: 'select', buildType: null, rot: 0, variant: 0, moveId: 0, selected: null,
   view: 0, speed: 1, paused: true, started: false, hover: null, touchPreview: null, panelShop: 0,
+  sound: audio.on, photo: false,
 };
 
 const canvas = document.getElementById('scene');
@@ -34,8 +41,11 @@ function save(manual = false) {
   if (manual) ui.toast(ok ? 'Gespeichert' : 'Speichern nicht möglich', ok ? 'good' : 'bad');
 }
 
+const isWall = (type) => FURNITURE[type]?.layer === 'wall';
+
 // ───────────── Aktionen (von UI und Eingabe genutzt) ─────────────
 
+let photoResume = false;
 const actions = {
   setSpeed(v) {
     if (!state.started) return;
@@ -56,6 +66,7 @@ const actions = {
   },
   pickBuild(type) {
     state.buildType = state.buildType === type ? null : type;
+    state.variant = 0;
     state.touchPreview = null;
     if (!state.buildType) renderer.setGhost(null);
     ui.update();
@@ -74,13 +85,16 @@ const actions = {
     if (v === 'out' && state.tool !== 'select') actions.setTool('select');
     ui.update(true);
   },
-  inspectorAction(act) {
+  inspectorAction(act, arg) {
     const sel = state.selected;
     if (act === 'close') { state.selected = null; renderer.setSelected(null); return ui.update(); }
+    if (act === 'pet' && sel?.kind === 'agent') { game.pet(sel.id); sound.purr(); return ui.update(); }
     if (!sel || sel.kind !== 'item') return;
     const it = game.items.get(sel.id);
     if (!it) return;
-    if (act === 'rotate') {
+    if (act === 'variant') {
+      game.setVariant(it.id, Number(arg));
+    } else if (act === 'rotate') {
       const r = game.move(it.id, it.x, it.z, (it.rot + 1) & 3);
       if (!r.ok) {
         // Bei nicht quadratischen Möbeln darf sich die Ecke verschieben
@@ -91,6 +105,7 @@ const actions = {
     } else if (act === 'move') {
       state.moveId = it.id;
       state.buildType = it.type;
+      state.variant = it.v || 0;
       state.rot = it.rot;
       state.tool = 'move';
       state.selected = null;
@@ -121,7 +136,7 @@ const actions = {
       case 'unlock': {
         const f = Number(args[0]);
         const r = game.unlockFloor(f);
-        if (r.ok) { ui.toast(`${FLOORS[f].name} angemietet`, 'good'); actions.setView(f); ui.openPanel('building'); }
+        if (r.ok) { ui.toast(`${FLOORS[f].name} angemietet`, 'good'); sound.chime(); actions.setView(f); ui.openPanel('building'); }
         else ui.toast(r.reason, 'bad');
         break;
       }
@@ -130,6 +145,7 @@ const actions = {
         const s = game.openShop(f, args[1]);
         if (s) {
           ui.toast(`${s.name} eröffnet – jetzt einrichten!`, 'good');
+          sound.chime();
           ui.closeModal();
           actions.setView(f);
           actions.setTool('build');
@@ -139,11 +155,16 @@ const actions = {
       case 'rename': {
         const s = game.shops.get(shopId);
         const name = String(args[1]).trim().slice(0, 24);
-        if (s && name) s.name = name;
+        if (s && name) { s.name = name; game.designVersion++; }
         break;
       }
       case 'view': ui.closeModal(); actions.setView(Number(args[0])); break;
       case 'save': save(true); break;
+      case 'sound':
+        audio.on = state.sound = !audio.on;
+        store.set(SETTINGS_KEY, JSON.stringify({ sound: audio.on }));
+        sound.rain(game.weather.type === 'regen');
+        break;
       case 'newGame':
         if (confirm('Wirklich neu anfangen? Der bisherige Spielstand geht verloren.')) {
           store.del(SAVE_KEY);
@@ -157,7 +178,38 @@ const actions = {
   reportClosed() {
     state.paused = false;
     save();
+    sound.rain(game.weather.type === 'regen');
     ui.update();
+  },
+  // Fotomodus: Oberfläche aus, Spiel pausiert, Tageszeit frei wählbar
+  photoMode(on) {
+    if (on === state.photo) return;
+    state.photo = on;
+    document.body.classList.toggle('photo', on);
+    document.getElementById('photoBar').classList.toggle('hidden', !on);
+    if (on) {
+      photoResume = !state.paused;
+      state.paused = true;
+      ui.closeModal();
+      state.selected = null;
+      renderer.setSelected(null);
+      renderer.setGhost(null);
+      renderer.setBuildMode(false);
+    } else {
+      renderer.clockOverride = null;
+      state.paused = !photoResume;
+      renderer.setBuildMode(state.tool === 'build' || state.tool === 'move');
+    }
+    ui.update();
+  },
+  photoTime(which) {
+    renderer.clockOverride = { morning: 8 * 60 + 10, noon: 13 * 60, evening: 18 * 60 + 50 }[which];
+  },
+  savePhoto() {
+    const a = document.createElement('a');
+    a.href = renderer.screenshot();
+    a.download = `pocketsim-cafe-tag${game.day}.jpg`;
+    a.click();
   },
 };
 
@@ -167,6 +219,7 @@ const ui = new UI(game, renderer, state, actions);
 
 let down = null;
 canvas.addEventListener('pointerdown', (e) => {
+  sound.unlock();
   down = { x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType, button: e.button };
 });
 canvas.addEventListener('pointermove', (e) => {
@@ -182,7 +235,7 @@ window.addEventListener('pointerup', (e) => {
 });
 
 function click(cx, cy, pointerType) {
-  if (!state.started) return;
+  if (!state.started || state.photo) return;
   const cell = renderer.pickCell(cx, cy);
   const f = state.view;
   if (state.tool === 'select') {
@@ -207,35 +260,45 @@ function click(cx, cy, pointerType) {
     const o = anchor(state.buildType, cell, state.rot);
     // Auf Touchgeräten erst Vorschau zeigen, zweites Tippen baut
     if (pointerType !== 'mouse') {
-      const same = state.touchPreview && state.touchPreview.x === o.x && state.touchPreview.z === o.z;
+      const same = state.touchPreview && state.touchPreview.x === o.x && state.touchPreview.z === o.z && state.touchPreview.rot === o.rot;
       if (!same) { state.touchPreview = { ...o }; state.hover = cell; return; }
     }
     if (state.tool === 'move') {
-      const r = game.move(state.moveId, o.x, o.z, state.rot);
+      const r = game.move(state.moveId, o.x, o.z, o.rot);
       if (!r.ok) return ui.toast(r.reason, 'bad');
       actions.setTool('select');
       state.selected = { kind: 'item', id: r.item.id };
       renderer.setSelected(r.item);
       return ui.update();
     }
-    const r = game.place(state.buildType, f, o.x, o.z, state.rot);
+    const r = game.place(state.buildType, f, o.x, o.z, o.rot, state.variant);
     if (!r.ok) return ui.toast(r.reason, 'bad');
+    sound.click();
     state.touchPreview = null;
     ui.update();
   }
 }
 
-// Möbel so ansetzen, dass die angetippte Zelle in seiner Mitte liegt
+// Möbel so ansetzen, dass die angetippte Zelle in seiner Mitte liegt.
+// Wandobjekte drehen sich selbst zur nächsten Wand.
 function anchor(type, cell, rot) {
-  const d = FURNITURE[type];
-  const [w, dd] = rot % 2 ? [d.d, d.w] : [d.w, d.d];
-  return { x: cell.x - Math.floor((w - 1) / 2), z: cell.z - Math.floor((dd - 1) / 2) };
+  if (isWall(type)) {
+    const cx = Math.max(0, Math.min(CONFIG.W - 1, cell.x)), cz = Math.max(0, Math.min(CONFIG.D - 1, cell.z));
+    const r = game.wallRotFor(type, cx, cz);
+    const [fw, fd] = footprint(type, r);
+    const x = r === 0 ? cx - Math.floor((fw - 1) / 2) : r === 1 ? 0 : CONFIG.W - fw;
+    const z = r === 0 ? 0 : cz - Math.floor((fd - 1) / 2);
+    return { x: Math.max(0, Math.min(CONFIG.W - fw, x)), z: Math.max(0, Math.min(CONFIG.D - fd, z)), rot: r };
+  }
+  const [w, d] = footprint(type, rot);
+  return { x: cell.x - Math.floor((w - 1) / 2), z: cell.z - Math.floor((d - 1) / 2), rot };
 }
 
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
   if (!state.started) return;
   const k = e.key.toLowerCase();
+  if (state.photo) { if (k === 'escape' || k === 'p') actions.photoMode(false); return; }
   if (k === 'r') actions.rotate();
   else if (k === 'escape') {
     if (ui.panel) ui.closeModal();
@@ -246,6 +309,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === '2') actions.setSpeed(2);
   else if (k === '3') actions.setSpeed(4);
   else if (k === 'b') actions.setTool(state.tool === 'build' ? 'select' : 'build');
+  else if (k === 'p') actions.photoMode(true);
   else if (k === 'delete' || k === 'backspace') { if (state.selected?.kind === 'item') actions.inspectorAction('sell'); }
   else if (k === 'pageup' || k === 'pagedown') {
     const order = [0, 1, 2, 'out'];
@@ -257,17 +321,17 @@ window.addEventListener('keydown', (e) => {
 // ───────────── Bauvorschau ─────────────
 
 function updateGhost() {
-  const building = (state.tool === 'build' || state.tool === 'move') && state.buildType && state.view !== 'out';
+  const building = !state.photo && (state.tool === 'build' || state.tool === 'move') && state.buildType && state.view !== 'out';
   const cell = state.touchPreview ? null : state.hover;
   if (!building || (!cell && !state.touchPreview) || (cell && !cell.inside && !state.touchPreview)) {
     renderer.setGhost(null);
-    renderer.setHover(state.tool === 'select' && state.hover?.inside ? state.hover : null);
+    renderer.setHover(!state.photo && state.tool === 'select' && state.hover?.inside ? state.hover : null);
     return;
   }
   const o = state.touchPreview || anchor(state.buildType, cell, state.rot);
-  const check = game.canPlace(state.buildType, state.view, o.x, o.z, state.rot, state.tool === 'move' ? state.moveId : 0);
+  const check = game.canPlace(state.buildType, state.view, o.x, o.z, o.rot, state.tool === 'move' ? state.moveId : 0);
   const afford = state.tool === 'move' || game.money >= FURNITURE[state.buildType].cost;
-  renderer.setGhost(state.buildType, state.view, o.x, o.z, state.rot, check.ok && afford);
+  renderer.setGhost(state.buildType, state.view, o.x, o.z, o.rot, check.ok && afford, state.variant);
   renderer.setHover(null);
   const hint = document.getElementById('hint');
   if (!check.ok) hint.textContent = check.reason;
@@ -277,7 +341,7 @@ function updateGhost() {
 
 // ───────────── Spielschleife ─────────────
 
-let last = performance.now(), acc = 0, uiAcc = 0, saveAcc = 0;
+let last = performance.now(), acc = 0, uiAcc = 0, saveAcc = 0, lastWeather = null;
 const STEP = 1 / CONFIG.tickRate;
 function loop(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -293,13 +357,23 @@ function loop(now) {
     if (e.kind === 'dayEnd') {
       state.paused = true;
       ui.showReport(e.report);
+      sound.chime();
       save();
-    }
+    } else if (e.kind === 'toast') {
+      ui.toast(e.text, e.tone);
+      if (e.text.startsWith('Tagesaufgabe')) sound.chime();
+    } else if (e.kind === 'money' && !e.tip && (state.view === 'out' || state.view === e.floor)) sound.ding();
   }
+  if (lastWeather !== game.weather.type && state.started) { lastWeather = game.weather.type; sound.rain(lastWeather === 'regen'); }
   updateGhost();
-  renderer.frame(state.paused ? 0 : dt * state.speed, fx, dt);
+  if (renderer.clockOverride != null) {
+    const real = game.clock;
+    game.clock = renderer.clockOverride;
+    renderer.frame(0, fx, dt);
+    game.clock = real;
+  } else renderer.frame(state.paused ? 0 : dt * state.speed, fx, dt);
   uiAcc += dt;
-  if (uiAcc > 0.25) { uiAcc = 0; ui.update(); }
+  if (uiAcc > 0.25) { uiAcc = 0; if (!state.photo) ui.update(); }
   saveAcc += dt;
   if (saveAcc > 20 && state.started) { saveAcc = 0; save(); }
   requestAnimationFrame(loop);
@@ -308,13 +382,15 @@ function loop(now) {
 // ───────────── Titelbildschirm ─────────────
 
 function start() {
+  sound.unlock();
   document.getElementById('title').classList.add('hidden');
   state.started = true;
   state.paused = false;
   if (!hasSave) {
     actions.setTool('build');
     ui.toast('Willkommen! Stell zuerst eine Theke mit Kasse auf.', 'good');
-  }
+  } else if (game.quest && !game.quest.done) ui.toast(`Heute: ${game.quest.text}`);
+  sound.rain(game.weather.type === 'regen');
   ui.update(true);
 }
 
@@ -337,4 +413,4 @@ ui.update(true);
 requestAnimationFrame(loop);
 
 // Für Tests und Neugierige
-window.pocketsim = { game, state, renderer, ui, actions };
+window.pocketsim = { game, state, renderer, ui, actions, PRODUCTS };

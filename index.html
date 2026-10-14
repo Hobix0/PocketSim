@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>PocketSim Café</title>
-  <meta name="description" content="Richte dein eigenes Café ein, verkaufe Kaffee und Snacks und baue Etage für Etage aus.">
+  <meta name="description" content="Ein gemütliches Herbst-Café: einrichten, streichen, Kürbis-Latte verkaufen und Etage für Etage ausbauen.">
   <meta name="theme-color" content="#2f4a42">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,7 +32,7 @@
       <div class="brand">PocketSim <em>Café</em></div>
       <div class="stats">
         <div class="stat"><label>Kasse</label><b id="money">–</b></div>
-        <div class="stat"><label id="dayLabel">Tag 1</label><b id="clock">07:00</b></div>
+        <div class="stat"><label id="dayLabel">Tag 1</label><b><span id="clock">07:00</span> <span id="weather" class="wx"></span></b></div>
         <div class="stat"><label>Ruf</label><b id="rep" class="stars"></b></div>
       </div>
       <div class="speed" id="speed"></div>
@@ -41,6 +41,7 @@
 
     <aside class="side">
       <section class="card shop" id="shopCard"></section>
+      <section class="card quest" id="questCard"></section>
       <section class="card steps" id="steps"></section>
     </aside>
 
@@ -53,19 +54,24 @@
       <div class="catalog hidden" id="catalog">
         <div class="cats" id="cats"></div>
         <div class="items" id="items"></div>
+        <div class="variants" id="variants"></div>
       </div>
       <div class="hint" id="hint"></div>
     </footer>
 
     <div id="toasts"></div>
+    <div id="photoBar" class="photobar hidden">
+      <button data-photo="morning">🌅 Morgen</button><button data-photo="noon">☀️ Mittag</button><button data-photo="evening">🌇 Abend</button>
+      <button data-photo="save">💾 Bild speichern</button><button data-photo="exit">✕ Zurück</button>
+    </div>
     <div id="modal" class="modal hidden"><div class="sheet"><button class="close" data-close aria-label="Schließen">×</button><div id="modalBody"></div></div></div>
   </div>
 
   <div id="title" class="title">
     <div class="title-card">
-      <div class="eyebrow">Wirtschaftssimulation</div>
+      <div class="eyebrow">🍂 Gemütliche Wirtschaftssimulation</div>
       <h1>PocketSim <em>Café</em></h1>
-      <p>Ein leeres Ladenlokal in der Altstadt, drei Etagen und ein Startkapital. Richte dein Café ein, stell Baristas ein, finde die richtigen Preise – und miete später die oberen Etagen dazu.</p>
+      <p>Oktober in der Altstadt. Draußen fällt das Laub, drinnen duftet es nach Zimt. Richte dein Café ein, streich die Wände, lerne Herbstrezepte, freunde dich mit Stammgästen an – und miete Etage für Etage dazu.</p>
       <div class="title-actions" id="titleActions"></div>
       <div class="loading" id="loading">Lade 3D-Engine …</div>
     </div>
