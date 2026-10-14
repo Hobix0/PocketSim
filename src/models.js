@@ -789,6 +789,117 @@ const BUILDERS = {
     for (const x of [-0.25, 0.25]) box(g, 0.05, 0.05, 0.5, m, x, 0, -0.1);
   },
 
+
+  // ── Supermarkt ──
+  s_kasse(g, c) {
+    // Kassenband vorne, Kassierplatz hinten
+    box(g, 2.0, 0.85, 0.62, c, 0, 0, 0.5, { r: 0.5 });
+    box(g, 1.6, 0.04, 0.5, '#26262a', -0.15, 0.85, 0.5, { r: 0.8 });
+    for (let i = 0; i < 4; i++) box(g, 0.2, 0.12, 0.16, ['#c8652f', '#e8dcc8', '#5a9a4a', '#d0a03e'][i], -0.75 + i * 0.3, 0.89, 0.5);
+    box(g, 0.3, 0.3, 0.3, '#c9ccd1', 0.75, 0.85, 0.5, { m: 0.6, r: 0.3 });
+    box(g, 0.26, 0.2, 0.03, '#7fd4c1', 0.75, 1.2, 0.4, { e: '#3aa08a', ei: 0.5 }).rotation.x = -0.35;
+    box(g, 0.1, 0.02, 0.1, '#e5534b', 0.45, 0.89, 0.5, { e: '#e5534b', ei: 0.6 });
+    // Kassenschild mit Nummer
+    cyl(g, 0.02, 0.02, 1.2, '#26262a', 0.95, 0.85, 0.75);
+    box(g, 0.3, 0.3, 0.04, '#2f5d50', 0.95, 2.0, 0.75);
+    // Hinterer Teil: Zigaretten-/Kaugummiregal
+    box(g, 2.0, 1.2, 0.3, shade(c, -0.1), 0, 0, -0.85);
+    for (let r = 0; r < 3; r++) for (let i = 0; i < 8; i++) box(g, 0.18, 0.12, 0.08, ['#b8302f', '#2c3a50', '#d0a03e', '#e8dcc8', '#5a9a4a'][(r + i) % 5], -0.84 + i * 0.24, 0.3 + r * 0.28, -0.7);
+  },
+  obststand(g, c) {
+    // Schräge Holzkisten mit Obst, Gemüse und Kürbissen
+    const stand = mat(c, { r: 0.8 });
+    box(g, 1.9, 0.5, 0.8, stand, 0, 0, 0);
+    const fruit = [['#c8302f', 0.07], ['#e8b34a', 0.07], ['#7aa04a', 0.08], ['#d9772f', 0.09], ['#5a3a6a', 0.06], ['#e8c06a', 0.07]];
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 3; i++) {
+      const crate = box(g, 0.58, 0.14, 0.36, '#b98a50', -0.62 + i * 0.62, 0.5 + r * 0.12, -0.18 + r * 0.38);
+      crate.rotation.x = -0.18;
+      const [col, rad] = fruit[(r * 3 + i) % fruit.length];
+      for (let k = 0; k < 6; k++) sph(g, rad, col, -0.8 + i * 0.62 + (k % 3) * 0.17, 0.66 + r * 0.12 - (Math.floor(k / 3)) * 0.02, -0.25 + r * 0.38 + Math.floor(k / 3) * 0.14);
+    }
+    box(g, 1.9, 0.9, 0.05, stand, 0, 0.5, -0.4);
+    box(g, 1.6, 0.25, 0.02, '#f4ece0', 0, 1.15, -0.37);
+    pumpkin(g, 0.7, 0, 0.45, 0.8); pumpkin(g, 0.4, 0, 0.5, 0.6, '#e9e1cf');
+  },
+  brotregal(g, c) {
+    const m = mat(c, { r: 0.8 });
+    box(g, 1.9, 1.7, 0.45, m, 0, 0, -0.22);
+    for (let r = 0; r < 4; r++) {
+      const shelf = box(g, 1.84, 0.03, 0.42, shade(c, 0.15), 0, 0.15 + r * 0.42, -0.18);
+      shelf.rotation.x = 0.12;
+      for (let i = 0; i < 5; i++) {
+        const loaf = sph(g, 0.1, ['#b8783a', '#8a5a2a', '#d9a04a'][(r + i) % 3], -0.72 + i * 0.36, 0.25 + r * 0.42, -0.12);
+        loaf.scale.set(1.5, 0.7, 0.9);
+      }
+    }
+    box(g, 1.9, 0.08, 0.5, '#e8dcc8', 0, 1.7, -0.2);
+  },
+  kuehlregal(g, c) {
+    box(g, 1.9, 2.0, 0.6, c, 0, 0, -0.2, { r: 0.4 });
+    box(g, 1.8, 1.6, 0.04, '#0f1d24', 0, 0.25, 0.09, { r: 0.6 });
+    box(g, 1.7, 0.04, 0.5, '#e8f6ff', 0, 1.88, -0.15, { e: '#d8f0ff', ei: 1.0, g: true });
+    const cols = ['#f4f4f0', '#5aa0d8', '#e8c06a', '#7aa04a', '#e86a8a', '#f4f4f0'];
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 7; i++) {
+      const tall = r === 0;
+      box(g, 0.18, tall ? 0.3 : 0.14, 0.14, cols[(r + i) % cols.length], -0.78 + i * 0.26, 0.32 + r * 0.38, -0.05, { r: 0.4 });
+    }
+    for (let r = 0; r < 4; r++) box(g, 1.8, 0.02, 0.42, '#c9ccd1', 0, 0.3 + r * 0.38, -0.12, { m: 0.6 });
+    box(g, 1.9, 0.12, 0.62, shade(c, -0.25), 0, 0, -0.2);
+  },
+  getraenkeregal(g, c) {
+    const m = mat(c, { m: 0.5, r: 0.4 });
+    box(g, 1.9, 1.9, 0.42, m, 0, 0, -0.26);
+    for (let r = 0; r < 4; r++) {
+      box(g, 1.84, 0.03, 0.4, '#c9ccd1', 0, 0.12 + r * 0.44, -0.22, { m: 0.6 });
+      for (let i = 0; i < 9; i++) {
+        const col = ['#5aa0d8', '#e8b34a', '#c8302f', '#7aa04a', '#f4f4f0', '#a86a2a'][(r * 2 + i) % 6];
+        cyl(g, 0.045, 0.045, 0.28, mat(col, { r: 0.2, o: 0.85 }), -0.82 + i * 0.205, 0.15 + r * 0.44, -0.18, {}, 8);
+      }
+    }
+    for (let i = 0; i < 3; i++) box(g, 0.36, 0.26, 0.28, '#3a6a3a', -0.6 + i * 0.6, 0, 0.18);
+  },
+  suessregal(g, c) {
+    const m = mat(c, { m: 0.5, r: 0.4 });
+    box(g, 1.9, 1.7, 0.42, m, 0, 0, -0.26);
+    const cols = ['#b8302f', '#e8b34a', '#5c3c53', '#d9772f', '#3a6aa8', '#e86a8a', '#7a4a2e'];
+    for (let r = 0; r < 4; r++) {
+      box(g, 1.84, 0.03, 0.4, '#c9ccd1', 0, 0.12 + r * 0.4, -0.22, { m: 0.6 });
+      for (let i = 0; i < 8; i++) box(g, 0.18, 0.26 - (i % 2) * 0.08, 0.14, cols[(r * 3 + i) % cols.length], -0.8 + i * 0.23, 0.15 + r * 0.4, -0.18, { r: 0.4 });
+    }
+    box(g, 1.3, 0.22, 0.03, '#e8b34a', 0, 1.72, -0.06, { e: '#ffcf60', ei: 0.3 });
+  },
+  tiefkuehl(g, c) {
+    box(g, 1.9, 0.82, 0.85, c, 0, 0, 0, { r: 0.4 });
+    box(g, 1.8, 0.04, 0.75, '#cfe6f0', 0, 0.82, 0, { o: 0.35, r: 0.05 });
+    box(g, 1.76, 0.02, 0.7, '#e8f6ff', 0, 0.78, 0, { e: '#cfeaff', ei: 0.6, g: true });
+    for (let i = 0; i < 8; i++) box(g, 0.36, 0.05, 0.28, ['#c8302f', '#e8b34a', '#3a6aa8', '#7aa04a'][i % 4], -0.7 + (i % 4) * 0.46, 0.7, -0.16 + Math.floor(i / 4) * 0.32, { r: 0.4 });
+    box(g, 1.9, 0.14, 0.85, shade(c, -0.25), 0, 0, 0);
+  },
+  drogerie(g, c) {
+    const m = mat(c, { m: 0.3, r: 0.4 });
+    box(g, 1.9, 1.7, 0.42, m, 0, 0, -0.26);
+    for (let r = 0; r < 4; r++) {
+      box(g, 1.84, 0.03, 0.4, '#c9ccd1', 0, 0.12 + r * 0.4, -0.22, { m: 0.6 });
+      for (let i = 0; i < 9; i++) {
+        const col = ['#e86a8a', '#5aa0d8', '#f4f4f0', '#7ac0a0', '#c8a0d8'][(r + i) % 5];
+        cyl(g, 0.05, 0.05, 0.18 + (i % 3) * 0.05, col, -0.82 + i * 0.205, 0.15 + r * 0.4, -0.18, { r: 0.3 }, 8);
+      }
+    }
+  },
+  wagenbox(g, c) {
+    const m = mat(c, { m: 0.7, r: 0.3 });
+    for (let k = 0; k < 3; k++) {
+      const z = -0.25 + k * 0.18;
+      box(g, 0.5, 0.36, 0.55, mat(c, { m: 0.7, r: 0.3, o: 0.55 }), 0, 0.42, z);
+      box(g, 0.5, 0.03, 0.03, m, 0, 0.95, z + 0.3);
+      for (const x of [-0.22, 0.22]) {
+        box(g, 0.025, 0.45, 0.025, m, x, 0.5, z + 0.3);
+        cyl(g, 0.05, 0.05, 0.04, '#26262a', x, 0.0, z - 0.2);
+      }
+    }
+    box(g, 0.2, 0.25, 0.02, '#2f5d50', 0, 0.55, 0.32);
+  },
+
   // ── Wand (Rückkante bei z = -0.5) ──
   akustik(g, c) {
     box(g, 0.9, 2.1, 0.03, '#2b2b2e', 0, 0.35, -0.48, { r: 1 });

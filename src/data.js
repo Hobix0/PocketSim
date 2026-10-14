@@ -62,7 +62,7 @@ export const SHOP_TYPES = {
     start: { shirts: 20 },
   },
   supermarkt: {
-    name: 'Supermarkt', icon: '🛒', available: false, mode: 'browse', traffic: 1.5,
+    name: 'Supermarkt', icon: '🛒', available: true, mode: 'browse', traffic: 1.5,
     desc: 'Alles für den Alltag. Viele Kund:innen, volle Körbe, kleine Margen.',
     sitChance: 0, defaultName: 'Markt am Eck', staff: 'Kassierer:in', staffPlural: 'Kassierer:innen', register: 's_kasse',
     needsText: 'Regale fehlen',
@@ -185,7 +185,7 @@ export const FURNITURE = {
   standspiegel: { name: 'Standspiegel', cat: 'room', shops: ['boutique'], w: 1, d: 1, cost: 220, decor: 2, v: METAL, desc: 'Großer Spiegel mit Rahmen.' },
 
   // Supermarkt
-  s_kasse: { name: 'Kasse mit Band', cat: 'service', shops: ['supermarkt'], w: 2, d: 2, cost: 1300, register: true, v: ['#2b2b2e', '#2f5d50', '#e8dcc8'], desc: 'Kassenband mit Scanner.' },
+  s_kasse: { name: 'Kasse mit Band', cat: 'service', shops: ['supermarkt'], w: 2, d: 2, cost: 1300, register: true, v: ['#e8dcc8', '#2f5d50', '#2b2b2e'], desc: 'Kassenband mit Scanner.' },
   obststand: { name: 'Obst & Gemüse', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 520, provides: 'produce', decor: 2, v: WOOD, desc: 'Holzkisten mit Äpfeln, Kürbissen und Kohl.' },
   brotregal: { name: 'Brotregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 480, provides: 'bread', v: WOOD, desc: 'Brot und Brötchen vom Bäcker.' },
   kuehlregal: { name: 'Kühlregal', cat: 'service', shops: ['supermarkt'], w: 2, d: 1, cost: 1100, provides: 'dairy', glow: true, v: ['#e7e3db', '#2b2b2e'], desc: 'Milch, Käse, Joghurt.' },
