@@ -46,7 +46,7 @@ export const SHOP_TYPES = {
     start: { bohnen: 100, milch: 40, tee: 50 },
   },
   fastfood: {
-    name: 'Fast Food', icon: '🍔', available: false, mode: 'counter', traffic: 0.8,
+    name: 'Fast Food', icon: '🍔', available: true, mode: 'counter', traffic: 0.8,
     desc: 'Burger, Pommes und Shakes – schnell, laut, beliebt.',
     sitChance: 0.4, defaultName: 'Burger Eck', staff: 'Crew', staffPlural: 'Crew', register: 'ff_theke',
     needsText: 'Grill, Fritteuse oder Getränkestation fehlt',

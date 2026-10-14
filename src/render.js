@@ -790,7 +790,7 @@ export class Renderer {
 
   setView(v) {
     this.view = v;
-    if (v === 'out') this.focus.set(0, 2, 0.5);
+    if (v === 'out') this.focus.set(-6, 2, 0.5);
     else this.focus.set(OX + lotX(v) + W / 2, 0.8, 0.5);
     // Kurz nach dem Wechsel auf passenden Abstand zoomen (Straße weit, Laden nah)
     this.zoomTo = v === 'out' ? (this.camera.aspect < 1 ? 130 : 84) : (this.camera.aspect < 1 ? 34 : 26);
