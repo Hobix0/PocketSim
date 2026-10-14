@@ -252,6 +252,21 @@ const TEX = {
       g.fillStyle = shade(c, -0.55); g.fillRect(0, h * 0.85, w, h * 0.15);
     },
   },
+  menu: {
+    w: 256, h: 96,
+    draw: (g, w, h, c) => {
+      g.fillStyle = c; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 3; i++) {
+        const x = 8 + i * 84;
+        g.fillStyle = 'rgba(255,255,255,0.08)'; g.fillRect(x, 6, 78, h - 12);
+        g.fillStyle = ['#d9a04a', '#b8302f', '#7aa04a'][i];
+        g.beginPath(); g.arc(x + 39, 34, 18, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#f4ece0'; g.font = '600 12px system-ui'; g.textAlign = 'center';
+        g.fillText(['BURGER', 'MENÜ', 'SALAT'][i], x + 39, 68);
+        g.fillStyle = '#ffd27a'; g.fillText(['5,90', '8,90', '6,50'][i], x + 39, 84);
+      }
+    },
+  },
   neon: {
     w: 256, h: 96,
     draw: (g, w, h, c) => {
@@ -290,10 +305,10 @@ export function floorMaterial(id) {
   if (!surfaceCache.has(key)) surfaceCache.set(key, new THREE.MeshStandardMaterial({ map: texture(id), roughness: id === 'schachbrett' || id === 'terrazzo' ? 0.45 : 0.8 }));
   return surfaceCache.get(key);
 }
-export function facadeMaterial(id, hex) {
+export function facadeMaterial(id, hex, tex = id.startsWith('ziegel') ? 'ziegel' : 'putz') {
   const key = `fa|${id}`;
   if (!surfaceCache.has(key)) {
-    const t = id.startsWith('ziegel') ? texture('ziegel', null, hex) : texture('putz', null, hex);
+    const t = texture(tex, null, hex);
     surfaceCache.set(key, new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 }));
   }
   return surfaceCache.get(key);
@@ -525,6 +540,76 @@ const BUILDERS = {
     box(g, 0.6, 0.5, 0.02, '#ffcf6b', 0, 0.5, 0.16, { e: '#ff9f3d', ei: 0.8, g: true });
     box(g, 0.5, 0.25, 0.02, '#8fd3ff', 0, 0.12, 0.16, { e: '#4fb8ff', ei: 0.5, g: true });
     for (const x of [-0.33, 0.33]) box(g, 0.06, 1.0, 0.03, '#ffe08a', x, 0.05, 0.16, { e: '#ffb347', ei: 0.9, g: true });
+  },
+
+
+  // ── Stil-Elemente aus Stahl und Grün ──
+  stahlregal(g, c) {
+    const m = mat(c, { m: 0.5, r: 0.4 });
+    for (const x of [-0.92, 0.92]) for (const z of [-0.15, 0.15]) box(g, 0.035, 2.1, 0.035, m, x, 0, z - 0.1);
+    for (const y of [0.05, 0.6, 1.15, 1.7]) {
+      box(g, 1.88, 0.03, 0.36, C.woodLight, 0, y, -0.1);
+      for (const z of [-0.27, 0.07]) box(g, 1.88, 0.025, 0.025, m, 0, y - 0.01, z);
+    }
+    for (let i = 0; i < 4; i++) {
+      pot(g, ['#e7dccb', '#26262a', '#c06a43'][i % 3], 0.1, 0.16, -0.65 + i * 0.43, -0.1);
+      const lift = [0.08, 0.63, 1.18, 1.73][i];
+      g.children.at(-2).position.y += lift; g.children.at(-1).position.y += lift;
+      bush(g, -0.65 + i * 0.43, lift + 0.32, -0.1, 0.65);
+    }
+    for (let i = 0; i < 4; i++) cyl(g, 0.05, 0.05, 0.16, ['#dfe9ea', '#c9a36a', '#b35a3b', '#e8e1d0'][i], 0.3 + i * 0.13, 0.63, -0.1, { o: i === 0 ? 0.6 : 1 });
+    for (let i = 0; i < 5; i++) {
+      const v = mesh(cached('vine', () => new THREE.CylinderGeometry(0.035, 0.02, 0.8, 5)), mat(i % 2 ? C.leaf : C.leafDark, { r: 0.9 }), -0.8 + i * 0.4, 1.45, 0.08, g);
+      v.rotation.z = (i - 2) * 0.1;
+    }
+  },
+  pflanzkuebel(g, c) {
+    box(g, 0.7, 0.55, 0.7, c, 0, 0, 0, { r: 0.6 });
+    box(g, 0.62, 0.03, 0.62, C.soil, 0, 0.53, 0);
+    const b = sph(g, 0.36, '#4f7a3a', 0, 0.9, 0, { r: 0.9 });
+    b.scale.set(1, 0.9, 1);
+    bush(g, 0, 1.05, 0, 0.9, ['#55753b', '#6b8a45']);
+  },
+  efeurahmen(g, c) {
+    const m = mat(c, { m: 0.5, r: 0.4 });
+    const y = CEIL - 0.75;
+    for (const x of [-0.9, 0.9]) cyl(g, 0.008, 0.008, 0.75, '#1b1b1d', x, y, 0);
+    box(g, 1.9, 0.04, 0.04, m, 0, y, -0.25);
+    box(g, 1.9, 0.04, 0.04, m, 0, y, 0.25);
+    for (const x of [-0.93, 0, 0.93]) box(g, 0.04, 0.04, 0.54, m, x, y, 0);
+    for (let i = 0; i < 9; i++) {
+      bush(g, -0.85 + i * 0.21, y + 0.06, (noise(i) - 0.5) * 0.4, 0.7, ['#4c8a3f', '#356b2e', '#5f9a48']);
+      const v = mesh(cached('vine', () => new THREE.CylinderGeometry(0.035, 0.02, 0.8, 5)), mat(i % 2 ? C.leaf : C.leafDark, { r: 0.9 }), -0.85 + i * 0.21, y - 0.35 - noise(i + 3) * 0.2, (noise(i + 7) - 0.5) * 0.4, g);
+      v.scale.y = 0.6 + noise(i + 9) * 0.6;
+    }
+    cyl(g, 0.012, 0.012, 0.3, '#1b1b1d', -0.45, y - 0.3, 0);
+    sph(g, 0.08, '#f6e3b8', -0.45, y - 0.4, 0, { e: '#ffcf80', ei: 1.2, g: true }).castShadow = false;
+    cyl(g, 0.012, 0.012, 0.3, '#1b1b1d', 0.45, y - 0.3, 0);
+    sph(g, 0.08, '#f6e3b8', 0.45, y - 0.4, 0, { e: '#ffcf80', ei: 1.2, g: true }).castShadow = false;
+  },
+  diner(g, c) {
+    const f = mat(c, { r: 0.6 });
+    for (const z of [-0.72, 0.72]) {
+      const s = z < 0 ? 1 : -1;
+      box(g, 1.9, 0.42, 0.52, mat('#2b2b2e', { r: 0.6 }), 0, 0, z);
+      box(g, 1.86, 0.1, 0.5, f, 0, 0.42, z + s * 0.02);
+      box(g, 1.9, 0.7, 0.14, f, 0, 0.42, z - s * 0.22);
+      for (let k = 0; k < 3; k++) box(g, 0.02, 0.62, 0.15, mat(shade(c, -0.25)), -0.62 + k * 0.62, 0.46, z - s * 0.215);
+    }
+    box(g, 1.5, 0.05, 0.7, '#efebe4', 0, 0.72, 0, { r: 0.3 });
+    cyl(g, 0.05, 0.05, 0.72, mat('#c9ccd1', { m: 0.8, r: 0.3 }), 0, 0, 0);
+    cyl(g, 0.03, 0.03, 0.12, '#b8302f', -0.3, 0.77, 0.1);
+    cyl(g, 0.03, 0.03, 0.12, '#d0a03e', -0.2, 0.77, 0.1);
+  },
+  menuboard(g, c) {
+    const m = cached(`menuMat|${c}`, () => {
+      const t = texture('menu', null, c);
+      const mm = new THREE.MeshStandardMaterial({ map: t, emissive: '#ffffff', emissiveMap: t, emissiveIntensity: 0.6, roughness: 0.6 });
+      mm.userData.glow = 0.6; glowMats.add(mm);
+      return mm;
+    });
+    box(g, 1.8, 0.75, 0.06, '#1b1b1d', 0, 1.9, -0.47);
+    mesh(boxGeo(1.7, 0.65, 0.01), m, 0, 2.275, -0.435, g).castShadow = false;
   },
 
   // ── Wand (Rückkante bei z = -0.5) ──

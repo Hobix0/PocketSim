@@ -1,6 +1,6 @@
 // HTML-Oberfläche: Kopfleiste, Ladenstatus, Tagesaufgabe, Baukatalog, Inspektor und Fenster.
 import {
-  CONFIG, FLOORS, SHOP_TYPES, FURNITURE, FURNITURE_CATS, PRODUCTS, SUPPLIES, WEATHER, PAINT, WALL_PATTERNS,
+  CONFIG, LOTS, SHOP_TYPES, FURNITURE, FURNITURE_CATS, PRODUCTS, SUPPLIES, WEATHER, PAINT, WALL_PATTERNS,
   FLOOR_MATS, FACADES, AWNINGS, FRAMES, DESIGN_COST, paintHex, calendar,
   productsFor, suppliesFor, furnitureFor,
 } from './data.js';
@@ -26,6 +26,12 @@ const STATE_TEXT = {
   toSeat: 'sucht sich einen Platz', sitting: 'sitzt und genießt', leaving: 'geht nach Hause', exit: 'geht weiter', pass: 'läuft vorbei',
 };
 const PET_TEXT = { sleep: 'schläft im Körbchen 💤', idle: 'putzt sich', walk: 'streunt durchs Café', home: 'trottet zum Körbchen' };
+const NEEDS = {
+  machine: 'Siebträger', display: 'Vitrine', grill: 'Grill', fryer: 'Fritteuse', soda: 'Getränkestation', shake: 'Shake-Maschine',
+  rack: 'Kleiderstange', fold: 'Präsentiertisch', shoes: 'Schuhregal', acc: 'Accessoire-Stand',
+  produce: 'Obststand', bread: 'Brotregal', dairy: 'Kühlregal', bev: 'Getränkeregal', sweets: 'Süßwarenregal', frozen: 'Tiefkühltruhe', drug: 'Drogerieregal',
+};
+const KIND = { drink: 'Getränk', snack: 'Essen', item: 'Artikel' };
 const SIDES = [['all', 'Alle Wände'], ['back', 'Hinten'], ['left', 'Links'], ['right', 'Rechts'], ['front', 'Vorne']];
 
 export class UI {
@@ -38,7 +44,7 @@ export class UI {
     this.panel = null;
     this.stepsCollapsed = false;
     this.lastHtml = {};
-    this.design = { tab: 'inside', floor: 0, side: 'all' };
+    this.design = { tab: 'inside', lot: 0, side: 'all' };
 
     $('modal').addEventListener('pointerdown', (e) => { if (e.target.id === 'modal') this.closeModal(); });
     $('modal').addEventListener('click', (e) => { if (e.target.closest('[data-close]')) this.closeModal(); });
@@ -59,7 +65,7 @@ export class UI {
     const menu = $('menu');
     menu.innerHTML = [
       ['menu', '☕', 'Karte'], ['stock', '📦', 'Lager'], ['staff', '🧑‍🍳', 'Team'], ['design', '🎨', 'Gestalten'],
-      ['guests', '💛', 'Gäste'], ['building', '🏢', 'Etagen'], ['stats', '📈', 'Bilanz'], ['photo', '📷', 'Foto'], ['game', '☰', 'Spiel'],
+      ['guests', '💛', 'Gäste'], ['building', '🏘️', 'Straße'], ['stats', '📈', 'Bilanz'], ['photo', '📷', 'Foto'], ['game', '☰', 'Spiel'],
     ].map(([id, ico, lbl]) => `<button data-panel="${id}" title="${lbl}"><span class="ico">${ico}</span><span class="lbl">${lbl}</span></button>`).join('');
     menu.addEventListener('click', (e) => {
       const b = e.target.closest('[data-panel]');
@@ -89,7 +95,7 @@ export class UI {
       if (b) { this.state.variant = Number(b.dataset.v); this.renderCatalog(); }
     });
 
-    $('floors').addEventListener('click', (e) => {
+    $('lots').addEventListener('click', (e) => {
       const b = e.target.closest('[data-view]');
       if (b) this.actions.setView(b.dataset.view === 'out' ? 'out' : Number(b.dataset.view));
     });
@@ -123,7 +129,7 @@ export class UI {
     });
 
     this.renderTools();
-    this.renderFloors();
+    this.renderLots();
   }
 
   set(id, html) {
@@ -135,7 +141,7 @@ export class UI {
   // Laden der aktuell betrachteten Etage
   currentShop() {
     const v = this.state.view === 'out' ? 0 : this.state.view;
-    return this.game.shopOnFloor(v);
+    return this.game.shopOnLot(v);
   }
 
   renderTools() {
@@ -154,7 +160,7 @@ export class UI {
       sell: 'Möbel antippen, um es für 50 % zu verkaufen',
       select: '',
     };
-    $('hint').textContent = this.state.view === 'out' && t !== 'select' ? 'Zum Einrichten eine Etage wählen' : hints[t] || '';
+    $('hint').textContent = this.state.view === 'out' && t !== 'select' ? 'Zum Einrichten einen Laden wählen' : hints[t] || '';
   }
 
   renderCatalog() {
@@ -162,7 +168,7 @@ export class UI {
     if (!shop) {
       this.set('cats', '');
       this.set('variants', '');
-      this.set('items', '<div style="padding:10px;color:var(--ink-2)">Auf dieser Etage gibt es noch keinen Laden. <button class="btn small primary" data-open="building">Etagen öffnen</button></div>');
+      this.set('items', '<div style="padding:10px;color:var(--ink-2)">Auf diesem Grundstück gibt es noch keinen Laden. <button class="btn small primary" data-open="building">Zur Straße</button></div>');
       return;
     }
     const types = furnitureFor(shop.type);
@@ -183,16 +189,15 @@ export class UI {
     this.set('variants', vs.length > 1 ? `<span>Farbe</span>${vs.map((hex, i) => `<button data-v="${i}" class="sw ${(this.state.variant || 0) === i ? 'on' : ''}" style="--c:${hex}" title="Variante ${i + 1}"></button>`).join('')}` : '');
   }
 
-  renderFloors() {
+  renderLots() {
     const g = this.game;
     const v = this.state.view;
-    const rows = [['out', 'Außen', '']];
-    for (let f = FLOORS.length - 1; f >= 0; f--) {
-      const fl = g.floors[f];
-      const shop = g.shops.get(fl.shop);
-      rows.push([String(f), FLOORS[f].short, fl.unlocked ? (shop ? SHOP_TYPES[shop.type].name : 'leer') : 'frei', !fl.unlocked]);
-    }
-    this.set('floors', rows.map(([id, name, sub, locked]) => `<button data-view="${id}" class="${String(v) === id ? 'on' : ''} ${locked ? 'locked' : ''}" title="${name}">${name}${sub ? `<small>${sub}</small>` : ''}</button>`).join(''));
+    const rows = [['out', '🏘️', 'Straße']];
+    g.lots.forEach((lt, i) => {
+      const shop = g.shops.get(lt.shop);
+      rows.push([String(i), shop ? SHOP_TYPES[shop.type].icon : lt.owned ? '🏗️' : '🪧', shop ? shop.name : lt.owned ? 'leer' : 'zu kaufen', !lt.owned]);
+    });
+    this.set('lots', rows.map(([id, ico, sub, locked]) => `<button data-view="${id}" class="${String(v) === id ? 'on' : ''} ${locked ? 'locked' : ''}" title="${esc(sub)}"><span>${ico}</span><small>${esc(sub)}</small></button>`).join(''));
   }
 
   // ───────────── laufende Aktualisierung ─────────────
@@ -216,7 +221,7 @@ export class UI {
     this.renderShopCard();
     this.renderQuest();
     this.renderSteps();
-    this.renderFloors();
+    this.renderLots();
     this.renderTools();
     this.renderInspector();
     if (this.panel && this.panel !== 'report' && this.panelLive) this.openPanel(this.panel, true);
@@ -225,25 +230,25 @@ export class UI {
   renderShopCard() {
     const g = this.game;
     const v = this.state.view === 'out' ? 0 : this.state.view;
-    const shop = g.shopOnFloor(v);
+    const shop = g.shopOnLot(v);
     if (!shop) {
-      const fl = g.floors[v];
-      this.set('shopCard', `<div class="head"><h3>${FLOORS[v].name}</h3><span class="pill wait">${fl.unlocked ? 'leer' : 'zu vermieten'}</span></div>
-        <div class="sub">${fl.unlocked ? 'Hier kannst du einen neuen Laden eröffnen.' : `Anmieten für ${money(FLOORS[v].unlockCost)} · Miete ${money(FLOORS[v].rent)}/Tag`}</div>
-        <div class="row" style="margin-top:10px"><button class="btn primary small" data-open="building">${fl.unlocked ? 'Laden eröffnen' : 'Etage ansehen'}</button></div>`);
+      const fl = g.lots[v];
+      this.set('shopCard', `<div class="head"><h3>${LOTS[v].name}</h3><span class="pill wait">${fl.owned ? 'leer' : 'zu verkaufen'}</span></div>
+        <div class="sub">${fl.owned ? 'Hier kannst du einen neuen Laden bauen.' : `Kaufen für ${money(LOTS[v].cost)} · laufende Kosten ${money(LOTS[v].rent)}/Tag`}</div>
+        <div class="row" style="margin-top:10px"><button class="btn primary small" data-open="building">${fl.owned ? 'Laden bauen' : 'Grundstück ansehen'}</button></div>`);
       return;
     }
     const st = g.shopStatus(shop);
     const pill = st.serving ? '<span class="pill open">Geöffnet</span>'
       : st.ready ? `<span class="pill wait">${g.clock < CONFIG.openFrom ? 'öffnet ' + clockStr(CONFIG.openFrom) : 'Feierabend'}</span>`
         : '<span class="pill closed">Geschlossen</span>';
-    const d = g.derived[shop.floor];
+    const d = g.derived[shop.lot];
     const queue = d.registers.reduce((s, r) => s + r.queue.length, 0);
     const guests = [...g.agents.values()].filter((a) => a.shop === shop.id && a.kind === 'customer' && a.state !== 'exit').length;
     const satToday = shop.day.satN ? Math.round(shop.day.satSum / shop.day.satN) : '–';
     const reasons = st.reasons.filter((r) => r !== 'Laden ist geschlossen');
     this.set('shopCard', `<div class="head"><h3>${esc(shop.name)}</h3>${pill}</div>
-      <div class="sub">${SHOP_TYPES[shop.type].name} · ${FLOORS[shop.floor].name}</div>
+      <div class="sub">${SHOP_TYPES[shop.type].icon} ${SHOP_TYPES[shop.type].name} · ${LOTS[shop.lot].name}</div>
       ${reasons.length ? `<ul class="reasons">${reasons.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
       <div class="kpis">
         <div class="kpi"><label>Umsatz</label><b>${money(shop.day.revenue)}</b></div>
@@ -268,23 +273,26 @@ export class UI {
 
   steps() {
     const g = this.game;
-    const shop = g.shopOnFloor(0);
+    const shop = g.shopOnLot(0);
+    if (!shop) return [];
+    const st = SHOP_TYPES[shop.type];
     const d = g.derived[0];
     const servedTotal = g.history.reduce((s, h) => s + h.served, 0) + g.today.served;
-    const ds = g.floors[0].design;
+    const ds = g.lots[0].design;
+    const recipe = Object.keys(shop.menu).find((p) => PRODUCTS[p].recipe);
+    const fixtures = Object.values(d.provides).reduce((n, a) => n + a.length, 0);
     return [
-      ['Theke mit Kasse aufstellen', d.registers.length > 0],
-      ['Siebträger-Station aufstellen', d.machines.length > 0],
-      ['Barista einstellen (Team)', shop && shop.staff > 0],
-      ['Kuchenvitrine für Snacks', d.displays.length > 0],
-      ['Mindestens 4 Sitzplätze', d.seats.length >= 4],
-      ['Wände streichen (🎨 Gestalten)', Object.values(ds.walls).some((w) => w.color !== 'creme' || w.pattern !== 'glatt')],
-      ['Kürbis-Latte auf die Karte (☕ Karte)', shop && shop.menu.kuerbislatte?.unlocked],
+      [`${st.mode === 'counter' ? 'Theke' : 'Kasse'} aufstellen`, d.registers.length > 0],
+      [`${st.staff} einstellen (Team)`, shop.staff > 0],
+      [{ cafe: 'Siebträger und Vitrine aufstellen', fastfood: 'Grill, Fritteuse und Getränke', boutique: 'Kleiderstange und Präsentiertisch', supermarkt: 'Mindestens 4 Regale' }[shop.type], fixtures >= (shop.type === 'supermarkt' ? 4 : shop.type === 'fastfood' ? 3 : 2)],
+      ...(st.mode === 'counter' ? [['Mindestens 6 Sitzplätze', d.seats.length >= 6]] : [['Ware im Lager einkaufen', Object.values(shop.stock).filter((n) => n > 0).length >= 3]]),
+      ['Wände gestalten (🎨 Gestalten)', Object.entries(ds.walls).some(([k, w]) => w.color !== 'leinen' && w.color !== 'kreide' || (k !== 'back' && w.pattern !== 'glatt'))],
+      ...(recipe ? [[`${PRODUCTS[recipe].name} ins Angebot`, shop.menu[recipe].unlocked]] : []),
       ['Ambiente auf 50 bringen', d.appeal >= 50],
-      ['Eine Café-Katze aufnehmen', [...g.items.values()].some((it) => FURNITURE[it.type].pet)],
-      ['150 Gäste bedienen', servedTotal >= 150],
-      ['Das 1. Obergeschoss anmieten', g.floors[1].unlocked],
-      ['Zweites Café im 1. OG eröffnen', !!g.floors[1].shop],
+      ['Eine Ladenkatze aufnehmen', [...g.items.values()].some((it) => FURNITURE[it.type].pet)],
+      ['150 Kund:innen bedienen', servedTotal >= 150],
+      ['Zweites Grundstück kaufen', g.lots[1].owned],
+      ['Zweiten Laden eröffnen', !!g.lots[1].shop],
     ];
   }
 
@@ -314,12 +322,12 @@ export class UI {
       if (!it) { this.state.selected = null; box.classList.add('hidden'); return; }
       const d = FURNITURE[it.type];
       const rows = [];
-      const der = g.derived[it.floor];
+      const der = g.derived[it.lot];
       if (d.register) {
         const r = der.registers.find((x) => x.id === it.id);
-        const shop = g.shopOnFloor(it.floor);
+        const shop = g.shopOnLot(it.lot);
         const staffed = shop && g.staffedRegisters(shop).includes(r);
-        rows.push(['Besetzt', staffed ? 'ja' : '<b style="color:var(--red)">keine Barista</b>']);
+        rows.push(['Besetzt', staffed ? 'ja' : '<b style="color:var(--red)">kein Personal</b>']);
         rows.push(['Warteschlange', `${r ? r.queue.length : 0} / ${r ? r.queueSpots.length : 0}`]);
       }
       if (d.seat) {
@@ -384,7 +392,7 @@ export class UI {
   openPanel(id, refresh = false) {
     const body = $('modalBody');
     const scroll = $('modal').querySelector('.sheet').scrollTop;
-    if (!refresh && id === 'design') this.design.floor = this.state.view === 'out' ? 0 : this.state.view;
+    if (!refresh && id === 'design') this.design.lot = this.state.view === 'out' ? 0 : this.state.view;
     const html = this[`panel_${id}`]?.();
     if (html == null) return;
     if (refresh && this.lastPanelHtml === html) return;
@@ -426,18 +434,18 @@ export class UI {
   panelAction(act, args) {
     const g = this.game;
     const report = (r, ok) => { if (r && !r.ok) this.toast(r.reason, 'bad'); else if (r?.cost) this.toast(ok || `Umgestaltet (−${money(r.cost)})`, 'good'); };
-    const f = this.design.floor;
+    const f = this.design.lot;
     switch (act) {
       case 'dtab': this.design.tab = args[0]; break;
-      case 'dfloor': this.design.floor = Number(args[0]); break;
+      case 'dlot': this.design.lot = Number(args[0]); break;
       case 'dside': this.design.side = args[0]; break;
       case 'wcolor': report(g.paintWalls(f, this.design.side, { color: args[0] })); break;
       case 'wpattern': report(g.paintWalls(f, this.design.side, { pattern: args[0] })); break;
-      case 'dado': report(g.setWainscot(f, { on: args[0] === 'on' ? true : args[0] === 'off' ? false : g.floors[f].design.wainscot.on })); break;
+      case 'dado': report(g.setWainscot(f, { on: args[0] === 'on' ? true : args[0] === 'off' ? false : g.lots[f].design.wainscot.on })); break;
       case 'dadocolor': report(g.setWainscot(f, { color: args[0], on: true })); break;
       case 'floormat': report(g.setFloorMat(f, args[0])); break;
       case 'ceiling': report(g.setCeiling(f, args[0])); break;
-      case 'ext': report(g.setExterior(args[0], args[1])); break;
+      case 'ext': report(g.setExterior(f, args[0], args[1])); break;
       case 'apron': g.setApron(Number(args[0]), args[1]); break;
       case 'recipe': {
         const r = g.unlockRecipe(Number(args[0]), args[1]);
@@ -452,7 +460,7 @@ export class UI {
   shopTabs(active) {
     const shops = [...this.game.shops.values()];
     if (shops.length < 2) return '';
-    return `<div class="cats tabs">${shops.map((s) => `<button data-do="tab:${s.id}" class="${s.id === active.id ? 'on' : ''}">${esc(s.name)} · ${FLOORS[s.floor].short}</button>`).join('')}</div>`;
+    return `<div class="cats tabs">${shops.map((s) => `<button data-do="tab:${s.id}" class="${s.id === active.id ? 'on' : ''}">${SHOP_TYPES[s.type].icon} ${esc(s.name)}</button>`).join('')}</div>`;
   }
 
   panelShop() {
@@ -469,23 +477,23 @@ export class UI {
       const p = PRODUCTS[pid];
       const m = shop.menu[pid];
       if (!m.unlocked) {
-        return `<tr class="locked"><td><b>${p.name}</b> <span class="tag">Herbstrezept</span><br><small style="color:var(--ink-3)">${p.kind === 'drink' ? 'Getränk' : 'Snack'} · fairer Preis ${money2(p.fair)}</small></td>
-          <td colspan="3"><button class="btn small primary" data-do="recipe:${shop.id}:${pid}" ${g.money < p.recipe ? 'disabled' : ''}>Rezept lernen · ${money(p.recipe)}</button></td></tr>`;
+        return `<tr class="locked"><td><b>${p.name}</b> <span class="tag">Herbst-Special</span><br><small style="color:var(--ink-3)">${KIND[p.kind]} · fairer Preis ${money2(p.fair)}</small></td>
+          <td colspan="3"><button class="btn small primary" data-do="recipe:${shop.id}:${pid}" ${g.money < p.recipe ? 'disabled' : ''}>Ins Angebot · ${money(p.recipe)}</button></td></tr>`;
       }
       const offer = g.offerable(shop, pid);
-      const missing = p.needs === 'machine' && !g.derived[shop.floor].machines.length ? 'Siebträger fehlt'
-        : p.needs === 'display' && !g.derived[shop.floor].displays.length ? 'Vitrine fehlt' : '';
+      const missing = p.needs && !g.derived[shop.lot].provides[p.needs]?.length ? `${NEEDS[p.needs] || 'Ausstattung'} fehlt` : '';
       const ratio = m.price / p.fair;
       const fair = ratio <= 0.92 ? '<span class="fair lo">günstig</span>' : ratio <= 1.08 ? '<span class="fair">fair</span>' : ratio <= 1.25 ? '<span class="fair hi">teuer</span>' : '<span class="fair hi">viel zu teuer</span>';
       const stock = g.inStock(shop, pid) ? '' : ' · <span style="color:var(--red)">ausverkauft</span>';
       const hot = p.warm && cold ? ' · <span class="tag warm">heute gefragt</span>' : '';
       return `<tr class="${offer ? '' : 'off'}">
-        <td><b>${p.name}</b><br><small style="color:var(--ink-3)">${p.kind === 'drink' ? 'Getränk' : 'Snack'}${missing ? ' · ' + missing : stock}${hot}</small></td>
+        <td><b>${p.name}</b><br><small style="color:var(--ink-3)">${KIND[p.kind]}${missing ? ' · ' + missing : stock}${hot}</small></td>
         <td><span class="stepper"><button data-do="price:${shop.id}:${pid}:-0.1">−</button><b>${money2(m.price)}</b><button data-do="price:${shop.id}:${pid}:0.1">+</button></span><br>${fair}</td>
         <td class="num">${shop.day.sold[pid] || 0}</td>
         <td><label class="toggle" style="margin:0"><input type="checkbox" data-change="product:${shop.id}:${pid}" ${m.on ? 'checked' : ''}><span></span></label></td></tr>`;
     }).join('');
-    return `<h2>Speisekarte</h2><p class="lead">Preise über dem fairen Wert bringen mehr pro Tasse, vergraulen aber Gäste. An kalten Tagen sind warme Herbstgetränke besonders gefragt${cold ? ' – heute ist so ein Tag 🍂' : ''}.</p>
+    const counter = SHOP_TYPES[shop.type].mode === 'counter';
+    return `<h2>${counter ? 'Speisekarte' : 'Sortiment'}</h2><p class="lead">Preise über dem fairen Wert bringen mehr pro Verkauf, vergraulen aber Kundschaft. An kalten Tagen ist Warmes besonders gefragt${cold ? ' – heute ist so ein Tag 🍂' : ''}.</p>
       ${this.shopTabs(shop)}
       <table class="list"><tr><th>Produkt</th><th>Preis</th><th class="num">Heute</th><th>An</th></tr>${rows}</table>`;
   }
@@ -514,12 +522,13 @@ export class UI {
     const g = this.game;
     const shop = this.panelShop();
     if (!shop) return null;
-    const d = g.derived[shop.floor];
+    const d = g.derived[shop.lot];
     const regs = d.registers.length;
     const staffed = Math.min(shop.staff, regs);
     const helpers = Math.max(0, shop.staff - regs);
     const total = [...g.shops.values()].reduce((s, x) => s + x.staff, 0);
-    return `<h2>Team</h2><p class="lead">Jede Kasse braucht eine Barista. Wer übrig ist, hilft an der Siebträger-Station und macht den Service schneller.</p>
+    const st = SHOP_TYPES[shop.type];
+    return `<h2>Team</h2><p class="lead">Jede ${st.mode === 'counter' ? 'Theke' : 'Kasse'} braucht eine Person (${st.staff}). Wer übrig ist, ${st.mode === 'counter' ? 'hilft bei der Zubereitung' : 'hilft beim Einpacken und Auffüllen'} und macht alles schneller.</p>
       ${this.shopTabs(shop)}
       <div class="staffrow"><div class="people">${'🧑‍🍳'.repeat(shop.staff) || '<span style="font-size:14px;color:var(--ink-3)">Noch niemand eingestellt</span>'}</div>
         <span class="stepper"><button data-do="fire:${shop.id}" ${shop.staff ? '' : 'disabled'}>−</button><b>${shop.staff}</b><button data-do="hire:${shop.id}" ${shop.staff >= CONFIG.maxStaff ? 'disabled' : ''}>+</button></span></div>
@@ -544,25 +553,25 @@ export class UI {
     const g = this.game;
     const ds = this.design;
     const tabs = `<div class="cats tabs"><button data-do="dtab:inside" class="${ds.tab === 'inside' ? 'on' : ''}">🏠 Innen</button><button data-do="dtab:outside" class="${ds.tab === 'outside' ? 'on' : ''}">🧱 Außen</button></div>`;
+    const lotTabs = `<div class="cats">${g.lots.map((lt, i) => (lt.owned ? `<button data-do="dlot:${i}" class="${ds.lot === i ? 'on' : ''}">${lt.shop ? SHOP_TYPES[g.shops.get(lt.shop).type].icon + ' ' + esc(g.shops.get(lt.shop).name) : LOTS[i].name}</button>` : '')).join('')}</div>`;
+    if (!g.lots[ds.lot]?.owned) ds.lot = 0;
     if (ds.tab === 'outside') {
-      const ext = g.exterior;
+      const ext = g.lots[ds.lot].design.ext;
       const card = (key, o, preview) => `<button class="look ${ext[key] === o.id ? 'on' : ''}" data-do="ext:${key}:${o.id}">${preview}<span>${o.name}</span></button>`;
-      return `<h2>Gestalten</h2><p class="lead">Mach dein Haus zum schönsten der Straße.</p>${tabs}
-        <h4>Fassade · ${money(DESIGN_COST.facade)}</h4><div class="looks">${FACADES.map((o) => card('facade', o, `<canvas data-prev="${o.id.startsWith('ziegel') ? 'ziegel' : 'putz'}" data-col="${o.hex}"></canvas>`)).join('')}</div>
-        <h4>Markise · ${money(DESIGN_COST.awning)}</h4><div class="looks">${AWNINGS.map((o) => card('awning', o, `<canvas data-prev="markise" data-col="${o.a}|${o.b}"></canvas>`)).join('')}</div>
-        <h4>Schild und Banner · ${money(DESIGN_COST.sign)}</h4>
+      return `<h2>Gestalten</h2><p class="lead">Mach deinen Laden zum schönsten der Straße.</p>${tabs}${lotTabs}
+        <h4>Fassade · ${money(DESIGN_COST.facade)}</h4><div class="looks">${FACADES.map((o) => card('facade', o, `<canvas data-prev="${o.tex}" data-col="${o.hex}"></canvas>`)).join('')}</div>
+        <h4>Vordach · ${money(DESIGN_COST.awning)}</h4><div class="looks">${AWNINGS.map((o) => card('awning', o, `<canvas data-prev="markise" data-col="${o.a}|${o.b}"></canvas>`)).join('')}</div>
+        <h4>Schriftzug-Tafel · ${money(DESIGN_COST.sign)}</h4>
         <div class="swatches big">${PAINT.map((p) => `<button class="sw ${ext.sign === p.id ? 'on' : ''}" style="--c:${p.hex}" title="${p.name}" data-do="ext:sign:${p.id}"></button>`).join('')}</div>
         <h4>Fensterrahmen · ${money(DESIGN_COST.frames)}</h4>
         <div class="swatches big">${FRAMES.map((p) => `<button class="sw ${ext.frames === p.id ? 'on' : ''}" style="--c:${p.hex}" title="${p.name}" data-do="ext:frames:${p.id}"></button>`).join('')}</div>`;
     }
-    const floors = g.floors.map((fl, i) => (fl.unlocked ? `<button data-do="dfloor:${i}" class="${ds.floor === i ? 'on' : ''}">${FLOORS[i].short}</button>` : '')).join('');
-    const fl = g.floors[ds.floor];
-    if (!fl.unlocked) return `<h2>Gestalten</h2>${tabs}<p class="lead">Diese Etage ist noch nicht angemietet.</p>`;
+    const fl = g.lots[ds.lot];
     const d = fl.design;
     const side = ds.side === 'all' ? d.walls.back : d.walls[ds.side];
     const nSides = ds.side === 'all' ? 4 : 1;
     return `<h2>Gestalten</h2><p class="lead">Streich die Wände, tapezier, verleg neuen Boden. Individuelle Gestaltung steigert das Ambiente.</p>${tabs}
-      <div class="cats">${floors}</div>
+      ${lotTabs}
       <h4>Wände · ${money(DESIGN_COST.wall)} je Wand</h4>
       <div class="cats sides">${SIDES.map(([id, n]) => `<button data-do="dside:${id}" class="${ds.side === id ? 'on' : ''}">${n}</button>`).join('')}</div>
       <div class="looks">${WALL_PATTERNS.map((p) => `<button class="look ${side.pattern === p.id ? 'on' : ''}" data-do="wpattern:${p.id}"><canvas data-prev="${p.id}" data-col="${paintHex(side.color)}"></canvas><span>${p.name}</span></button>`).join('')}</div>
@@ -604,30 +613,28 @@ export class UI {
     return `<h2>Stammgäste</h2><p class="lead">Wer sich wohlfühlt, kommt wieder. Mit jedem schönen Besuch wächst die Freundschaft – Stammgäste mit vielen Herzen geben mehr Trinkgeld und verzeihen auch mal einen höheren Preis.</p>
       ${met.length ? `<div class="guests">${rows}</div>` : '<p style="color:var(--ink-3)">Noch hast du keine Stammgäste kennengelernt. Öffne dein Café und warte ab, wer vorbeikommt.</p>'}
       <p style="color:var(--ink-3);font-size:12.5px">${met.length} von ${g.regulars.length} Nachbarn kennen dein Café.</p>
-      ${cats.length ? `<h4>Café-Katzen</h4><div class="guests">${cats.map((c) => `<div class="guest"><div class="avatar cat" style="--c:${c.petColor}"></div><div class="info"><b>${esc(c.petName)}</b><small>wohnt im ${FLOORS[c.floor].name}</small></div><span>${g.today.petted.includes(c.id) ? 'heute gestreichelt ❤️' : ''}</span></div>`).join('')}</div>` : '<div class="tip">Tipp: Mit einem Katzenkörbchen (Katalog → Herbst) zieht eine Café-Katze ein.</div>'}`;
+      ${cats.length ? `<h4>Ladenkatzen</h4><div class="guests">${cats.map((c) => `<div class="guest"><div class="avatar cat" style="--c:${c.petColor}"></div><div class="info"><b>${esc(c.petName)}</b><small>wohnt in ${esc(g.shopOnLot(c.lot)?.name || LOTS[c.lot].name)}</small></div><span>${g.today.petted.includes(c.id) ? 'heute gestreichelt ❤️' : ''}</span></div>`).join('')}</div>` : '<div class="tip">Tipp: Mit einem Katzenkörbchen (Katalog → Herbst) zieht eine Ladenkatze ein.</div>'}`;
   }
 
   panel_building() {
     const g = this.game;
-    const rows = [];
-    for (let f = FLOORS.length - 1; f >= 0; f--) {
-      const fl = g.floors[f];
-      const shop = g.shops.get(fl.shop);
+    const rows = g.lots.map((lt, i) => {
+      const shop = g.shops.get(lt.shop);
       let right = '', extra = '';
-      if (!fl.unlocked) {
-        const c = g.canUnlock(f);
-        right = `<button class="btn primary small" data-do="unlock:${f}" ${c.ok ? '' : 'disabled'} title="${c.reason || ''}">Anmieten · ${money(FLOORS[f].unlockCost)}</button>`;
+      if (!lt.owned) {
+        const c = g.canBuyLot(i);
+        right = `<button class="btn primary small" data-do="buyLot:${i}" ${c.ok ? '' : 'disabled'} title="${c.reason || ''}">Kaufen · ${money(LOTS[i].cost)}</button>`;
       } else if (!shop) {
-        extra = `<div class="shoptypes">${Object.entries(SHOP_TYPES).map(([id, t]) => `<button class="shoptype" data-do="openShop:${f}:${id}" ${t.available ? '' : 'disabled'}><b>${t.name}</b><small>${t.desc}</small>${t.available ? '' : '<span class="soon">bald verfügbar</span>'}</button>`).join('')}</div>`;
+        extra = `<div class="shoptypes">${Object.entries(SHOP_TYPES).map(([id, t]) => `<button class="shoptype" data-do="openShop:${i}:${id}" ${t.available ? '' : 'disabled'}><b>${t.icon} ${t.name}</b><small>${t.desc}</small>${t.available ? '' : '<span class="soon">bald verfügbar</span>'}</button>`).join('')}</div>`;
       } else {
-        right = `<button class="btn small" data-do="view:${f}">Ansehen</button>`;
+        right = `<button class="btn small" data-do="view:${i}">Ansehen</button>`;
         extra = `<div style="margin-top:8px"><input class="text" data-change="rename:${shop.id}" value="${esc(shop.name)}" maxlength="24" aria-label="Name"></div>`;
       }
-      rows.push(`<div class="floorrow ${fl.unlocked ? '' : 'locked'}" style="flex-wrap:wrap"><div class="lvl">${FLOORS[f].short}</div>
-        <div class="info"><b>${FLOORS[f].name}</b><small>${fl.unlocked ? (shop ? `${SHOP_TYPES[shop.type].name} · Miete ${money(FLOORS[f].rent)}/Tag` : 'Angemietet – noch kein Laden') : `Miete ${money(FLOORS[f].rent)}/Tag nach Anmietung`}</small></div>
-        ${right}<div style="flex-basis:100%">${extra}</div></div>`);
-    }
-    return `<h2>Etagen</h2><p class="lead">Jede Etage kann einen eigenen Laden aufnehmen. Die oberen Etagen erreichen Gäste über das eigene Treppenhaus mit Haustür – unabhängig vom Café im Erdgeschoss. Weitere Ladentypen folgen.</p>${rows.join('')}`;
+      return `<div class="floorrow ${lt.owned ? '' : 'locked'}" style="flex-wrap:wrap"><div class="lvl">${shop ? SHOP_TYPES[shop.type].icon : LOTS[i].short}</div>
+        <div class="info"><b>${shop ? esc(shop.name) : LOTS[i].name}</b><small>${lt.owned ? (shop ? `${SHOP_TYPES[shop.type].name} · ${LOTS[i].name} · ${money(LOTS[i].rent)}/Tag` : 'Gekauft – noch kein Laden') : `${money(LOTS[i].rent)}/Tag laufende Kosten nach dem Kauf`}</small></div>
+        ${right}<div style="flex-basis:100%">${extra}</div></div>`;
+    });
+    return `<h2>Deine Straße</h2><p class="lead">Kauf Grundstücke und bau darauf eigene Läden. Jeder Laden hat eigene Kundschaft, eigenes Personal, eigenes Lager und eine eigene Gestaltung.</p>${rows.join('')}`;
   }
 
   panel_stats() {
@@ -659,7 +666,7 @@ export class UI {
         <tr><td>Verschieben</td><td>Rechte Maustaste / zwei Finger</td></tr>
         <tr><td>Zoomen</td><td>Mausrad / Pinch</td></tr>
         <tr><td>Möbel drehen</td><td>R</td></tr>
-        <tr><td>Etage wechseln</td><td>Bild ↑ / Bild ↓</td></tr>
+        <tr><td>Laden wechseln</td><td>Bild ↑ / Bild ↓ oder Leiste rechts</td></tr>
         <tr><td>Pause / Tempo</td><td>Leertaste · 1 · 2 · 3</td></tr>
         <tr><td>Fotomodus</td><td>P</td></tr>
         <tr><td>Abbrechen</td><td>Esc</td></tr>
@@ -673,7 +680,8 @@ export class UI {
     const lost = r.lostPrice + r.lostWait + r.lostFull + r.lostStock;
     const tips = [];
     if (r.lostPrice > r.served * 0.15) tips.push('Viele Gäste fanden die Preise zu hoch.');
-    if (r.lostWait > 2) tips.push('Gäste sind wegen langer Wartezeit gegangen – mehr Personal oder eine zweite Theke helfen.');
+    if (r.lostWait > 2) tips.push('Kundschaft ist wegen langer Wartezeit gegangen – mehr Personal oder eine zweite Kasse helfen.');
+    if (r.browsed > 4) tips.push(`${r.browsed} Leute haben nur gestöbert und nichts gekauft – mehr Ambiente oder eine Umkleide helfen.`);
     if (r.lostFull > 2) tips.push('Die Schlange war voll. Mehr Platz vor der Theke oder eine zweite Kasse helfen.');
     if (r.lostStock > 2) tips.push('Einige Produkte waren ausverkauft. Prüf das Lager oder die Auto-Bestellung.');
     if (r.spoiled > 10) tips.push(`Backwaren im Wert von ${money2(r.spoiled)} wurden entsorgt.`);
@@ -690,6 +698,7 @@ export class UI {
         ${line('Gewinn', money2(r.profit), r.profit >= 0 ? 'pos' : 'neg').replace('class="line"', 'class="line total"')}
         ${r.build ? line('Investiert in Einrichtung', money2(r.build)) : ''}
       </div>
+      ${r.shops?.length > 1 ? `<h4>Je Laden</h4><div class="report">${r.shops.map((x) => line(`${SHOP_TYPES[x.type].icon} ${esc(x.name)} · ${x.served} Kund:innen`, money2(x.revenue))).join('')}</div>` : ''}
       ${tips.map((t) => `<div class="tip">${t}</div>`).join('')}
       ${forecast}
       <div class="row"><button class="btn primary" data-close>Weiter</button></div>`;

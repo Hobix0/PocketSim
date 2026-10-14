@@ -1,17 +1,18 @@
-// Wirtschaftssimulation des Gebäudes – ohne Grafik, damit sie auch unter Node läuft.
-// Koordinaten: jede Ladenetage ist ein Raster W × D (1 Feld = 1 m). x läuft nach rechts,
-// z nach vorn zur Straße. Links davon (x < 0) liegt das Treppenhaus, vorne (z ≥ D) die Straße.
+// Wirtschaftssimulation der Ladenstraße – ohne Grafik, damit sie auch unter Node läuft.
+// Koordinaten: Jeder Laden steht auf einem Grundstück mit eigenem Raster W × D (1 Feld = 1 m).
+// Die Läden reihen sich entlang x auf (lotX), z läuft nach vorn zur Straße (z ≥ D = Gehweg).
+// Figuren haben globale Koordinaten (x über die ganze Straße), Möbel lokale je Grundstück.
 import {
-  CONFIG, FLOORS, SHOP_TYPES, FURNITURE, PRODUCTS, SUPPLIES, DEMAND_CURVE, WEATHER, REGULARS,
+  CONFIG, LOTS, SHOP_TYPES, FURNITURE, PRODUCTS, SUPPLIES, DEMAND_CURVE, WEATHER, REGULARS,
   PET_NAMES, PET_COLORS, QUESTS, DESIGN_COST, PAINT, WALL_PATTERNS, FLOOR_MATS, FACADES, AWNINGS, FRAMES,
-  productsFor, suppliesFor, defaultDesign, defaultExterior, calendar,
+  productsFor, suppliesFor, defaultDesign, calendar, lotX, streetLength,
 } from './data.js';
 import { findPath, reachable } from './path.js';
 
-export const SAVE_VERSION = 2;
-const { W, D, floorHeight: H } = CONFIG;
-const CORE = CONFIG.core;
+export const SAVE_VERSION = 3;
+const { W, D } = CONFIG;
 const LAYERS = ['floor', 'rug', 'wall', 'ceil'];
+const EDGE_L = -14, edgeR = () => streetLength() + 12;
 
 export function makeRng(seed) {
   let a = seed >>> 0;
@@ -42,13 +43,21 @@ export const facing = (rot) => [[0, 1], [1, 0], [0, -1], [-1, 0]][rot & 3];
 // Wandobjekte: an welcher Wand hängt ein Objekt mit dieser Drehung?
 export const wallSideOf = (rot) => ['back', 'left', 'front', 'right'][rot & 3];
 
-// Punkt im unrotierten Möbel (lx, lz in Metern ab Ecke) → Etagenkoordinaten
+// Punkt im unrotierten Möbel (lx, lz in Metern ab Ecke) → lokale Ladenkoordinaten
 export function localToFloor(item, lx, lz) {
   const def = FURNITURE[item.type];
   const [w, d] = footprint(item.type, item.rot);
   const cx = lx - def.w / 2, cz = lz - def.d / 2;
   const [s, c] = facing(item.rot);
   return [item.x + w / 2 + cx * c + cz * s, item.z + d / 2 - cx * s + cz * c];
+}
+
+// Eingangsfeld: direkt hinter der Ladentür
+export const entryCell = () => [CONFIG.doorX, D - 1];
+
+// Felder, auf die nichts Blockierendes gebaut werden darf (Laufweg an der Tür)
+export function isReserved(lot, x, z) {
+  return x === CONFIG.doorX && (z === D - 1 || z === D - 2);
 }
 
 // Liegt ein Wandfeld vor einem Fenster? (Rückwand läuft entlang x, rechte Wand rückwärts entlang z)
@@ -59,44 +68,12 @@ function onWindow(rot, x, z) {
   return false;
 }
 
-// Eingangsfeld eines Ladens: im EG die Ladentür, oben die Tür zum Treppenhaus
-export const entryCell = (f) => (f === 0 ? [CONFIG.doorX, D - 1] : [0, CORE.shopDoorZ]);
-
-// Felder, auf die nichts Blockierendes gebaut werden darf (Laufweg an der Tür)
-export function isReserved(f, x, z) {
-  const [ex, ez] = entryCell(f);
-  if (f === 0) return x === ex && (z === ez || z === ez - 1);
-  return z === ez && (x === ex || x === ex + 1);
+// Vom Gehweg vor der Ladentür bis ins Eingangsfeld (globale Koordinaten)
+export function inPath(lot) {
+  const x = lotX(lot) + CONFIG.doorX + 0.5;
+  return [{ lot, x, z: D + 0.5 }, { lot, x, z: D - 0.5 }];
 }
-
-// Wegpunkte durch das Treppenhaus: Etage k → k+1 (Podesttreppe)
-function flight(k) {
-  const b = k * H;
-  return [
-    { f: k, x: -2.45, z: 6.3, y: b, core: true },
-    { f: k, x: -2.45, z: 5.5, y: b, core: true },
-    { f: k, x: -2.45, z: 1.5, y: b + H / 2, core: true, stair: true },
-    { f: k, x: -2.45, z: 0.75, y: b + H / 2, core: true },
-    { f: k + 1, x: -0.95, z: 0.75, y: b + H / 2, core: true },
-    { f: k + 1, x: -0.95, z: 1.5, y: b + H / 2, core: true },
-    { f: k + 1, x: -0.95, z: 5.5, y: b + H, core: true, stair: true },
-    { f: k + 1, x: -0.95, z: 6.2, y: b + H, core: true },
-  ];
-}
-
-// Vom Gehweg (vor der passenden Haustür) bis zum Eingangsfeld der Etage f
-export function inPath(f) {
-  if (f === 0) {
-    const x = CONFIG.doorX + 0.5;
-    return [{ f: 0, x, z: D + 0.5, y: 0 }, { f: 0, x, z: D - 0.5, y: 0 }];
-  }
-  const pts = [{ f: 0, x: CORE.door, z: D + 0.5, y: 0, core: true }, { f: 0, x: CORE.door, z: D - 0.8, y: 0, core: true }];
-  for (let k = 0; k < f; k++) pts.push(...flight(k));
-  pts.push({ f, x: -0.95, z: CORE.shopDoorZ + 0.5, y: f * H, core: true }, { f, x: 0.5, z: CORE.shopDoorZ + 0.5, y: f * H });
-  return pts;
-}
-const outPath = (f) => inPath(f).reverse();
-const doorFront = (f) => (f === 0 ? CONFIG.doorX + 0.5 : CORE.door);
+const doorFront = (lot) => lotX(lot) + CONFIG.doorX + 0.5;
 
 const AGENT_LOOKS = {
   skin: ['#f1c9a5', '#e0ac87', '#c68863', '#8d5a3b', '#5c3a26', '#f6d7bf'],
@@ -107,11 +84,11 @@ const AGENT_LOOKS = {
 };
 
 export class Game {
-  constructor(seed = 1) {
-    this.newGame(seed);
+  constructor(seed = 1, firstType = 'cafe') {
+    this.newGame(seed, firstType);
   }
 
-  newGame(seed = (Math.random() * 1e9) | 0) {
+  newGame(seed = (Math.random() * 1e9) | 0, firstType = 'cafe') {
     this.seed = seed;
     this.rng = makeRng(seed);
     this.money = CONFIG.startMoney;
@@ -120,8 +97,7 @@ export class Game {
     this.rep = CONFIG.startRep;
     this.nextId = 1;
     this.time = 0;
-    this.floors = FLOORS.map((_, i) => ({ index: i, unlocked: i === 0, shop: 0, design: defaultDesign() }));
-    this.exterior = defaultExterior();
+    this.lots = LOTS.map((_, i) => ({ index: i, owned: i === 0, shop: 0, design: defaultDesign() }));
     this.items = new Map();
     this.shops = new Map();
     this.agents = new Map();
@@ -137,16 +113,14 @@ export class Game {
     this.forecast = this.rollWeather();
     this.resetToday();
     this.rebuild();
-    const shop = this.openShop(0, 'cafe');
-    // Startausstattung im Lager
-    shop.stock.bohnen = 100; shop.stock.milch = 40; shop.stock.tee = 50;
+    if (firstType) this.openShop(0, firstType);
     this.newQuest();
   }
 
   resetToday() {
     this.today = {
       revenue: 0, supplies: 0, build: 0, served: 0, entered: 0, tips: 0, quest: 0,
-      lostPrice: 0, lostWait: 0, lostFull: 0, lostStock: 0, sat80: 0, sits: 0,
+      lostPrice: 0, lostWait: 0, lostFull: 0, lostStock: 0, browsed: 0, sat80: 0, sits: 0,
       satSum: 0, satN: 0, sold: {}, repStart: this.rep, petted: [],
     };
   }
@@ -158,7 +132,6 @@ export class Game {
     let type = entries[0][0];
     for (const [id, w] of entries) { r -= w.w; if (r <= 0) { type = id; break; } }
     const [lo, hi] = WEATHER[type].temp;
-    // Je später im Herbst, desto kühler
     const cool = Math.min(6, Math.floor(this.day / 10));
     return { type, temp: Math.round(lo + this.rng() * (hi - lo)) - cool };
   }
@@ -166,7 +139,7 @@ export class Game {
   // ───────────────────────── Raster & abgeleitete Daten ─────────────────────────
 
   rebuild() {
-    this.grid = this.floors.map(() => Object.fromEntries(LAYERS.map((l) => [l, new Int32Array(W * D)])));
+    this.grid = this.lots.map(() => Object.fromEntries(LAYERS.map((l) => [l, new Int32Array(W * D)])));
     for (const it of this.items.values()) this.stamp(it, it.id);
     this.refresh();
   }
@@ -179,36 +152,48 @@ export class Game {
   }
 
   stamp(it, val) {
-    const layer = this.grid[it.floor][FURNITURE[it.type].layer];
+    const layer = this.grid[it.lot][FURNITURE[it.type].layer];
     for (const [x, z] of this.cellsOf(it.type, it.x, it.z, it.rot)) layer[z * W + x] = val;
   }
 
-  blockedFn(f) {
-    const occ = this.grid[f].floor;
+  blockedFn(lot) {
+    const occ = this.grid[lot].floor;
     return (x, z) => occ[z * W + x] !== 0;
   }
 
-  itemAt(f, x, z, layers = LAYERS) {
+  itemAt(lot, x, z, layers = LAYERS) {
     if (x < 0 || z < 0 || x >= W || z >= D) return null;
     for (const l of layers) {
-      const id = this.grid[f][l][z * W + x];
+      const id = this.grid[lot][l][z * W + x];
       if (id) return this.items.get(id);
     }
     return null;
   }
 
-  // Theken, Sitzplätze, Ausstattung und Ambiente neu berechnen (nach jeder Umbaumaßnahme)
+  // Freie Felder vor einem Möbel (dort stehen Kund:innen beim Stöbern)
+  accessCells(lot, it) {
+    const def = FURNITURE[it.type];
+    const blocked = this.blockedFn(lot);
+    const out = [];
+    for (let k = 0; k < def.w; k++) {
+      const [x, z] = localToFloor(it, k + 0.5, def.d + 0.5).map(Math.floor);
+      if (x >= 0 && z >= 0 && x < W && z < D && !blocked(x, z)) out.push([x, z]);
+    }
+    return out;
+  }
+
+  // Kassen, Sitzplätze, Warenträger und Ambiente neu berechnen (nach jeder Umbaumaßnahme)
   refresh() {
     this.layoutVersion++;
-    this.derived = this.floors.map((fl, f) => {
-      const items = [...this.items.values()].filter((it) => it.floor === f);
+    this.derived = this.lots.map((lt, l) => {
+      const items = [...this.items.values()].filter((it) => it.lot === l);
       const registers = items.filter((it) => FURNITURE[it.type].register).sort((a, b) => a.id - b.id).map((it) => {
         let st = this.regState.get(it.id);
         if (!st) { st = { id: it.id, queue: [], serving: 0, timer: 0 }; this.regState.set(it.id, st); }
         const spot = localToFloor(it, 0.5, 2.5).map(Math.floor);
         st.item = it;
         st.spot = spot;
-        st.queueSpots = this.queueSpots(f, spot, facing(it.rot));
+        st.queueSpots = this.queueSpots(l, spot, facing(it.rot));
         return st;
       });
       const seats = [];
@@ -217,10 +202,10 @@ export class Game {
         if (def.seat === 'chair') {
           const [s, c] = facing(it.rot);
           for (const [dx, dz] of [[s, c], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
-            const t = this.itemAt(f, it.x + dx, it.z + dz, ['floor']);
+            const t = this.itemAt(l, it.x + dx, it.z + dz, ['floor']);
             if (!t || !FURNITURE[t.type].table || !!FURNITURE[t.type].tall !== !!def.needsTall) continue;
             seats.push({
-              id: `${it.id}:0`, item: it.id, floor: f, cell: [it.x, it.z], h: def.needsTall ? 0.74 : 0.47,
+              id: `${it.id}:0`, item: it.id, lot: l, cell: [it.x, it.z], h: def.needsTall ? 0.74 : 0.47,
               x: it.x + 0.5 - dx * 0.08, z: it.z + 0.5 - dz * 0.08, yaw: Math.atan2(dx, dz),
             });
             break;
@@ -229,19 +214,39 @@ export class Game {
           const yaw = it.rot * Math.PI / 2;
           for (let k = 0; k < def.w; k++) {
             const [x, z] = localToFloor(it, k + 0.5, def.low ? 0.5 : 0.45);
-            seats.push({ id: `${it.id}:${k}`, item: it.id, floor: f, cell: [Math.floor(x), Math.floor(z)], x, z, yaw, h: def.low ? 0.16 : 0.47 });
+            seats.push({ id: `${it.id}:${k}`, item: it.id, lot: l, cell: [Math.floor(x), Math.floor(z)], x, z, yaw, h: def.low ? 0.16 : 0.47 });
+          }
+        } else if (def.seat === 'booth') {
+          // Diner-Sitzecke: zwei Bänke gegenüber, je zwei Plätze
+          for (let k = 0; k < 4; k++) {
+            const back = k < 2;
+            const [x, z] = localToFloor(it, (k % 2) + 0.5, back ? 0.35 : 1.65);
+            const yaw = it.rot * Math.PI / 2 + (back ? 0 : Math.PI);
+            seats.push({ id: `${it.id}:${k}`, item: it.id, lot: l, cell: [Math.floor(x), Math.floor(z)], x, z, yaw, h: 0.47 });
           }
         }
       }
-      const machines = items.filter((it) => FURNITURE[it.type].machine);
-      const displays = items.filter((it) => FURNITURE[it.type].display);
+      const provides = {};
+      const access = new Map();
+      for (const it of items) {
+        const p = FURNITURE[it.type].provides;
+        if (p) (provides[p] ||= []).push(it);
+        if (p || FURNITURE[it.type].fitting) access.set(it.id, this.accessCells(l, it));
+      }
+      const fittings = items.filter((it) => FURNITURE[it.type].fitting);
       const decor = items.reduce((sum, it) => sum + (FURNITURE[it.type].decor || 0), 0);
       const variety = new Set(items.filter((it) => FURNITURE[it.type].decor).map((it) => it.type)).size;
-      const ds = fl.design;
-      const custom = Object.values(ds.walls).filter((w) => w.pattern !== 'glatt' || w.color !== 'creme').length;
-      const designBonus = Math.min(8, custom * 1.5 + (ds.floor !== 'eiche' ? 2 : 0));
-      const appeal = Math.round(Math.min(100, clamp(decor * 1.2, 0, 55) + clamp(seats.length * 2, 0, 25) + clamp(variety * 1.2, 0, 12) + designBonus));
-      return { registers, seats, machines, displays, decor, variety, appeal };
+      const ds = lt.design;
+      const shop = this.shops.get(lt.shop);
+      const base = defaultDesign(shop?.type);
+      const custom = Object.entries(ds.walls).filter(([k, w]) => w.pattern !== base.walls[k].pattern || w.color !== base.walls[k].color).length;
+      const designBonus = Math.min(8, custom * 1.5 + (ds.floor !== base.floor ? 2 : 0));
+      // Läden ohne Sitzplätze (Boutique, Supermarkt) bekommen den Sitzplatz-Anteil über Warenträger
+      const browse = shop && SHOP_TYPES[shop.type].mode === 'browse';
+      const fixtures = Object.values(provides).reduce((s, a) => s + a.length, 0);
+      const seatPart = browse ? clamp(fixtures * 3, 0, 25) : clamp(seats.length * 2, 0, 25);
+      const appeal = Math.round(Math.min(100, clamp(decor * 1.2, 0, 55) + seatPart + clamp(variety * 1.2, 0, 12) + designBonus));
+      return { registers, seats, provides, access, fittings, decor, variety, appeal, machines: provides.machine || [], displays: provides.display || [] };
     });
     // Sitzplätze, die es nicht mehr gibt, freigeben
     const valid = new Set(this.derived.flatMap((d) => d.seats.map((s) => s.id)));
@@ -252,7 +257,7 @@ export class Game {
         if (a) { a.seat = null; this.leave(a); }
       }
     }
-    // Entfernte Theken: Warteschlangen auflösen
+    // Entfernte Kassen: Warteschlangen auflösen
     const regIds = new Set(this.derived.flatMap((d) => d.registers.map((r) => r.id)));
     for (const [id, st] of [...this.regState]) {
       if (regIds.has(id)) continue;
@@ -264,19 +269,29 @@ export class Game {
     }
     for (const r of this.derived.flatMap((d) => d.registers)) this.requeue(r);
     this.syncPets();
-    // Laufende Gäste neu routen, falls ihr Weg verbaut wurde
+    // Laufende Kund:innen neu routen, falls ihr Weg verbaut wurde
     for (const a of this.agents.values()) {
-      if (!a.route.length || a.x < 0 || a.z >= D) continue;
+      if (!a.route.length || !this.inside(a)) continue;
       if (a.kind === 'pet') { if (a.goal) this.petRoute(a, a.goal); continue; }
       if (a.state === 'leaving') this.exitRoute(a);
       else if (a.goal) this.routeTo(a, a.goal);
     }
   }
 
-  // Warteschlange: gerade Linie vor der Theke, biegt an Hindernissen ab
-  queueSpots(f, spot, dir) {
-    const blocked = this.blockedFn(f);
-    const ok = (x, z) => x >= 0 && z >= 0 && x < W && z < D && !blocked(x, z) && !isReserved(f, x, z);
+  // Steht die Figur im Laden ihres Grundstücks?
+  inside(a) {
+    const lx = a.x - lotX(a.lot);
+    return a.z < D && lx >= 0 && lx < W;
+  }
+
+  localCell(a) {
+    return [clamp(Math.floor(a.x - lotX(a.lot)), 0, W - 1), clamp(Math.floor(a.z), 0, D - 1)];
+  }
+
+  // Warteschlange: gerade Linie vor der Kasse, biegt an Hindernissen ab
+  queueSpots(lot, spot, dir) {
+    const blocked = this.blockedFn(lot);
+    const ok = (x, z) => x >= 0 && z >= 0 && x < W && z < D && !blocked(x, z) && !isReserved(lot, x, z);
     if (!ok(spot[0], spot[1])) return [];
     const spots = [spot];
     const used = new Set([spot[1] * W + spot[0]]);
@@ -299,40 +314,39 @@ export class Game {
 
   // ───────────────────────── Bauen ─────────────────────────
 
-  // Für Wandobjekte: passende Drehung je nach nächster Wand (vorne sind Schaufenster)
+  // Für Wandobjekte: passende Drehung je nach nächster Wand (vorne ist das Schaufenster)
   wallRotFor(type, x, z) {
     const d = [[z, 0], [x, 1], [W - 1 - x, 3]].sort((a, b) => a[0] - b[0]);
     return d[0][1];
   }
 
-  canPlace(type, f, x, z, rot, ignoreId = 0) {
+  canPlace(type, lot, x, z, rot, ignoreId = 0) {
     const def = FURNITURE[type];
-    const fl = this.floors[f];
-    if (!def || !fl) return { ok: false, reason: 'Unbekannt' };
-    if (!fl.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
-    const shop = this.shops.get(fl.shop);
-    if (!shop) return { ok: false, reason: 'Erst einen Laden auf dieser Etage eröffnen' };
+    const lt = this.lots[lot];
+    if (!def || !lt) return { ok: false, reason: 'Unbekannt' };
+    if (!lt.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    const shop = this.shops.get(lt.shop);
+    if (!shop) return { ok: false, reason: 'Erst einen Laden eröffnen' };
     if (def.shops !== '*' && !def.shops.includes(shop.type)) return { ok: false, reason: `Passt nicht in ${SHOP_TYPES[shop.type].name}` };
-    const layer = this.grid[f][def.layer];
+    const layer = this.grid[lot][def.layer];
     const cells = this.cellsOf(type, x, z, rot);
     const [fx, fz] = facing(rot);
     for (const [cx, cz] of cells) {
-      if (cx < 0 || cz < 0 || cx >= W || cz >= D) return { ok: false, reason: 'Außerhalb der Etage' };
-      if (def.layer === 'floor' && isReserved(f, cx, cz)) return { ok: false, reason: 'Laufweg an der Tür muss frei bleiben' };
+      if (cx < 0 || cz < 0 || cx >= W || cz >= D) return { ok: false, reason: 'Außerhalb des Ladens' };
+      if (def.layer === 'floor' && isReserved(lot, cx, cz)) return { ok: false, reason: 'Laufweg an der Tür muss frei bleiben' };
       const o = layer[cz * W + cx];
       if (o && o !== ignoreId) return { ok: false, reason: 'Platz belegt' };
       if (def.layer === 'wall') {
         const bx = cx - fx, bz = cz - fz;
         if (bx >= 0 && bz >= 0 && bx < W && bz < D) return { ok: false, reason: 'Muss an eine Wand' };
-        if ((rot & 3) === 2) return { ok: false, reason: 'Vorne sind Fenster' };
-        if (f > 0 && (rot & 3) === 1 && cz === CORE.shopDoorZ) return { ok: false, reason: 'Hier ist die Tür' };
+        if ((rot & 3) === 2) return { ok: false, reason: 'Vorne ist das Schaufenster' };
         if (onWindow(rot & 3, cx, cz)) return { ok: false, reason: 'Hier ist ein Fenster' };
       }
     }
     if (def.layer !== 'floor') return { ok: true };
 
     // Probehalber eintragen und Erreichbarkeit prüfen
-    const occ = this.grid[f].floor;
+    const occ = this.grid[lot].floor;
     const backup = cells.map(([cx, cz]) => occ[cz * W + cx]);
     const ig = ignoreId ? this.items.get(ignoreId) : null;
     const ignored = ig ? this.cellsOf(ig.type, ig.x, ig.z, ig.rot) : [];
@@ -340,15 +354,15 @@ export class Game {
     for (const [cx, cz] of cells) occ[cz * W + cx] = -1;
     let reason = '';
     try {
-      const blocked = this.blockedFn(f);
-      const entry = entryCell(f);
-      const reach = reachable(W, D, blocked, entry[0], entry[1]);
-      const regs = [...this.items.values()].filter((it) => it.floor === f && it.id !== ignoreId && FURNITURE[it.type].register);
-      if (def.register) regs.push({ type, x, z, rot, floor: f });
+      const blocked = this.blockedFn(lot);
+      const [ex, ez] = entryCell();
+      const reach = reachable(W, D, blocked, ex, ez);
+      const regs = [...this.items.values()].filter((it) => it.lot === lot && it.id !== ignoreId && FURNITURE[it.type].register);
+      if (def.register) regs.push({ type, x, z, rot, lot });
       for (const r of regs) {
         const [nx, nz] = localToFloor(r, 0.5, 2.5).map(Math.floor);
-        if (nx < 0 || nz < 0 || nx >= W || nz >= D || blocked(nx, nz)) { reason = 'Vor der Theke muss Platz für Gäste sein'; break; }
-        if (!reach.has(nz * W + nx)) { reason = 'Theke wäre vom Eingang nicht erreichbar'; break; }
+        if (nx < 0 || nz < 0 || nx >= W || nz >= D || blocked(nx, nz)) { reason = 'Vor der Kasse muss Platz für Kund:innen sein'; break; }
+        if (!reach.has(nz * W + nx)) { reason = 'Kasse wäre vom Eingang nicht erreichbar'; break; }
       }
     } finally {
       cells.forEach(([cx, cz], i) => { occ[cz * W + cx] = backup[i]; });
@@ -357,13 +371,13 @@ export class Game {
     return reason ? { ok: false, reason } : { ok: true };
   }
 
-  place(type, f, x, z, rot = 0, v = 0, free = false) {
+  place(type, lot, x, z, rot = 0, v = 0, free = false) {
     const def = FURNITURE[type];
-    const check = this.canPlace(type, f, x, z, rot);
+    const check = this.canPlace(type, lot, x, z, rot);
     if (!check.ok) return { ok: false, reason: check.reason };
     if (!free && this.money < def.cost) return { ok: false, reason: 'Nicht genug Geld' };
     if (!free) { this.money -= def.cost; this.today.build += def.cost; }
-    const it = { id: this.nextId++, type, floor: f, x, z, rot: rot & 3, v: clamp(v | 0, 0, (def.v?.length || 1) - 1) };
+    const it = { id: this.nextId++, type, lot, x, z, rot: rot & 3, v: clamp(v | 0, 0, (def.v?.length || 1) - 1) };
     if (def.pet) {
       const used = new Set([...this.items.values()].map((i) => i.petName));
       it.petName = PET_NAMES.find((n) => !used.has(n)) || PET_NAMES[Math.floor(this.rng() * PET_NAMES.length)];
@@ -379,7 +393,7 @@ export class Game {
   move(id, x, z, rot) {
     const it = this.items.get(id);
     if (!it) return { ok: false, reason: 'Unbekannt' };
-    const check = this.canPlace(it.type, it.floor, x, z, rot, id);
+    const check = this.canPlace(it.type, it.lot, x, z, rot, id);
     if (!check.ok) return check;
     this.stamp(it, 0);
     Object.assign(it, { x, z, rot: rot & 3 });
@@ -416,58 +430,61 @@ export class Game {
   }
 
   // patch: { color?, pattern? }, side: 'back' | 'left' | 'right' | 'front' | 'all'
-  paintWalls(f, side, patch) {
-    const fl = this.floors[f];
-    if (!fl?.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
+  paintWalls(lot, side, patch) {
+    const lt = this.lots[lot];
+    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
     if (patch.color && !PAINT.some((p) => p.id === patch.color)) return { ok: false, reason: 'Unbekannte Farbe' };
     if (patch.pattern && !WALL_PATTERNS.some((p) => p.id === patch.pattern)) return { ok: false, reason: 'Unbekanntes Muster' };
     const sides = side === 'all' ? ['back', 'left', 'right', 'front'] : [side];
-    const change = sides.filter((s) => Object.entries(patch).some(([k, v]) => fl.design.walls[s][k] !== v));
+    const change = sides.filter((s) => Object.entries(patch).some(([k, v]) => lt.design.walls[s][k] !== v));
     if (!change.length) return { ok: true, cost: 0 };
     const cost = change.length * DESIGN_COST.wall;
     if (!this.pay(cost)) return { ok: false, reason: 'Nicht genug Geld' };
-    for (const s of change) Object.assign(fl.design.walls[s], patch);
+    for (const s of change) Object.assign(lt.design.walls[s], patch);
     this.designChanged();
     return { ok: true, cost };
   }
 
-  setWainscot(f, patch) {
-    const fl = this.floors[f];
-    if (!fl?.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
-    if (!Object.entries(patch).some(([k, v]) => fl.design.wainscot[k] !== v)) return { ok: true, cost: 0 };
+  setWainscot(lot, patch) {
+    const lt = this.lots[lot];
+    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (!Object.entries(patch).some(([k, v]) => lt.design.wainscot[k] !== v)) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.wainscot)) return { ok: false, reason: 'Nicht genug Geld' };
-    Object.assign(fl.design.wainscot, patch);
+    Object.assign(lt.design.wainscot, patch);
     this.designChanged();
     return { ok: true, cost: DESIGN_COST.wainscot };
   }
 
-  setFloorMat(f, id) {
-    const fl = this.floors[f];
-    if (!fl?.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
+  setFloorMat(lot, id) {
+    const lt = this.lots[lot];
+    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
     if (!FLOOR_MATS.some((m) => m.id === id)) return { ok: false, reason: 'Unbekannter Boden' };
-    if (fl.design.floor === id) return { ok: true, cost: 0 };
+    if (lt.design.floor === id) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.floor)) return { ok: false, reason: 'Nicht genug Geld' };
-    fl.design.floor = id;
+    lt.design.floor = id;
     this.designChanged();
     return { ok: true, cost: DESIGN_COST.floor };
   }
 
-  setCeiling(f, color) {
-    const fl = this.floors[f];
-    if (!fl?.unlocked) return { ok: false, reason: 'Etage noch nicht angemietet' };
-    if (fl.design.ceiling === color) return { ok: true, cost: 0 };
+  setCeiling(lot, color) {
+    const lt = this.lots[lot];
+    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
+    if (lt.design.ceiling === color) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST.ceiling)) return { ok: false, reason: 'Nicht genug Geld' };
-    fl.design.ceiling = color;
+    lt.design.ceiling = color;
     this.designChanged();
     return { ok: true, cost: DESIGN_COST.ceiling };
   }
 
-  setExterior(key, value) {
+  // Außengestaltung je Laden: facade, awning, sign, frames
+  setExterior(lot, key, value) {
+    const lt = this.lots[lot];
+    if (!lt?.owned) return { ok: false, reason: 'Grundstück gehört dir noch nicht' };
     const lists = { facade: FACADES, awning: AWNINGS, sign: PAINT, frames: FRAMES };
     if (!lists[key]?.some((o) => o.id === value)) return { ok: false, reason: 'Unbekannt' };
-    if (this.exterior[key] === value) return { ok: true, cost: 0 };
+    if (lt.design.ext[key] === value) return { ok: true, cost: 0 };
     if (!this.pay(DESIGN_COST[key])) return { ok: false, reason: 'Nicht genug Geld' };
-    this.exterior[key] = value;
+    lt.design.ext[key] = value;
     this.designChanged();
     return { ok: true, cost: DESIGN_COST[key] };
   }
@@ -484,44 +501,45 @@ export class Game {
     this.refresh();
   }
 
-  // ───────────────────────── Etagen & Läden ─────────────────────────
+  // ───────────────────────── Grundstücke & Läden ─────────────────────────
 
-  canUnlock(f) {
-    const fl = this.floors[f];
-    if (!fl || fl.unlocked) return { ok: false, reason: 'Schon angemietet' };
-    if (!this.floors[f - 1].unlocked) return { ok: false, reason: 'Erst die Etage darunter anmieten' };
-    if (this.money < FLOORS[f].unlockCost) return { ok: false, reason: 'Nicht genug Geld' };
+  canBuyLot(l) {
+    const lt = this.lots[l];
+    if (!lt || lt.owned) return { ok: false, reason: 'Gehört dir schon' };
+    if (this.money < LOTS[l].cost) return { ok: false, reason: 'Nicht genug Geld' };
     return { ok: true };
   }
 
-  unlockFloor(f) {
-    const c = this.canUnlock(f);
+  buyLot(l) {
+    const c = this.canBuyLot(l);
     if (!c.ok) return c;
-    this.money -= FLOORS[f].unlockCost;
-    this.today.build += FLOORS[f].unlockCost;
-    this.floors[f].unlocked = true;
+    this.money -= LOTS[l].cost;
+    this.today.build += LOTS[l].cost;
+    this.lots[l].owned = true;
     this.designChanged();
     return { ok: true };
   }
 
-  openShop(f, type, name) {
-    const fl = this.floors[f];
+  openShop(l, type, name) {
+    const lt = this.lots[l];
     const st = SHOP_TYPES[type];
-    if (!fl || !fl.unlocked || fl.shop || !st || !st.available) return null;
+    if (!lt || !lt.owned || lt.shop || !st || !st.available) return null;
+    const used = new Set([...this.shops.values()].map((s) => s.name));
     const shop = {
-      id: this.nextId++, type, floor: f, name: name || (f ? `${st.defaultName} ${FLOORS[f].short}` : st.defaultName),
-      open: true, staff: 0, menu: {}, stock: {}, auto: {}, apron: 'tanne',
+      id: this.nextId++, type, lot: l, name: name || (used.has(st.defaultName) ? `${st.defaultName} ${l + 1}` : st.defaultName),
+      open: true, staff: 0, menu: {}, stock: {}, auto: {}, apron: type === 'fastfood' ? 'weinrot' : 'tanne',
       day: { revenue: 0, served: 0, satSum: 0, satN: 0, sold: {} },
     };
     for (const p of productsFor(type)) shop.menu[p] = { price: PRODUCTS[p].price, on: true, unlocked: !PRODUCTS[p].recipe };
-    for (const s of suppliesFor(type)) { shop.stock[s] = 0; shop.auto[s] = true; }
+    for (const s of suppliesFor(type)) { shop.stock[s] = st.start?.[s] || 0; shop.auto[s] = true; }
     this.shops.set(shop.id, shop);
-    fl.shop = shop.id;
+    lt.shop = shop.id;
+    lt.design = defaultDesign(type);
     this.designChanged();
     return shop;
   }
 
-  shopOnFloor(f) { return this.shops.get(this.floors[f]?.shop) || null; }
+  shopOnLot(l) { return this.shops.get(this.lots[l]?.shop) || null; }
 
   hire(shopId) {
     const s = this.shops.get(shopId);
@@ -540,7 +558,8 @@ export class Game {
   setPrice(shopId, pid, price) {
     const s = this.shops.get(shopId);
     if (!s?.menu[pid]) return;
-    s.menu[pid].price = round2(clamp(Math.round(price * 10) / 10, 0.5, 30));
+    const step = price >= 20 ? 1 : 0.1;
+    s.menu[pid].price = round2(clamp(Math.round(price / step) * step, 0.5, 300));
   }
 
   toggleProduct(shopId, pid, on) {
@@ -551,7 +570,7 @@ export class Game {
   unlockRecipe(shopId, pid) {
     const s = this.shops.get(shopId);
     const p = PRODUCTS[pid];
-    if (!s?.menu[pid] || s.menu[pid].unlocked) return { ok: false, reason: 'Schon auf der Karte' };
+    if (!s?.menu[pid] || s.menu[pid].unlocked) return { ok: false, reason: 'Schon im Angebot' };
     if (!this.pay(p.recipe)) return { ok: false, reason: 'Nicht genug Geld' };
     s.menu[pid].unlocked = true;
     s.menu[pid].on = true;
@@ -575,10 +594,7 @@ export class Game {
     const p = PRODUCTS[pid];
     const m = shop.menu[pid];
     if (!m?.on || !m.unlocked) return false;
-    const d = this.derived[shop.floor];
-    if (p.needs === 'machine' && !d.machines.length) return false;
-    if (p.needs === 'display' && !d.displays.length) return false;
-    return true;
+    return !p.needs || !!this.derived[shop.lot].provides[p.needs]?.length;
   }
 
   inStock(shop, pid) {
@@ -594,10 +610,11 @@ export class Game {
   // Gründe, warum ein Laden (noch) nicht verkauft
   shopStatus(shop) {
     const reasons = [];
-    const d = this.derived[shop.floor];
-    if (!d.registers.length) reasons.push('Theke mit Kasse fehlt');
-    if (!shop.staff) reasons.push('Keine Barista eingestellt');
-    if (!productsFor(shop.type).some((p) => this.offerable(shop, p))) reasons.push('Siebträger oder Vitrine fehlt');
+    const st = SHOP_TYPES[shop.type];
+    const d = this.derived[shop.lot];
+    if (!d.registers.length) reasons.push(`${st.mode === 'counter' ? 'Theke' : 'Kasse'} fehlt`);
+    if (!shop.staff) reasons.push(`Kein Personal (${st.staff}) eingestellt`);
+    if (!productsFor(shop.type).some((p) => this.offerable(shop, p))) reasons.push(st.needsText);
     if (!shop.open) reasons.push('Laden ist geschlossen');
     const ready = reasons.length === 0;
     const hours = this.clock >= CONFIG.openFrom && this.clock < CONFIG.openUntil;
@@ -605,21 +622,21 @@ export class Game {
   }
 
   staffedRegisters(shop) {
-    return this.derived[shop.floor].registers.slice(0, shop.staff);
+    return this.derived[shop.lot].registers.slice(0, shop.staff);
   }
 
-  // Arbeitsgeschwindigkeit: zusätzliche Baristas helfen an der Maschine
+  // Arbeitsgeschwindigkeit: zusätzliches Personal hilft mit
   serviceSpeed(shop) {
-    const regs = Math.max(1, Math.min(shop.staff, this.derived[shop.floor].registers.length));
+    const regs = Math.max(1, Math.min(shop.staff, this.derived[shop.lot].registers.length));
     const helpers = Math.max(0, shop.staff - regs);
     return 1.6 * (1 + 0.5 * Math.min(helpers / regs, 2));
   }
 
-  // Positionen der Baristas für die Darstellung
-  staffSpots(f) {
-    const shop = this.shopOnFloor(f);
+  // Positionen des Personals für die Darstellung (lokale Koordinaten)
+  staffSpots(l) {
+    const shop = this.shopOnLot(l);
     if (!shop || !shop.staff) return [];
-    const d = this.derived[f];
+    const d = this.derived[l];
     const out = [];
     const regs = d.registers.slice(0, shop.staff);
     for (const r of regs) {
@@ -627,11 +644,14 @@ export class Game {
       out.push({ x, z, yaw: r.item.rot * Math.PI / 2, busy: !!r.serving, role: 'kasse' });
     }
     const helpers = shop.staff - regs.length;
+    const stations = Object.values(d.provides).flat();
     for (let k = 0; k < helpers; k++) {
-      const m = d.machines[k % Math.max(1, d.machines.length)];
+      const m = stations[k % Math.max(1, stations.length)];
       if (m) {
-        const [x, z] = localToFloor(m, 0.5 + (k >= d.machines.length ? 0.35 : 0), 1.35);
-        out.push({ x, z, yaw: m.rot * Math.PI / 2 + Math.PI, busy: true, role: 'maschine' });
+        const def = FURNITURE[m.type];
+        const browse = SHOP_TYPES[shop.type].mode === 'browse';
+        const [x, z] = localToFloor(m, def.w / 2 + (k >= stations.length ? 0.35 : 0), def.d + 0.35);
+        out.push({ x, z, yaw: m.rot * Math.PI / 2 + Math.PI, busy: !browse, role: browse ? 'regal' : 'station' });
       } else if (d.registers[0]) {
         const [x, z] = localToFloor(d.registers[0].item, 1.5, 0.5);
         out.push({ x, z, yaw: d.registers[0].item.rot * Math.PI / 2, busy: false, role: 'hilfe' });
@@ -660,7 +680,6 @@ export class Game {
       const inside = [...this.agents.values()].some((a) => a.kind === 'customer');
       if (!inside || this.clock >= CONFIG.openUntil + 90) this.endDay();
       else if (this.clock >= CONFIG.openUntil + 45) {
-        // Ladenschluss: wer noch wartet, geht
         for (const a of [...this.agents.values()]) if (a.kind === 'customer' && (a.state === 'queue' || a.state === 'toQueue')) this.leave(a);
       }
     }
@@ -669,17 +688,19 @@ export class Game {
   spawn(dt) {
     const hour = Math.floor(this.clock / 60);
     const wx = WEATHER[this.weather.type];
-    // Passanten auf dem Gehweg (nur Kulisse)
-    const pedRate = (hour >= 7 && hour < 20 ? 0.12 : 0.03) * wx.ped;
+    const pedRate = (hour >= 7 && hour < 20 ? 0.14 : 0.04) * wx.ped * (1 + this.shops.size * 0.15);
     if (this.rng() < pedRate * dt) this.spawnPedestrian();
 
     const repMult = 0.3 + 1.4 * this.rep / 100;
     const weekend = calendar(this.day).weekend ? 1.25 : 1;
     for (const shop of this.shops.values()) {
       if (!this.shopStatus(shop).serving) continue;
-      const appeal = this.derived[shop.floor].appeal;
+      const st = SHOP_TYPES[shop.type];
+      const appeal = this.derived[shop.lot].appeal;
+      // Schmuddelwetter lockt ins Café und zum Imbiss
+      const wxMult = st.mode === 'counter' ? wx.demand : 1;
       const perHour = CONFIG.baseCustomersPerHour * (DEMAND_CURVE[hour] ?? 0) * repMult * (0.6 + 0.9 * appeal / 100)
-        * (shop.floor > 0 ? 0.85 : 1) * wx.demand * weekend;
+        * st.traffic * wxMult * weekend;
       const perSecond = perHour / 60 * CONFIG.minutesPerSecond;
       let count = 0;
       for (const a of this.agents.values()) if (a.shop === shop.id) count++;
@@ -701,9 +722,9 @@ export class Game {
     const left = this.rng() < 0.5;
     const z = D + 1.5 + this.rng() * 1.4;
     const a = {
-      id: this.nextId++, kind: 'ped', floor: 0, x: left ? -12 : W + 9, z, y: 0, yaw: 0, state: 'pass',
+      id: this.nextId++, kind: 'ped', lot: 0, x: left ? EDGE_L : edgeR(), z, y: 0, yaw: 0, state: 'pass',
       look: this.newLook(), speed: CONFIG.walkSpeed * (0.85 + this.rng() * 0.3),
-      route: [{ f: 0, x: left ? W + 9 : -12, z: z + (this.rng() - 0.5) * 0.4, y: 0 }],
+      route: [{ lot: 0, x: left ? edgeR() : EDGE_L, z: z + (this.rng() - 0.5) * 0.4 }],
     };
     this.agents.set(a.id, a);
   }
@@ -711,22 +732,21 @@ export class Game {
   spawnCustomer(shop) {
     const left = this.rng() < 0.5;
     const z = D + 1.6 + this.rng() * 0.8;
-    // Manchmal kommt ein Stammgast
     let reg = null;
     if (this.rng() < 0.3) {
       const present = new Set([...this.agents.values()].map((a) => a.regular));
       const pool = this.regulars.filter((r) => r.lastDay !== this.day && !present.has(r.i));
       if (pool.length) reg = pool[Math.floor(this.rng() * pool.length)];
     }
-    const x0 = doorFront(shop.floor);
+    const x0 = doorFront(shop.lot);
     const a = {
-      id: this.nextId++, kind: 'customer', shop: shop.id, floor: 0, x: left ? -12 : W + 9, z, y: 0, yaw: 0,
+      id: this.nextId++, kind: 'customer', shop: shop.id, lot: shop.lot, x: left ? EDGE_L : edgeR(), z, y: 0, yaw: 0,
       state: 'approach', look: reg ? reg.look : this.newLook(), speed: CONFIG.walkSpeed * (0.9 + this.rng() * 0.2),
       route: [
-        { f: 0, x: x0 + (this.rng() - 0.5) * 0.6, z: D + 1.7, y: 0 },
-        { f: 0, x: x0, z: D + 0.6, y: 0 },
+        { lot: shop.lot, x: x0 + (this.rng() - 0.5) * 0.6, z: D + 1.7 },
+        { lot: shop.lot, x: x0, z: D + 0.6 },
       ],
-      wants: [], sat: 72, wait: 0, patience: 55 + this.rng() * 60, timer: 0, seat: null, register: 0, qIndex: -1,
+      wants: [], basket: [], todo: [], sat: 72, wait: 0, patience: 55 + this.rng() * 60, timer: 0, seat: null, register: 0, qIndex: -1,
       cup: false, goal: null, done: false, paid: 0, regular: reg ? reg.i : -1,
     };
     if (reg) { reg.lastDay = this.day; a.patience += 25; }
@@ -735,27 +755,34 @@ export class Game {
 
   bubble(a, icon) { this.fx.push({ kind: 'bubble', agent: a.id, icon }); }
 
-  // Gast steht vor der Tür und liest die Karte
+  // Kund:in steht vor der Tür und schaut ins Schaufenster
   decide(a) {
     const shop = this.shops.get(a.shop);
     if (!shop || !this.shopStatus(shop).serving) return this.turnAway(a, '🔒');
     this.today.entered++;
+    const st = SHOP_TYPES[shop.type];
     const offer = productsFor(shop.type).filter((p) => this.offerable(shop, p));
-    const pick = (kind) => {
-      const list = offer.filter((p) => PRODUCTS[p].kind === kind);
+    const pickFrom = (list, exclude = []) => {
+      list = list.filter((p) => !exclude.includes(p));
       if (!list.length) return null;
       const total = list.reduce((s, p) => s + this.popularity(p), 0);
       let r = this.rng() * total;
       for (const p of list) { r -= this.popularity(p); if (r <= 0) return p; }
       return list[list.length - 1];
     };
-    const wish = [];
     const reg = this.regulars[a.regular];
+    const wish = [];
     if (reg?.fav && offer.includes(reg.fav) && this.rng() < 0.7) wish.push(reg.fav);
-    else if (this.rng() < 0.88) { const p = pick('drink'); if (p) wish.push(p); }
-    if (this.rng() < 0.42) { const p = pick('snack'); if (p && !wish.includes(p)) wish.push(p); }
-    // Wer nichts Passendes findet, nimmt irgendetwas von der Karte
-    if (!wish.length) { const p = pick('drink') || pick('snack'); if (p) wish.push(p); }
+    if (st.mode === 'counter') {
+      const drinks = offer.filter((p) => PRODUCTS[p].kind === 'drink'), food = offer.filter((p) => PRODUCTS[p].kind !== 'drink');
+      if (!wish.length && this.rng() < 0.88) { const p = pickFrom(drinks); if (p) wish.push(p); }
+      if (this.rng() < (shop.type === 'fastfood' ? 0.85 : 0.42)) { const p = pickFrom(food, wish); if (p) wish.push(p); }
+      if (shop.type === 'fastfood' && this.rng() < 0.25) { const p = pickFrom(food, wish); if (p) wish.push(p); }
+      if (!wish.length) { const p = pickFrom(offer); if (p) wish.push(p); }
+    } else {
+      const n = shop.type === 'supermarkt' ? 2 + Math.floor(this.rng() * 4) : 1 + Math.floor(this.rng() * 2.2);
+      while (wish.length < Math.min(n, offer.length)) { const p = pickFrom(offer, wish); if (!p) break; wish.push(p); }
+    }
     const willing = 0.85 + this.rng() * 0.55 + (this.rep - 50) / 500 + (reg ? reg.hearts * 0.03 : 0);
     a.wants = wish.filter((p) => shop.menu[p].price <= PRODUCTS[p].fair * willing);
     if (reg && !reg.fav && wish.length) reg.fav = wish[0];
@@ -765,26 +792,84 @@ export class Game {
       return this.turnAway(a, '💸');
     }
     if (a.wants.length < wish.length) a.sat -= 8;
+    if (reg && !reg.met) {
+      reg.met = true;
+      this.fx.push({ kind: 'toast', text: `Neue Stammkundschaft: ${reg.name}`, tone: 'good' });
+    }
+    if (st.mode === 'counter') return this.joinQueue(a);
+    a.todo = [...a.wants];
+    a.basket = [];
+    a.cup = 'basket';
+    this.nextShelf(a);
+  }
 
-    // Kürzeste Schlange an einer besetzten Kasse
+  // Kürzeste Schlange an einer besetzten Kasse
+  joinQueue(a) {
+    const shop = this.shops.get(a.shop);
     const regs = this.staffedRegisters(shop).filter((r) => r.queueSpots.length);
     regs.sort((r1, r2) => r1.queue.length - r2.queue.length);
     const r = regs[0];
     if (!r || r.queue.length >= r.queueSpots.length) {
       this.today.lostFull++;
-      a.sat = 35;
+      a.sat = Math.min(a.sat, 35);
+      this.returnBasket(a, shop);
+      if (this.inside(a)) { this.bubble(a, '😤'); return this.leave(a); }
       return this.turnAway(a, '😤');
-    }
-    if (reg && !reg.met) {
-      reg.met = true;
-      this.fx.push({ kind: 'toast', text: `Neuer Stammgast: ${reg.name}`, tone: 'good' });
     }
     r.queue.push(a.id);
     a.register = r.id;
     a.qIndex = r.queue.length - 1;
     a.state = 'toQueue';
+    a.wait = 0;
     const spot = r.queueSpots[Math.min(a.qIndex, r.queueSpots.length - 1)];
-    this.routeTo(a, { f: shop.floor, x: spot[0], z: spot[1] });
+    this.routeTo(a, { lot: shop.lot, x: spot[0], z: spot[1] });
+  }
+
+  // Beim Stöbern: zum nächsten passenden Regal, danach (Boutique) evtl. anprobieren, dann zur Kasse
+  nextShelf(a) {
+    const shop = this.shops.get(a.shop);
+    const d = this.derived[shop.lot];
+    while (a.todo.length) {
+      const pid = a.todo.shift();
+      const list = (d.provides[PRODUCTS[pid].needs] || []).filter((it) => d.access.get(it.id)?.length);
+      if (!list.length) { a.sat -= 8; continue; }
+      const it = list[Math.floor(this.rng() * list.length)];
+      const cells = d.access.get(it.id);
+      const [cx, cz] = cells[Math.floor(this.rng() * cells.length)];
+      a.state = 'toShelf';
+      a.shelf = { pid, item: it.id };
+      const [fx, fz] = facing(it.rot);
+      a.faceYaw = Math.atan2(-fx, -fz);
+      this.routeTo(a, { lot: shop.lot, x: cx, z: cz });
+      return;
+    }
+    a.shelf = null;
+    if (!a.basket.length) {
+      this.today.browsed++;
+      this.bubble(a, '🤷');
+      a.sat = Math.min(a.sat, 55);
+      return this.leave(a);
+    }
+    if (shop.type === 'boutique' && !a.fitted && d.fittings.length && this.rng() < 0.6) {
+      const room = d.fittings[Math.floor(this.rng() * d.fittings.length)];
+      const cells = d.access.get(room.id) || [];
+      if (cells.length) {
+        a.fitted = true;
+        a.state = 'toFitting';
+        const [fx, fz] = facing(room.rot);
+        a.faceYaw = Math.atan2(-fx, -fz);
+        this.routeTo(a, { lot: shop.lot, x: cells[0][0], z: cells[0][1] });
+        return;
+      }
+    }
+    this.joinQueue(a);
+  }
+
+  // Wer ohne zu zahlen geht, legt die Ware zurück
+  returnBasket(a, shop) {
+    if (!a.basket?.length || !shop) return;
+    for (const p of a.basket) for (const [s, n] of Object.entries(PRODUCTS[p].uses)) shop.stock[s] += n;
+    a.basket = [];
   }
 
   turnAway(a, icon) {
@@ -792,28 +877,24 @@ export class Game {
     this.finish(a);
     a.state = 'exit';
     a.goal = null;
-    const left = a.x < CONFIG.doorX - 3;
-    a.route = [{ f: 0, x: a.x, z: D + 1.8, y: 0 }, { f: 0, x: left ? -12 : W + 9, z: D + 1.8 + this.rng() * 0.6, y: 0 }];
+    const left = this.rng() < 0.5;
+    a.route = [{ lot: a.lot, x: a.x, z: D + 1.8 }, { lot: a.lot, x: left ? EDGE_L : edgeR(), z: D + 1.8 + this.rng() * 0.6 }];
   }
 
-  // Wegeplanung zu einem Feld im eigenen Laden; goal = { f, x, z, allowBlocked, exact }
+  // Wegeplanung zu einem Feld im eigenen Laden; goal = { lot, x, z, allowBlocked, exact } (lokal)
   routeTo(a, goal) {
     a.goal = goal;
+    const ox = lotX(goal.lot);
     const pts = [];
     let cx, cz;
-    if (a.z >= D || a.x < 0) {
-      // Noch draußen oder im Treppenhaus: durch die passende Tür hinein
-      pts.push(...inPath(goal.f));
-      [cx, cz] = entryCell(goal.f);
-    } else {
-      cx = clamp(Math.floor(a.x), 0, W - 1);
-      cz = clamp(Math.floor(a.z), 0, D - 1);
-    }
-    const y = goal.f * H;
-    const path = findPath(W, D, this.blockedFn(goal.f), cx, cz, goal.x, goal.z, goal.allowBlocked)
+    if (!this.inside(a)) {
+      pts.push(...inPath(goal.lot));
+      [cx, cz] = entryCell();
+    } else [cx, cz] = this.localCell(a);
+    const path = findPath(W, D, this.blockedFn(goal.lot), cx, cz, goal.x, goal.z, goal.allowBlocked)
       || [[goal.x, goal.z]]; // notfalls direkt (z. B. eingebaut) – niemand bleibt stecken
-    pts.push(...path.map(([x, z]) => ({ f: goal.f, x: x + 0.5, z: z + 0.5, y })));
-    if (goal.exact) pts.push({ f: goal.f, x: goal.exact[0], z: goal.exact[1], y });
+    pts.push(...path.map(([x, z]) => ({ lot: goal.lot, x: ox + x + 0.5, z: z + 0.5 })));
+    if (goal.exact) pts.push({ lot: goal.lot, x: ox + goal.exact[0], z: goal.exact[1] });
     a.route = pts;
     return true;
   }
@@ -828,17 +909,17 @@ export class Game {
       if (a.qIndex !== i || (a.goal && (a.goal.x !== spot[0] || a.goal.z !== spot[1]))) {
         a.qIndex = i;
         a.state = 'toQueue';
-        this.routeTo(a, { f: r.item.floor, x: spot[0], z: spot[1] });
+        this.routeTo(a, { lot: r.item.lot, x: spot[0], z: spot[1] });
       }
     });
   }
 
   updateRegister(r, dt) {
-    const shop = this.shopOnFloor(r.item.floor);
+    const shop = this.shopOnLot(r.item.lot);
     if (!shop) return;
     const staffed = this.staffedRegisters(shop).includes(r);
     if (r.serving) {
-      if (!staffed) return; // Barista fehlt – Bestellung wartet
+      if (!staffed) return; // Personal fehlt – Bestellung wartet
       r.timer -= dt * this.serviceSpeed(shop);
       if (r.timer <= 0) this.completeOrder(r, shop);
       return;
@@ -846,27 +927,35 @@ export class Game {
     if (!staffed) return;
     const front = this.agents.get(r.queue[0]);
     if (!front || front.state !== 'queue' || front.qIndex !== 0) return;
-    // Bestellung aufnehmen
-    const d = this.derived[shop.floor];
-    const items = [];
-    for (const p of front.wants) {
-      if (this.offerable(shop, p) && this.inStock(shop, p)) items.push(p);
-      else { front.sat -= 14; this.today.lostStock++; }
-    }
     if (front.wait > 25) front.sat -= (front.wait - 25) * 0.35;
-    if (!items.length) {
-      this.bubble(front, '❌');
-      r.queue.shift();
-      this.leave(front);
-      this.requeue(r);
-      return;
+    const d = this.derived[shop.lot];
+    if (SHOP_TYPES[shop.type].mode === 'browse') {
+      // Waren liegen schon im Korb – nur noch scannen und einpacken
+      front.items = [...front.basket];
+      r.timer = 2 + front.items.reduce((t, p) => t + PRODUCTS[p].prep, 0);
+    } else {
+      const items = [];
+      for (const p of front.wants) {
+        if (this.offerable(shop, p) && this.inStock(shop, p)) items.push(p);
+        else { front.sat -= 14; this.today.lostStock++; }
+      }
+      if (!items.length) {
+        this.bubble(front, '❌');
+        r.queue.shift();
+        this.leave(front);
+        this.requeue(r);
+        return;
+      }
+      if (items.length < front.wants.length) this.bubble(front, '😕');
+      for (const p of items) for (const [s, n] of Object.entries(PRODUCTS[p].uses)) shop.stock[s] -= n;
+      // Mehrere Geräte derselben Art beschleunigen die Zubereitung
+      r.timer = 2 + items.reduce((t, p) => {
+        const n = d.provides[PRODUCTS[p].needs]?.length || 1;
+        return t + PRODUCTS[p].prep / (1 + 0.35 * (n - 1));
+      }, 0);
+      front.items = items;
     }
-    if (items.length < front.wants.length) this.bubble(front, '😕');
-    for (const p of items) for (const [s, n] of Object.entries(PRODUCTS[p].uses)) shop.stock[s] -= n;
-    const coffee = 1 / (1 + 0.35 * Math.max(0, d.machines.length - 1));
-    r.timer = 2 + items.reduce((t, p) => t + PRODUCTS[p].prep * (PRODUCTS[p].kind === 'drink' ? coffee : 1), 0);
     r.serving = front.id;
-    front.items = items;
     front.state = 'ordering';
   }
 
@@ -875,6 +964,7 @@ export class Game {
     r.serving = 0;
     r.queue.shift();
     if (!a) { this.requeue(r); return; }
+    const st = SHOP_TYPES[shop.type];
     let total = 0;
     for (const p of a.items) {
       const price = shop.menu[p].price;
@@ -884,41 +974,47 @@ export class Game {
       a.sat += clamp((PRODUCTS[p].fair - price) / PRODUCTS[p].fair * 40, -20, 8);
       this.questProgress('sell', 1, p);
     }
+    a.basket = [];
     total = round2(total);
     a.paid = total;
     this.earn(total, shop);
     this.today.served++;
     shop.day.served++;
     this.questProgress('serve', 1);
-    a.cup = a.items.some((p) => PRODUCTS[p].kind === 'drink') ? 'cup' : 'bag';
-    this.fx.push({ kind: 'money', floor: shop.floor, x: r.spot[0] + 0.5, z: r.spot[1] + 0.5, amount: total });
+    a.cup = st.mode === 'browse' ? 'bag' : a.items.some((p) => PRODUCTS[p].kind === 'drink') ? 'cup' : 'bag';
+    this.fx.push({ kind: 'money', lot: shop.lot, x: r.spot[0] + 0.5, z: r.spot[1] + 0.5, amount: total });
 
-    // Trinkgeld von zufriedenen Gästen
-    const d = this.derived[shop.floor];
+    // Trinkgeld von zufriedenen Gästen (nicht im Supermarkt)
+    const d = this.derived[shop.lot];
     const reg = this.regulars[a.regular];
-    if (a.sat + d.appeal * 0.12 >= 82 || (reg && reg.hearts >= 3 && a.sat >= 60)) {
-      const tip = round2(Math.max(0.2, total * (0.05 + this.rng() * 0.1 + (reg ? reg.hearts * 0.02 : 0))));
+    if (shop.type !== 'supermarkt' && (a.sat + d.appeal * 0.12 >= 82 || (reg && reg.hearts >= 3 && a.sat >= 60))) {
+      const tip = round2(Math.max(0.2, Math.min(5, total * (0.05 + this.rng() * 0.1 + (reg ? reg.hearts * 0.02 : 0)))));
       this.earn(tip, shop);
       this.today.tips = round2(this.today.tips + tip);
-      this.fx.push({ kind: 'money', floor: shop.floor, x: r.spot[0] + 0.5, z: r.spot[1] + 0.5, amount: tip, tip: true });
+      this.fx.push({ kind: 'money', lot: shop.lot, x: r.spot[0] + 0.5, z: r.spot[1] + 0.5, amount: tip, tip: true });
     }
     this.requeue(r);
 
     // Hinsetzen – ab und zu, bei Schmuddelwetter öfter
-    const chance = (SHOP_TYPES[shop.type].sitChance || 0) + d.appeal * 0.002 + WEATHER[this.weather.type].sit;
-    if (this.rng() < chance) {
-      const free = d.seats.filter((s) => !this.seatTaken.has(s.id));
-      if (free.length) {
-        const seat = free[Math.floor(this.rng() * free.length)];
-        this.seatTaken.set(seat.id, a.id);
-        a.seat = seat.id;
-        a.state = 'toSeat';
-        this.routeTo(a, { f: seat.floor, x: seat.cell[0], z: seat.cell[1], allowBlocked: true, exact: [seat.x, seat.z] });
+    if (st.mode === 'counter') {
+      const chance = (st.sitChance || 0) + d.appeal * 0.002 + WEATHER[this.weather.type].sit;
+      if (this.rng() < chance) {
+        const free = d.seats.filter((s) => !this.seatTaken.has(s.id));
+        if (free.length) {
+          const seat = free[Math.floor(this.rng() * free.length)];
+          this.seatTaken.set(seat.id, a.id);
+          a.seat = seat.id;
+          a.state = 'toSeat';
+          this.routeTo(a, { lot: seat.lot, x: seat.cell[0], z: seat.cell[1], allowBlocked: true, exact: [seat.x, seat.z] });
+          return;
+        }
+        a.sat -= 10;
+        this.bubble(a, '🪑');
+        this.leave(a);
         return;
       }
-      a.sat -= 10;
-      this.bubble(a, '🪑');
-    } else this.bubble(a, a.sat >= 70 ? '😊' : a.sat >= 45 ? '🙂' : '😐');
+    }
+    this.bubble(a, a.sat >= 70 ? '😊' : a.sat >= 45 ? '🙂' : '😐');
     this.leave(a);
   }
 
@@ -946,37 +1042,40 @@ export class Game {
       a.register = 0;
     }
     if (a.seat) { this.seatTaken.delete(a.seat); a.seat = null; }
+    this.returnBasket(a, this.shops.get(a.shop));
+    if (a.cup === 'basket') a.cup = false;
     this.finish(a);
-    if (a.z >= D) return this.turnAway(a, '');
+    if (!this.inside(a)) return this.turnAway(a, '');
     a.state = 'leaving';
     a.side = this.rng() < 0.5 ? -1 : 1;
     this.exitRoute(a);
   }
 
   exitRoute(a) {
-    const f = a.floor;
+    const l = a.lot;
     const pts = [];
-    if (a.x >= 0 && a.z < D) {
-      const [ex, ez] = entryCell(f);
-      const path = findPath(W, D, this.blockedFn(f), clamp(Math.floor(a.x), 0, W - 1), clamp(Math.floor(a.z), 0, D - 1), ex, ez) || [[ex, ez]];
-      pts.push(...path.map(([x, z]) => ({ f, x: x + 0.5, z: z + 0.5, y: f * H })));
-      pts.push(...outPath(f));
+    if (this.inside(a)) {
+      const [ex, ez] = entryCell();
+      const [sx, sz] = this.localCell(a);
+      const path = findPath(W, D, this.blockedFn(l), sx, sz, ex, ez) || [[ex, ez]];
+      pts.push(...path.map(([x, z]) => ({ lot: l, x: lotX(l) + x + 0.5, z: z + 0.5 })));
+      pts.push(...[...inPath(l)].reverse());
     }
-    const x0 = doorFront(f);
+    const x0 = doorFront(l);
     pts.push(
-      { f: 0, x: x0 + a.side, z: D + 1.9, y: 0 },
-      { f: 0, x: a.side < 0 ? -12 : W + 9, z: D + 1.7 + (a.id % 7) * 0.12, y: 0 },
+      { lot: l, x: x0 + a.side, z: D + 1.9 },
+      { lot: l, x: a.side < 0 ? EDGE_L : edgeR(), z: D + 1.7 + (a.id % 7) * 0.12 },
     );
     a.route = pts;
     a.goal = null;
   }
 
-  // Zufriedenheit verbuchen (einmal je Gast)
+  // Zufriedenheit verbuchen (einmal je Kund:in)
   finish(a) {
     if (a.done || a.kind !== 'customer') return;
     a.done = true;
     const shop = this.shops.get(a.shop);
-    if (a.paid && shop) a.sat += this.derived[shop.floor].appeal * 0.12;
+    if (a.paid && shop) a.sat += this.derived[shop.lot].appeal * 0.12;
     a.sat = clamp(a.sat, 0, 100);
     this.today.satSum += a.sat;
     this.today.satN++;
@@ -990,12 +1089,11 @@ export class Game {
       const before = Math.floor(reg.hearts);
       if (a.sat >= 72) reg.hearts = Math.min(5, reg.hearts + 0.34);
       else if (a.sat < 40) reg.hearts = Math.max(0, reg.hearts - 1);
-      if (Math.floor(reg.hearts) > before) this.fx.push({ kind: 'toast', text: `${reg.name} mag dein Café ${'❤'.repeat(Math.floor(reg.hearts))}`, tone: 'good' });
+      if (Math.floor(reg.hearts) > before) this.fx.push({ kind: 'toast', text: `${reg.name} mag deine Läden ${'❤'.repeat(Math.floor(reg.hearts))}`, tone: 'good' });
     }
   }
 
   updateAgent(a, dt) {
-    // Warten in der Schlange kostet Geduld
     if (a.kind === 'customer' && (a.state === 'queue' || a.state === 'toQueue')) {
       a.wait += dt;
       if (a.wait > a.patience) {
@@ -1005,29 +1103,51 @@ export class Game {
         return this.leave(a);
       }
     }
-    if (a.state === 'sitting') {
+    if (a.state === 'sitting' || a.state === 'browsing' || a.state === 'fitting') {
       a.timer -= dt;
-      if (a.timer <= 0) { this.bubble(a, a.sat >= 70 ? '😊' : '🙂'); this.leave(a); }
-      return;
+      if (a.timer > 0) return;
+      if (a.state === 'sitting') { this.bubble(a, a.sat >= 70 ? '😊' : '🙂'); return this.leave(a); }
+      if (a.state === 'fitting') { a.sat += 6; this.bubble(a, '✨'); return this.joinQueue(a); }
+      return this.pickFromShelf(a);
     }
     this.walk(a, dt);
     if (!a.route.length) this.arrive(a);
+  }
+
+  // Am Regal: Ware ansehen und mit gewisser Wahrscheinlichkeit in den Korb legen
+  pickFromShelf(a) {
+    const shop = this.shops.get(a.shop);
+    const pid = a.shelf?.pid;
+    if (shop && pid) {
+      if (!this.inStock(shop, pid)) {
+        a.sat -= 12;
+        this.today.lostStock++;
+        this.bubble(a, '❌');
+      } else {
+        const d = this.derived[shop.lot];
+        const chance = shop.type === 'supermarkt' ? 0.96 : 0.42 + d.appeal * 0.002 + (d.fittings.length ? 0.12 : 0);
+        if (this.rng() < chance) {
+          for (const [s, n] of Object.entries(PRODUCTS[pid].uses)) shop.stock[s] -= n;
+          a.basket.push(pid);
+        }
+      }
+    }
+    this.nextShelf(a);
   }
 
   walk(a, dt) {
     let step = a.speed * dt;
     while (step > 0 && a.route.length) {
       const w = a.route[0];
-      const dx = w.x - a.x, dz = w.z - a.z, dy = w.y - a.y;
-      const dist = Math.hypot(dx, dz, dy * 0.6);
-      const sp = w.stair ? CONFIG.climbSpeed / CONFIG.walkSpeed : 1;
-      if (dist <= step * sp) {
-        a.x = w.x; a.z = w.z; a.y = w.y; a.floor = w.f;
-        step -= dist / sp;
+      const dx = w.x - a.x, dz = w.z - a.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist <= step) {
+        a.x = w.x; a.z = w.z; a.lot = w.lot;
+        step -= dist;
         a.route.shift();
       } else {
-        const k = step * sp / dist;
-        a.x += dx * k; a.z += dz * k; a.y += dy * k;
+        const k = step / dist;
+        a.x += dx * k; a.z += dz * k;
         if (Math.abs(dx) + Math.abs(dz) > 1e-3) a.yaw = Math.atan2(dx, dz);
         step = 0;
       }
@@ -1040,15 +1160,25 @@ export class Game {
       case 'toQueue': {
         a.state = 'queue';
         const r = this.regState.get(a.register);
-        if (r) a.yaw = Math.atan2(r.spot[0] + 0.5 - a.x, r.spot[1] + 0.5 - a.z) || a.yaw;
+        if (r) a.yaw = Math.atan2(lotX(a.lot) + r.spot[0] + 0.5 - a.x, r.spot[1] + 0.5 - a.z) || a.yaw;
         if (r && a.qIndex === 0) { const [s, c] = facing(r.item.rot); a.yaw = Math.atan2(-s, -c); }
         return;
       }
+      case 'toShelf':
+        a.state = 'browsing';
+        a.yaw = a.faceYaw ?? a.yaw;
+        a.timer = (this.shops.get(a.shop)?.type === 'supermarkt' ? 2 : 5) + this.rng() * 4;
+        return;
+      case 'toFitting':
+        a.state = 'fitting';
+        a.yaw = a.faceYaw ?? a.yaw;
+        a.timer = 6 + this.rng() * 4;
+        return;
       case 'toSeat': {
         const seat = this.seatById(a.seat);
         if (!seat) return this.leave(a);
         a.state = 'sitting';
-        a.x = seat.x; a.z = seat.z; a.yaw = seat.yaw; a.seatH = seat.h;
+        a.x = lotX(seat.lot) + seat.x; a.z = seat.z; a.yaw = seat.yaw; a.seatH = seat.h;
         a.timer = 25 + this.rng() * 50 + (this.weather.type === 'regen' ? 20 : 0);
         a.sat += 6;
         this.today.sits++;
@@ -1062,7 +1192,7 @@ export class Game {
     }
   }
 
-  // ───────────────────────── Café-Katzen ─────────────────────────
+  // ───────────────────────── Ladenkatzen ─────────────────────────
 
   syncPets() {
     const homes = new Map([...this.items.values()].filter((it) => FURNITURE[it.type].pet).map((it) => [it.id, it]));
@@ -1074,18 +1204,19 @@ export class Game {
       if (have.has(it.id)) continue;
       const [x, z] = localToFloor(it, 0.5, 0.5);
       this.agents.set(this.nextId, {
-        id: this.nextId++, kind: 'pet', home: it.id, name: it.petName, color: it.petColor, floor: it.floor,
-        x, z, y: it.floor * H, yaw: it.rot * Math.PI / 2, state: 'sleep', timer: 10 + this.rng() * 20, route: [], speed: 0.7, goal: null,
+        id: this.nextId++, kind: 'pet', home: it.id, name: it.petName, color: it.petColor, lot: it.lot,
+        x: lotX(it.lot) + x, z, y: 0, yaw: it.rot * Math.PI / 2, state: 'sleep', timer: 10 + this.rng() * 20, route: [], speed: 0.7, goal: null,
       });
     }
   }
 
   petRoute(a, goal) {
     a.goal = goal;
-    const sx = clamp(Math.floor(a.x), 0, W - 1), sz = clamp(Math.floor(a.z), 0, D - 1);
-    const path = findPath(W, D, this.blockedFn(a.floor), sx, sz, goal.x, goal.z, true) || [];
-    a.route = path.map(([x, z]) => ({ f: a.floor, x: x + 0.5, z: z + 0.5, y: a.floor * H }));
-    if (goal.exact) a.route.push({ f: a.floor, x: goal.exact[0], z: goal.exact[1], y: a.floor * H });
+    const [sx, sz] = this.localCell(a);
+    const ox = lotX(a.lot);
+    const path = findPath(W, D, this.blockedFn(a.lot), sx, sz, goal.x, goal.z, true) || [];
+    a.route = path.map(([x, z]) => ({ lot: a.lot, x: ox + x + 0.5, z: z + 0.5 }));
+    if (goal.exact) a.route.push({ lot: a.lot, x: ox + goal.exact[0], z: goal.exact[1] });
   }
 
   updatePet(a, dt) {
@@ -1101,21 +1232,21 @@ export class Game {
     }
     a.timer -= dt;
     if (a.timer > 0) return;
-    // Nächstes Ziel: herumstreunen, zu einem Gast oder zurück ins Körbchen
-    const blocked = this.blockedFn(a.floor);
+    const blocked = this.blockedFn(a.lot);
     if (a.state === 'idle' && this.rng() < 0.3) {
       const [x, z] = localToFloor(home, 0.5, 0.5);
       a.state = 'home';
       this.petRoute(a, { x: home.x, z: home.z, exact: [x, z] });
       return;
     }
-    const guests = [...this.agents.values()].filter((g) => g.kind === 'customer' && g.state === 'sitting' && g.floor === a.floor);
+    const guests = [...this.agents.values()].filter((g) => g.kind === 'customer' && (g.state === 'sitting' || g.state === 'browsing') && g.lot === a.lot && this.inside(g));
     let tx, tz;
     if (guests.length && this.rng() < 0.4) {
       const g = guests[Math.floor(this.rng() * guests.length)];
-      tx = clamp(Math.floor(g.x + (this.rng() < 0.5 ? 1 : -1)), 0, W - 1);
-      tz = clamp(Math.floor(g.z), 0, D - 1);
-      if (blocked(tx, tz)) { tx = undefined; }
+      const [gx, gz] = this.localCell(g);
+      tx = clamp(gx + (this.rng() < 0.5 ? 1 : -1), 0, W - 1);
+      tz = gz;
+      if (blocked(tx, tz)) tx = undefined;
       else { g.sat += 4; this.fx.push({ kind: 'bubble', agent: g.id, icon: '😻' }); }
     }
     if (tx === undefined) {
@@ -1129,7 +1260,6 @@ export class Game {
     this.petRoute(a, { x: tx, z: tz });
   }
 
-  // Katze streicheln: einmal am Tag gibt es etwas Ruf
   pet(agentId) {
     const a = this.agents.get(agentId);
     if (!a || a.kind !== 'pet') return false;
@@ -1147,7 +1277,8 @@ export class Game {
     const lvl = Math.min(6, Math.floor(this.day / 4) + this.shops.size - 1);
     const prods = [];
     for (const s of this.shops.values()) for (const p of productsFor(s.type)) if (this.offerable(s, p) && !prods.includes(p)) prods.push(p);
-    const pool = QUESTS.filter((q) => q.kind !== 'sell' || prods.length);
+    const seating = [...this.shops.values()].some((s) => SHOP_TYPES[s.type].mode === 'counter');
+    const pool = QUESTS.filter((q) => (q.kind !== 'sell' || prods.length) && (q.kind !== 'sit' || seating));
     const tpl = pool[Math.floor(this.rng() * pool.length)];
     this.quest = { kind: tpl.kind, progress: 0, done: false, ...tpl.gen(this.rng, lvl, prods) };
   }
@@ -1181,7 +1312,7 @@ export class Game {
     let staff = 0;
     for (const s of this.shops.values()) staff += s.staff;
     const wages = staff * CONFIG.wage;
-    const rent = this.floors.reduce((sum, fl, i) => sum + (fl.unlocked ? FLOORS[i].rent : 0), 0);
+    const rent = this.lots.reduce((sum, lt, i) => sum + (lt.owned ? LOTS[i].rent : 0), 0);
     let spoiled = 0;
     for (const s of this.shops.values()) {
       for (const sid of Object.keys(s.stock)) {
@@ -1195,13 +1326,13 @@ export class Game {
       day: this.day, date: calendar(this.day).label, weather: { ...this.weather },
       revenue: t.revenue, tips: t.tips, quest: t.quest, supplies: t.supplies, wages, rent, spoiled: round2(spoiled), build: t.build,
       profit: round2(t.revenue + t.quest - t.supplies - wages - rent),
-      served: t.served, entered: t.entered, lostPrice: t.lostPrice, lostWait: t.lostWait, lostFull: t.lostFull, lostStock: t.lostStock,
+      served: t.served, entered: t.entered, lostPrice: t.lostPrice, lostWait: t.lostWait, lostFull: t.lostFull, lostStock: t.lostStock, browsed: t.browsed,
       sat: t.satN ? Math.round(t.satSum / t.satN) : null, rep: Math.round(this.rep), repDelta: Math.round(this.rep - t.repStart),
       sold: { ...t.sold }, money: this.money, questText: this.quest?.text, questDone: !!this.quest?.done,
+      shops: [...this.shops.values()].map((s) => ({ name: s.name, type: s.type, revenue: s.day.revenue, served: s.day.served })),
     };
     this.history.push(report);
     if (this.history.length > 120) this.history.shift();
-    // Neuer Tag: Gäste gehen nach Hause, die Katzen bleiben
     for (const a of [...this.agents.values()]) if (a.kind !== 'pet') this.agents.delete(a.id);
     this.seatTaken.clear();
     for (const r of this.regState.values()) { r.queue = []; r.serving = 0; r.timer = 0; }
@@ -1222,9 +1353,9 @@ export class Game {
   serialize() {
     return {
       v: SAVE_VERSION, seed: this.seed, rng: this.rng.state(), money: this.money, day: this.day, clock: this.clock,
-      rep: this.rep, nextId: this.nextId, exterior: this.exterior, weather: this.weather, forecast: this.forecast,
+      rep: this.rep, nextId: this.nextId, weather: this.weather, forecast: this.forecast,
       quest: this.quest, regulars: this.regulars,
-      floors: this.floors.map((f) => ({ unlocked: f.unlocked, shop: f.shop, design: f.design })),
+      lots: this.lots.map((l) => ({ owned: l.owned, shop: l.shop, design: l.design })),
       items: [...this.items.values()],
       shops: [...this.shops.values()],
       history: this.history, today: this.today,
@@ -1237,14 +1368,13 @@ export class Game {
     this.rng = makeRng(data.seed);
     this.rng.set(data.rng);
     this.money = data.money; this.day = data.day; this.clock = data.clock; this.rep = data.rep; this.nextId = data.nextId;
-    this.floors = FLOORS.map((_, i) => ({
-      index: i, unlocked: !!data.floors[i]?.unlocked, shop: data.floors[i]?.shop || 0,
-      design: mergeDesign(data.floors[i]?.design),
-    }));
-    this.exterior = { ...defaultExterior(), ...data.exterior };
-    this.items = new Map(data.items.map((it) => [it.id, { v: 0, ...it }]));
     this.shops = new Map(data.shops.map((s) => [s.id, { apron: 'tanne', ...s, menu: { ...s.menu }, stock: { ...s.stock }, auto: { ...s.auto } }]));
-    // Neue Produkte/Waren späterer Versionen ergänzen
+    this.lots = LOTS.map((_, i) => {
+      const l = data.lots[i];
+      const shop = this.shops.get(l?.shop);
+      return { index: i, owned: !!l?.owned, shop: l?.shop || 0, design: mergeDesign(l?.design, shop?.type) };
+    });
+    this.items = new Map(data.items.map((it) => [it.id, { v: 0, ...it }]));
     for (const s of this.shops.values()) {
       for (const p of productsFor(s.type)) if (!s.menu[p]) s.menu[p] = { price: PRODUCTS[p].price, on: true, unlocked: !PRODUCTS[p].recipe };
       for (const sid of suppliesFor(s.type)) if (!(sid in s.stock)) { s.stock[sid] = 0; s.auto[sid] = true; }
@@ -1268,14 +1398,15 @@ export class Game {
   }
 }
 
-function mergeDesign(d) {
-  const base = defaultDesign();
+function mergeDesign(d, type) {
+  const base = defaultDesign(type);
   if (!d) return base;
   return {
     walls: Object.fromEntries(Object.keys(base.walls).map((k) => [k, { ...base.walls[k], ...d.walls?.[k] }])),
     wainscot: { ...base.wainscot, ...d.wainscot },
     floor: d.floor || base.floor,
     ceiling: d.ceiling || base.ceiling,
+    ext: { ...base.ext, ...d.ext },
   };
 }
 
@@ -1283,20 +1414,23 @@ function mergeDesign(d) {
 export function migrate(data) {
   if (!data || typeof data !== 'object') throw new Error('Kein Spielstand');
   if (data.v === SAVE_VERSION) return data;
-  if (data.v === 1) {
-    // v1: Treppe stand im Laden; oben ist jetzt die Tür zum Treppenhaus
+  if (data.v === 1 || data.v === 2) {
+    // v1/v2: Etagen eines Hauses → jetzt eigene Läden auf Grundstücken nebeneinander
     let refund = 0;
     const items = data.items.filter((it) => {
-      if (it.floor === 0 || FURNITURE[it.type]?.layer !== 'floor') return !!FURNITURE[it.type];
+      if (!FURNITURE[it.type]) return false;
+      if (FURNITURE[it.type].layer !== 'floor') return true;
       const [w, d] = footprint(it.type, it.rot);
       for (let i = 0; i < w; i++) for (let k = 0; k < d; k++) {
         if (isReserved(it.floor, it.x + i, it.z + k)) { refund += FURNITURE[it.type].cost; return false; }
       }
       return true;
-    }).map((it) => ({ ...it, v: 0 }));
+    }).map(({ floor, ...it }) => ({ v: 0, ...it, lot: floor }));
+    const ext = data.exterior;
     return {
       ...data, v: SAVE_VERSION, items, money: data.money + refund,
-      shops: data.shops.map((s) => ({ ...s, menu: Object.fromEntries(Object.entries(s.menu).map(([k, m]) => [k, { unlocked: true, ...m }])) })),
+      lots: data.floors.map((f, i) => ({ owned: !!f.unlocked, shop: f.shop, design: { ...f.design, ext: i === 0 ? ext : undefined } })),
+      shops: data.shops.map(({ floor, ...s }) => ({ ...s, lot: floor, menu: Object.fromEntries(Object.entries(s.menu).map(([k, m]) => [k, { unlocked: true, ...m }])) })),
     };
   }
   throw new Error('Spielstand passt nicht zu dieser Version');

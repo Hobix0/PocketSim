@@ -2,7 +2,7 @@
 import { Game, SAVE_VERSION, footprint } from './sim.js';
 import { Renderer } from './render.js';
 import { UI, money } from './ui.js';
-import { CONFIG, FLOORS, FURNITURE, PRODUCTS } from './data.js';
+import { CONFIG, LOTS, FURNITURE, PRODUCTS, SHOP_TYPES } from './data.js';
 import { sound, audio } from './audio.js';
 
 const SAVE_KEY = 'pocketsim.cafe.save';
@@ -133,10 +133,10 @@ const actions = {
       case 'auto': game.shops.get(shopId).auto[args[1]] = args[2]; break;
       case 'hire': game.hire(shopId); break;
       case 'fire': game.fire(shopId); break;
-      case 'unlock': {
+      case 'buyLot': {
         const f = Number(args[0]);
-        const r = game.unlockFloor(f);
-        if (r.ok) { ui.toast(`${FLOORS[f].name} angemietet`, 'good'); sound.chime(); actions.setView(f); ui.openPanel('building'); }
+        const r = game.buyLot(f);
+        if (r.ok) { ui.toast(`${LOTS[f].name} gekauft – such dir einen Laden aus!`, 'good'); sound.chime(); actions.setView(f); ui.openPanel('building'); }
         else ui.toast(r.reason, 'bad');
         break;
       }
@@ -236,6 +236,11 @@ window.addEventListener('pointerup', (e) => {
 
 function click(cx, cy, pointerType) {
   if (!state.started || state.photo) return;
+  // In der Straßenansicht: Klick auf einen Laden springt hinein
+  if (state.view === 'out' && state.tool === 'select' && !renderer.pickAgent(cx, cy)) {
+    const lot = renderer.pickLot(cx, cy);
+    if (lot != null) return actions.setView(lot);
+  }
   const cell = renderer.pickCell(cx, cy);
   const f = state.view;
   if (state.tool === 'select') {
@@ -312,7 +317,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'p') actions.photoMode(true);
   else if (k === 'delete' || k === 'backspace') { if (state.selected?.kind === 'item') actions.inspectorAction('sell'); }
   else if (k === 'pageup' || k === 'pagedown') {
-    const order = [0, 1, 2, 'out'];
+    const order = ['out', ...LOTS.map((_, i) => i)];
     const i = order.indexOf(state.view);
     actions.setView(order[Math.max(0, Math.min(order.length - 1, i + (k === 'pageup' ? 1 : -1)))]);
   }
@@ -362,7 +367,7 @@ function loop(now) {
     } else if (e.kind === 'toast') {
       ui.toast(e.text, e.tone);
       if (e.text.startsWith('Tagesaufgabe')) sound.chime();
-    } else if (e.kind === 'money' && !e.tip && (state.view === 'out' || state.view === e.floor)) sound.ding();
+    } else if (e.kind === 'money' && !e.tip && (state.view === 'out' || state.view === e.lot)) sound.ding();
   }
   if (lastWeather !== game.weather.type && state.started) { lastWeather = game.weather.type; sound.rain(lastWeather === 'regen'); }
   updateGhost();
@@ -388,23 +393,30 @@ function start() {
   state.paused = false;
   if (!hasSave) {
     actions.setTool('build');
-    ui.toast('Willkommen! Stell zuerst eine Theke mit Kasse auf.', 'good');
+    const st = SHOP_TYPES[game.shopOnLot(0).type];
+    ui.toast(`Willkommen! Stell zuerst ${st.mode === 'counter' ? 'eine Theke' : 'eine Kasse'} auf.`, 'good');
   } else if (game.quest && !game.quest.done) ui.toast(`Heute: ${game.quest.text}`);
   sound.rain(game.weather.type === 'regen');
   ui.update(true);
 }
 
 const titleActions = document.getElementById('titleActions');
+const choice = () => `<div class="startpick">${Object.entries(SHOP_TYPES).map(([id, t]) => `<button class="shoptype" data-start="${id}" ${t.available ? '' : 'disabled'}><b>${t.icon} ${t.name}</b><small>${t.desc}</small>${t.available ? '' : '<span class="soon">bald verfügbar</span>'}</button>`).join('')}</div>`;
 titleActions.innerHTML = hasSave
   ? `<button class="btn primary" id="continue">Weiterspielen · Tag ${game.day}</button><button class="btn" id="fresh">Neues Spiel</button>`
-  : '<button class="btn primary" id="continue">Café eröffnen</button>';
-document.getElementById('continue').addEventListener('click', start);
-document.getElementById('fresh')?.addEventListener('click', () => {
-  if (!confirm('Bisherigen Spielstand löschen und neu anfangen?')) return;
+  : `<div class="pickhead">Mit welchem Laden fängst du an?</div>${choice()}`;
+document.getElementById('continue')?.addEventListener('click', start);
+titleActions.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-start]');
+  if (!b || b.disabled) return;
   store.del(SAVE_KEY);
-  game.newGame();
+  game.newGame(undefined, b.dataset.start);
   hasSave = false;
   start();
+});
+document.getElementById('fresh')?.addEventListener('click', () => {
+  if (!confirm('Bisherigen Spielstand löschen und neu anfangen?')) return;
+  titleActions.innerHTML = `<div class="pickhead">Mit welchem Laden fängst du an?</div>${choice()}`;
 });
 document.getElementById('loading').textContent = '';
 window.addEventListener('beforeunload', () => { if (state.started) save(); });

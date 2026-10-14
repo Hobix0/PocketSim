@@ -90,8 +90,9 @@ input { font: inherit; }
 
 /* ── Etagenwahl ── */
 .floors { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; padding: 5px; background: var(--paper); border-radius: var(--r); box-shadow: var(--shadow); }
-.floors button { width: 54px; height: 44px; border-radius: 10px; font-weight: 600; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
-.floors button small { font-weight: 400; font-size: 10px; color: var(--ink-3); }
+.floors button { width: 64px; height: 50px; border-radius: 10px; font-weight: 600; font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.floors button span { font-size: 18px; line-height: 1; }
+.floors button small { font-weight: 400; font-size: 9.5px; color: var(--ink-3); max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
 .floors button.on { background: var(--green); color: #fff; }
 .floors button.on small { color: #cfe3da; }
 .floors button.locked { opacity: 0.55; }
@@ -262,6 +263,11 @@ body.photo #ui > *:not(.photobar):not(#toasts) { display: none !important; }
   .menu button .ico { font-size: 18px; }
 }
 
+.pickhead { font-weight: 600; margin-bottom: 8px; width: 100%; }
+.startpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.title-card { max-width: 520px; }
+.title-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
 /* ── Handy ── */
 @media (max-width: 760px) {
   .topbar { gap: 6px; top: calc(8px + var(--safe-top)); left: 8px; right: 8px; }
@@ -284,7 +290,7 @@ body.photo #ui > *:not(.photobar):not(#toasts) { display: none !important; }
   .quest { padding: 8px 12px; }
   .quest .qtext { font-size: 13.5px; margin: 2px 0 5px; }
   .floors { top: calc(112px + var(--safe-top)); right: 8px; transform: none; }
-  .floors button { width: 48px; height: 40px; }
+  .floors button { width: 54px; height: 44px; }
   .inspector { right: 8px; left: 8px; width: auto; bottom: calc(76px + var(--safe-bottom)); }
   #toasts { top: auto; bottom: calc(140px + var(--safe-bottom)); }
   .toast { font-size: 12.5px; padding: 6px 12px; }
