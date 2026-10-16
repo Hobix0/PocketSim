@@ -2,6 +2,7 @@
   "id": "lichtschiene_kreuz",
   "name": "Lichtschiene Kreuz",
   "kategorie": "lichtschienen",
+  "ebene": "decke",
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},

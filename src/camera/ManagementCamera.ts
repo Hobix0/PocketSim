@@ -69,6 +69,13 @@ export class ManagementCamera {
     this.goalDistance = THREE.MathUtils.clamp(this.goalDistance * this.settings.zoomFaktor ** steps, min, max);
   }
 
+  /** Abstand sofort setzen (z. B. aus der Level-Datei). */
+  setDistance(d: number): void {
+    const { min, max } = this.settings.abstand;
+    this.goalDistance = this.distance = THREE.MathUtils.clamp(d, min, max);
+    this.place();
+  }
+
   setAspect(aspect: number): void {
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();

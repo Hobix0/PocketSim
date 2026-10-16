@@ -2,6 +2,7 @@
   "id": "schwerlastregal_quertraeger",
   "name": "Schwerlastregal Querträger",
   "kategorie": "lager",
+  "ebene": "objekt",
   "preis": 120,
   "freischaltLevel": 1,
   "werte": {},

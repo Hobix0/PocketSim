@@ -4,6 +4,7 @@ import { ModelComponent } from '../components/ModelComponent';
 import { AttachedModelComponent } from '../components/AttachedModelComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
+import { CarryableComponent } from '../components/CarryableComponent';
 import type { ProductDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import type { Placement } from './createBuildEntity';
@@ -28,6 +29,7 @@ export function createCartonEntity(def: ProductDef, menge: number, ctx: FactoryC
   entity.add(new ModelComponent(karton));
   if (def.model) entity.add(new AttachedModelComponent(def.model, ctx.models, [0, h, 0], Math.min(...karton.groesse) * 0.8));
   entity.add(new CartonComponent(def, menge));
-  entity.add(new SelectableComponent('karton', def.name, `${ctx.content.kontexte.karton.name} · ${menge} Stück`));
+  entity.add(new CarryableComponent(ctx.actions));
+  entity.add(new SelectableComponent('karton', def.name, ctx.content.kontexte.karton.name));
   return entity;
 }

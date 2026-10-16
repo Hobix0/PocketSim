@@ -2,7 +2,8 @@ import { readData, readFolderEntries } from '../core/Data';
 import { Registry } from './Registry';
 import {
   validateBuild, validateCategory, validateProduct,
-  type BuildDef, type CategoryDef, type ContextInfo, type ProductDef, type StorageSettings, type ValueInfo,
+  type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
+  type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings,
 } from './definitions';
 
 // Alle Spielinhalte an einem Ort. Wird einmal beim Start geladen und geprüft;
@@ -15,6 +16,11 @@ export class Content {
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
   readonly lager: StorageSettings;
+  readonly baumenue: BuildSettings;
+  readonly rollen: Record<string, RoleDef>;
+  readonly personal: StaffSettings;
+  readonly namen: string[];
+  readonly arbeit: WorkSettings;
   /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
@@ -30,6 +36,11 @@ export class Content {
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
     this.lager = readData<StorageSettings>('lager/standard');
+    this.baumenue = readData<BuildSettings>('baumenue/standard');
+    this.rollen = readData<Record<string, RoleDef>>('personal/rollen');
+    this.personal = readData<StaffSettings>('personal/standard');
+    this.namen = readData<string[]>('personal/namen');
+    this.arbeit = readData<WorkSettings>('arbeit/standard');
     this.texte = readData<Record<string, string>>('texte/standard');
     this.crossCheck();
   }

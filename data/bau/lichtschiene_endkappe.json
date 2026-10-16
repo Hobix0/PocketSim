@@ -2,6 +2,7 @@
   "id": "lichtschiene_endkappe",
   "name": "Lichtschiene Endkappe",
   "kategorie": "lichtschienen",
+  "ebene": "decke",
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},

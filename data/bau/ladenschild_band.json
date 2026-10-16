@@ -2,6 +2,7 @@
   "id": "ladenschild_band",
   "name": "Ladenschild Band",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

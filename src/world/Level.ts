@@ -56,6 +56,8 @@ export interface LevelData {
   raster: number;
   boden: { groesse: [number, number]; farbe: string };
   kameraStart: [number, number, number];
+  /** Optionaler Kameraabstand zu Beginn (sonst aus data/kamera) */
+  kameraAbstand?: number;
   bloecke: BlockData[];                 // feste Kulisse (Wände, Straße …)
   objekte: LevelObject[];               // Entities aus dem Bau-Katalog
 }

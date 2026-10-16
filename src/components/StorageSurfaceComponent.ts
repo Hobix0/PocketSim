@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { Component } from '../ecs/Component';
 import type { Describable, InfoRow } from '../ui/describe';
 
-// Ablagefläche für Kartons, z. B. eine Europalette.
-// Aus Grundfläche, Höhe und Kartonmaß ergeben sich Plätze in einem Raster,
-// die Ebene für Ebene von unten nach oben belegt werden.
+// Ablagefläche für Kartons, z. B. eine Europalette oder ein Schwerlastregal.
+// Aus Grundfläche und Kartonmaß ergibt sich ein Raster je Ebene. Die Ebenen sind
+// entweder gestapelt auf der Oberseite (Palette) oder die Regalböden (Schwerlastregal).
+// Belegt wird von unten nach oben.
 
 export class StorageSurfaceComponent extends Component implements Describable {
   /** Platz-Mittelpunkte (Unterkante des Kartons) in lokalen Koordinaten der Entity. */
@@ -12,19 +13,25 @@ export class StorageSurfaceComponent extends Component implements Describable {
   /** Platz-Nummer → id der Karton-Entity */
   private readonly occupied = new Map<number, number>();
 
-  constructor(footprint: [number, number, number], ebenen: number, karton: [number, number, number]) {
+  constructor(footprint: [number, number, number], ablage: { ebenen?: number; boeden?: number[] }, karton: [number, number, number]) {
     super();
     const [w, h, d] = footprint;
     const [kw, kh, kd] = karton;
     const nx = Math.max(1, Math.floor(w / kw));
     const nz = Math.max(1, Math.floor(d / kd));
-    for (let level = 0; level < ebenen; level++) {
+    const heights = ablage.boeden ?? Array.from({ length: ablage.ebenen ?? 1 }, (_, i) => h + i * kh);
+    for (const y of heights) {
       for (let iz = 0; iz < nz; iz++) {
         for (let ix = 0; ix < nx; ix++) {
-          this.slots.push(new THREE.Vector3((ix - (nx - 1) / 2) * kw, h + level * kh, (iz - (nz - 1) / 2) * kd));
+          this.slots.push(new THREE.Vector3((ix - (nx - 1) / 2) * kw, y, (iz - (nz - 1) / 2) * kd));
         }
       }
     }
+  }
+
+  /** Belegte Plätze */
+  get used(): number {
+    return this.occupied.size;
   }
 
   get capacity(): number {

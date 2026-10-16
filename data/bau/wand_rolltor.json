@@ -2,6 +2,7 @@
   "id": "wand_rolltor",
   "name": "Wand Rolltor",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

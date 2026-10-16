@@ -2,6 +2,7 @@
   "id": "wand_rot",
   "name": "Wand Rot",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

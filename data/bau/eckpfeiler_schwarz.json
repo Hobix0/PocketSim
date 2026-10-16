@@ -2,6 +2,7 @@
   "id": "eckpfeiler_schwarz",
   "name": "Eckpfeiler Schwarz",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

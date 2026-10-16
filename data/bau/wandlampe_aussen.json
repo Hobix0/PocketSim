@@ -2,6 +2,7 @@
   "id": "wandlampe_aussen",
   "name": "Wandlampe Außen",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
   "preis": 70,
   "freischaltLevel": 1,
   "werte": {"strom": 0.03},

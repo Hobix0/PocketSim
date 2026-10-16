@@ -7,6 +7,7 @@
   "gebinde": 8,
   "preisOffen": true,
   "frisch": false,
+  "kuehlung": false,
   "freischaltLevel": 1,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Allzweckreiniger.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Allzweckreiniger.png",

@@ -2,6 +2,7 @@
   "id": "schwerlastregal_ohne_boeden",
   "name": "Schwerlastregal ohne Böden",
   "kategorie": "lager",
+  "ebene": "objekt",
   "preis": 120,
   "freischaltLevel": 1,
   "werte": {},

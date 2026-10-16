@@ -2,6 +2,7 @@
   "id": "attika_dachkante",
   "name": "Attika Dachkante",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

@@ -2,6 +2,7 @@
   "id": "wand_innen_durchgang",
   "name": "Wand Innen Durchgang",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

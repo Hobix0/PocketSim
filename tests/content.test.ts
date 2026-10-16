@@ -75,7 +75,7 @@ describe('Registry', () => {
     const { vk: _vk, ...ohneVk } = milch;
     expect(() => new Registry('produkte', [{ file: 'milch_1l', data: ohneVk }], validateProduct))
       .toThrow('produkte/milch_1l.json: "vk" muss eine Zahl sein');
-    expect(() => validateBuild({ id: 'x', name: 'X', kategorie: 'k', preis: 1, freischaltLevel: 1, platzhalter: { groesse: [1, 2], farbe: '#fff' } }, 'bau/x.json'))
+    expect(() => validateBuild({ id: 'x', name: 'X', kategorie: 'k', ebene: 'objekt', preis: 1, freischaltLevel: 1, platzhalter: { groesse: [1, 2], farbe: '#fff' } }, 'bau/x.json'))
       .toThrow(/groesse.*drei Zahlen/);
   });
 });

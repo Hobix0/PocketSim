@@ -12,6 +12,11 @@ export abstract class Component {
   /** Die Entity, an der diese Komponente hängt. Wird von Entity.add gesetzt. */
   entity!: Entity;
 
+  /** Der Welt melden, dass sich der Zustand geändert hat (Anzeigen aktualisieren sich dann). */
+  protected notifyChanged(): void {
+    this.entity?.world?.events.emit('changed', this.entity);
+  }
+
   onAttach(): void {}
   update(_dt: number): void {}
   onDetach(): void {}

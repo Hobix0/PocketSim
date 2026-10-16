@@ -2,6 +2,7 @@
   "id": "pflanzkuebel_boden",
   "name": "Pflanzkübel Boden",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

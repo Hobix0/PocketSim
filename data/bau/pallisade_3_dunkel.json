@@ -2,6 +2,7 @@
   "id": "pallisade_3_dunkel",
   "name": "Pallisade 3 Dunkel",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

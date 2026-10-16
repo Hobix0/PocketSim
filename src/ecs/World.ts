@@ -10,6 +10,8 @@ import type { Entity } from './Entity';
 export interface WorldEvents extends Record<string, unknown> {
   added: Entity;
   removed: Entity;
+  /** Eine Entity hat ihren Zustand geändert (z. B. Regal befüllt). Komponenten melden das über notifyChanged(). */
+  changed: Entity;
 }
 
 export class World {

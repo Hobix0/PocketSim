@@ -19,6 +19,10 @@ export interface InteractorEvents extends Record<string, unknown> {
 export class Interactor {
   readonly events = new Emitter<InteractorEvents>();
   hovered: Entity | null = null;
+  /** Aus, solange z. B. ein Bauwerkzeug aktiv ist: dann wird nichts markiert oder angeklickt. */
+  enabled = true;
+  /** Zusätzlich hervorgehobene Entity (z. B. der Karton in der Hand). */
+  marked: () => Entity | null = () => null;
 
   private readonly raycaster = new THREE.Raycaster();
 
@@ -42,6 +46,10 @@ export class Interactor {
 
   /** Einmal pro Frame aufrufen. */
   update(camera: THREE.Camera): void {
+    if (!this.enabled) {
+      this.setHovered(null);
+      return;
+    }
     this.setHovered(this.pick(camera));
 
     if (this.hovered) {
@@ -107,8 +115,17 @@ export class Interactor {
     this.events.emit('hoverChanged', entity);
   }
 
+  /** Angebote und Hervorhebung neu bestimmen, z. B. wenn sich die Hand geändert hat. */
+  refresh(previouslyMarked?: Entity | null): void {
+    if (previouslyMarked) this.refreshHighlight(previouslyMarked);
+    const m = this.marked();
+    if (m) this.refreshHighlight(m);
+    this.events.emit('hoverChanged', this.hovered);
+  }
+
   private refreshHighlight(entity: Entity): void {
-    const level = this.selection.current === entity ? 'selected' : this.hovered === entity ? 'hover' : 'none';
+    const selected = this.selection.current === entity || this.marked() === entity;
+    const level = selected ? 'selected' : this.hovered === entity ? 'hover' : 'none';
     setHighlight(entity, level, this.highlightColor);
   }
 }

@@ -2,6 +2,7 @@
   "id": "schienenleuchte_pendel_kugel",
   "name": "Schienenleuchte Pendel Kugel",
   "kategorie": "einrichtung",
+  "ebene": "decke",
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},

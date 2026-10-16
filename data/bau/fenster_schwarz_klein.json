@@ -2,6 +2,7 @@
   "id": "fenster_schwarz_klein",
   "name": "Fenster Schwarz klein",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

@@ -2,6 +2,7 @@
   "id": "pallisade_2",
   "name": "Pallisade 2",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

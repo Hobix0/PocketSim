@@ -2,6 +2,7 @@
   "id": "fenster_schwarz_2",
   "name": "Fenster schwarz 2",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

@@ -2,6 +2,7 @@
   "id": "fenster_klein_dunkel",
   "name": "Fenster klein dunkel",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

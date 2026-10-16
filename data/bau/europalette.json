@@ -2,6 +2,7 @@
   "id": "europalette",
   "name": "Europalette",
   "kategorie": "lager",
+  "ebene": "objekt",
   "preis": 15,
   "freischaltLevel": 1,
   "werte": {"lagerplaetze": 12},

@@ -2,6 +2,7 @@
   "id": "pendelleuchte",
   "name": "Pendelleuchte",
   "kategorie": "einrichtung",
+  "ebene": "decke",
   "preis": 90,
   "freischaltLevel": 1,
   "werte": {"strom": 0.05},

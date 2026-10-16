@@ -1,0 +1,10 @@
+{
+  "raster": 0.25,
+  "deckenhoehe": 4,
+  "rueckerstattung": 0.5,
+  "kategorien": [
+    { "id": "einrichtung", "name": "Einrichtung" },
+    { "id": "store_props", "name": "Ladenausstattung" },
+    { "id": "lager", "name": "Lager" }
+  ]
+}

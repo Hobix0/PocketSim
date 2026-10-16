@@ -2,6 +2,7 @@
   "id": "markise_rot_weiss",
   "name": "Markise Rot-Weiß",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

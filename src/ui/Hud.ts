@@ -21,6 +21,10 @@ export class Hud {
   private readonly timeEl: HTMLElement;
   private readonly speedEl: HTMLElement;
   private readonly helpEl: HTMLElement;
+  private readonly toolsEl: HTMLElement;
+  private readonly handEl: HTMLElement;
+  private readonly toolHandlers = new Map<string, () => void>();
+  private readonly texts: (key: string) => string;
   private deltaTimer = 0;
 
   constructor(
@@ -40,7 +44,12 @@ export class Hud {
           <span class="meter"><span class="fill"></span></span><small class="xp"></small></span>
         <span class="stat time"><span class="label">Zeit</span><b></b></span>
         <span class="speed"></span>
+        <span class="tools">
+          <button type="button" data-tool="bauen"></button>
+          <button type="button" data-tool="personal"></button>
+        </span>
       </div>
+      <div class="hand panel" hidden></div>
       <div class="hud-help panel"></div>`;
     document.body.append(this.root);
     const q = (sel: string) => this.root.querySelector(sel) as HTMLElement;
@@ -53,7 +62,15 @@ export class Hud {
     this.timeEl = q('.time b');
     this.speedEl = q('.speed');
     this.helpEl = q('.hud-help');
+    this.toolsEl = q('.tools');
+    this.handEl = q('.hand');
     this.toasts = new Toasts(this.root);
+    this.toolsEl.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.tool) return;
+      b.blur();
+      this.toolHandlers.get(b.dataset.tool)?.();
+    });
 
     // Tempo-Knöpfe: Klick wirkt wie die Taste
     this.speedEl.addEventListener('click', (e) => {
@@ -70,9 +87,11 @@ export class Hud {
     clock.events.on('minute', () => this.renderTime());
     clock.events.on('newDay', ({ tag }) => this.toasts.show(content.text('neuer_tag', { tag })));
     clock.events.on('speedChanged', () => this.renderSpeed());
-    input.onChange(() => { this.renderSpeed(); this.renderHelp(); });
+    input.onChange(() => { this.renderSpeed(); this.renderHelp(); this.renderTools(); });
+    this.texts = (k: string) => content.text(k);
 
     this.renderPlayer();
+    this.renderTools();
     this.renderTime();
     this.renderSpeed();
     this.renderHelp();
@@ -106,6 +125,28 @@ export class Hud {
     const parts = [btn(0, '❚❚', 'zeit_anhalten', c.paused)];
     for (let s = 1; s <= c.stufen; s++) parts.push(btn(s, '▶'.repeat(s), `zeit_stufe_${s}`, !c.paused && c.stufe === s));
     this.speedEl.innerHTML = parts.join('');
+  }
+
+  /** Was ein Knopf der Werkzeugleiste tut ("bauen", "personal"). */
+  onTool(tool: string, handler: () => void): void {
+    this.toolHandlers.set(tool, handler);
+  }
+
+  /** Knopf als aktiv zeigen (z. B. Baumenü offen). */
+  setToolActive(tool: string, active: boolean): void {
+    this.toolsEl.querySelector(`[data-tool="${tool}"]`)?.classList.toggle('active', active);
+  }
+
+  /** Was der Spieler in der Hand hält; null blendet die Anzeige aus. */
+  showHand(text: string | null, hint = ''): void {
+    this.handEl.hidden = text === null;
+    if (text !== null) this.handEl.innerHTML = `<b>${esc(text)}</b>${hint ? `<small>${hint}</small>` : ''}`;
+  }
+
+  private renderTools(): void {
+    const key = (a: string) => `<span class="key">${esc(this.input.keyLabel(a))}</span>`;
+    this.toolsEl.querySelector('[data-tool="bauen"]')!.innerHTML = `${esc(this.texts('bauen'))} ${key('bauen_menue')}`;
+    this.toolsEl.querySelector('[data-tool="personal"]')!.innerHTML = `${esc(this.texts('personal'))} ${key('personal_menue')}`;
   }
 
   private renderHelp(): void {

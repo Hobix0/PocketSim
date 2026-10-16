@@ -7,6 +7,7 @@
   "gebinde": 8,
   "preisOffen": true,
   "frisch": true,
+  "kuehlung": true,
   "freischaltLevel": 1,
   "model": "3d/Produkte/05_Tiefkuehl/SM_Eiswuerfel_Beutel.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Eiswuerfel_Beutel.png",

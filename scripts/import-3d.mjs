@@ -108,7 +108,7 @@ for (const row of readCsv(path.join(DATA, '3d/Baubar/_export_liste.csv'))) {
     model: `3d/Baubar/${posix(row.Datei)}`,
     icon: fs.existsSync(path.join(DATA, icon)) ? icon : undefined,
     platzhalter: { groesse: sizeOf(row), farbe: '#b9c0c6' },
-  }, ['id', 'name', 'kategorie', 'kontext', 'funktionen', 'preis', 'freischaltLevel', 'werte', 'ablage', 'model', 'icon', 'platzhalter']);
+  }, ['id', 'name', 'kategorie', 'ebene', 'kontext', 'funktionen', 'preis', 'freischaltLevel', 'werte', 'regal', 'ablage', 'model', 'icon', 'platzhalter']);
   save('bau', id, fresh, ['model', 'icon', 'platzhalter']);
 }
 
@@ -132,7 +132,7 @@ for (const row of readCsv(path.join(DATA, '3d/Produkte/_export_liste.csv'))) {
     model: `3d/Produkte/${posix(row.Datei)}`,
     icon: fs.existsSync(path.join(DATA, icon)) ? icon : undefined,
     groesse: sizeOf(row),
-  }, ['id', 'name', 'kategorie', 'ek', 'vk', 'gebinde', 'preisOffen', 'frisch', 'freischaltLevel', 'model', 'icon', 'groesse']);
+  }, ['id', 'name', 'kategorie', 'ek', 'vk', 'gebinde', 'preisOffen', 'frisch', 'kuehlung', 'freischaltLevel', 'model', 'icon', 'groesse']);
   save('produkte', id, fresh, ['model', 'icon', 'groesse']);
 }
 

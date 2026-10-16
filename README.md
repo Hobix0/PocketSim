@@ -58,6 +58,16 @@ Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`
 - Kartons sind Entities: anklicken zeigt Produkt, Stückzahl, Einkaufs- und Verkaufswert; oben drauf steht eine Packung des Produkts
 - Pro Taste gilt nur das wichtigste Angebot (`prioritaet`): Klick aufs Terminal öffnet den Einkauf statt es auszuwählen
 
+**Kleiner Start-Laden, Baumenü, Einräumen und Personal** ✅
+
+- Das Spiel startet jetzt im **leeren Laden 8 × 6 m** (`data/level/start.json`): Fliesen, Wände, Schaufensterfront, Einkaufsterminal und zwei Europaletten – sonst nichts. Testgelände und Musterschau gibt es weiter über `#testgelaende` und `#musterschau`
+- **Baumenü** (`B` oder Knopf „Bauen“): Kategorien aus `data/baumenue/standard.json` als Tabs, Katalog mit Icon und Preis. Vorschau folgt der Maus (grün = frei, rot = geht nicht), `R` dreht, Linksklick baut, `Esc` bricht ab
+- Bauregeln (`src/building/placement.ts`): Objekte brauchen Boden, dürfen sich nicht mit Objekten oder Wänden überschneiden, kosten Geld und müssen freigeschaltet sein. **Abreißen** gibt die Hälfte zurück, **Verschieben** ist kostenlos; beides nur, wenn keine Kartons bzw. keine Ware darauf liegen
+- **Einräumen von Hand:** Karton anklicken → er ist „in der Hand“ (Anzeige unten) → Regal anklicken → Ware wandert in die Fächer und ist im Regal zu sehen. Gekühlte Ware passt nur ins Kühlregal. Handarbeit bringt XP (`data/arbeit/standard.json`)
+- **Personal** (`P` oder Knopf „Personal“): jeden Tag neue Bewerbungen, einstellen, entlassen. Auffüller holen selbstständig Kartons von den Paletten und räumen sie ein. Der Lohn wird zu Beginn jedes Tages fällig – reicht das Geld nicht, kündigt die Person. Werte in `data/personal/`
+
+Noch vereinfacht: Das Personal läuft in gerader Linie (Wegfindung kommt mit der Kunden-KI).
+
 
 
 ## Starten
@@ -93,6 +103,11 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Tempo 1 / 2 / 3 | `1` `2` `3` |
 | Objekt auswählen | Linksklick |
 | Auswahl aufheben | Klick ins Leere oder `Esc` |
+| Baumenü auf/zu | `B` |
+| Personal auf/zu | `P` |
+| Bauvorschau drehen | `R` |
+| Karton aufnehmen / ins Regal | Linksklick auf Karton, dann auf Regal |
+| Abbrechen, Fenster schließen, Karton abstellen | `Esc` (schließt immer nur das Oberste) |
 | Debug-Anzeige an/aus | `F3` |
 
 Die Belegung steht in `data/eingabe/standard.json`.
@@ -177,7 +192,7 @@ tests/                  automatische Tests
 ```mermaid
 flowchart LR
   J["data/bau/regal_standard.json"] -->|readFolderEntries| R["Registry 'bau'<br>geprüft"]
-  L["data/level/testgelaende.json<br>objekte: typ + position"] --> G[Game]
+  L["data/level/start.json<br>objekte: typ + position"] --> G[Game]
   R --> G
   G -->|createBuildEntity| E["Entity 'regal_standard'"]
   E --- M[ModelComponent<br>Platzhalter-Quader]
@@ -262,6 +277,24 @@ flowchart LR
 
 Ein Bauelement wird zur Lagerfläche mit `"ablage": { "ebenen": 2 }`; die Plätze ergeben sich aus Grundfläche und Kartonmaß (`data/lager/standard.json`).
 
+### Bauen, Einräumen, Personal
+
+```mermaid
+flowchart LR
+  M[BuildMenu] --> B[BuildController]
+  B -->|checkPlacement| P[placement.ts]
+  P --> F[FootprintComponent<br>ebene + Grundfläche]
+  B -->|spend / earn| S[PlayerState]
+  K[Karton<br>CarryableComponent] -->|Klick| H[Hand]
+  R[ShelfComponent] -->|Klick: Einräumen| ST[Stocking.stockFromCarton]
+  H --> ST
+  PW[PersonalWindow] --> SF[Staff]
+  SF -->|hired| W[WorkerComponent]
+  W -->|findStockingTask| ST
+```
+
+Jedes Bauelement hat eine **Ebene** (`boden`, `wand`, `anbau`, `objekt`, `decke`); sie bestimmt, was sich gegenseitig im Weg ist. Ein Regal bekommt `"regal": { "ebenen": [Bodenhöhen], "kapazitaet": 24, "kuehlung": false }`. Spieler und Personal benutzen dieselbe Einräum-Funktion.
+
 ### Datenformate
 
 Produkt (`data/produkte/<id>.json`, Dateiname = id):
@@ -276,7 +309,7 @@ Produkt (`data/produkte/<id>.json`, Dateiname = id):
 Bauelement (`data/bau/<id>.json`):
 
 ```json
-{ "id": "kuehlregal_offen", "name": "Kühlregal Offen", "kategorie": "einrichtung", "kontext": "regal",
+{ "id": "kuehlregal_offen", "name": "Kühlregal Offen", "kategorie": "einrichtung", "ebene": "objekt", "kontext": "regal",
   "preis": 900, "freischaltLevel": 2, "werte": { "slots": 4, "strom": 0.9 },
   "model": "3d/Baubar/Einrichtung/SM_Build_Kuehlregal_Offen.fbx", "icon": "3d/Icons_Baubar/T_Build_Kuehlregal_Offen.png",
   "platzhalter": { "groesse": [0.6, 2, 2], "farbe": "#b9c0c6" } }
@@ -297,8 +330,8 @@ Regeln, die überall gelten:
 3. ~~Interaktion: Objekte unter der Maus erkennen, hervorheben, anklicken; Kontext-Hinweise~~
 4. ~~Stats und HUD (Geld, Level, Zeit) mit Events~~
 5. ~~Einkaufsterminal und Produkte~~
-6. Regal-Slots inklusive Anlegen per Klick (Anker → A → B) und Einräumen
-7. Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben
+6. ~~Regale und Einräumen~~ (Slots per Anker-Klick folgen später)
+7. ~~Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben~~ – plus Personal
 8. Speichern/Laden mit 3 Slots, Haupt- und Pausemenü
 9. Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange
 10. Danach: Versorgung, erweitertes Bausystem, Fabrik, Lager, Rohstoffe

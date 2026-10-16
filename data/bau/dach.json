@@ -2,6 +2,7 @@
   "id": "dach",
   "name": "Dach",
   "kategorie": "gebaeude_basis",
+  "ebene": "decke",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

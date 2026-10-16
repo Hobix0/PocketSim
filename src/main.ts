@@ -3,9 +3,9 @@ import { Game } from './core/Game';
 import { hasData } from './core/Data';
 
 // Einstiegspunkt: Spiel erzeugen und starten.
-// Das Level kommt aus der Adresse, z. B. …/#musterschau; ohne Angabe das Testgelände.
+// Das Level kommt aus der Adresse, z. B. …/#musterschau oder …/#testgelaende; ohne Angabe der kleine Start-Laden.
 const wanted = location.hash.replace(/^#/, '');
-const levelId = wanted && hasData(`level/${wanted}`) ? wanted : 'testgelaende';
+const levelId = wanted && hasData(`level/${wanted}`) ? wanted : 'start';
 const game = new Game(document.getElementById('app')!, levelId);
 game.start();
 

@@ -7,6 +7,7 @@
   "gebinde": 20,
   "preisOffen": true,
   "frisch": false,
+  "kuehlung": false,
   "freischaltLevel": 1,
   "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Kekse_Rolle.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Kekse_Rolle.png",

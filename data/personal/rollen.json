@@ -1,0 +1,8 @@
+{
+  "auffueller": {
+    "name": "Auffüller",
+    "beschreibung": "Holt Kartons aus dem Lager und räumt sie in passende Regale.",
+    "lohnProTag": 80,
+    "farbe": "#3f7cac"
+  }
+}

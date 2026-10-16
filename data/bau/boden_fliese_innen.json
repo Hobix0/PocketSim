@@ -2,6 +2,7 @@
   "id": "boden_fliese_innen",
   "name": "Boden Fliese Innen",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

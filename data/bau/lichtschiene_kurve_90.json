@@ -2,6 +2,7 @@
   "id": "lichtschiene_kurve_90",
   "name": "Lichtschiene Kurve 90",
   "kategorie": "lichtschienen",
+  "ebene": "decke",
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},

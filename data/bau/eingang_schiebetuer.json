@@ -2,6 +2,7 @@
   "id": "eingang_schiebetuer",
   "name": "Eingang Schiebetür",
   "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},

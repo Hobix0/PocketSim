@@ -2,6 +2,7 @@
   "id": "store_cart_01",
   "name": "Einkaufswagen",
   "kategorie": "store_props",
+  "ebene": "objekt",
   "preis": 400,
   "freischaltLevel": 1,
   "werte": {},

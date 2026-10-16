@@ -83,7 +83,8 @@ describe('Info aus Komponenten', () => {
     // toLocaleString setzt ein geschütztes Leerzeichen (\u00a0) vor das €
     expect(sel.untertitel).toBe('Regal · 180\u00a0€');
     const rows = regal.all().filter(isDescribable).flatMap((c) => c.describe());
-    expect(rows).toEqual([{ label: 'Regalplätze', value: '4' }]);
+    expect(rows[0]).toEqual({ label: 'Regalplätze', value: '4' });
+    expect(rows.slice(1).map((r) => r.value)).toEqual(['leer', 'leer', 'leer', 'leer']);
   });
 });
 
@@ -94,7 +95,7 @@ describe('Priorität', () => {
     for (const e of [...world.all()]) world.remove(e);
     let opened = 0;
     const { createBuildEntity: create } = await import('../src/factory/createBuildEntity');
-    const t = world.add(create(content.bau.get('einkaufsterminal'), { position: [0, 0, 0], drehung: 0 }, { content, actions: { openPurchase: () => opened++ } }));
+    const t = world.add(create(content.bau.get('einkaufsterminal'), { position: [0, 0, 0], drehung: 0 }, { content, actions: { openPurchase: () => opened++, carriedCarton: () => null, pickUpCarton: () => {}, dropCarton: () => {}, stockInto: () => {} } }));
     t.object.updateMatrixWorld(true);
     interactor.update(camera);
     expect(interactor.options().map((o) => o.text)).toEqual(['einkaufen']);

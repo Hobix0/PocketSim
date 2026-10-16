@@ -7,6 +7,7 @@
   "gebinde": 8,
   "preisOffen": true,
   "frisch": true,
+  "kuehlung": true,
   "freischaltLevel": 1,
   "model": "3d/Produkte/05_Tiefkuehl/SM_Eis_am_Stiel_6er.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Eis_am_Stiel_6er.png",

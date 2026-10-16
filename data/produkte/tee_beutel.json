@@ -7,6 +7,7 @@
   "gebinde": 12,
   "preisOffen": true,
   "frisch": false,
+  "kuehlung": false,
   "freischaltLevel": 1,
   "model": "3d/Produkte/07_Grundnahrung/SM_Tee_Beutel.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Tee_Beutel.png",

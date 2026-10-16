@@ -2,6 +2,7 @@
   "id": "kasse_schwarz",
   "name": "Kasse Schwarz",
   "kategorie": "einrichtung",
+  "ebene": "objekt",
   "kontext": "kasse",
   "preis": 1200,
   "freischaltLevel": 1,

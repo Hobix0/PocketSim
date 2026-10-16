@@ -2,6 +2,7 @@
   "id": "ziegelwand",
   "name": "Ziegelwand",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

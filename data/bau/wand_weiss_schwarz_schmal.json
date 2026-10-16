@@ -2,6 +2,7 @@
   "id": "wand_weiss_schwarz_schmal",
   "name": "Wand Weiß/Schwarz schmal",
   "kategorie": "gebaeude_basis",
+  "ebene": "wand",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

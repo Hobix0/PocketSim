@@ -2,6 +2,7 @@
   "id": "pflanzentop_schwarz",
   "name": "Pflanzentopf Schwarz",
   "kategorie": "gebaeude_basis",
+  "ebene": "objekt",
   "preis": 80,
   "freischaltLevel": 1,
   "werte": {},

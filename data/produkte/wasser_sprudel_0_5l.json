@@ -7,6 +7,7 @@
   "gebinde": 12,
   "preisOffen": true,
   "frisch": false,
+  "kuehlung": false,
   "freischaltLevel": 1,
   "model": "3d/Produkte/06_Getraenke/SM_Wasser_Sprudel_0_5L.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Wasser_Sprudel_0_5L.png",

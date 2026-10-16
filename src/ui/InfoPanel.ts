@@ -1,6 +1,7 @@
 import type { Content } from '../content/Content';
 import type { InputMap } from '../input/InputMap';
 import type { Selection } from '../interaction/Selection';
+import type { World } from '../ecs/World';
 import { SelectableComponent } from '../components/SelectableComponent';
 import { isDescribable } from './describe';
 import { esc } from './html';
@@ -16,12 +17,15 @@ export class InfoPanel {
     private readonly selection: Selection,
     private readonly input: InputMap,
     private readonly content: Content,
+    world?: World,
   ) {
     this.el = document.createElement('div');
     this.el.className = 'info panel';
     this.el.hidden = true;
     document.querySelector('.hud')!.append(this.el);
     selection.events.on('changed', () => this.render());
+    // Zustand der Auswahl hat sich geändert (z. B. Regal befüllt) → neu zeichnen
+    world?.events.on('changed', (e) => { if (e === selection.current) this.render(); });
     input.onChange(() => this.render());
   }
 

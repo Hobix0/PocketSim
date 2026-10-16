@@ -2,6 +2,7 @@
   "id": "store_checkout_01",
   "name": "Kassentresen",
   "kategorie": "store_props",
+  "ebene": "objekt",
   "kontext": "kasse",
   "preis": 1500,
   "freischaltLevel": 1,
