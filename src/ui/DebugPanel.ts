@@ -70,7 +70,7 @@ export class DebugPanel {
     // Wie viele Entities je Typ stehen in der Welt?
     const counts = new Map<string, number>();
     for (const e of this.world.all()) counts.set(e.typeId, (counts.get(e.typeId) ?? 0) + 1);
-    const placed = [...counts].map(([id, n]) => row(c.bau.find(id)?.name ?? id, `${n}×`)).join('');
+    const placed = [...counts].map(([id, n]) => row(c.bau.find(id)?.name ?? c.produkte.find(id)?.name ?? id, `${n}×`)).join('');
 
     // Summe der Bauteil-Werte (Prinzip: Werte summieren sich von unten nach oben)
     const sums = Object.entries(sumValues(this.world))

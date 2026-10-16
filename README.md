@@ -42,14 +42,12 @@ Das Spiel wird von **schräg oben** in einer **Management-Ansicht** gespielt, ni
 
 - 61 Bauelemente und 150 Produkte aus `data/3d/` (FBX aus Blender, Icons, Export-Listen)
 - `npm run import:3d` erzeugt daraus `data/bau/*.json` und `data/produkte/*.json`
-- `ModelLibrary` lädt die FBX-Dateien, teilt Geometrie zwischen Exemplaren und gibt allen Modellen **ein** gemeinsames Material mit der Palettentextur
+- `ModelLibrary` lädt die FBX-Dateien, teilt Geometrie zwischen Exemplaren und gibt allen Modellen **ein** gemeinsames Material mit der Palettentextur `2026 Palette.png`
+- Produkte bekommen zusätzlich ihr Etikett aus `Produkt_Etiketten.png` (zweiter UV-Satz `UV_Icons`, über die Palettenfarbe gelegt)
 - Das Testgelände ist aus den Modulen gebaut: Laden 14 × 10 m mit Schaufensterfront, Schiebetür, Ladenschild, Markisen, Kassen, Regalen, Kühlmöbeln, Obststand, Einkaufswagen, Gehweg und Lagerhof hinter dem Rolltor
-- **Musterschau:** alle Bauteile nebeneinander – Adresse mit `#musterschau` öffnen
+- **Musterschau:** alle Bauteile und alle 150 Produkte – Adresse mit `#musterschau` öffnen
 
-Noch offen:
-
-- **`2026 Palette.png` fehlt.** Die Modelle holen ihre Farbe über die UVs aus dieser Textur. Solange sie fehlt, erscheinen sie grau. Datei irgendwo unter `data/3d/` ablegen – sie wird automatisch benutzt.
-- **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`), bis die echte Preisliste da ist.
+Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`), bis die echte Preisliste da ist.
 
 
 
@@ -101,7 +99,8 @@ data/3d/
   Produkte/_export_liste.csv
   Icons_Baubar/T_Build_*.png             Vorschaubilder fürs UI
   Icons_Produkte/T_Icon_*.png
-  2026 Palette.png                       Farbpalette (alle Modelle)
+  2026 Palette.png                       Farbpalette (alle Modelle, UV-Satz "UV_Palette")
+  Produkt_Etiketten.png                  Etiketten-Atlas (Produkte, UV-Satz "UV_Icons")
 ```
 
 Nach neuen oder geänderten Exporten:
@@ -123,6 +122,7 @@ Konventionen der Modelle (aus dem Export gemessen):
 | Drehung einer Wand | Außenseite +X: 0°, −X: 180°, +Z: −90°, −Z: 90° |
 | Leuchten, Lichtschienen | hängen vom Ursprung nach unten → auf Deckenhöhe (4 m) setzen |
 | Bodenhöhe | Fliesen 5 cm, Gehweg 14 cm – Objekte darauf entsprechend höher setzen |
+| Materialien | `M_Glass` wird Glas, alles andere die Palette; Produkte (`M_Produkte`) zusätzlich mit Etikett |
 
 ## Aufbau
 
@@ -138,7 +138,7 @@ data/                   Werte und Inhalte (JSON), werden automatisch eingelesen
   zeit/                 Startzeit, Minuten pro Sekunde, Tempostufen, Wochentage
   eingabe/              Tastenbelegung (Aktion → Tasten)
   kamera/               Kamerawerte
-  level/                Level-Dateien: feste Kulisse und platzierte Objekte (mit "wiederholen" für Reihen)
+  level/                Level-Dateien: Kulisse und platzierte Objekte ("typ" = Bauelement, "produkt" = Produkt, "wiederholen" für Reihen)
   3d/                   Blender-Exporte (FBX, Icons, Export-Listen)
 src/
   main.ts               Einstieg: Spiel erzeugen und starten
@@ -150,8 +150,8 @@ src/
   ecs/                  Entity, Component, World
   components/           wiederverwendbare Komponenten (Modell, Werte …)
   content/              Datenformate, Prüfung, Registry, Content
-  factory/              baut Entities aus Datendefinitionen
-  assets/               ModelLibrary: lädt FBX-Modelle, Palette, Glas
+  factory/              baut Entities aus Datendefinitionen (Bauelemente, Produkte)
+  assets/               ModelLibrary (lädt FBX, Palette, Glas), LabelMaterial (Etiketten)
   input/                InputMap (Aktionen statt fester Tasten), Pointer (Mauszeiger)
   camera/               Management-Kamera
   world/                Level-Kulisse, Feld unter der Maus

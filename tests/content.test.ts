@@ -14,11 +14,14 @@ describe('Spieldaten in data/', () => {
     for (const p of c.produkte.all()) expect(p.vk).toBeGreaterThan(p.ek);
   });
 
-  it('jedes Objekt in jedem Level verweist auf ein Bauelement', () => {
+  it('jedes Objekt in jedem Level verweist auf ein Bauelement oder Produkt', () => {
     const c = new Content();
     for (const id of ['testgelaende', 'musterschau']) {
       const level = readData<LevelData>(`level/${id}`);
-      for (const o of level.objekte) expect(c.bau.has(o.typ), `${id}: ${o.typ}`).toBe(true);
+      for (const o of level.objekte) {
+        if (o.produkt !== undefined) expect(c.produkte.has(o.produkt), `${id}: ${o.produkt}`).toBe(true);
+        else expect(c.bau.has(o.typ ?? ''), `${id}: ${o.typ}`).toBe(true);
+      }
     }
   });
 

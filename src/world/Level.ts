@@ -15,7 +15,8 @@ export interface BlockData {
 
 /** Ein Objekt aus einem Datenkatalog, das beim Laden des Levels platziert wird. */
 export interface LevelObject {
-  typ: string;                          // id in data/bau
+  typ?: string;                         // id in data/bau …
+  produkt?: string;                     // … oder id in data/produkte
   position: [number, number, number];
   drehung: number;                      // Grad um die Hochachse
   /** Optional: als Reihe oder Fläche wiederholen, z. B. Bodenplatten oder Wandstücke. */
@@ -24,7 +25,8 @@ export interface LevelObject {
 
 /** Ein einzelnes, fertig ausgerechnetes Objekt (nach dem Auflösen von "wiederholen"). */
 export interface PlacedObject {
-  typ: string;
+  typ?: string;
+  produkt?: string;
   position: [number, number, number];
   drehung: number;
 }
@@ -38,7 +40,8 @@ export function expandObjects(list: LevelObject[]): PlacedObject[] {
     for (let i = 0; i < nx; i++) {
       for (let k = 0; k < nz; k++) {
         const [x, y, z] = o.position;
-        out.push({ typ: o.typ, position: [round(x + i * dx), y, round(z + k * dz)], drehung: o.drehung });
+        const ref = o.produkt !== undefined ? { produkt: o.produkt } : { typ: o.typ };
+        out.push({ ...ref, position: [round(x + i * dx), y, round(z + k * dz)], drehung: o.drehung });
       }
     }
   }

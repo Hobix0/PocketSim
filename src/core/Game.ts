@@ -9,6 +9,7 @@ import { GridCursor } from '../world/GridCursor';
 import { Content } from '../content/Content';
 import { World } from '../ecs/World';
 import { createBuildEntity } from '../factory/createBuildEntity';
+import { createProductEntity } from '../factory/createProductEntity';
 import { Selection } from '../interaction/Selection';
 import { Interactor } from '../interaction/Interactor';
 import { PlayerState, type LevelTable, type PlayerStart } from '../state/PlayerState';
@@ -111,7 +112,10 @@ export class Game {
 
     // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
     for (const o of expandObjects(this.level.data.objekte)) {
-      this.world.add(createBuildEntity(this.content.bau.get(o.typ), o, this.content, this.models));
+      const entity = o.produkt !== undefined
+        ? createProductEntity(this.content.produkte.get(o.produkt), o, this.models)
+        : createBuildEntity(this.content.bau.get(o.typ ?? ''), o, this.content, this.models);
+      this.world.add(entity);
     }
 
     window.addEventListener('resize', () => this.resize());

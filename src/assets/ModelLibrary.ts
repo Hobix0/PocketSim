@@ -1,19 +1,22 @@
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { LabelMaterial } from './LabelMaterial';
 
 // Lädt die Blender-Modelle aus data/3d und gibt fertige Exemplare heraus.
 //
 // - Jedes FBX wird nur einmal geladen; Exemplare teilen sich Geometrie und Material.
 // - Alle Modelle nutzen EIN gemeinsames Material mit der Palettentextur
 //   "2026 Palette.png" (Farbe kommt über die UVs aus der Palette).
+// - Produkte haben einen zweiten UV-Satz für Etiketten aus "Produkt_Etiketten.png";
+//   sie bekommen das LabelMaterial (Palette + Etikett darüber).
 // - Das Blender-Material "M_Glass" wird durch ein durchsichtiges Glas ersetzt.
-// - Fehlt die Palette, erscheinen die Modelle neutral grau. Sobald die Datei
-//   irgendwo unter data/3d liegt, wird sie ohne Code-Änderung benutzt.
+// - Fehlt eine Textur, erscheinen die Modelle neutral grau bzw. ohne Etikett.
 //
 // Vite sammelt alle Dateien beim Bauen ein (import.meta.glob) und kopiert sie mit.
 
 const modelUrls = import.meta.glob('/data/3d/**/*.fbx', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 const paletteUrls = import.meta.glob('/data/3d/**/2026 Palette.png', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+const labelUrls = import.meta.glob('/data/3d/**/Produkt_Etiketten.png', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
 /** Liefert Modell-Exemplare; ModelComponent kennt nur diese Schnittstelle (in Tests ohne Browser fehlt sie). */
 export interface ModelProvider {
@@ -21,14 +24,16 @@ export interface ModelProvider {
 }
 
 // 1×1 transparentes Bild: ersetzt die Texturpfade aus Blender (E:\…\2026 Palette.png),
-// damit der Loader keine fehlschlagenden Anfragen stellt. Die Palette setzen wir selbst.
+// damit der Loader keine fehlschlagenden Anfragen stellt. Die Texturen setzen wir selbst.
 const EMPTY_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABpfZFQAAAAABJRU5ErkJggg==';
 
 export class ModelLibrary implements ModelProvider {
   readonly hasPalette: boolean;
+  readonly hasLabels: boolean;
   private readonly loader: FBXLoader;
   private readonly templates = new Map<string, Promise<THREE.Group>>();
   private readonly paletteMaterial: THREE.MeshStandardMaterial;
+  private readonly labelMaterial: THREE.MeshStandardMaterial;
   private readonly glassMaterial: THREE.MeshStandardMaterial;
 
   constructor() {
@@ -37,19 +42,19 @@ export class ModelLibrary implements ModelProvider {
     this.loader = new FBXLoader(manager);
 
     const paletteUrl = Object.values(paletteUrls)[0];
+    const labelUrl = Object.values(labelUrls)[0];
     this.hasPalette = paletteUrl !== undefined;
-    this.paletteMaterial = new THREE.MeshStandardMaterial({ name: 'Palette', roughness: 0.85, metalness: 0 });
-    if (paletteUrl) {
-      const tex = new THREE.TextureLoader().load(paletteUrl);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      // Flache Farbfelder: keine Weichzeichnung zwischen benachbarten Feldern
-      tex.magFilter = THREE.NearestFilter;
-      tex.minFilter = THREE.LinearFilter;
-      tex.generateMipmaps = false;
-      this.paletteMaterial.map = tex;
-    } else {
-      this.paletteMaterial.color.set('#c9ced3');
-    }
+    this.hasLabels = labelUrl !== undefined;
+
+    // Palette: flache Farbfelder, keine Weichzeichnung zwischen benachbarten Feldern
+    const palette = paletteUrl ? loadTexture(paletteUrl, THREE.NearestFilter, THREE.LinearFilter, false) : null;
+    const base = { roughness: 0.85, metalness: 0, map: palette, color: palette ? '#ffffff' : '#c9ced3' };
+    this.paletteMaterial = new THREE.MeshStandardMaterial({ name: 'Palette', ...base });
+
+    // Etiketten: Bildmotive, hier darf weich gefiltert werden
+    const labels = labelUrl ? loadTexture(labelUrl, THREE.LinearFilter, THREE.LinearMipmapLinearFilter, true) : null;
+    this.labelMaterial = labels ? new LabelMaterial({ name: 'Produkt', ...base, labelMap: labels }) : this.paletteMaterial;
+
     this.glassMaterial = new THREE.MeshStandardMaterial({
       name: 'Glas', color: '#8cc7db', transparent: true, opacity: 0.35, roughness: 0.1, metalness: 0, depthWrite: false,
     });
@@ -81,7 +86,9 @@ export class ModelLibrary implements ModelProvider {
   private prepare(group: THREE.Group): THREE.Group {
     group.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
-      const replace = (m: THREE.Material) => (/glass/i.test(m.name) ? this.glassMaterial : this.paletteMaterial);
+      // Zweiter UV-Satz = Etiketten (nur Produkte haben ihn)
+      const solid = obj.geometry.attributes.uv1 ? this.labelMaterial : this.paletteMaterial;
+      const replace = (m: THREE.Material) => (/glass/i.test(m.name) ? this.glassMaterial : solid);
       const old = obj.material as THREE.Material | THREE.Material[];
       if (Array.isArray(old) && obj.geometry.groups.length === 0) {
         // Mehrere Material-Plätze, aber keine Flächengruppen: alle Flächen gehören zum ersten Platz.
@@ -91,12 +98,21 @@ export class ModelLibrary implements ModelProvider {
         obj.material = Array.isArray(old) ? old.map(replace) : replace(old);
       }
       for (const m of Array.isArray(old) ? old : [old]) disposeMaterial(m);
-      const glassOnly = [].concat(obj.material as never).every((m) => m === this.glassMaterial);
+      const glassOnly = [obj.material].flat().every((m) => m === this.glassMaterial);
       obj.castShadow = !glassOnly;
       obj.receiveShadow = true;
     });
     return group;
   }
+}
+
+function loadTexture(url: string, mag: THREE.MagnificationTextureFilter, min: THREE.MinificationTextureFilter, mipmaps: boolean): THREE.Texture {
+  const tex = new THREE.TextureLoader().load(url);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = mag;
+  tex.minFilter = min;
+  tex.generateMipmaps = mipmaps;
+  return tex;
 }
 
 function disposeMaterial(m: THREE.Material): void {
