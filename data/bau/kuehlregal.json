@@ -2,6 +2,7 @@
   "id": "kuehlregal",
   "name": "Kühlregal",
   "kategorie": "einrichtung",
+  "kontext": "regal",
   "preis": 450,
   "freischaltLevel": 2,
   "platzhalter": { "groesse": [3, 2.1, 0.8], "farbe": "#cfe0e6" },

@@ -1,6 +1,6 @@
 import type { Content } from '../content/Content';
 import type { World } from '../ecs/World';
-import { sumValues } from '../components/ValuesComponent';
+import { formatValue, sumValues } from '../components/ValuesComponent';
 
 // Entwickler-Anzeige: was aus den Daten geladen wurde und was in der Welt steht.
 // Aktualisiert sich über die Ereignisse der Welt, nicht jeden Frame.
@@ -34,7 +34,7 @@ export class DebugPanel {
     const sums = Object.entries(sumValues(this.world))
       .map(([key, n]) => {
         const info = c.werte[key];
-        return row(info.name, `${formatNumber(n)}${info.einheit ? ` ${info.einheit}` : ''}`);
+        return row(info.name, formatValue(n, info.einheit));
       })
       .join('');
 
@@ -48,8 +48,4 @@ export class DebugPanel {
       <h4>Summe der Bauteile</h4>
       ${sums || row('–', '')}`;
   }
-}
-
-function formatNumber(n: number): string {
-  return n.toLocaleString('de-DE', { maximumFractionDigits: 2 });
 }

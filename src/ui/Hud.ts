@@ -1,5 +1,6 @@
 import type { InputMap } from '../input/InputMap';
 import type { Cell } from '../world/GridCursor';
+import { esc } from './html';
 
 // Einfaches HUD: Titelleiste mit Feldanzeige und Steuerungshinweise.
 // Die Tastennamen kommen aus der InputMap und werden bei jeder Umbelegung neu geschrieben.
@@ -38,7 +39,7 @@ export class Hud {
   }
 
   private renderHelp(): void {
-    const k = (action: string) => `<span class="key">${escapeHtml(this.input.keyLabel(action))}</span>`;
+    const k = (action: string) => `<span class="key">${esc(this.input.keyLabel(action))}</span>`;
     const hints = [
       `${k('kamera_vor')}${k('kamera_links')}${k('kamera_zurueck')}${k('kamera_rechts')} schwenken`,
       `${k('kamera_drehen_links')}${k('kamera_drehen_rechts')} drehen`,
@@ -49,8 +50,4 @@ export class Hud {
     ];
     this.helpEl.innerHTML = hints.map((h) => `<span class="hint">${h}</span>`).join('');
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 }

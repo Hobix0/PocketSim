@@ -30,7 +30,9 @@ export class ModelComponent extends Component {
     if (!this.mesh) return;
     this.entity.object.remove(this.mesh);
     this.mesh.geometry.dispose();
-    (this.mesh.material as THREE.Material).dispose();
+    // Auch die Kopien aus der Hervorhebung freigeben (siehe interaction/highlight.ts)
+    const data = this.mesh.userData as { baseMaterial?: THREE.Material; glowMaterial?: THREE.Material };
+    for (const m of new Set([this.mesh.material as THREE.Material, data.baseMaterial, data.glowMaterial])) m?.dispose();
     this.mesh = null;
   }
 }

@@ -1,0 +1,8 @@
+{
+  "nichts":   { "name": "" },
+  "regal":    { "name": "Regal" },
+  "kasse":    { "name": "Kasse" },
+  "produkt":  { "name": "Produkt" },
+  "terminal": { "name": "Terminal" },
+  "bauen":    { "name": "Bauen" }
+}

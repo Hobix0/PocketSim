@@ -33,12 +33,19 @@ export interface BuildDef {
   id: string;
   name: string;
   kategorie: string;
+  /** Interaktions-Kontext (data/interaktion/kontexte.json). Ohne Kontext ist das Element nicht anklickbar. */
+  kontext?: string;
   preis: number;
   freischaltLevel: number;
   werte: Record<string, number>;
   platzhalter: PlaceholderDef;
   model?: string;
   icon?: string;
+}
+
+/** Ein Interaktions-Kontext, z. B. "Regal" (data/interaktion/kontexte.json). */
+export interface ContextInfo {
+  name: string;
 }
 
 /** Anzeigename und Einheit eines Werts (data/werte/standard.json). */
@@ -74,6 +81,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     id: str(o, 'id', where),
     name: str(o, 'name', where),
     kategorie: str(o, 'kategorie', where),
+    kontext: optStr(o, 'kontext', where),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),

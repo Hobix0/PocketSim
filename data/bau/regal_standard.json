@@ -2,6 +2,7 @@
   "id": "regal_standard",
   "name": "Standardregal",
   "kategorie": "einrichtung",
+  "kontext": "regal",
   "preis": 120,
   "freischaltLevel": 1,
   "platzhalter": { "groesse": [2, 2, 0.6], "farbe": "#5d7480" },

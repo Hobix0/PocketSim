@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 import { readData } from './Data';
 import { InputMap, type Bindings } from '../input/InputMap';
+import { Pointer } from '../input/Pointer';
 import { ManagementCamera, type CameraSettings } from '../camera/ManagementCamera';
 import { Level, type LevelData } from '../world/Level';
 import { GridCursor } from '../world/GridCursor';
 import { Content } from '../content/Content';
 import { World } from '../ecs/World';
 import { createBuildEntity } from '../factory/createBuildEntity';
+import { Selection } from '../interaction/Selection';
+import { Interactor } from '../interaction/Interactor';
 import { Hud } from '../ui/Hud';
 import { DebugPanel } from '../ui/DebugPanel';
+import { ContextHint } from '../ui/ContextHint';
+import { InfoPanel } from '../ui/InfoPanel';
 
 // Zentrale Spielklasse: Renderer, Szene, Spielschleife.
 // Sie verbindet die Systeme, enthält aber selbst keine Spiellogik.
@@ -19,11 +24,16 @@ export class Game {
   readonly content: Content;
   readonly world: World;
   readonly input: InputMap;
+  readonly pointer = new Pointer();
   readonly level: Level;
   readonly view: ManagementCamera;
   readonly cursor: GridCursor;
+  readonly selection = new Selection();
+  readonly interactor: Interactor;
   readonly hud: Hud;
   readonly debug: DebugPanel;
+  readonly contextHint: ContextHint;
+  readonly info: InfoPanel;
 
   private readonly timer = new THREE.Timer();
   private readonly sun: THREE.DirectionalLight;
@@ -31,6 +41,7 @@ export class Game {
   constructor(container: HTMLElement, levelId: string) {
     // Inhalte zuerst: Fehler in den Daten sollen sofort auffallen
     this.content = new Content();
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5fd08a';
 
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -44,6 +55,7 @@ export class Game {
     // Eingabe
     this.input = new InputMap(readData<Bindings>('eingabe/standard'));
     this.input.attach(surface);
+    this.pointer.attach(surface);
 
     // Kulisse
     this.level = new Level(readData<LevelData>(`level/${levelId}`));
@@ -74,18 +86,21 @@ export class Game {
     this.view.attach(surface);
 
     // Feld unter der Maus
-    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5fd08a';
-    this.cursor = new GridCursor(this.level.data.raster, accent);
-    this.cursor.attach(surface);
+    this.cursor = new GridCursor(this.level.data.raster, accent, this.pointer);
     this.scene.add(this.cursor.mesh);
+
+    // Interaktion: was liegt unter dem Zeiger, was passiert beim Klick
+    this.interactor = new Interactor(this.world, this.input, this.pointer, this.selection, accent);
 
     // Oberfläche
     this.hud = new Hud(this.input, this.level.data.name);
     this.debug = new DebugPanel(this.content, this.world);
+    this.contextHint = new ContextHint(this.interactor, this.input, this.pointer, this.content);
+    this.info = new InfoPanel(this.selection, this.input, this.content);
 
-    // Erst jetzt Objekte setzen, damit die Anzeige sie mitzählt
+    // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
     for (const o of this.level.data.objekte) {
-      this.world.add(createBuildEntity(this.content.bau.get(o.typ), o));
+      this.world.add(createBuildEntity(this.content.bau.get(o.typ), o, this.content));
     }
 
     window.addEventListener('resize', () => this.resize());
@@ -101,10 +116,15 @@ export class Game {
     // Lange Pausen (Tab im Hintergrund) nicht als einen Riesenschritt rechnen
     const dt = Math.min(this.timer.getDelta(), 0.1);
     if (this.input.wasPressed('debug_anzeige')) this.debug.toggle();
+
     this.view.update(dt);
     this.world.update(dt);
-    this.cursor.update(this.view.camera, this.level.bounds);
+    this.interactor.update(this.view.camera);
+    // Über einem Objekt zeigt der Hinweis am Zeiger, worum es geht – dann keine Feld-Markierung
+    this.cursor.update(this.view.camera, this.level.bounds, this.interactor.hovered !== null);
     this.hud.showCell(this.cursor.cell);
+    this.contextHint.update();
+
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
   }

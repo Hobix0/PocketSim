@@ -142,3 +142,75 @@ html, body {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
+
+/* ── Hinweis am Mauszeiger ── */
+.context-hint {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 7px 10px;
+  display: grid;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.context-hint .ctx-title {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.context-hint .ctx-title span {
+  margin-left: 8px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Info-Fenster zur Auswahl ── */
+.info {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  width: min(260px, calc(100% - 24px));
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.info h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.info .sub {
+  margin-top: -6px;
+  color: var(--accent);
+  font-size: 12.5px;
+}
+
+.info .rows {
+  display: grid;
+  gap: 3px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-line);
+}
+
+.info .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.info .row b {
+  color: var(--text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.info .foot {
+  font-size: 12px;
+}

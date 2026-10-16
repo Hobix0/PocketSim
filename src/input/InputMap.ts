@@ -33,12 +33,12 @@ export class InputMap {
   attach(surface: HTMLElement): void {
     window.addEventListener('keydown', (e) => {
       if (e.repeat || isTyping(e.target)) return;
-      this.press(e.code);
+      this.setCode(e.code, true);
     });
-    window.addEventListener('keyup', (e) => this.release(e.code));
+    window.addEventListener('keyup', (e) => this.setCode(e.code, false));
     window.addEventListener('blur', () => this.held.clear());
-    surface.addEventListener('pointerdown', (e) => this.press(`Mouse${e.button}`));
-    window.addEventListener('pointerup', (e) => this.release(`Mouse${e.button}`));
+    surface.addEventListener('pointerdown', (e) => this.setCode(`Mouse${e.button}`, true));
+    window.addEventListener('pointerup', (e) => this.setCode(`Mouse${e.button}`, false));
     surface.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
@@ -90,13 +90,14 @@ export class InputMap {
     return this.bindings.get(action) ?? [];
   }
 
-  private press(code: string): void {
+  /** Taste oder Maustaste drücken/loslassen. Wird von den Browser-Ereignissen und von Tests benutzt. */
+  setCode(code: string, down: boolean): void {
+    if (!down) {
+      this.held.delete(code);
+      return;
+    }
     if (!this.held.has(code)) this.pressed.add(code);
     this.held.add(code);
-  }
-
-  private release(code: string): void {
-    this.held.delete(code);
   }
 
   private save(): void {

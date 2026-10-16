@@ -22,6 +22,13 @@ Das Spiel wird von **schräg oben** in einer **Management-Ansicht** gespielt, ni
 - Debug-Anzeige (`F3`): geladene Daten, Objekte in der Welt und die **Summe der Bauteil-Werte**
 - Automatische Tests mit Vitest
 
+**Meilenstein 3 – Interaktion** ✅
+
+- Objekte unter dem Mauszeiger werden erkannt und hervorgehoben (`src/interaction/Interactor.ts`)
+- Gemeinsame Schnittstelle `InteractableComponent`: Jede Komponente bietet selbst an, was man mit ihr tun kann. Eine Entity kann mehrere solcher Komponenten tragen.
+- Kontext unter dem Zeiger (`getContext()`, z. B. `regal`, `kasse`, `nichts`) und Hinweis am Zeiger wie „[Linksklick] Auswählen“, die Taste kommt live aus der Belegung
+- Auswahl per Klick, Info-Fenster mit Zeilen aus den Komponenten, Abwählen per Klick ins Leere oder `Esc`
+
 Die Produkte in `data/produkte/` sind **Beispiele**, bis die CSV mit den 50 Produkten eingespielt ist.
 
 ## Starten
@@ -51,6 +58,8 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Kamera schwenken | `W` `A` `S` `D` oder Pfeiltasten, mittlere Maustaste ziehen |
 | Kamera drehen | `Q` / `E`, rechte Maustaste ziehen |
 | Zoomen | Mausrad |
+| Objekt auswählen | Linksklick |
+| Auswahl aufheben | Klick ins Leere oder `Esc` |
 | Debug-Anzeige an/aus | `F3` |
 
 Die Belegung steht in `data/eingabe/standard.json`.
@@ -63,6 +72,7 @@ data/                   Werte und Inhalte (JSON), werden automatisch eingelesen
   produkte/             Produkte, eine Datei pro Produkt
   sortiment/            Warenkategorien
   werte/                Namen und Einheiten der Bauteil-Werte (Strom, Regalplätze …)
+  interaktion/          Kontexte (Regal, Kasse …) und Hinweistexte
   eingabe/              Tastenbelegung (Aktion → Tasten)
   kamera/               Kamerawerte
   level/                Level-Dateien: feste Kulisse und platzierte Objekte
@@ -71,14 +81,15 @@ src/
   core/Game.ts          Renderer, Szene, Spielschleife – verbindet die Systeme
   core/Data.ts          liest Dateien und ganze Ordner aus data/
   core/Emitter.ts       Ereignisse senden und abonnieren
+  interaction/          Interactor, InteractableComponent, Auswahl, Hervorhebung
   ecs/                  Entity, Component, World
   components/           wiederverwendbare Komponenten (Modell, Werte …)
   content/              Datenformate, Prüfung, Registry, Content
   factory/              baut Entities aus Datendefinitionen
-  input/InputMap.ts     Aktionen statt fester Tasten
+  input/                InputMap (Aktionen statt fester Tasten), Pointer (Mauszeiger)
   camera/               Management-Kamera
   world/                Level-Kulisse, Feld unter der Maus
-  ui/                   HUD, Debug-Anzeige, UI-Kit-Tokens (style.css)
+  ui/                   HUD, Hinweis am Zeiger, Info-Fenster, Debug-Anzeige, UI-Kit-Tokens (style.css)
 tests/                  automatische Tests
 ```
 
@@ -110,6 +121,37 @@ for (const [e, v] of world.query(ValuesComponent)) { /* … */ }
 
 Eine Komponente erbt von `Component` und nutzt nur, was sie braucht: `onAttach()`, `update(dt)`, `onDetach()`.
 
+### Interaktion
+
+```mermaid
+sequenceDiagram
+  participant M as Maus
+  participant I as Interactor
+  participant E as Entity
+  participant C as InteractableComponent(s)
+  M->>I: Zeiger bewegt
+  I->>E: Raycast trifft Mesh → Entity
+  I->>C: options()
+  C-->>I: [Linksklick] Auswählen
+  I-->>M: Hervorhebung + Hinweis am Zeiger
+  M->>I: Linksklick
+  I->>C: run() des passenden Angebots
+  C->>I: selection.set(entity)
+```
+
+Eine neue Interaktion ist eine neue Komponente:
+
+```ts
+class EinraeumenComponent extends InteractableComponent {
+  override readonly kontext = 'regal';
+  options(by: Interactor) {
+    return [{ aktion: 'auswaehlen', text: 'einraeumen', run: () => { /* … */ } }];
+  }
+}
+```
+
+Komponenten, die `describe()` haben, liefern automatisch Zeilen fürs Info-Fenster.
+
 ### Datenformate
 
 Produkt (`data/produkte/<id>.json`, Dateiname = id):
@@ -122,12 +164,12 @@ Produkt (`data/produkte/<id>.json`, Dateiname = id):
 Bauelement (`data/bau/<id>.json`):
 
 ```json
-{ "id": "kuehlregal", "name": "Kühlregal", "kategorie": "einrichtung", "preis": 450, "freischaltLevel": 2,
+{ "id": "kuehlregal", "name": "Kühlregal", "kategorie": "einrichtung", "kontext": "regal", "preis": 450, "freischaltLevel": 2,
   "platzhalter": { "groesse": [3, 2.1, 0.8], "farbe": "#cfe0e6" },
   "werte": { "slots": 3, "strom": 0.8 } }
 ```
 
-`model` und `icon` sind optional und werden genutzt, sobald es die Blender-Exporte gibt. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
+`kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` sind optional und werden genutzt, sobald es die Blender-Exporte gibt. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
 
 Regeln, die überall gelten:
 
@@ -139,7 +181,7 @@ Regeln, die überall gelten:
 
 1. ~~Grundgerüst mit Management-Kamera~~
 2. ~~Entity-/Komponenten-System und Daten-Registry~~
-3. Interaktion: Objekte unter der Maus erkennen, hervorheben, anklicken; Kontext-Hinweise
+3. ~~Interaktion: Objekte unter der Maus erkennen, hervorheben, anklicken; Kontext-Hinweise~~
 4. Stats und HUD (Geld, Level, Zeit) mit Events
 5. Einkaufsterminal und Produkte
 6. Regal-Slots inklusive Anlegen per Klick (Anker → A → B) und Einräumen
