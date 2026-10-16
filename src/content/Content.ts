@@ -14,7 +14,7 @@ export class Content {
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
-  /** Hinweistexte für Interaktionen, z. B. "auswaehlen" → "Auswählen". */
+  /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
   constructor() {
@@ -28,13 +28,13 @@ export class Content {
     this.bau = new Registry('bau', readFolderEntries('bau'), validateBuild);
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
-    this.texte = readData<Record<string, string>>('interaktion/texte');
+    this.texte = readData<Record<string, string>>('texte/standard');
     this.crossCheck();
   }
 
-  /** Hinweistext zu einem Schlüssel; der Schlüssel selbst, wenn es keinen Text gibt. */
-  text(key: string): string {
-    return this.texte[key] ?? key;
+  /** Text zu einem Schlüssel; Platzhalter wie {level} werden ersetzt. Ohne Text: der Schlüssel selbst. */
+  text(key: string, werte: Record<string, string | number> = {}): string {
+    return (this.texte[key] ?? key).replace(/\{(\w+)\}/g, (m, name: string) => (name in werte ? String(werte[name]) : m));
   }
 
   /** Querverweise prüfen: Kategorien, Kontexte und Werte müssen bekannt sein. */
