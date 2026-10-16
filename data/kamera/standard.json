@@ -1,0 +1,11 @@
+{
+  "sichtfeld": 40,
+  "neigung": 55,
+  "abstand": { "min": 8, "max": 60, "start": 26 },
+  "startDrehung": 30,
+  "schwenkGeschwindigkeit": 0.9,
+  "drehGeschwindigkeit": 90,
+  "mausDrehung": 0.3,
+  "zoomFaktor": 1.12,
+  "glaettung": 10
+}
