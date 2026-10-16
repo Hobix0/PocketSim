@@ -1,0 +1,65 @@
+﻿Asset;Blender-Name;Kategorie;Breite_cm;Tiefe_cm;Hoehe_cm;Datei
+SM_Build_Deckenstrahler_Schiene;Deckenstrahler Schiene;Einrichtung;82.3;21.9;25.4;Einrichtung\SM_Build_Deckenstrahler_Schiene.fbx
+SM_Build_Deckenstrahler_Schiene_Einzel;Deckenstrahler Schiene Einzel;Einrichtung;10.0;22.2;25.6;Einrichtung\SM_Build_Deckenstrahler_Schiene_Einzel.fbx
+SM_Build_Kasse_Schwarz;Kasse Schwarz;Einrichtung;90.7;300.0;134.2;Einrichtung\SM_Build_Kasse_Schwarz.fbx
+SM_Build_Kuehlregal_Offen;Kühlregal Offen;Einrichtung;60.0;200.0;200.0;Einrichtung\SM_Build_Kuehlregal_Offen.fbx
+SM_Build_Pendelleuchte;Pendelleuchte;Einrichtung;10.0;10.0;145.1;Einrichtung\SM_Build_Pendelleuchte.fbx
+SM_Build_Schienenleuchte_Lichtleiste;Schienenleuchte_Lichtleiste;Einrichtung;100.0;6.0;53.0;Einrichtung\SM_Build_Schienenleuchte_Lichtleiste.fbx
+SM_Build_Schienenleuchte_Pendel_Kegel;Schienenleuchte_Pendel_Kegel;Einrichtung;34.0;34.0;53.0;Einrichtung\SM_Build_Schienenleuchte_Pendel_Kegel.fbx
+SM_Build_Schienenleuchte_Pendel_Kugel;Schienenleuchte_Pendel_Kugel;Einrichtung;19.2;19.7;53.0;Einrichtung\SM_Build_Schienenleuchte_Pendel_Kugel.fbx
+SM_Build_Wandregal_Weiss;Wandregal Weiß;Einrichtung;50.0;200.0;180.0;Einrichtung\SM_Build_Wandregal_Weiss.fbx
+SM_Build_Betontraeger_Schwarz;Betonträger Schwarz;Gebaeude_Basis;25.0;200.0;25.0;Gebaeude_Basis\SM_Build_Betontraeger_Schwarz.fbx
+SM_Build_Dach;Dach;Gebaeude_Basis;200.0;200.0;20.0;Gebaeude_Basis\SM_Build_Dach.fbx
+SM_Build_Fenster;Fenster;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster.fbx
+SM_Build_Fenster_klein_dunkel;Fenster klein dunkel;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_klein_dunkel.fbx
+SM_Build_Fenster_klein_hell;Fenster klein hell;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_klein_hell.fbx
+SM_Build_Fenster_schwarz_2;Fenster schwarz 2;Gebaeude_Basis;40.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_schwarz_2.fbx
+SM_Build_Fenster_Schwarz_klein;Fenster Schwarz klein;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_Schwarz_klein.fbx
+SM_Build_Fenster_weiss_2;Fenster weiß 2.;Gebaeude_Basis;40.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_weiss_2.fbx
+SM_Build_Fenster_weiss_gross;Fenster weiß groß;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_weiss_gross.fbx
+SM_Build_Fenster_weiss_gross;Fenster weiß groß.001;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Fenster_weiss_gross.fbx
+SM_Build_Pallisade_1;Pallisade 1;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Pallisade_1.fbx
+SM_Build_Pallisade_2;Pallisade 2;Gebaeude_Basis;20.0;188.0;400.0;Gebaeude_Basis\SM_Build_Pallisade_2.fbx
+SM_Build_Pallisade_2;Pallisade 2.001;Gebaeude_Basis;20.0;188.0;400.0;Gebaeude_Basis\SM_Build_Pallisade_2.fbx
+SM_Build_Pallisade_3;Pallisade 3;Gebaeude_Basis;20.0;168.0;400.0;Gebaeude_Basis\SM_Build_Pallisade_3.fbx
+SM_Build_Pallisade_3_Dunkel;Pallisade 3_Dunkel;Gebaeude_Basis;20.0;168.0;400.0;Gebaeude_Basis\SM_Build_Pallisade_3_Dunkel.fbx
+SM_Build_PflanzenTop_Schwarz;PflanzenTop_Schwarz;Gebaeude_Basis;60.3;160.0;110.6;Gebaeude_Basis\SM_Build_PflanzenTop_Schwarz.fbx
+SM_Build_PflanzenTop_Weiss;PflanzenTop_Weiß;Gebaeude_Basis;60.3;160.0;110.6;Gebaeude_Basis\SM_Build_PflanzenTop_Weiss.fbx
+SM_Build_Tuer;Tür;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Tuer.fbx
+SM_Build_Wand_Dunkel;Wand Dunkel;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Wand_Dunkel.fbx
+SM_Build_Wand_Rot;Wand Rot;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Wand_Rot.fbx
+SM_Build_Wand_Weiss;Wand Weiß;Gebaeude_Basis;20.0;200.0;400.0;Gebaeude_Basis\SM_Build_Wand_Weiss.fbx
+SM_Build_Wand_Weiss_Schwarz_Schmal;Wand Weiß/Schwarz/ Schmal;Gebaeude_Basis;20.0;100.0;400.0;Gebaeude_Basis\SM_Build_Wand_Weiss_Schwarz_Schmal.fbx
+SM_Build_ZiegelWand;ZiegelWand;Gebaeude_Basis;33.1;200.0;400.0;Gebaeude_Basis\SM_Build_ZiegelWand.fbx
+SM_Build_Attika_Dachkante;Attika Dachkante;Gebaeude_Erweiterung;30.0;200.0;42.0;Gebaeude_Erweiterung\SM_Build_Attika_Dachkante.fbx
+SM_Build_Boden_Fliese_Innen;Boden Fliese Innen;Gebaeude_Erweiterung;200.0;200.0;5.0;Gebaeude_Erweiterung\SM_Build_Boden_Fliese_Innen.fbx
+SM_Build_Boden_Gehweg;Boden Gehweg;Gebaeude_Erweiterung;200.0;200.0;14.0;Gebaeude_Erweiterung\SM_Build_Boden_Gehweg.fbx
+SM_Build_Eckpfeiler_Schwarz;Eckpfeiler Schwarz;Gebaeude_Erweiterung;34.0;34.0;400.0;Gebaeude_Erweiterung\SM_Build_Eckpfeiler_Schwarz.fbx
+SM_Build_Eingang_Schiebetuer;Eingang Schiebetür;Gebaeude_Erweiterung;50.0;200.0;400.0;Gebaeude_Erweiterung\SM_Build_Eingang_Schiebetuer.fbx
+SM_Build_Eingangsstufe;Eingangsstufe;Gebaeude_Erweiterung;60.5;200.0;17.5;Gebaeude_Erweiterung\SM_Build_Eingangsstufe.fbx
+SM_Build_Ladenschild_Band;Ladenschild Band;Gebaeude_Erweiterung;36.0;200.0;65.0;Gebaeude_Erweiterung\SM_Build_Ladenschild_Band.fbx
+SM_Build_Markise_Rot_Weiss;Markise Rot-Weiß;Gebaeude_Erweiterung;126.0;200.0;68.1;Gebaeude_Erweiterung\SM_Build_Markise_Rot_Weiss.fbx
+SM_Build_Pflanzkuebel_Boden;Pflanzkübel Boden;Gebaeude_Erweiterung;60.0;60.0;98.4;Gebaeude_Erweiterung\SM_Build_Pflanzkuebel_Boden.fbx
+SM_Build_Schaufenster_Gross;Schaufenster Groß;Gebaeude_Erweiterung;28.0;200.0;400.0;Gebaeude_Erweiterung\SM_Build_Schaufenster_Gross.fbx
+SM_Build_Wand_Innen_Durchgang;Wand Innen Durchgang;Gebaeude_Erweiterung;25.0;200.0;400.0;Gebaeude_Erweiterung\SM_Build_Wand_Innen_Durchgang.fbx
+SM_Build_Wand_Rolltor;Wand Rolltor;Gebaeude_Erweiterung;40.0;200.0;400.0;Gebaeude_Erweiterung\SM_Build_Wand_Rolltor.fbx
+SM_Build_Wandlampe_Aussen;Wandlampe Außen;Gebaeude_Erweiterung;40.5;22.0;16.5;Gebaeude_Erweiterung\SM_Build_Wandlampe_Aussen.fbx
+SM_Build_Europalette;Europalette;Lager;120.0;80.0;14.4;Lager\SM_Build_Europalette.fbx
+SM_Build_Schwerlastregal_mit_Boeden;Schwerlastregal mit Böden;Lager;111.0;290.0;273.0;Lager\SM_Build_Schwerlastregal_mit_Boeden.fbx
+SM_Build_Schwerlastregal_ohne_Boeden;Schwerlastregal ohne Böden;Lager;111.0;290.0;273.0;Lager\SM_Build_Schwerlastregal_ohne_Boeden.fbx
+SM_Build_Schwerlastregal_Quertraeger;Schwerlastregal Querträger;Lager;5.0;279.7;8.0;Lager\SM_Build_Schwerlastregal_Quertraeger.fbx
+SM_Build_Schwerlastregal_Rahmen;Schwerlastregal Rahmen;Lager;110.0;10.0;273.0;Lager\SM_Build_Schwerlastregal_Rahmen.fbx
+SM_Build_Lichtschiene_Abhaenger;Lichtschiene_Abhaenger;Lichtschienen;10.0;10.0;50.0;Lichtschienen\SM_Build_Lichtschiene_Abhaenger.fbx
+SM_Build_Lichtschiene_Endkappe;Lichtschiene_Endkappe;Lichtschienen;1.2;4.2;10.5;Lichtschienen\SM_Build_Lichtschiene_Endkappe.fbx
+SM_Build_Lichtschiene_Gerade_050;Lichtschiene_Gerade_050;Lichtschienen;50.0;10.0;60.0;Lichtschienen\SM_Build_Lichtschiene_Gerade_050.fbx
+SM_Build_Lichtschiene_Gerade_100;Lichtschiene_Gerade_100;Lichtschienen;100.0;10.0;60.0;Lichtschienen\SM_Build_Lichtschiene_Gerade_100.fbx
+SM_Build_Lichtschiene_Gerade_200;Lichtschiene_Gerade_200;Lichtschienen;200.0;10.0;60.0;Lichtschienen\SM_Build_Lichtschiene_Gerade_200.fbx
+SM_Build_Lichtschiene_Kreuz;Lichtschiene_Kreuz;Lichtschienen;50.0;50.0;60.5;Lichtschienen\SM_Build_Lichtschiene_Kreuz.fbx
+SM_Build_Lichtschiene_Kurve_90;Lichtschiene_Kurve_90;Lichtschienen;52.2;52.2;10.0;Lichtschienen\SM_Build_Lichtschiene_Kurve_90.fbx
+SM_Build_Lichtschiene_T;Lichtschiene_T;Lichtschienen;50.0;30.0;60.5;Lichtschienen\SM_Build_Lichtschiene_T.fbx
+SM_Build_Cube;Cube.002;SET;86.0;186.0;305.7;SET\SM_Build_Cube.fbx
+SM_Build_SM_Store_Cart_01;SM_Store_Cart_01;Store_Props;101.6;64.0;100.5;Store_Props\SM_Build_SM_Store_Cart_01.fbx
+SM_Build_SM_Store_Checkout_01;SM_Store_Checkout_01;Store_Props;92.0;200.0;221.0;Store_Props\SM_Build_SM_Store_Checkout_01.fbx
+SM_Build_SM_Store_Fridge_Upright_01;SM_Store_Fridge_Upright_01;Store_Props;79.3;130.0;205.0;Store_Props\SM_Build_SM_Store_Fridge_Upright_01.fbx
+SM_Build_SM_Store_ProduceStand_01;SM_Store_ProduceStand_01;Store_Props;110.0;152.0;195.5;Store_Props\SM_Build_SM_Store_ProduceStand_01.fbx
+SM_Build_SM_Store_Shelf_Wall_01;SM_Store_Shelf_Wall_01;Store_Props;54.0;204.0;223.0;Store_Props\SM_Build_SM_Store_Shelf_Wall_01.fbx
