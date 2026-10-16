@@ -3,6 +3,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   // Relative Pfade, damit der Build auch aus einem Unterordner läuft
   base: './',
+  // FBX-Modelle aus Blender als Dateien behandeln
+  assetsInclude: ['**/*.fbx'],
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 1000, // three.js allein ist ~500 kB

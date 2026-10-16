@@ -136,13 +136,6 @@
       },
       "freischaltLevel": 2
     },
-    "store_produce_stand_01": {
-      "preis": 600,
-      "kontext": "regal",
-      "werte": {
-        "slots": 4
-      }
-    },
     "schwerlastregal_mit_boeden": {
       "preis": 350,
       "kontext": "regal",
@@ -172,6 +165,13 @@
       "preis": 70,
       "werte": {
         "strom": 0.03
+      }
+    },
+    "store_producestand_01": {
+      "preis": 600,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
       }
     }
   },
@@ -203,11 +203,11 @@
     "store_cart_01": "Einkaufswagen",
     "store_checkout_01": "Kassentresen",
     "store_fridge_upright_01": "Getränkekühlschrank",
-    "store_produce_stand_01": "Obst- und Gemüsestand",
     "store_shelf_wall_01": "Wandregal Markt",
     "wand_weiss_schwarz_schmal": "Wand Weiß/Schwarz schmal",
     "ziegelwand": "Ziegelwand",
     "pflanzentop_schwarz": "Pflanzentopf Schwarz",
-    "pflanzentop_weiss": "Pflanzentopf Weiß"
+    "pflanzentop_weiss": "Pflanzentopf Weiß",
+    "store_producestand_01": "Obst- und Gemüsestand"
   }
 }

@@ -22,6 +22,7 @@ export class DebugPanel {
   ) {
     this.el = document.createElement('div');
     this.el.className = 'debug panel';
+    this.el.hidden = true; // F3 blendet die Anzeige ein
     this.el.innerHTML = `
       <div class="debug-body"></div>
       <h4>Zeiger</h4>

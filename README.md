@@ -69,6 +69,7 @@ Weitere Befehle:
 | `npm run check` | nur Typprüfung |
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
 | `npm run preview` | den Build lokal ansehen |
+| `npm run build:artifact` | Build für claude.ai-Artifacts in `dist-artifact/` (Modelle als JS eingebettet, weil Artifacts keine .fbx-Dateien ausliefern) |
 
 Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` erreichbar, z. B. `urbanEvolution.view.zoom(-2)`.
 

@@ -14,7 +14,18 @@ import { LabelMaterial } from './LabelMaterial';
 //
 // Vite sammelt alle Dateien beim Bauen ein (import.meta.glob) und kopiert sie mit.
 
-const modelUrls = import.meta.glob('/data/3d/**/*.fbx', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
+/** Pfad (/data/3d/…fbx) → Funktion, die die Lade-Adresse liefert. */
+type ModelSources = Record<string, () => Promise<string>>;
+
+// Normal: Modelle als eigene Dateien. Für Umgebungen, die keine .fbx-Dateien ausliefern
+// (z. B. claude.ai-Artifacts), baut `npm run build:artifact` sie stattdessen als Daten-URL
+// in kleine JS-Dateien ein, die erst bei Bedarf geladen werden.
+const modelSources: ModelSources = import.meta.env.VITE_INLINE_MODELS
+  ? (import.meta.glob('/data/3d/**/*.fbx', { query: '?inline', import: 'default' }) as ModelSources)
+  : Object.fromEntries(
+      Object.entries(import.meta.glob('/data/3d/**/*.fbx', { query: '?url', import: 'default', eager: true }) as Record<string, string>)
+        .map(([path, url]) => [path, () => Promise.resolve(url)]),
+    );
 const paletteUrls = import.meta.glob('/data/3d/**/2026 Palette.png', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 const labelUrls = import.meta.glob('/data/3d/**/Produkt_Etiketten.png', { query: '?url', import: 'default', eager: true }) as Record<string, string>;
 
@@ -62,7 +73,7 @@ export class ModelLibrary implements ModelProvider {
 
   /** Gibt es zu diesem Pfad (relativ zu data/) ein Modell? */
   has(path: string): boolean {
-    return `/data/${path}` in modelUrls;
+    return `/data/${path}` in modelSources;
   }
 
   /** Neues Exemplar eines Modells, z. B. instance('3d/Baubar/…/SM_Build_Wand_Weiss.fbx'). */
@@ -74,9 +85,9 @@ export class ModelLibrary implements ModelProvider {
   private template(path: string): Promise<THREE.Group> {
     let t = this.templates.get(path);
     if (!t) {
-      const url = modelUrls[`/data/${path}`];
-      if (!url) return Promise.reject(new Error(`Modell fehlt: data/${path}`));
-      t = this.loader.loadAsync(url).then((group) => this.prepare(group));
+      const source = modelSources[`/data/${path}`];
+      if (!source) return Promise.reject(new Error(`Modell fehlt: data/${path}`));
+      t = source().then((url) => this.loader.loadAsync(url)).then((group) => this.prepare(group));
       this.templates.set(path, t);
     }
     return t;
