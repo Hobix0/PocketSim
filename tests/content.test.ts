@@ -28,9 +28,10 @@ describe('Spieldaten in data/', () => {
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
     expect(c.produkte.size).toBe(150);
-    expect(c.bau.size).toBe(61);
+    // 61 Bauelemente aus Blender; weitere (z. B. das Einkaufsterminal) dürfen noch ohne Modell sein
+    expect(c.bau.all().filter((d) => d.model).length).toBe(61);
     const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
-    for (const d of [...c.produkte.all(), ...c.bau.all()]) {
+    for (const d of [...c.produkte.all(), ...c.bau.all().filter((b) => b.model)]) {
       expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);
       expect(files.has(`/data/${d.icon}`), `${d.id}: Icon ${d.icon}`).toBe(true);
     }
@@ -57,7 +58,7 @@ describe('Level', () => {
 });
 
 describe('Registry', () => {
-  const milch = { id: 'milch_1l', name: 'Milch', kategorie: 'molkerei_eier', ek: 0.69, vk: 1.09, frisch: true, freischaltLevel: 1 };
+  const milch = { id: 'milch_1l', name: 'Milch', kategorie: 'molkerei_eier', ek: 0.69, vk: 1.09, gebinde: 12, frisch: true, freischaltLevel: 1 };
 
   it('liest Einträge und findet sie per id', () => {
     const r = new Registry('produkte', [{ file: 'milch_1l', data: milch }], validateProduct);

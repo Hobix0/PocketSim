@@ -24,7 +24,7 @@ function setup() {
   camera.position.set(0, 12, 10);
   camera.lookAt(0, 1, 0);
   camera.updateMatrixWorld();
-  const regal = world.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [0, 0, 0], drehung: 0 }, content));
+  const regal = world.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [0, 0, 0], drehung: 0 }, { content }));
   regal.object.updateMatrixWorld(true);
   const click = (code = 'Mouse0') => { input.setCode(code, true); interactor.update(camera); input.endFrame(); input.setCode(code, false); };
   return { content, world, input, pointer, selection, interactor, camera, regal, click };
@@ -84,5 +84,22 @@ describe('Info aus Komponenten', () => {
     expect(sel.untertitel).toBe('Regal · 180\u00a0€');
     const rows = regal.all().filter(isDescribable).flatMap((c) => c.describe());
     expect(rows).toEqual([{ label: 'Regalplätze', value: '4' }]);
+  });
+});
+
+describe('Priorität', () => {
+  it('pro Taste gilt nur das Angebot mit der höchsten Priorität', async () => {
+    const { content, world, interactor, camera, click } = setup();
+    // Ein Terminal genau unter den Zeiger stellen (das Regal vorher entfernen)
+    for (const e of [...world.all()]) world.remove(e);
+    let opened = 0;
+    const { createBuildEntity: create } = await import('../src/factory/createBuildEntity');
+    const t = world.add(create(content.bau.get('einkaufsterminal'), { position: [0, 0, 0], drehung: 0 }, { content, actions: { openPurchase: () => opened++ } }));
+    t.object.updateMatrixWorld(true);
+    interactor.update(camera);
+    expect(interactor.options().map((o) => o.text)).toEqual(['einkaufen']);
+    expect(interactor.getContext()).toBe('terminal');
+    click();
+    expect(opened).toBe(1);
   });
 });

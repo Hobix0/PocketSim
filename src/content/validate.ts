@@ -39,6 +39,13 @@ export function vec3(o: Raw, key: string, where: string): [number, number, numbe
   return [v[0], v[1], v[2]];
 }
 
+/** Liste aus Texten; fehlt das Feld, ist die Liste leer. */
+export function strList(o: Raw, key: string, where: string): string[] {
+  const v = o[key] ?? [];
+  if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) throw new Error(`${where}: "${key}" muss eine Liste aus Texten sein`);
+  return v as string[];
+}
+
 /** Objekt mit beliebigen Schlüsseln und Zahlenwerten, z. B. "werte": { "strom": 0.8 }. */
 export function numberMap(o: Raw, key: string, where: string): Record<string, number> {
   const v = o[key] ?? {};

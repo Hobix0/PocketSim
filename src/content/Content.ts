@@ -2,7 +2,7 @@ import { readData, readFolderEntries } from '../core/Data';
 import { Registry } from './Registry';
 import {
   validateBuild, validateCategory, validateProduct,
-  type BuildDef, type CategoryDef, type ContextInfo, type ProductDef, type ValueInfo,
+  type BuildDef, type CategoryDef, type ContextInfo, type ProductDef, type StorageSettings, type ValueInfo,
 } from './definitions';
 
 // Alle Spielinhalte an einem Ort. Wird einmal beim Start geladen und geprüft;
@@ -14,6 +14,7 @@ export class Content {
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
+  readonly lager: StorageSettings;
   /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
@@ -28,6 +29,7 @@ export class Content {
     this.bau = new Registry('bau', readFolderEntries('bau'), validateBuild);
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
+    this.lager = readData<StorageSettings>('lager/standard');
     this.texte = readData<Record<string, string>>('texte/standard');
     this.crossCheck();
   }

@@ -4,6 +4,7 @@
   "kategorie": "grundnahrung",
   "ek": 0.8,
   "vk": 1.29,
+  "gebinde": 12,
   "preisOffen": true,
   "frisch": false,
   "freischaltLevel": 1,

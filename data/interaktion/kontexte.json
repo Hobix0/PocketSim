@@ -4,5 +4,6 @@
   "kasse":    { "name": "Kasse" },
   "produkt":  { "name": "Produkt" },
   "terminal": { "name": "Terminal" },
+  "karton":   { "name": "Karton" },
   "bauen":    { "name": "Bauen" }
 }

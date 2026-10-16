@@ -63,9 +63,15 @@ export class Interactor {
     return 'nichts';
   }
 
-  /** Alle Angebote der Entity unter dem Zeiger. */
+  /** Angebote der Entity unter dem Zeiger – pro Taste nur das mit der höchsten Priorität. */
   options(): InteractionOption[] {
-    return this.hovered ? this.interactables(this.hovered).flatMap((c) => c.options(this)) : [];
+    if (!this.hovered) return [];
+    const best = new Map<string, InteractionOption>();
+    for (const o of this.interactables(this.hovered).flatMap((c) => c.options(this))) {
+      const current = best.get(o.aktion);
+      if (!current || (o.prioritaet ?? 0) > (current.prioritaet ?? 0)) best.set(o.aktion, o);
+    }
+    return [...best.values()];
   }
 
   private interactables(entity: Entity): InteractableComponent[] {

@@ -4,6 +4,7 @@
   "kategorie": "molkerei_eier",
   "ek": 0.7,
   "vk": 1.19,
+  "gebinde": 12,
   "preisOffen": true,
   "frisch": true,
   "freischaltLevel": 1,

@@ -14,6 +14,8 @@ export interface InteractionOption {
   text: string;
   /** Wird ausgeführt, wenn der Spieler die Aktion auslöst. */
   run(by: Interactor): void;
+  /** Liegen mehrere Angebote auf derselben Taste, gilt nur das mit der höchsten Priorität (Standard 0). */
+  prioritaet?: number;
 }
 
 export abstract class InteractableComponent extends Component {

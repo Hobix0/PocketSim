@@ -4,6 +4,7 @@ import type { PlayerState } from '../state/PlayerState';
 import type { GameClock } from '../state/GameClock';
 import { Toasts } from './Toasts';
 import { esc } from './html';
+import { formatMoney } from './format';
 
 // HUD: Top-Bar (Geld, Level, Zeit, Tempo) und Steuerungshinweise unten.
 // Alles wird nur bei Ereignissen neu geschrieben, nicht jeden Frame.
@@ -120,8 +121,4 @@ export class Hud {
     ];
     this.helpEl.innerHTML = hints.map((h) => `<span class="hint">${h}</span>`).join('');
   }
-}
-
-export function formatMoney(n: number): string {
-  return n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }

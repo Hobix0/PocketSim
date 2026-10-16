@@ -19,52 +19,62 @@
     "obst_gemuese": {
       "ek": 0.9,
       "vk": 1.49,
-      "frisch": true
+      "frisch": true,
+      "gebinde": 10
     },
     "backwaren": {
       "ek": 0.8,
       "vk": 1.39,
-      "frisch": true
+      "frisch": true,
+      "gebinde": 10
     },
     "molkerei_eier": {
       "ek": 0.7,
       "vk": 1.19,
-      "frisch": true
+      "frisch": true,
+      "gebinde": 12
     },
     "fleisch_wurst": {
       "ek": 2.5,
       "vk": 3.99,
-      "frisch": true
+      "frisch": true,
+      "gebinde": 8
     },
     "tiefkuehl": {
       "ek": 1.6,
       "vk": 2.69,
-      "frisch": true
+      "frisch": true,
+      "gebinde": 8
     },
     "getraenke": {
       "ek": 0.6,
       "vk": 1.19,
-      "frisch": false
+      "frisch": false,
+      "gebinde": 12
     },
     "grundnahrung": {
       "ek": 0.8,
       "vk": 1.29,
-      "frisch": false
+      "frisch": false,
+      "gebinde": 12
     },
     "suesswaren_snacks": {
       "ek": 0.8,
       "vk": 1.69,
-      "frisch": false
+      "frisch": false,
+      "gebinde": 20
     },
     "haushalt_reinigung": {
       "ek": 1.2,
       "vk": 2.29,
-      "frisch": false
+      "frisch": false,
+      "gebinde": 8
     },
     "drogerie_koerperpflege": {
       "ek": 1.1,
       "vk": 2.19,
-      "frisch": false
+      "frisch": false,
+      "gebinde": 10
     }
   },
   "bauStandard": {
@@ -146,7 +156,10 @@
     "europalette": {
       "preis": 15,
       "werte": {
-        "lagerplaetze": 1
+        "lagerplaetze": 12
+      },
+      "ablage": {
+        "ebenen": 2
       }
     },
     "pendelleuchte": {

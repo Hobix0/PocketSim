@@ -4,6 +4,7 @@
   "kategorie": "obst_gemuese",
   "ek": 0.9,
   "vk": 1.49,
+  "gebinde": 10,
   "preisOffen": true,
   "frisch": true,
   "freischaltLevel": 1,

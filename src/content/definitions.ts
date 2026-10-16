@@ -1,4 +1,4 @@
-import { asObject, bool, num, numberMap, optStr, str, vec3 } from './validate';
+import { asObject, bool, num, numberMap, optStr, str, strList, vec3 } from './validate';
 
 // Datenformate der Inhalte und ihre Prüfung.
 // Ein neues Feld kommt hier dazu – Logik, die das Feld nicht kennt, bleibt unberührt.
@@ -16,6 +16,8 @@ export interface ProductDef {
   kategorie: string;
   ek: number;
   vk: number;
+  /** Stück pro Karton beim Einkauf. */
+  gebinde: number;
   frisch: boolean;
   freischaltLevel: number;
   /** true, solange EK/VK nur Startwerte je Kategorie sind (siehe scripts/import-3d.config.json). */
@@ -40,6 +42,10 @@ export interface BuildDef {
   kategorie: string;
   /** Interaktions-Kontext (data/interaktion/kontexte.json). Ohne Kontext ist das Element nicht anklickbar. */
   kontext?: string;
+  /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
+  funktionen: string[];
+  /** Ablagefläche für Kartons (z. B. Europalette): Anzahl Ebenen übereinander. */
+  ablage?: { ebenen: number };
   preis: number;
   freischaltLevel: number;
   werte: Record<string, number>;
@@ -51,6 +57,11 @@ export interface BuildDef {
 /** Ein Interaktions-Kontext, z. B. "Regal" (data/interaktion/kontexte.json). */
 export interface ContextInfo {
   name: string;
+}
+
+/** Einstellungen für Kartons (data/lager/standard.json). */
+export interface StorageSettings {
+  karton: { groesse: [number, number, number]; farbe: string };
 }
 
 /** Anzeigename und Einheit eines Werts (data/werte/standard.json). */
@@ -72,6 +83,7 @@ export function validateProduct(raw: unknown, where: string): ProductDef {
     kategorie: str(o, 'kategorie', where),
     ek: num(o, 'ek', where, 0),
     vk: num(o, 'vk', where, 0),
+    gebinde: num(o, 'gebinde', where, 1),
     frisch: bool(o, 'frisch', where),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     preisOffen: o.preisOffen === undefined ? false : bool(o, 'preisOffen', where),
@@ -89,6 +101,8 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     name: str(o, 'name', where),
     kategorie: str(o, 'kategorie', where),
     kontext: optStr(o, 'kontext', where),
+    funktionen: strList(o, 'funktionen', where),
+    ablage: o.ablage === undefined ? undefined : { ebenen: num(asObject(o.ablage, `${where} → ablage`), 'ebenen', `${where} → ablage`, 1) },
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),

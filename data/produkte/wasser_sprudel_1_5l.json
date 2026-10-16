@@ -4,6 +4,7 @@
   "kategorie": "getraenke",
   "ek": 0.6,
   "vk": 1.19,
+  "gebinde": 12,
   "preisOffen": true,
   "frisch": false,
   "freischaltLevel": 1,

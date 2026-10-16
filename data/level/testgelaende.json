@@ -58,6 +58,7 @@
     {"typ": "schwerlastregal_mit_boeden", "position": [0.7, 0.14, -7.7], "drehung": 0},
     {"typ": "europalette", "position": [3.4, 0.14, -6.4], "drehung": 0, "wiederholen": {"anzahl": [2, 1], "abstand": [1.6, 0]}},
     {"typ": "europalette", "position": [3.4, 0.14, -8.1], "drehung": 90},
+    {"typ": "einkaufsterminal", "position": [7.2, 0.14, -8.4], "drehung": 180},
     {"typ": "pallisade_1", "position": [8.2, 0, -6.2], "drehung": 0, "wiederholen": {"anzahl": [1, 2], "abstand": [0, -2]}},
     {"typ": "pallisade_1", "position": [1, 0, -9.3], "drehung": 90, "wiederholen": {"anzahl": [4, 1], "abstand": [2, 0]}}
   ]

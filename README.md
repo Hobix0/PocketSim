@@ -49,6 +49,15 @@ Das Spiel wird von **schräg oben** in einer **Management-Ansicht** gespielt, ni
 
 Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`), bis die echte Preisliste da ist.
 
+**Meilenstein 5 – Einkaufsterminal und Produkte** ✅
+
+- Einkaufsterminal im Lagerhof (`data/bau/einkaufsterminal.json`, Funktion `"einkauf"`): Klick öffnet den Großhandel
+- Großhandel-Fenster: alle Produkte aus `data/produkte`, nach Warenkategorie in Tabs, mit Icon, EK, VK und Kartonpreis; gesperrte Produkte zeigen „ab Level …“
+- Gekauft wird kartonweise (`"gebinde"` = Stück pro Karton). Bezahlt wird der EK sofort, die Ware steht als **Kartons auf den Europaletten** (je 12 Plätze)
+- Geprüft wird vor dem Bezahlen: Auswahl leer, Produkt gesperrt, **zu wenig Lagerplatz**, zu wenig Geld – ein Fehler ändert nichts
+- Kartons sind Entities: anklicken zeigt Produkt, Stückzahl, Einkaufs- und Verkaufswert; oben drauf steht eine Packung des Produkts
+- Pro Taste gilt nur das wichtigste Angebot (`prioritaet`): Klick aufs Terminal öffnet den Einkauf statt es auszuwählen
+
 
 
 ## Starten
@@ -133,6 +142,7 @@ data/                   Werte und Inhalte (JSON), werden automatisch eingelesen
   produkte/             Produkte, eine Datei pro Produkt
   sortiment/            Warenkategorien
   werte/                Namen und Einheiten der Bauteil-Werte (Strom, Regalplätze …)
+  lager/                Kartonmaße und -farbe
   interaktion/          Kontexte (Regal, Kasse …)
   texte/                Anzeigetexte mit Platzhaltern, z. B. "Level {level} erreicht"
   spieler/              Startwerte (Geld, XP) und XP-Grenzen der Level
@@ -148,6 +158,7 @@ src/
   core/Emitter.ts       Ereignisse senden und abonnieren
   interaction/          Interactor, InteractableComponent, Auswahl, Hervorhebung
   state/                Spielzustand ohne Darstellung: PlayerState, GameClock
+  economy/              Purchasing (Einkauf beim Großhandel)
   ecs/                  Entity, Component, World
   components/           wiederverwendbare Komponenten (Modell, Werte …)
   content/              Datenformate, Prüfung, Registry, Content
@@ -155,7 +166,7 @@ src/
   assets/               ModelLibrary (lädt FBX, Palette, Glas), LabelMaterial (Etiketten)
   input/                InputMap (Aktionen statt fester Tasten), Pointer (Mauszeiger)
   camera/               Management-Kamera
-  world/                Level-Kulisse, Feld unter der Maus
+  world/                Level-Kulisse, Feld unter der Maus, CartonStorage (Lager aus allen Ablageflächen)
   ui/                   HUD (Top-Bar), Toasts, Hinweis am Zeiger, Info-Fenster, Debug-Anzeige, UI-Kit (style.css)
 scripts/                import-3d.mjs und seine Konfiguration
 tests/                  automatische Tests
@@ -236,13 +247,28 @@ flowchart LR
   C -->|Spielzeit| W[World.update]
 ```
 
+### Einkauf
+
+```mermaid
+flowchart LR
+  T[TerminalComponent] -->|Klick| F[PurchaseWindow]
+  F -->|order| P[Purchasing]
+  P -->|1. gesperrt?| C[(data/produkte)]
+  P -->|2. Platz?| L[CartonStorage]
+  P -->|3. spend EK| S[PlayerState]
+  P -->|4. deliver| L
+  L -->|Karton-Entity| A[StorageSurfaceComponent<br>Europalette]
+```
+
+Ein Bauelement wird zur Lagerfläche mit `"ablage": { "ebenen": 2 }`; die Plätze ergeben sich aus Grundfläche und Kartonmaß (`data/lager/standard.json`).
+
 ### Datenformate
 
 Produkt (`data/produkte/<id>.json`, Dateiname = id):
 
 ```json
 { "id": "cola_0_5l", "name": "Cola 0,5 L", "kategorie": "getraenke",
-  "ek": 0.6, "vk": 1.19, "preisOffen": true, "frisch": false, "freischaltLevel": 1,
+  "ek": 0.6, "vk": 1.19, "gebinde": 12, "preisOffen": true, "frisch": false, "freischaltLevel": 1,
   "model": "3d/Produkte/06_Getraenke/SM_Cola_0_5L.fbx", "icon": "3d/Icons_Produkte/T_Icon_Cola_0_5L.png",
   "groesse": [0.06, 0.189, 0.06] }
 ```
@@ -256,7 +282,7 @@ Bauelement (`data/bau/<id>.json`):
   "platzhalter": { "groesse": [0.6, 2, 2], "farbe": "#b9c0c6" } }
 ```
 
-`kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` verweisen auf Dateien unter `data/`. `platzhalter.groesse` sind die Maße des Modells (Breite, Höhe, Tiefe in Metern); der Quader erscheint, bis das Modell geladen ist. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
+`funktionen` schaltet besondere Fähigkeiten ein (z. B. `"einkauf"`), `ablage` macht es zur Lagerfläche für Kartons. `kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` verweisen auf Dateien unter `data/`. `platzhalter.groesse` sind die Maße des Modells (Breite, Höhe, Tiefe in Metern); der Quader erscheint, bis das Modell geladen ist. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
 
 Regeln, die überall gelten:
 
@@ -270,7 +296,7 @@ Regeln, die überall gelten:
 2. ~~Entity-/Komponenten-System und Daten-Registry~~
 3. ~~Interaktion: Objekte unter der Maus erkennen, hervorheben, anklicken; Kontext-Hinweise~~
 4. ~~Stats und HUD (Geld, Level, Zeit) mit Events~~
-5. Einkaufsterminal und Produkte
+5. ~~Einkaufsterminal und Produkte~~
 6. Regal-Slots inklusive Anlegen per Klick (Anker → A → B) und Einräumen
 7. Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben
 8. Speichern/Laden mit 3 Slots, Haupt- und Pausemenü

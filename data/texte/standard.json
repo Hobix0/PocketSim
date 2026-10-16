@@ -3,5 +3,17 @@
   "auswahl_aufheben": "Auswahl aufheben",
   "level_erreicht": "Level {level} erreicht",
   "neuer_tag": "Tag {tag} beginnt",
-  "nicht_genug_geld": "Nicht genug Geld"
+  "einkaufen": "Einkaufen",
+  "einkauf_titel": "Großhandel",
+  "einkauf_hinweis": "Ware wird in Kartons geliefert und auf freie Lagerplätze (Paletten) gestellt.",
+  "einkauf_bestellen": "Bestellen",
+  "einkauf_summe": "Summe",
+  "einkauf_platz": "Freie Lagerplätze",
+  "einkauf_gesperrt": "ab Level {level}",
+  "einkauf_geliefert": "{kartons} Kartons geliefert",
+  "einkauf_fehler_leer": "Noch nichts ausgewählt",
+  "einkauf_fehler_gesperrt": "{produkt} ist erst ab Level {level} verfügbar",
+  "einkauf_fehler_platz": "Zu wenig Lagerplatz: {frei} frei, {noetig} nötig",
+  "einkauf_fehler_geld": "Nicht genug Geld",
+  "schliessen": "Schließen"
 }

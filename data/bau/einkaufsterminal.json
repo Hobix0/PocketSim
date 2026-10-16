@@ -1,0 +1,11 @@
+{
+  "id": "einkaufsterminal",
+  "name": "Einkaufsterminal",
+  "kategorie": "einrichtung",
+  "kontext": "terminal",
+  "funktionen": ["einkauf"],
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {"strom": 0.1},
+  "platzhalter": {"groesse": [0.6, 1.25, 0.5], "farbe": "#38434c"}
+}

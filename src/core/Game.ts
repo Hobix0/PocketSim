@@ -14,10 +14,14 @@ import { Selection } from '../interaction/Selection';
 import { Interactor } from '../interaction/Interactor';
 import { PlayerState, type LevelTable, type PlayerStart } from '../state/PlayerState';
 import { GameClock, type ClockSettings } from '../state/GameClock';
+import { Purchasing } from '../economy/Purchasing';
+import { CartonStorage } from '../world/CartonStorage';
+import type { FactoryContext } from '../factory/FactoryContext';
 import { Hud } from '../ui/Hud';
 import { DebugPanel } from '../ui/DebugPanel';
 import { ContextHint } from '../ui/ContextHint';
 import { InfoPanel } from '../ui/InfoPanel';
+import { PurchaseWindow } from '../ui/PurchaseWindow';
 
 // Zentrale Spielklasse: Renderer, Szene, Spielschleife.
 // Sie verbindet die Systeme, enthält aber selbst keine Spiellogik.
@@ -42,6 +46,11 @@ export class Game {
   readonly debug: DebugPanel;
   readonly contextHint: ContextHint;
   readonly info: InfoPanel;
+  /** Was die Fabriken zum Bauen von Entities brauchen. */
+  readonly factory: FactoryContext;
+  readonly storage: CartonStorage;
+  readonly purchasing: Purchasing;
+  readonly purchaseWindow: PurchaseWindow;
 
   private readonly timer = new THREE.Timer();
   private readonly sun: THREE.DirectionalLight;
@@ -110,11 +119,17 @@ export class Game {
     this.contextHint = new ContextHint(this.interactor, this.input, this.pointer, this.content);
     this.info = new InfoPanel(this.selection, this.input, this.content);
 
+    // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
+    this.factory = { content: this.content, models: this.models, actions: { openPurchase: () => this.purchaseWindow.open() } };
+    this.storage = new CartonStorage(this.world, this.factory);
+    this.purchasing = new Purchasing(this.content.produkte, this.player, this.storage);
+    this.purchaseWindow = new PurchaseWindow(this.hud.root, this.content, this.purchasing, this.player, this.world, this.hud.toasts);
+
     // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
     for (const o of expandObjects(this.level.data.objekte)) {
       const entity = o.produkt !== undefined
-        ? createProductEntity(this.content.produkte.get(o.produkt), o, this.models)
-        : createBuildEntity(this.content.bau.get(o.typ ?? ''), o, this.content, this.models);
+        ? createProductEntity(this.content.produkte.get(o.produkt), o, this.factory)
+        : createBuildEntity(this.content.bau.get(o.typ ?? ''), o, this.factory);
       this.world.add(entity);
     }
 
@@ -147,11 +162,12 @@ export class Game {
     this.input.endFrame();
   }
 
-  /** Tasten, die überall gelten (Zeit, Debug). */
+  /** Tasten, die überall gelten (Zeit, Debug, Fenster schließen). */
   private handleGlobalKeys(): void {
     const i = this.input;
     if (i.wasPressed('debug_anzeige')) this.debug.toggle();
     if (i.wasPressed('zeit_anhalten')) this.clock.togglePause();
+    if (i.wasPressed('pause') && this.purchaseWindow.isOpen) this.purchaseWindow.close();
     for (let s = 1; s <= this.clock.stufen; s++) if (i.wasPressed(`zeit_stufe_${s}`)) this.clock.setStufe(s);
   }
 
