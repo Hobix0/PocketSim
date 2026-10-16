@@ -8,5 +8,6 @@
   "kamera_ziehen_schieben": ["Mouse1"],
   "kamera_ziehen_drehen": ["Mouse2"],
   "auswaehlen": ["Mouse0"],
-  "pause": ["Escape"]
+  "pause": ["Escape"],
+  "debug_anzeige": ["F3"]
 }

@@ -1,0 +1,9 @@
+{
+  "id": "kuehlregal",
+  "name": "Kühlregal",
+  "kategorie": "einrichtung",
+  "preis": 450,
+  "freischaltLevel": 2,
+  "platzhalter": { "groesse": [3, 2.1, 0.8], "farbe": "#cfe0e6" },
+  "werte": { "slots": 3, "strom": 0.8 }
+}

@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import type { Bounds } from '../camera/ManagementCamera';
 
-// Baut ein Testgelände aus einer Level-Datei (data/level/*.json).
+// Baut die feste Kulisse eines Levels aus seiner Datei (data/level/*.json).
 // Bis die Blender-Modelle angebunden sind, besteht alles aus einfachen Quadern.
+// Die Objekte unter "objekte" setzt Game als Entities in die Welt.
 
 export interface BlockData {
   name: string;
@@ -12,13 +13,21 @@ export interface BlockData {
   rotation?: [number, number, number]; // Grad
 }
 
+/** Ein Objekt aus einem Datenkatalog, das beim Laden des Levels platziert wird. */
+export interface LevelObject {
+  typ: string;                          // id in data/bau
+  position: [number, number, number];
+  drehung: number;                      // Grad um die Hochachse
+}
+
 export interface LevelData {
   name: string;
   himmel: string;
   raster: number;
   boden: { groesse: [number, number]; farbe: string };
   kameraStart: [number, number, number];
-  bloecke: BlockData[];
+  bloecke: BlockData[];                 // feste Kulisse (Wände, Straße …)
+  objekte: LevelObject[];               // Entities aus dem Bau-Katalog
 }
 
 export class Level {

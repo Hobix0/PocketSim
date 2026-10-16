@@ -45,6 +45,7 @@ export class Hud {
       `<span class="key">Mausrad</span> zoomen`,
       `${k('kamera_ziehen_schieben')} ziehen: schieben`,
       `${k('kamera_ziehen_drehen')} ziehen: drehen`,
+      `${k('debug_anzeige')} Debug-Anzeige`,
     ];
     this.helpEl.innerHTML = hints.map((h) => `<span class="hint">${h}</span>`).join('');
   }
