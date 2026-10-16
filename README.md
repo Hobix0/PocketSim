@@ -29,6 +29,15 @@ Das Spiel wird von **schräg oben** in einer **Management-Ansicht** gespielt, ni
 - Kontext unter dem Zeiger (`getContext()`, z. B. `regal`, `kasse`, `nichts`) und Hinweis am Zeiger wie „[Linksklick] Auswählen“, die Taste kommt live aus der Belegung
 - Auswahl per Klick, Info-Fenster mit Zeilen aus den Komponenten, Abwählen per Klick ins Leere oder `Esc`
 
+**Meilenstein 4 – Stats und HUD** ✅
+
+- `PlayerState` (`src/state/`): Geld, XP und Level, getrennt von jeder Darstellung (Koop-Vorbereitung). Ausgaben, die das Konto übersteigen, werden abgelehnt; Beträge werden auf Cent gerundet.
+- `GameClock`: Tag, Uhrzeit, Pause und drei Tempostufen. Die Simulation läuft im Spieltempo, die Kamera in Echtzeit.
+- Top-Bar mit Kontostand (inklusive kurzer +/− Anzeige), Level mit XP-Balken, Wochentag/Tag/Uhrzeit und Tempo-Knöpfen
+- Alles wird über Ereignisse aktualisiert (`changed`, `transaction`, `levelUp`, `minute`, `newDay`, `speedChanged`), nicht jeden Frame
+- Meldungen (Toasts) für Level-Aufstieg und neuen Tag
+- Debug-Anzeige mit Testknöpfen für Geld und XP
+
 Die Produkte in `data/produkte/` sind **Beispiele**, bis die CSV mit den 50 Produkten eingespielt ist.
 
 ## Starten
@@ -58,6 +67,8 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Kamera schwenken | `W` `A` `S` `D` oder Pfeiltasten, mittlere Maustaste ziehen |
 | Kamera drehen | `Q` / `E`, rechte Maustaste ziehen |
 | Zoomen | Mausrad |
+| Zeit anhalten / weiter | `Leertaste` |
+| Tempo 1 / 2 / 3 | `1` `2` `3` |
 | Objekt auswählen | Linksklick |
 | Auswahl aufheben | Klick ins Leere oder `Esc` |
 | Debug-Anzeige an/aus | `F3` |
@@ -72,7 +83,10 @@ data/                   Werte und Inhalte (JSON), werden automatisch eingelesen
   produkte/             Produkte, eine Datei pro Produkt
   sortiment/            Warenkategorien
   werte/                Namen und Einheiten der Bauteil-Werte (Strom, Regalplätze …)
-  interaktion/          Kontexte (Regal, Kasse …) und Hinweistexte
+  interaktion/          Kontexte (Regal, Kasse …)
+  texte/                Anzeigetexte mit Platzhaltern, z. B. "Level {level} erreicht"
+  spieler/              Startwerte (Geld, XP) und XP-Grenzen der Level
+  zeit/                 Startzeit, Minuten pro Sekunde, Tempostufen, Wochentage
   eingabe/              Tastenbelegung (Aktion → Tasten)
   kamera/               Kamerawerte
   level/                Level-Dateien: feste Kulisse und platzierte Objekte
@@ -82,6 +96,7 @@ src/
   core/Data.ts          liest Dateien und ganze Ordner aus data/
   core/Emitter.ts       Ereignisse senden und abonnieren
   interaction/          Interactor, InteractableComponent, Auswahl, Hervorhebung
+  state/                Spielzustand ohne Darstellung: PlayerState, GameClock
   ecs/                  Entity, Component, World
   components/           wiederverwendbare Komponenten (Modell, Werte …)
   content/              Datenformate, Prüfung, Registry, Content
@@ -89,7 +104,7 @@ src/
   input/                InputMap (Aktionen statt fester Tasten), Pointer (Mauszeiger)
   camera/               Management-Kamera
   world/                Level-Kulisse, Feld unter der Maus
-  ui/                   HUD, Hinweis am Zeiger, Info-Fenster, Debug-Anzeige, UI-Kit-Tokens (style.css)
+  ui/                   HUD (Top-Bar), Toasts, Hinweis am Zeiger, Info-Fenster, Debug-Anzeige, UI-Kit (style.css)
 tests/                  automatische Tests
 ```
 
@@ -152,6 +167,22 @@ class EinraeumenComponent extends InteractableComponent {
 
 Komponenten, die `describe()` haben, liefern automatisch Zeilen fürs Info-Fenster.
 
+### Spielzustand und HUD
+
+```mermaid
+flowchart LR
+  subgraph Zustand["Spielzustand (ohne three.js)"]
+    P[PlayerState<br>Geld · XP · Level]
+    C[GameClock<br>Tag · Uhrzeit · Tempo]
+  end
+  X[Kasse, Terminal …<br>später] -->|earn / spend / addXp| P
+  P -->|changed · transaction · levelUp| H[HUD Top-Bar]
+  C -->|minute · newDay · speedChanged| H
+  H -->|Toasts| T[Meldungen]
+  G[Game.tick] -->|echte Zeit| C
+  C -->|Spielzeit| W[World.update]
+```
+
 ### Datenformate
 
 Produkt (`data/produkte/<id>.json`, Dateiname = id):
@@ -182,7 +213,7 @@ Regeln, die überall gelten:
 1. ~~Grundgerüst mit Management-Kamera~~
 2. ~~Entity-/Komponenten-System und Daten-Registry~~
 3. ~~Interaktion: Objekte unter der Maus erkennen, hervorheben, anklicken; Kontext-Hinweise~~
-4. Stats und HUD (Geld, Level, Zeit) mit Events
+4. ~~Stats und HUD (Geld, Level, Zeit) mit Events~~
 5. Einkaufsterminal und Produkte
 6. Regal-Slots inklusive Anlegen per Klick (Anker → A → B) und Einräumen
 7. Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben

@@ -10,6 +10,8 @@ import { World } from '../ecs/World';
 import { createBuildEntity } from '../factory/createBuildEntity';
 import { Selection } from '../interaction/Selection';
 import { Interactor } from '../interaction/Interactor';
+import { PlayerState, type LevelTable, type PlayerStart } from '../state/PlayerState';
+import { GameClock, type ClockSettings } from '../state/GameClock';
 import { Hud } from '../ui/Hud';
 import { DebugPanel } from '../ui/DebugPanel';
 import { ContextHint } from '../ui/ContextHint';
@@ -30,6 +32,9 @@ export class Game {
   readonly cursor: GridCursor;
   readonly selection = new Selection();
   readonly interactor: Interactor;
+  /** Spielerwerte (Geld, XP, Level) – getrennt von jeder Darstellung. */
+  readonly player: PlayerState;
+  readonly clock: GameClock;
   readonly hud: Hud;
   readonly debug: DebugPanel;
   readonly contextHint: ContextHint;
@@ -41,6 +46,10 @@ export class Game {
   constructor(container: HTMLElement, levelId: string) {
     // Inhalte zuerst: Fehler in den Daten sollen sofort auffallen
     this.content = new Content();
+
+    // Spielzustand ohne Darstellung (Koop-tauglich)
+    this.player = new PlayerState('lokal', readData<PlayerStart>('spieler/start'), readData<LevelTable>('spieler/level'));
+    this.clock = new GameClock(readData<ClockSettings>('zeit/standard'));
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5fd08a';
 
     // Renderer
@@ -93,8 +102,8 @@ export class Game {
     this.interactor = new Interactor(this.world, this.input, this.pointer, this.selection, accent);
 
     // Oberfläche
-    this.hud = new Hud(this.input, this.level.data.name);
-    this.debug = new DebugPanel(this.content, this.world);
+    this.hud = new Hud(this.input, this.content, this.player, this.clock, this.level.data.name);
+    this.debug = new DebugPanel(this.hud.root, this.content, this.world, this.player);
     this.contextHint = new ContextHint(this.interactor, this.input, this.pointer, this.content);
     this.info = new InfoPanel(this.selection, this.input, this.content);
 
@@ -113,20 +122,31 @@ export class Game {
 
   private tick(time: number): void {
     this.timer.update(time);
-    // Lange Pausen (Tab im Hintergrund) nicht als einen Riesenschritt rechnen
-    const dt = Math.min(this.timer.getDelta(), 0.1);
-    if (this.input.wasPressed('debug_anzeige')) this.debug.toggle();
+    // Echte Zeit seit dem letzten Bild. Höchstens 1 s, damit ein Tab im Hintergrund
+    // keinen Riesensprung erzeugt – aber auch auf langsamen Rechnern geht keine Spielzeit verloren.
+    const realDt = Math.min(this.timer.getDelta(), 1);
+    this.handleGlobalKeys();
 
-    this.view.update(dt);
-    this.world.update(dt);
+    // Kamera in Echtzeit (gegen Ruckeln enger begrenzt), Simulation im Spieltempo (steht in der Pause)
+    this.view.update(Math.min(realDt, 0.1));
+    const simDt = this.clock.update(realDt);
+    this.world.update(simDt);
     this.interactor.update(this.view.camera);
     // Über einem Objekt zeigt der Hinweis am Zeiger, worum es geht – dann keine Feld-Markierung
     this.cursor.update(this.view.camera, this.level.bounds, this.interactor.hovered !== null);
-    this.hud.showCell(this.cursor.cell);
+    this.debug.showCell(this.cursor.cell);
     this.contextHint.update();
 
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
+  }
+
+  /** Tasten, die überall gelten (Zeit, Debug). */
+  private handleGlobalKeys(): void {
+    const i = this.input;
+    if (i.wasPressed('debug_anzeige')) this.debug.toggle();
+    if (i.wasPressed('zeit_anhalten')) this.clock.togglePause();
+    for (let s = 1; s <= this.clock.stufen; s++) if (i.wasPressed(`zeit_stufe_${s}`)) this.clock.setStufe(s);
   }
 
   private resize(): void {

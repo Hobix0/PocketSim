@@ -1,17 +1,51 @@
 import type { Content } from '../content/Content';
 import type { World } from '../ecs/World';
+import type { PlayerState } from '../state/PlayerState';
+import type { Cell } from '../world/GridCursor';
 import { formatValue, sumValues } from '../components/ValuesComponent';
 
-// Entwickler-Anzeige: was aus den Daten geladen wurde und was in der Welt steht.
-// Aktualisiert sich über die Ereignisse der Welt, nicht jeden Frame.
+// Entwickler-Anzeige: was aus den Daten geladen wurde, was in der Welt steht,
+// das Feld unter der Maus – und Testknöpfe für Geld und XP, solange es noch
+// kein Gameplay gibt, das beides verdient.
 
 export class DebugPanel {
   private readonly el: HTMLElement;
+  private readonly body: HTMLElement;
+  private readonly cellEl: HTMLElement;
+  private lastCell = '';
 
-  constructor(private readonly content: Content, private readonly world: World) {
+  constructor(
+    parent: HTMLElement,
+    private readonly content: Content,
+    private readonly world: World,
+    player: PlayerState,
+  ) {
     this.el = document.createElement('div');
     this.el.className = 'debug panel';
-    document.querySelector('.hud')!.append(this.el);
+    this.el.innerHTML = `
+      <div class="debug-body"></div>
+      <h4>Zeiger</h4>
+      <div class="row"><span>Feld</span><b class="cell">–</b></div>
+      <h4>Testen</h4>
+      <div class="buttons">
+        <button type="button" data-geld="100">+100 €</button>
+        <button type="button" data-geld="-100">−100 €</button>
+        <button type="button" data-xp="50">+50 XP</button>
+      </div>`;
+    parent.append(this.el);
+    this.body = this.el.querySelector('.debug-body')!;
+    this.cellEl = this.el.querySelector('.cell')!;
+
+    this.el.querySelector('.buttons')!.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b) return;
+      b.blur();
+      const geld = Number(b.dataset.geld ?? 0);
+      if (geld > 0) player.earn(geld, 'debug');
+      if (geld < 0) player.spend(-geld, 'debug');
+      if (b.dataset.xp) player.addXp(Number(b.dataset.xp));
+    });
+
     world.events.on('added', () => this.render());
     world.events.on('removed', () => this.render());
     this.render();
@@ -19,6 +53,14 @@ export class DebugPanel {
 
   toggle(): void {
     this.el.hidden = !this.el.hidden;
+  }
+
+  /** Feld unter der Maus anzeigen (nur bei Änderung ins DOM schreiben). */
+  showCell(cell: Cell | null): void {
+    const text = cell ? `${Math.floor(cell.x)} | ${Math.floor(cell.z)}` : '–';
+    if (text === this.lastCell) return;
+    this.lastCell = text;
+    this.cellEl.textContent = text;
   }
 
   private render(): void {
@@ -38,7 +80,7 @@ export class DebugPanel {
       })
       .join('');
 
-    this.el.innerHTML = `
+    this.body.innerHTML = `
       <h4>Daten geladen</h4>
       ${row('Warenkategorien', String(c.kategorien.size))}
       ${row('Produkte', String(c.produkte.size))}

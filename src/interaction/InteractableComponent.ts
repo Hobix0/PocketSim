@@ -10,7 +10,7 @@ import type { Interactor } from './Interactor';
 export interface InteractionOption {
   /** Eingabe-Aktion, die das Angebot auslöst (aus data/eingabe). */
   aktion: string;
-  /** Schlüssel für den Hinweistext (aus data/interaktion/texte.json). */
+  /** Schlüssel für den Hinweistext (aus data/texte/standard.json). */
   text: string;
   /** Wird ausgeführt, wenn der Spieler die Aktion auslöst. */
   run(by: Interactor): void;

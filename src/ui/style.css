@@ -8,7 +8,10 @@
   --text-dim: #9aa7b1;
   --accent: #5fd08a;
   --accent-ink: #0f2a1a;
+  --danger: #f08a7a;
   --key-bg: #2b353e;
+  --button-bg: #2b353e;
+  --button-hover: #36424c;
   --radius: 8px;
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme: dark;
@@ -35,12 +38,36 @@ html, body {
   touch-action: none;
 }
 
-/* ── HUD ── */
+[hidden] {
+  display: none !important;
+}
+
+/* ── HUD-Raster: Top-Bar oben, Fenster darunter, Hinweise unten ── */
 .hud {
   position: fixed;
   inset: 0;
   pointer-events: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  grid-template-areas:
+    "top    top    top"
+    "debug  toasts info"
+    ".      .      ."
+    "help   help   help";
+  gap: 10px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
 }
+
+@media (max-width: 720px) {
+  .hud {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr auto;
+    grid-template-areas: "top" "toasts" "info" "debug" "." "help";
+  }
+}
+
+/* ── Bausteine ── */
 
 .panel {
   background: var(--panel);
@@ -49,49 +76,31 @@ html, body {
   backdrop-filter: blur(6px);
 }
 
-.hud-top {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  left: 12px;
-  padding: 8px 12px;
-  display: flex;
-  gap: 14px;
-  align-items: baseline;
+.hud button {
+  pointer-events: auto;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--button-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
 }
 
-.hud-top .title {
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.hud button:hover {
+  background: var(--button-hover);
 }
 
-.hud-top .title b {
-  color: var(--accent);
-  font-weight: 600;
+.hud button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
-.hud-top .cell {
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-  min-width: 9ch;
-}
-
-.hud-help {
-  position: absolute;
-  left: 50%;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  max-width: calc(100% - 24px);
-  padding: 8px 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  justify-content: center;
-  color: var(--text-dim);
-  font-size: 13px;
-}
-
-.hint {
-  white-space: nowrap;
+.hud button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .key {
@@ -107,19 +116,164 @@ html, body {
   text-align: center;
 }
 
+.hint {
+  white-space: nowrap;
+}
+
+/* ── Top-Bar ── */
+.topbar {
+  grid-area: top;
+  justify-self: start;
+  max-width: 100%;
+  padding: 8px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  align-items: center;
+}
+
+.topbar .title {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: grid;
+  line-height: 1.15;
+}
+
+.topbar .title b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.topbar .title small,
+.topbar .label,
+.topbar .xp {
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+.topbar .stat {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 8px;
+  align-items: baseline;
+  line-height: 1.2;
+}
+
+.topbar .stat .label {
+  grid-column: 1 / -1;
+  text-transform: uppercase;
+}
+
+.topbar .stat b {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.topbar .meter {
+  align-self: center;
+  width: 70px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--key-bg);
+  overflow: hidden;
+}
+
+.topbar .meter .fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.topbar .level .xp {
+  grid-column: 1 / -1;
+  font-variant-numeric: tabular-nums;
+}
+
+.topbar .delta {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.topbar .delta.show { opacity: 1; }
+.topbar .delta.plus { color: var(--accent); }
+.topbar .delta.minus { color: var(--danger); }
+
+.topbar .speed {
+  display: flex;
+  gap: 4px;
+}
+
+.topbar .speed button {
+  min-width: 34px;
+  letter-spacing: -0.1em;
+}
+
+/* ── Toasts ── */
+.toasts {
+  grid-area: toasts;
+  align-self: start;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.toast {
+  padding: 8px 14px;
+  font-size: 13px;
+  animation: toast-in 0.25s ease;
+  transition: opacity 0.3s;
+}
+
+.toast.gut { border-color: var(--accent); color: var(--accent); }
+.toast.warnung { border-color: var(--danger); color: var(--danger); }
+.toast.weg { opacity: 0; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+
+/* ── Hinweise unten ── */
+.hud-help {
+  grid-area: help;
+  justify-self: center;
+  max-width: 100%;
+  padding: 8px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
 /* ── Debug-Anzeige ── */
 .debug {
-  position: absolute;
-  top: calc(64px + env(safe-area-inset-top, 0px));
-  left: 12px;
-  width: min(280px, calc(100% - 24px));
+  grid-area: debug;
+  align-self: start;
+  justify-self: start;
+  width: min(260px, 100%);
+  box-sizing: border-box;
+  pointer-events: auto;
   padding: 10px 12px;
   font-size: 12.5px;
   color: var(--text-dim);
 }
 
 .debug h4 {
-  margin: 0 0 6px;
+  margin: 10px 0 6px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -127,8 +281,8 @@ html, body {
   color: var(--accent);
 }
 
-.debug h4:not(:first-child) {
-  margin-top: 10px;
+.debug > :first-child h4:first-child {
+  margin-top: 0;
 }
 
 .debug .row {
@@ -141,6 +295,12 @@ html, body {
   color: var(--text);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+}
+
+.debug .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* ── Hinweis am Mauszeiger ── */
@@ -169,10 +329,11 @@ html, body {
 
 /* ── Info-Fenster zur Auswahl ── */
 .info {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  right: 12px;
-  width: min(260px, calc(100% - 24px));
+  grid-area: info;
+  align-self: start;
+  justify-self: end;
+  width: min(260px, 100%);
+  box-sizing: border-box;
   padding: 12px 14px;
   display: grid;
   gap: 8px;
@@ -213,4 +374,9 @@ html, body {
 
 .info .foot {
   font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .topbar .meter .fill, .topbar .delta, .toast { transition: none; }
 }

@@ -9,5 +9,9 @@
   "kamera_ziehen_drehen": ["Mouse2"],
   "auswaehlen": ["Mouse0"],
   "pause": ["Escape"],
+  "zeit_anhalten": ["Space"],
+  "zeit_stufe_1": ["Digit1"],
+  "zeit_stufe_2": ["Digit2"],
+  "zeit_stufe_3": ["Digit3"],
   "debug_anzeige": ["F3"]
 }
