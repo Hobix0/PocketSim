@@ -87,10 +87,20 @@ export class ModelLibrary implements ModelProvider {
     if (!t) {
       const source = modelSources[`/data/${path}`];
       if (!source) return Promise.reject(new Error(`Modell fehlt: data/${path}`));
-      t = source().then((url) => this.loader.loadAsync(url)).then((group) => this.prepare(group));
+      t = source().then((url) => this.load(url)).then((group) => this.prepare(group));
       this.templates.set(path, t);
     }
     return t;
+  }
+
+  /**
+   * Datei laden. Eingebettete Modelle (data:-Adressen) werden direkt im Speicher
+   * dekodiert statt per fetch geholt – Seiten mit strenger Sicherheitsrichtlinie
+   * (z. B. claude.ai-Artifacts) verbieten fetch auf data:-Adressen.
+   */
+  private async load(url: string): Promise<THREE.Group> {
+    if (url.startsWith('data:')) return this.loader.parse(dataUrlToBuffer(url), '');
+    return this.loader.loadAsync(url);
   }
 
   /** Materialien ersetzen und Schatten einschalten. */
@@ -115,6 +125,14 @@ export class ModelLibrary implements ModelProvider {
     });
     return group;
   }
+}
+
+/** "data:…;base64,AAAA" → Bytes */
+function dataUrlToBuffer(url: string): ArrayBuffer {
+  const binary = atob(url.slice(url.indexOf(',') + 1));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
 function loadTexture(url: string, mag: THREE.MagnificationTextureFilter, min: THREE.MinificationTextureFilter, mipmaps: boolean): THREE.Texture {
