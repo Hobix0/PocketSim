@@ -1,0 +1,11 @@
+{
+  "id": "pflanzentop_weiss",
+  "name": "Pflanzentopf Weiß",
+  "kategorie": "gebaeude_basis",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_PflanzenTop_Weiss.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_PflanzenTop_Weiss.png",
+  "platzhalter": {"groesse": [0.603, 1.106, 1.6], "farbe": "#b9c0c6"}
+}

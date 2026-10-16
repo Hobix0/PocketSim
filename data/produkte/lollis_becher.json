@@ -1,0 +1,13 @@
+{
+  "id": "lollis_becher",
+  "name": "Lollis Becher",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Lollis_Becher.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Lollis_Becher.png",
+  "groesse": [0.084, 0.151, 0.084]
+}

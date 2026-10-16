@@ -1,0 +1,11 @@
+{
+  "id": "store_producestand_01",
+  "name": "SM Store ProduceStand 01",
+  "kategorie": "store_props",
+  "preis": 400,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_ProduceStand_01.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_SM_Store_ProduceStand_01.png",
+  "platzhalter": {"groesse": [1.1, 1.955, 1.52], "farbe": "#b9c0c6"}
+}

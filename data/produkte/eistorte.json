@@ -1,0 +1,13 @@
+{
+  "id": "eistorte",
+  "name": "Eistorte",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Eistorte.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Eistorte.png",
+  "groesse": [0.122, 0.092, 0.26]
+}

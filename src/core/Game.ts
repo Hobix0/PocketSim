@@ -3,7 +3,8 @@ import { readData } from './Data';
 import { InputMap, type Bindings } from '../input/InputMap';
 import { Pointer } from '../input/Pointer';
 import { ManagementCamera, type CameraSettings } from '../camera/ManagementCamera';
-import { Level, type LevelData } from '../world/Level';
+import { Level, expandObjects, type LevelData } from '../world/Level';
+import { ModelLibrary } from '../assets/ModelLibrary';
 import { GridCursor } from '../world/GridCursor';
 import { Content } from '../content/Content';
 import { World } from '../ecs/World';
@@ -24,6 +25,7 @@ export class Game {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly content: Content;
+  readonly models = new ModelLibrary();
   readonly world: World;
   readonly input: InputMap;
   readonly pointer = new Pointer();
@@ -108,8 +110,8 @@ export class Game {
     this.info = new InfoPanel(this.selection, this.input, this.content);
 
     // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
-    for (const o of this.level.data.objekte) {
-      this.world.add(createBuildEntity(this.content.bau.get(o.typ), o, this.content));
+    for (const o of expandObjects(this.level.data.objekte)) {
+      this.world.add(createBuildEntity(this.content.bau.get(o.typ), o, this.content, this.models));
     }
 
     window.addEventListener('resize', () => this.resize());

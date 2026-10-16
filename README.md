@@ -38,7 +38,20 @@ Das Spiel wird von **schräg oben** in einer **Management-Ansicht** gespielt, ni
 - Meldungen (Toasts) für Level-Aufstieg und neuen Tag
 - Debug-Anzeige mit Testknöpfen für Geld und XP
 
-Die Produkte in `data/produkte/` sind **Beispiele**, bis die CSV mit den 50 Produkten eingespielt ist.
+**Blender-Modelle** ✅
+
+- 61 Bauelemente und 150 Produkte aus `data/3d/` (FBX aus Blender, Icons, Export-Listen)
+- `npm run import:3d` erzeugt daraus `data/bau/*.json` und `data/produkte/*.json`
+- `ModelLibrary` lädt die FBX-Dateien, teilt Geometrie zwischen Exemplaren und gibt allen Modellen **ein** gemeinsames Material mit der Palettentextur
+- Das Testgelände ist aus den Modulen gebaut: Laden 14 × 10 m mit Schaufensterfront, Schiebetür, Ladenschild, Markisen, Kassen, Regalen, Kühlmöbeln, Obststand, Einkaufswagen, Gehweg und Lagerhof hinter dem Rolltor
+- **Musterschau:** alle Bauteile nebeneinander – Adresse mit `#musterschau` öffnen
+
+Noch offen:
+
+- **`2026 Palette.png` fehlt.** Die Modelle holen ihre Farbe über die UVs aus dieser Textur. Solange sie fehlt, erscheinen sie grau. Datei irgendwo unter `data/3d/` ablegen – sie wird automatisch benutzt.
+- **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`), bis die echte Preisliste da ist.
+
+
 
 ## Starten
 
@@ -53,7 +66,8 @@ Weitere Befehle:
 
 | Befehl | Was passiert |
 |---|---|
-| `npm test` | automatische Tests (Entities, Daten) |
+| `npm test` | automatische Tests (Entities, Daten, Modelle) |
+| `npm run import:3d` | Blender-Exporte aus `data/3d` in die Spieldaten übernehmen |
 | `npm run check` | nur Typprüfung |
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
 | `npm run preview` | den Build lokal ansehen |
@@ -75,6 +89,41 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 
 Die Belegung steht in `data/eingabe/standard.json`.
 
+## 3D-Modelle
+
+Die Modelle kommen als FBX aus Blender nach `data/3d/`:
+
+```
+data/3d/
+  Baubar/<Kategorie>/SM_Build_*.fbx      Bauelemente
+  Baubar/_export_liste.csv               Name, Kategorie, Maße in cm, Datei
+  Produkte/<Nr>_<Kategorie>/SM_*.fbx     Produkte
+  Produkte/_export_liste.csv
+  Icons_Baubar/T_Build_*.png             Vorschaubilder fürs UI
+  Icons_Produkte/T_Icon_*.png
+  2026 Palette.png                       Farbpalette (alle Modelle)
+```
+
+Nach neuen oder geänderten Exporten:
+
+```bash
+npm run import:3d
+```
+
+Das Skript legt für jedes Modell eine JSON-Datei an (`data/bau/<id>.json`, `data/produkte/<id>.json`). Bei bestehenden Dateien aktualisiert es nur `model`, `icon` und die Maße – Preise, Kontext und Werte, die man von Hand pflegt, bleiben erhalten. Startwerte für neue Einträge und deutsche Namen stehen in `scripts/import-3d.config.json`.
+
+Konventionen der Modelle (aus dem Export gemessen):
+
+| | |
+|---|---|
+| Einheit | Meter, Y nach oben, Ursprung unten in der Mitte |
+| Raster | Wände, Fenster, Türen 2 m breit, 4 m hoch; Bodenplatten 2 × 2 m |
+| Wände | laufen in der Länge entlang Z; die **Außenseite ist +X** |
+| Anbauteile | Markise, Ladenschild, Außenlampe, Eingangsstufe: gleiche Position und Drehung wie das Wandmodul |
+| Drehung einer Wand | Außenseite +X: 0°, −X: 180°, +Z: −90°, −Z: 90° |
+| Leuchten, Lichtschienen | hängen vom Ursprung nach unten → auf Deckenhöhe (4 m) setzen |
+| Bodenhöhe | Fliesen 5 cm, Gehweg 14 cm – Objekte darauf entsprechend höher setzen |
+
 ## Aufbau
 
 ```
@@ -89,7 +138,8 @@ data/                   Werte und Inhalte (JSON), werden automatisch eingelesen
   zeit/                 Startzeit, Minuten pro Sekunde, Tempostufen, Wochentage
   eingabe/              Tastenbelegung (Aktion → Tasten)
   kamera/               Kamerawerte
-  level/                Level-Dateien: feste Kulisse und platzierte Objekte
+  level/                Level-Dateien: feste Kulisse und platzierte Objekte (mit "wiederholen" für Reihen)
+  3d/                   Blender-Exporte (FBX, Icons, Export-Listen)
 src/
   main.ts               Einstieg: Spiel erzeugen und starten
   core/Game.ts          Renderer, Szene, Spielschleife – verbindet die Systeme
@@ -101,10 +151,12 @@ src/
   components/           wiederverwendbare Komponenten (Modell, Werte …)
   content/              Datenformate, Prüfung, Registry, Content
   factory/              baut Entities aus Datendefinitionen
+  assets/               ModelLibrary: lädt FBX-Modelle, Palette, Glas
   input/                InputMap (Aktionen statt fester Tasten), Pointer (Mauszeiger)
   camera/               Management-Kamera
   world/                Level-Kulisse, Feld unter der Maus
   ui/                   HUD (Top-Bar), Toasts, Hinweis am Zeiger, Info-Fenster, Debug-Anzeige, UI-Kit (style.css)
+scripts/                import-3d.mjs und seine Konfiguration
 tests/                  automatische Tests
 ```
 
@@ -188,19 +240,22 @@ flowchart LR
 Produkt (`data/produkte/<id>.json`, Dateiname = id):
 
 ```json
-{ "id": "milch_1l", "name": "Milch 1 L", "kategorie": "molkerei_eier",
-  "ek": 0.69, "vk": 1.09, "frisch": true, "freischaltLevel": 1 }
+{ "id": "cola_0_5l", "name": "Cola 0,5 L", "kategorie": "getraenke",
+  "ek": 0.6, "vk": 1.19, "preisOffen": true, "frisch": false, "freischaltLevel": 1,
+  "model": "3d/Produkte/06_Getraenke/SM_Cola_0_5L.fbx", "icon": "3d/Icons_Produkte/T_Icon_Cola_0_5L.png",
+  "groesse": [0.06, 0.189, 0.06] }
 ```
 
 Bauelement (`data/bau/<id>.json`):
 
 ```json
-{ "id": "kuehlregal", "name": "Kühlregal", "kategorie": "einrichtung", "kontext": "regal", "preis": 450, "freischaltLevel": 2,
-  "platzhalter": { "groesse": [3, 2.1, 0.8], "farbe": "#cfe0e6" },
-  "werte": { "slots": 3, "strom": 0.8 } }
+{ "id": "kuehlregal_offen", "name": "Kühlregal Offen", "kategorie": "einrichtung", "kontext": "regal",
+  "preis": 900, "freischaltLevel": 2, "werte": { "slots": 4, "strom": 0.9 },
+  "model": "3d/Baubar/Einrichtung/SM_Build_Kuehlregal_Offen.fbx", "icon": "3d/Icons_Baubar/T_Build_Kuehlregal_Offen.png",
+  "platzhalter": { "groesse": [0.6, 2, 2], "farbe": "#b9c0c6" } }
 ```
 
-`kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` sind optional und werden genutzt, sobald es die Blender-Exporte gibt. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
+`kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` verweisen auf Dateien unter `data/`. `platzhalter.groesse` sind die Maße des Modells (Breite, Höhe, Tiefe in Metern); der Quader erscheint, bis das Modell geladen ist. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
 
 Regeln, die überall gelten:
 

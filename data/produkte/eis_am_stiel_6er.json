@@ -1,0 +1,13 @@
+{
+  "id": "eis_am_stiel_6er",
+  "name": "Eis am Stiel 6er",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Eis_am_Stiel_6er.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Eis_am_Stiel_6er.png",
+  "groesse": [0.057, 0.2, 0.181]
+}

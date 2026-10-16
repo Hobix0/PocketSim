@@ -1,0 +1,13 @@
+{
+  "id": "deo_spray",
+  "name": "Deo Spray",
+  "kategorie": "drogerie_koerperpflege",
+  "ek": 1.1,
+  "vk": 2.19,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Deo_Spray.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Deo_Spray.png",
+  "groesse": [0.054, 0.195, 0.054]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "schienenleuchte_pendel_kegel",
+  "name": "Schienenleuchte Pendel Kegel",
+  "kategorie": "einrichtung",
+  "preis": 250,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Schienenleuchte_Pendel_Kegel.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Schienenleuchte_Pendel_Kegel.png",
+  "platzhalter": {"groesse": [0.34, 0.53, 0.34], "farbe": "#b9c0c6"}
+}

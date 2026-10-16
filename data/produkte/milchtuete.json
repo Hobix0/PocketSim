@@ -1,0 +1,13 @@
+{
+  "id": "milchtuete",
+  "name": "Milchtuete",
+  "kategorie": "molkerei_eier",
+  "ek": 0.7,
+  "vk": 1.19,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/03_Molkerei_Eier/SM_Milchtuete.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Milchtuete.png",
+  "groesse": [0.061, 0.193, 0.061]
+}

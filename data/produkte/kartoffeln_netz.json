@@ -1,0 +1,13 @@
+{
+  "id": "kartoffeln_netz",
+  "name": "Kartoffeln Netz",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Kartoffeln_Netz.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Kartoffeln_Netz.png",
+  "groesse": [0.135, 0.123, 0.131]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "fischstaebchen",
+  "name": "Fischstäbchen",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Fischstaebchen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Fischstaebchen.png",
+  "groesse": [0.047, 0.13, 0.191]
+}

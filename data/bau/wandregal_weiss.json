@@ -1,0 +1,12 @@
+{
+  "id": "wandregal_weiss",
+  "name": "Wandregal Weiß",
+  "kategorie": "einrichtung",
+  "kontext": "regal",
+  "preis": 180,
+  "freischaltLevel": 1,
+  "werte": {"slots": 4},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Wandregal_Weiss.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Wandregal_Weiss.png",
+  "platzhalter": {"groesse": [0.5, 1.8, 2], "farbe": "#b9c0c6"}
+}

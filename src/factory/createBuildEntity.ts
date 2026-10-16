@@ -5,6 +5,7 @@ import { ValuesComponent } from '../components/ValuesComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
 import type { BuildDef } from '../content/definitions';
 import type { Content } from '../content/Content';
+import type { ModelProvider } from '../assets/ModelLibrary';
 
 // Baut aus einer Bauelement-Definition eine fertige Entity.
 // Welche Komponenten sie bekommt, entscheiden die Felder der Definition.
@@ -15,12 +16,13 @@ export interface Placement {
   drehung: number; // Grad um die Hochachse
 }
 
-export function createBuildEntity(def: BuildDef, placement: Placement, content: Content): Entity {
+/** `models` fehlt in Tests ohne Browser – dann bleibt es beim Platzhalter-Quader. */
+export function createBuildEntity(def: BuildDef, placement: Placement, content: Content, models?: ModelProvider): Entity {
   const entity = new Entity(def.id);
   entity.object.position.set(...placement.position);
   entity.object.rotation.y = THREE.MathUtils.degToRad(placement.drehung);
 
-  entity.add(new ModelComponent(def.platzhalter));
+  entity.add(new ModelComponent(def.platzhalter, def.model, models));
   entity.add(new ValuesComponent(def.werte, content.werte));
   if (def.kontext) {
     const kontextName = content.kontexte[def.kontext].name;

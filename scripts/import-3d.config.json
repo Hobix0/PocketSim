@@ -1,0 +1,213 @@
+{
+  "_hinweis": "Startwerte für neu importierte Einträge. Bestehende JSON-Dateien behalten ihre Werte; aktualisiert werden nur Modell, Icon und Maße.",
+  "ignorieren": [
+    "SM_Build_Cube"
+  ],
+  "produktKategorien": {
+    "01_Obst_Gemuese": "obst_gemuese",
+    "02_Backwaren": "backwaren",
+    "03_Molkerei_Eier": "molkerei_eier",
+    "04_Fleisch_Wurst": "fleisch_wurst",
+    "05_Tiefkuehl": "tiefkuehl",
+    "06_Getraenke": "getraenke",
+    "07_Grundnahrung": "grundnahrung",
+    "08_Suesswaren_Snacks": "suesswaren_snacks",
+    "09_Haushalt_Reinigung": "haushalt_reinigung",
+    "10_Drogerie_Koerperpflege": "drogerie_koerperpflege"
+  },
+  "produktStandard": {
+    "obst_gemuese": {
+      "ek": 0.9,
+      "vk": 1.49,
+      "frisch": true
+    },
+    "backwaren": {
+      "ek": 0.8,
+      "vk": 1.39,
+      "frisch": true
+    },
+    "molkerei_eier": {
+      "ek": 0.7,
+      "vk": 1.19,
+      "frisch": true
+    },
+    "fleisch_wurst": {
+      "ek": 2.5,
+      "vk": 3.99,
+      "frisch": true
+    },
+    "tiefkuehl": {
+      "ek": 1.6,
+      "vk": 2.69,
+      "frisch": true
+    },
+    "getraenke": {
+      "ek": 0.6,
+      "vk": 1.19,
+      "frisch": false
+    },
+    "grundnahrung": {
+      "ek": 0.8,
+      "vk": 1.29,
+      "frisch": false
+    },
+    "suesswaren_snacks": {
+      "ek": 0.8,
+      "vk": 1.69,
+      "frisch": false
+    },
+    "haushalt_reinigung": {
+      "ek": 1.2,
+      "vk": 2.29,
+      "frisch": false
+    },
+    "drogerie_koerperpflege": {
+      "ek": 1.1,
+      "vk": 2.19,
+      "frisch": false
+    }
+  },
+  "bauStandard": {
+    "einrichtung": {
+      "preis": 250
+    },
+    "gebaeude_basis": {
+      "preis": 80
+    },
+    "gebaeude_erweiterung": {
+      "preis": 150
+    },
+    "lager": {
+      "preis": 120
+    },
+    "lichtschienen": {
+      "preis": 30
+    },
+    "store_props": {
+      "preis": 400
+    }
+  },
+  "bauEinzeln": {
+    "kasse_schwarz": {
+      "preis": 1200,
+      "kontext": "kasse",
+      "werte": {
+        "kassen": 1,
+        "strom": 0.2
+      }
+    },
+    "store_checkout_01": {
+      "preis": 1500,
+      "kontext": "kasse",
+      "werte": {
+        "kassen": 1,
+        "strom": 0.3
+      }
+    },
+    "kuehlregal_offen": {
+      "preis": 900,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4,
+        "strom": 0.9
+      },
+      "freischaltLevel": 2
+    },
+    "wandregal_weiss": {
+      "preis": 180,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
+      }
+    },
+    "store_shelf_wall_01": {
+      "preis": 450,
+      "kontext": "regal",
+      "werte": {
+        "slots": 6
+      }
+    },
+    "store_fridge_upright_01": {
+      "preis": 1100,
+      "kontext": "regal",
+      "werte": {
+        "slots": 3,
+        "strom": 1.1
+      },
+      "freischaltLevel": 2
+    },
+    "store_produce_stand_01": {
+      "preis": 600,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
+      }
+    },
+    "schwerlastregal_mit_boeden": {
+      "preis": 350,
+      "kontext": "regal",
+      "werte": {
+        "lagerplaetze": 6
+      }
+    },
+    "europalette": {
+      "preis": 15,
+      "werte": {
+        "lagerplaetze": 1
+      }
+    },
+    "pendelleuchte": {
+      "preis": 90,
+      "werte": {
+        "strom": 0.05
+      }
+    },
+    "deckenstrahler_schiene": {
+      "preis": 120,
+      "werte": {
+        "strom": 0.08
+      }
+    },
+    "wandlampe_aussen": {
+      "preis": 70,
+      "werte": {
+        "strom": 0.03
+      }
+    }
+  },
+  "namen": {
+    "Gruen": "Grün",
+    "Broetchen": "Brötchen",
+    "Kaese": "Käse",
+    "Stueck": "Stück",
+    "Haehnchen": "Hähnchen",
+    "Wuerfel": "Würfel",
+    "Wuerstchen": "Würstchen",
+    "Staebchen": "Stäbchen",
+    "Gemuese": "Gemüse",
+    "Muesli": "Müsli",
+    "Sosse": "Soße",
+    "Nuesse": "Nüsse",
+    "Baerchen": "Bärchen",
+    "Kuechen": "Küchen",
+    "Muell": "Müll",
+    "Schwaemme": "Schwämme",
+    "Spuel": "Spül",
+    "Fluessig": "Flüssig",
+    "Tuecher": "Tücher",
+    "Buerste": "Bürste",
+    "Oel": "Öl",
+    "Haenger": "Hänger"
+  },
+  "bauNamen": {
+    "store_cart_01": "Einkaufswagen",
+    "store_checkout_01": "Kassentresen",
+    "store_fridge_upright_01": "Getränkekühlschrank",
+    "store_produce_stand_01": "Obst- und Gemüsestand",
+    "store_shelf_wall_01": "Wandregal Markt",
+    "wand_weiss_schwarz_schmal": "Wand Weiß/Schwarz schmal",
+    "ziegelwand": "Ziegelwand",
+    "pflanzentop_schwarz": "Pflanzentopf Schwarz",
+    "pflanzentop_weiss": "Pflanzentopf Weiß"
+  }
+}

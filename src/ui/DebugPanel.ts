@@ -84,6 +84,7 @@ export class DebugPanel {
       <h4>Daten geladen</h4>
       ${row('Warenkategorien', String(c.kategorien.size))}
       ${row('Produkte', String(c.produkte.size))}
+      ${row('… davon Preis offen', String(c.produkte.all().filter((p) => p.preisOffen).length))}
       ${row('Bauelemente', String(c.bau.size))}
       <h4>In der Welt</h4>
       ${placed || row('Entities', '0')}

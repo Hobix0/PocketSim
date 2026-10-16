@@ -1,0 +1,13 @@
+{
+  "id": "zucker",
+  "name": "Zucker",
+  "kategorie": "grundnahrung",
+  "ek": 0.8,
+  "vk": 1.29,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/07_Grundnahrung/SM_Zucker.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Zucker.png",
+  "groesse": [0.061, 0.16, 0.101]
+}

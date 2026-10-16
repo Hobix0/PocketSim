@@ -1,0 +1,13 @@
+{
+  "id": "schokomuesli",
+  "name": "Schokomüsli",
+  "kategorie": "grundnahrung",
+  "ek": 0.8,
+  "vk": 1.29,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/07_Grundnahrung/SM_Schokomuesli.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Schokomuesli.png",
+  "groesse": [0.052, 0.3, 0.201]
+}

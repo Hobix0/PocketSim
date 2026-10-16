@@ -1,0 +1,13 @@
+{
+  "id": "kochschinken_packung",
+  "name": "Kochschinken Packung",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Kochschinken_Packung.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Kochschinken_Packung.png",
+  "groesse": [0.132, 0.023, 0.182]
+}

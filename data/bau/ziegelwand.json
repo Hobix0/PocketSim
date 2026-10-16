@@ -1,0 +1,11 @@
+{
+  "id": "ziegelwand",
+  "name": "Ziegelwand",
+  "kategorie": "gebaeude_basis",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_ZiegelWand.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_ZiegelWand.png",
+  "platzhalter": {"groesse": [0.331, 4, 2], "farbe": "#b9c0c6"}
+}

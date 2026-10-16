@@ -1,0 +1,13 @@
+{
+  "id": "kaugummi",
+  "name": "Kaugummi",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Kaugummi.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Kaugummi.png",
+  "groesse": [0.019, 0.023, 0.075]
+}

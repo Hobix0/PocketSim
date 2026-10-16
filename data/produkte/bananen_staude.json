@@ -1,0 +1,13 @@
+{
+  "id": "bananen_staude",
+  "name": "Bananen Staude",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Bananen_Staude.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Bananen_Staude.png",
+  "groesse": [0.208, 0.071, 0.145]
+}

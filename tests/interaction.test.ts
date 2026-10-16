@@ -24,7 +24,7 @@ function setup() {
   camera.position.set(0, 12, 10);
   camera.lookAt(0, 1, 0);
   camera.updateMatrixWorld();
-  const regal = world.add(createBuildEntity(content.bau.get('regal_standard'), { position: [0, 0, 0], drehung: 0 }, content));
+  const regal = world.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [0, 0, 0], drehung: 0 }, content));
   regal.object.updateMatrixWorld(true);
   const click = (code = 'Mouse0') => { input.setCode(code, true); interactor.update(camera); input.endFrame(); input.setCode(code, false); };
   return { content, world, input, pointer, selection, interactor, camera, regal, click };
@@ -79,9 +79,9 @@ describe('Info aus Komponenten', () => {
   it('sammelt Titel und Zeilen aus den Komponenten', () => {
     const { regal } = setup();
     const sel = regal.require(SelectableComponent);
-    expect(sel.titel).toBe('Standardregal');
+    expect(sel.titel).toBe('Wandregal Weiß');
     // toLocaleString setzt ein geschütztes Leerzeichen (\u00a0) vor das €
-    expect(sel.untertitel).toBe('Regal · 120\u00a0€');
+    expect(sel.untertitel).toBe('Regal · 180\u00a0€');
     const rows = regal.all().filter(isDescribable).flatMap((c) => c.describe());
     expect(rows).toEqual([{ label: 'Regalplätze', value: '4' }]);
   });

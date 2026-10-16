@@ -1,0 +1,13 @@
+{
+  "id": "pizza_salami",
+  "name": "Pizza Salami",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Pizza_Salami.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Pizza_Salami.png",
+  "groesse": [0.306, 0.052, 0.306]
+}

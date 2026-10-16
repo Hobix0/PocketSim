@@ -1,0 +1,11 @@
+{
+  "id": "deckenstrahler_schiene_einzel",
+  "name": "Deckenstrahler Schiene Einzel",
+  "kategorie": "einrichtung",
+  "preis": 250,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Deckenstrahler_Schiene_Einzel.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Deckenstrahler_Schiene_Einzel.png",
+  "platzhalter": {"groesse": [0.1, 0.256, 0.222], "farbe": "#b9c0c6"}
+}

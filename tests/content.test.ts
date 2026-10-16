@@ -3,7 +3,7 @@ import { Content } from '../src/content/Content';
 import { Registry } from '../src/content/Registry';
 import { validateBuild, validateProduct } from '../src/content/definitions';
 import { readData } from '../src/core/Data';
-import type { LevelData } from '../src/world/Level';
+import { expandObjects, type LevelData } from '../src/world/Level';
 
 describe('Spieldaten in data/', () => {
   it('lassen sich vollständig laden und prüfen', () => {
@@ -14,10 +14,42 @@ describe('Spieldaten in data/', () => {
     for (const p of c.produkte.all()) expect(p.vk).toBeGreaterThan(p.ek);
   });
 
-  it('jedes Objekt im Testgelände verweist auf ein Bauelement', () => {
+  it('jedes Objekt in jedem Level verweist auf ein Bauelement', () => {
     const c = new Content();
-    const level = readData<LevelData>('level/testgelaende');
-    for (const o of level.objekte) expect(c.bau.has(o.typ), o.typ).toBe(true);
+    for (const id of ['testgelaende', 'musterschau']) {
+      const level = readData<LevelData>(`level/${id}`);
+      for (const o of level.objekte) expect(c.bau.has(o.typ), `${id}: ${o.typ}`).toBe(true);
+    }
+  });
+
+  it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
+    const c = new Content();
+    expect(c.produkte.size).toBe(150);
+    expect(c.bau.size).toBe(61);
+    const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
+    for (const d of [...c.produkte.all(), ...c.bau.all()]) {
+      expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);
+      expect(files.has(`/data/${d.icon}`), `${d.id}: Icon ${d.icon}`).toBe(true);
+    }
+  });
+
+  it('jede Warenkategorie hat 15 Produkte', () => {
+    const c = new Content();
+    for (const k of c.kategorien.all()) {
+      expect(c.produkte.all().filter((p) => p.kategorie === k.id).length, k.id).toBe(15);
+    }
+  });
+});
+
+describe('Level', () => {
+  it('löst Wiederholungen zu einzelnen Objekten auf', () => {
+    const list = expandObjects([
+      { typ: 'boden_fliese_innen', position: [-6, 0, -4], drehung: 0, wiederholen: { anzahl: [3, 2], abstand: [2, 2] } },
+      { typ: 'kasse_schwarz', position: [1, 0.05, 2], drehung: 90 },
+    ]);
+    expect(list).toHaveLength(7);
+    expect(list.map((o) => o.position)).toContainEqual([-2, 0, -2]);
+    expect(list[6]).toEqual({ typ: 'kasse_schwarz', position: [1, 0.05, 2], drehung: 90 });
   });
 });
 

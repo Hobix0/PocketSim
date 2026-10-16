@@ -1,0 +1,11 @@
+{
+  "id": "pendelleuchte",
+  "name": "Pendelleuchte",
+  "kategorie": "einrichtung",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {"strom": 0.05},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Pendelleuchte.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Pendelleuchte.png",
+  "platzhalter": {"groesse": [0.1, 1.451, 0.1], "farbe": "#b9c0c6"}
+}

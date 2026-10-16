@@ -1,0 +1,11 @@
+{
+  "id": "eckpfeiler_schwarz",
+  "name": "Eckpfeiler Schwarz",
+  "kategorie": "gebaeude_erweiterung",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Eckpfeiler_Schwarz.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Eckpfeiler_Schwarz.png",
+  "platzhalter": {"groesse": [0.34, 4, 0.34], "farbe": "#b9c0c6"}
+}

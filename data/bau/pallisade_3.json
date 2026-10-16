@@ -1,0 +1,11 @@
+{
+  "id": "pallisade_3",
+  "name": "Pallisade 3",
+  "kategorie": "gebaeude_basis",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_Pallisade_3.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Pallisade_3.png",
+  "platzhalter": {"groesse": [0.2, 4, 1.68], "farbe": "#b9c0c6"}
+}

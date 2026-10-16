@@ -18,11 +18,16 @@ export interface ProductDef {
   vk: number;
   frisch: boolean;
   freischaltLevel: number;
+  /** true, solange EK/VK nur Startwerte je Kategorie sind (siehe scripts/import-3d.config.json). */
+  preisOffen: boolean;
+  /** Pfad unter data/, z. B. "3d/Produkte/…/SM_Apfel_Rot.fbx". */
   model?: string;
   icon?: string;
+  /** Maße in Metern: Breite, Höhe, Tiefe. */
+  groesse?: [number, number, number];
 }
 
-/** Ersatzdarstellung, solange es noch kein Blender-Modell gibt. */
+/** Maße und Ersatzfarbe. Die Maße gelten auch, wenn es ein Modell gibt (Grundfläche fürs Bauen). */
 export interface PlaceholderDef {
   groesse: [number, number, number]; // Breite, Höhe, Tiefe in Metern
   farbe: string;
@@ -69,8 +74,10 @@ export function validateProduct(raw: unknown, where: string): ProductDef {
     vk: num(o, 'vk', where, 0),
     frisch: bool(o, 'frisch', where),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
+    preisOffen: o.preisOffen === undefined ? false : bool(o, 'preisOffen', where),
     model: optStr(o, 'model', where),
     icon: optStr(o, 'icon', where),
+    groesse: o.groesse === undefined ? undefined : vec3(o, 'groesse', where),
   };
 }
 

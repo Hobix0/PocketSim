@@ -1,0 +1,11 @@
+{
+  "id": "schienenleuchte_lichtleiste",
+  "name": "Schienenleuchte Lichtleiste",
+  "kategorie": "einrichtung",
+  "preis": 250,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Schienenleuchte_Lichtleiste.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Schienenleuchte_Lichtleiste.png",
+  "platzhalter": {"groesse": [1, 0.53, 0.06], "farbe": "#b9c0c6"}
+}

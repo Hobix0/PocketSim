@@ -1,0 +1,11 @@
+{
+  "id": "store_cart_01",
+  "name": "Einkaufswagen",
+  "kategorie": "store_props",
+  "preis": 400,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_Cart_01.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_SM_Store_Cart_01.png",
+  "platzhalter": {"groesse": [1.016, 1.005, 0.64], "farbe": "#b9c0c6"}
+}

@@ -2,5 +2,6 @@
   "slots":  { "name": "Regalplätze", "einheit": "" },
   "kassen": { "name": "Kassen",      "einheit": "" },
   "strom":  { "name": "Strom",       "einheit": "kW" },
-  "wasser": { "name": "Wasser",      "einheit": "l/h" }
+  "wasser": { "name": "Wasser",      "einheit": "l/h" },
+  "lagerplaetze": { "name": "Lagerplätze", "einheit": "" }
 }

@@ -1,0 +1,11 @@
+{
+  "id": "betontraeger_schwarz",
+  "name": "Betonträger Schwarz",
+  "kategorie": "gebaeude_basis",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_Betontraeger_Schwarz.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Betontraeger_Schwarz.png",
+  "platzhalter": {"groesse": [0.25, 0.25, 2], "farbe": "#b9c0c6"}
+}

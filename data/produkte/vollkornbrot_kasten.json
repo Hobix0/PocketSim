@@ -1,0 +1,13 @@
+{
+  "id": "vollkornbrot_kasten",
+  "name": "Vollkornbrot Kasten",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/02_Backwaren/SM_Vollkornbrot_Kasten.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Vollkornbrot_Kasten.png",
+  "groesse": [0.11, 0.137, 0.26]
+}

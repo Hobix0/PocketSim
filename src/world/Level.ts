@@ -18,7 +18,34 @@ export interface LevelObject {
   typ: string;                          // id in data/bau
   position: [number, number, number];
   drehung: number;                      // Grad um die Hochachse
+  /** Optional: als Reihe oder Fläche wiederholen, z. B. Bodenplatten oder Wandstücke. */
+  wiederholen?: { anzahl: [number, number]; abstand: [number, number] }; // [x, z]
 }
+
+/** Ein einzelnes, fertig ausgerechnetes Objekt (nach dem Auflösen von "wiederholen"). */
+export interface PlacedObject {
+  typ: string;
+  position: [number, number, number];
+  drehung: number;
+}
+
+/** Wiederholungen auflösen: aus einer Zeile mit anzahl [3, 2] werden sechs Objekte. */
+export function expandObjects(list: LevelObject[]): PlacedObject[] {
+  const out: PlacedObject[] = [];
+  for (const o of list) {
+    const [nx, nz] = o.wiederholen?.anzahl ?? [1, 1];
+    const [dx, dz] = o.wiederholen?.abstand ?? [0, 0];
+    for (let i = 0; i < nx; i++) {
+      for (let k = 0; k < nz; k++) {
+        const [x, y, z] = o.position;
+        out.push({ typ: o.typ, position: [round(x + i * dx), y, round(z + k * dz)], drehung: o.drehung });
+      }
+    }
+  }
+  return out;
+}
+
+const round = (n: number) => Math.round(n * 1000) / 1000;
 
 export interface LevelData {
   name: string;

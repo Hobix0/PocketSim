@@ -1,0 +1,13 @@
+{
+  "id": "eier_10er",
+  "name": "Eier 10er",
+  "kategorie": "molkerei_eier",
+  "ek": 0.7,
+  "vk": 1.19,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/03_Molkerei_Eier/SM_Eier_10er.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Eier_10er.png",
+  "groesse": [0.113, 0.077, 0.25]
+}

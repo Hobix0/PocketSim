@@ -1,0 +1,13 @@
+{
+  "id": "chips_ungarisch",
+  "name": "Chips Ungarisch",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Chips_Ungarisch.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Chips_Ungarisch.png",
+  "groesse": [0.051, 0.22, 0.15]
+}

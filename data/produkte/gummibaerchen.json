@@ -1,0 +1,13 @@
+{
+  "id": "gummibaerchen",
+  "name": "Gummibärchen",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Gummibaerchen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Gummibaerchen.png",
+  "groesse": [0.045, 0.19, 0.14]
+}

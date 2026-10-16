@@ -1,0 +1,13 @@
+{
+  "id": "kuechenrolle",
+  "name": "Küchenrolle",
+  "kategorie": "haushalt_reinigung",
+  "ek": 1.2,
+  "vk": 2.29,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Kuechenrolle.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Kuechenrolle.png",
+  "groesse": [0.187, 0.2, 0.37]
+}

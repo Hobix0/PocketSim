@@ -1,0 +1,12 @@
+{
+  "id": "store_shelf_wall_01",
+  "name": "Wandregal Markt",
+  "kategorie": "store_props",
+  "kontext": "regal",
+  "preis": 450,
+  "freischaltLevel": 1,
+  "werte": {"slots": 6},
+  "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_Shelf_Wall_01.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_SM_Store_Shelf_Wall_01.png",
+  "platzhalter": {"groesse": [0.54, 2.23, 2.04], "farbe": "#b9c0c6"}
+}

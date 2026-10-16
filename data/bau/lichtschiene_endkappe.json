@@ -1,0 +1,11 @@
+{
+  "id": "lichtschiene_endkappe",
+  "name": "Lichtschiene Endkappe",
+  "kategorie": "lichtschienen",
+  "preis": 30,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Lichtschienen/SM_Build_Lichtschiene_Endkappe.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Lichtschiene_Endkappe.png",
+  "platzhalter": {"groesse": [0.012, 0.105, 0.042], "farbe": "#b9c0c6"}
+}

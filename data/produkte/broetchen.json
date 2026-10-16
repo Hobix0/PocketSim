@@ -1,0 +1,13 @@
+{
+  "id": "broetchen",
+  "name": "Brötchen",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/02_Backwaren/SM_Broetchen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Broetchen.png",
+  "groesse": [0.106, 0.053, 0.092]
+}

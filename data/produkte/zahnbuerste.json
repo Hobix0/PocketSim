@@ -1,0 +1,13 @@
+{
+  "id": "zahnbuerste",
+  "name": "Zahnbürste",
+  "kategorie": "drogerie_koerperpflege",
+  "ek": 1.1,
+  "vk": 2.19,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Zahnbuerste.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Zahnbuerste.png",
+  "groesse": [0.021, 0.245, 0.071]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "hackfleisch",
+  "name": "Hackfleisch",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Hackfleisch.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Hackfleisch.png",
+  "groesse": [0.152, 0.035, 0.212]
+}

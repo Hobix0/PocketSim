@@ -1,0 +1,13 @@
+{
+  "id": "paprika_rot",
+  "name": "Paprika Rot",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Paprika_Rot.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Paprika_Rot.png",
+  "groesse": [0.09, 0.102, 0.09]
+}

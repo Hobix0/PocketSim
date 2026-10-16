@@ -1,0 +1,13 @@
+{
+  "id": "pommes_frites",
+  "name": "Pommes Frites",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Pommes_Frites.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Pommes_Frites.png",
+  "groesse": [0.052, 0.26, 0.2]
+}

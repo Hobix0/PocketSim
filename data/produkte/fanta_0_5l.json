@@ -1,0 +1,13 @@
+{
+  "id": "fanta_0_5l",
+  "name": "Fanta 0,5 L",
+  "kategorie": "getraenke",
+  "ek": 0.6,
+  "vk": 1.19,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/06_Getraenke/SM_Fanta_0_5L.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Fanta_0_5L.png",
+  "groesse": [0.06, 0.189, 0.059]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "wand_innen_durchgang",
+  "name": "Wand Innen Durchgang",
+  "kategorie": "gebaeude_erweiterung",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Wand_Innen_Durchgang.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Wand_Innen_Durchgang.png",
+  "platzhalter": {"groesse": [0.25, 4, 2], "farbe": "#b9c0c6"}
+}

@@ -1,0 +1,11 @@
+{
+  "id": "boden_fliese_innen",
+  "name": "Boden Fliese Innen",
+  "kategorie": "gebaeude_erweiterung",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Boden_Fliese_Innen.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Boden_Fliese_Innen.png",
+  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#b9c0c6"}
+}

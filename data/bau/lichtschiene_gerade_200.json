@@ -1,0 +1,11 @@
+{
+  "id": "lichtschiene_gerade_200",
+  "name": "Lichtschiene Gerade 200",
+  "kategorie": "lichtschienen",
+  "preis": 30,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Lichtschienen/SM_Build_Lichtschiene_Gerade_200.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Lichtschiene_Gerade_200.png",
+  "platzhalter": {"groesse": [2, 0.6, 0.1], "farbe": "#b9c0c6"}
+}

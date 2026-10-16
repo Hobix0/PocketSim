@@ -1,0 +1,13 @@
+{
+  "id": "zitrone",
+  "name": "Zitrone",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Zitrone.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Zitrone.png",
+  "groesse": [0.1, 0.06, 0.06]
+}

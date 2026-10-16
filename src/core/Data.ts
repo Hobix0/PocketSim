@@ -10,6 +10,11 @@ export interface DataEntry {
   data: unknown;
 }
 
+/** Gibt es diese Datei? z. B. hasData('level/musterschau') */
+export function hasData(path: string): boolean {
+  return `/data/${path}.json` in files;
+}
+
 /** Eine einzelne Datei lesen, z. B. readData('kamera/standard'). */
 export function readData<T>(path: string): T {
   const key = `/data/${path}.json`;

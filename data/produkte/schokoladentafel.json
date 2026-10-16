@@ -1,0 +1,13 @@
+{
+  "id": "schokoladentafel",
+  "name": "Schokoladentafel",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "preisOffen": true,
+  "frisch": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Schokoladentafel.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Schokoladentafel.png",
+  "groesse": [0.016, 0.086, 0.16]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "wiener_wuerstchen",
+  "name": "Wiener Würstchen",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "preisOffen": true,
+  "frisch": true,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Wiener_Wuerstchen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Wiener_Wuerstchen.png",
+  "groesse": [0.112, 0.03, 0.22]
+}
