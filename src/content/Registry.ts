@@ -20,6 +20,11 @@ export class Registry<T extends { id: string }> {
     }
   }
 
+  /** Eintrag nachträglich hinzufügen (z. B. eigene Modelle aus dem Editor). Gleiche id ersetzt den alten. */
+  add(item: T): void {
+    this.items.set(item.id, item);
+  }
+
   /** Eintrag holen; Fehler, wenn es ihn nicht gibt. */
   get(id: string): T {
     const item = this.items.get(id);

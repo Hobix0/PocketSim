@@ -39,6 +39,7 @@ import { PersonalWindow } from '../ui/PersonalWindow';
 import { ReportWindow } from '../ui/ReportWindow';
 import { GoalPanel } from '../ui/GoalPanel';
 import { esc } from '../ui/html';
+import { registerCustomModels } from '../editor/ModelStore';
 import { formatMoney } from '../ui/format';
 
 // Zentrale Spielklasse: Renderer, Szene, Spielschleife.
@@ -92,6 +93,8 @@ export class Game {
     // Modelle: Voxel-Stil laut Daten, die Adresse kann ihn ein- oder ausschalten
     const voxel = readData<VoxelSettings>('voxel/standard');
     this.models = new ModelLibrary({ ...voxel, aktiv: options.stil ? options.stil === 'voxel' : voxel.aktiv });
+    // Eigene Modelle aus dem Voxel-Editor (data/modelle und Browser-Speicher) ins Baumenü „Eigene“
+    registerCustomModels(this.content, this.models);
 
     // Spielzustand ohne Darstellung (Koop-tauglich)
     this.player = new PlayerState('lokal', readData<PlayerStart>('spieler/start'), readData<LevelTable>('spieler/level'));
@@ -234,6 +237,7 @@ export class Game {
     });
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
+    this.hud.onTool('editor', () => { location.hash = 'editor'; location.reload(); });
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;

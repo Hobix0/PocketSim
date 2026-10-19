@@ -50,6 +50,7 @@ export class Hud {
         <span class="tools">
           <button type="button" data-tool="bauen"></button>
           <button type="button" data-tool="personal"></button>
+          <button type="button" data-tool="editor"></button>
         </span>
       </div>
       <div class="hand panel" hidden></div>
@@ -163,6 +164,7 @@ export class Hud {
     const key = (a: string) => `<span class="key">${esc(this.input.keyLabel(a))}</span>`;
     this.toolsEl.querySelector('[data-tool="bauen"]')!.innerHTML = `${esc(this.texts('bauen'))} ${key('bauen_menue')}`;
     this.toolsEl.querySelector('[data-tool="personal"]')!.innerHTML = `${esc(this.texts('personal'))} ${key('personal_menue')}`;
+    this.toolsEl.querySelector('[data-tool="editor"]')!.textContent = this.texts('editor');
   }
 
   private renderHelp(): void {

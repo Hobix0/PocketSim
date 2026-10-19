@@ -4,6 +4,7 @@ import { LabelMaterial } from './LabelMaterial';
 import { voxelize, type VoxelSource } from '../voxel/voxelize';
 import { greedyMesh } from '../voxel/greedyMesh';
 import { loadPixels, pixelAt, type Pixels } from '../voxel/pixels';
+import type { VoxelGrid } from '../voxel/VoxelGrid';
 
 // Lädt die Blender-Modelle aus data/3d und gibt fertige Exemplare heraus.
 //
@@ -64,6 +65,8 @@ const EMPTY_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA
 
 export class ModelLibrary implements ModelProvider {
   readonly hasPalette: boolean;
+  /** Adresse der Palettentextur (z. B. für die Farbauswahl im Editor) */
+  readonly paletteUrl: string | undefined;
   readonly hasLabels: boolean;
   private readonly loader: FBXLoader;
   private readonly templates = new Map<string, Promise<THREE.Object3D>>();
@@ -80,6 +83,7 @@ export class ModelLibrary implements ModelProvider {
     this.loader = new FBXLoader(manager);
 
     const paletteUrl = Object.values(paletteUrls)[0];
+    this.paletteUrl = paletteUrl;
     const labelUrl = Object.values(labelUrls)[0];
     this.hasPalette = paletteUrl !== undefined;
     this.hasLabels = labelUrl !== undefined;
@@ -109,7 +113,7 @@ export class ModelLibrary implements ModelProvider {
 
   /** Gibt es zu diesem Pfad (relativ zu data/) ein Modell? */
   has(path: string): boolean {
-    return `/data/${path}` in modelSources;
+    return `/data/${path}` in modelSources || this.templates.has(path);
   }
 
   /** Neues Exemplar eines Modells, z. B. instance('3d/Baubar/…/SM_Build_Wand_Weiss.fbx'). */
@@ -230,7 +234,28 @@ export class ModelLibrary implements ModelProvider {
     const { solid, glass } = voxelize(sources, size);
     // Die Original-Dreiecke werden nicht mehr gebraucht
     for (const g of geometries) g.dispose();
+    const out = this.voxelObject(solid, glass, voxelStufen(this.voxel!, path));
+    out.name = group.name;
+    return out;
+  }
 
+  /**
+   * Fertiges Voxel-Modell (z. B. aus dem Editor) unter einem Pfad bereitstellen.
+   * Es lässt sich danach wie jedes andere Modell mit instance(path) verwenden.
+   */
+  registerVoxelModel(path: string, grid: VoxelGrid): void {
+    const stufen = this.voxel?.stufen ?? [{ ab: 0, faktor: 1 }];
+    this.templates.set(path, Promise.resolve(this.voxelObject(grid, null, stufen)));
+  }
+
+  /** Würfelgitter eines Modells (für den Editor als Vorlage); null, wenn es keins gibt. */
+  async voxelGridOf(path: string): Promise<VoxelGrid | null> {
+    const t = await this.template(path);
+    return (t.userData.voxelGrid as VoxelGrid | undefined) ?? null;
+  }
+
+  /** Gitter → Objekt mit Detailstufen (LOD); merkt sich das feinste Gitter für den Editor. */
+  private voxelObject(solid: VoxelGrid | null, glass: VoxelGrid | null, stufen: VoxelStufe[]): THREE.Object3D {
     // Eine Gruppe je Detailstufe; three.js wählt beim Zeichnen die passende (LOD)
     const level = (faktor: number) => {
       const g = new THREE.Group();
@@ -247,16 +272,15 @@ export class ModelLibrary implements ModelProvider {
       }
       return g;
     };
-    const stufen = voxelStufen(this.voxel!, path);
-    if (stufen.length <= 1) {
-      const out = level(stufen[0]?.faktor ?? 1);
-      out.name = group.name;
-      return out;
+    let out: THREE.Object3D;
+    if (stufen.length <= 1) out = level(stufen[0]?.faktor ?? 1);
+    else {
+      const lod = new THREE.LOD();
+      for (const st of stufen) lod.addLevel(level(st.faktor), st.ab);
+      out = lod;
     }
-    const lod = new THREE.LOD();
-    lod.name = group.name;
-    for (const st of stufen) lod.addLevel(level(st.faktor), st.ab);
-    return lod;
+    out.userData.voxelGrid = solid;
+    return out;
   }
 }
 

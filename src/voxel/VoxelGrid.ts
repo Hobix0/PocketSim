@@ -63,6 +63,13 @@ export class VoxelGrid {
     return this.data[this.index(x, y, z)];
   }
 
+  /** Wert setzen (0 = leer, sonst 0xRRGGBB); außerhalb des Feldes passiert nichts. */
+  set(x: number, y: number, z: number, rgb: number | null): void {
+    const [nx, ny, nz] = this.dims;
+    if (x < 0 || y < 0 || z < 0 || x >= nx || y >= ny || z >= nz) return;
+    this.data[this.index(x, y, z)] = rgb === null ? 0 : (rgb & 0xffffff) | FILLED;
+  }
+
   /**
    * Gröbere Fassung für größere Entfernung: je faktor³ Würfel werden zu einem.
    * Belegt, sobald einer der Würfel belegt ist; Farbe = die häufigste darunter.

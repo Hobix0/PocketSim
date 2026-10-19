@@ -5,5 +5,8 @@ const urls = import.meta.glob('/data/3d/Icons_*/*.png', { query: '?url', import:
 
 /** Adresse zu einem Icon-Pfad aus den Daten, z. B. "3d/Icons_Produkte/T_Icon_Cola_0_5L.png". */
 export function iconUrl(path: string | undefined): string | undefined {
-  return path ? urls[`/data/${path}`] : undefined;
+  if (!path) return undefined;
+  // Eigene Modelle bringen ihr Vorschaubild direkt mit
+  if (path.startsWith('data:image/')) return path;
+  return urls[`/data/${path}`];
 }

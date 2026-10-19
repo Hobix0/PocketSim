@@ -66,7 +66,6 @@ Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`
 - **Einräumen von Hand:** Karton anklicken → er ist „in der Hand“ (Anzeige unten) → Regal anklicken → Ware wandert in die Fächer und ist im Regal zu sehen. Gekühlte Ware passt nur ins Kühlregal. Handarbeit bringt XP (`data/arbeit/standard.json`)
 - **Personal** (`P` oder Knopf „Personal“): jeden Tag neue Bewerbungen, einstellen, entlassen. Auffüller holen selbstständig Kartons von den Paletten und räumen sie ein. Der Lohn wird zu Beginn jedes Tages fällig – reicht das Geld nicht, kündigt die Person. Werte in `data/personal/`
 
-Noch vereinfacht: Das Personal läuft in gerader Linie (Wegfindung kommt mit der Kunden-KI).
 
 **Voxel-Stil** ✅
 
@@ -84,6 +83,16 @@ Noch vereinfacht: Das Personal läuft in gerader Linie (Wegfindung kommt mit der
 - Um Mitternacht kommt der **Tagesbericht**: Kunden, Umsatz, Ausgaben, Ergebnis, Ruf und die am häufigsten vermissten Produkte (= was man einkaufen sollte). Nachts im leeren Laden läuft die Zeit schneller
 - **Ziele** für den Einstieg links oben (`data/ziele/start.json`) mit Belohnungen
 - Werte: `data/kunden/standard.json` (Öffnungszeiten, Andrang je Stunde, Geduld, Ruf), `data/navigation/standard.json`, Kassenplätze in `data/bau/kasse_*.json` (`"kasse"`)
+
+**Voxel-Editor** ✅
+
+- Öffnen über den Knopf **Editor** oben im Spiel oder mit `#editor` in der Adresse
+- Werkzeuge: Setzen `1`, Entfernen `2`, Malen `3`, Füllen `4` (zusammenhängende gleiche Farbe), Pipette `5` (oder `Alt` + Klick), Spiegeln links/rechts `M`, Rückgängig `Strg+Z`, Wiederholen `Strg+Y`
+- Ziehen mit gedrückter Maustaste setzt/entfernt/malt eine ganze Fläche in derselben Schicht
+- Farben aus der Spiel-Palette oder frei wählbar; Bauraum und Würfelgröße (1 – 10 cm) einstellbar
+- **Vorlage aus dem Spiel:** jedes Bauteil und Produkt als Ausgangspunkt laden und umbauen
+- **Im Spiel:** Art (Dekoration oder Regal), Preis, Platz (Boden, Decke, Wand). Bei Regalen erkennt der Editor die Regalböden automatisch – dort steht später die Ware. Vorne ist +X (grüner Pfeil)
+- **Speichern:** im Entwicklungsmodus als Datei `data/modelle/<id>.json` (gehört dann zum Projekt), sonst im Browser. „Exportieren“/„Importieren“ für Dateien. Gespeicherte Modelle erscheinen im Baumenü unter **Eigene**
 
 
 
@@ -360,6 +369,25 @@ Die Umrechnung steckt nur in `ModelLibrary` und `src/voxel/`; Spiellogik und Kom
 ```
 
 `stufen`: ab diesem Kameraabstand (m) werden faktor × faktor × faktor Würfel zu einem zusammengefasst (häufigste Farbe).
+
+### Eigene Modelle (data/modelle)
+
+```mermaid
+flowchart LR
+  ED[VoxelEditor] -->|encodeGrid| F[(data/modelle/*.json<br>oder Browser)]
+  F --> MS[ModelStore]
+  MS -->|toBuildDef| BAU[Baukatalog „Eigene“]
+  MS -->|registerVoxelModel| ML[ModelLibrary]
+  ML --> SPIEL[Entities im Spiel]
+```
+
+```json
+{ "id": "eigen_rotes_regal", "name": "Rotes Regal", "typ": "regal", "preis": 150, "ebene": "objekt",
+  "kantenlaenge": 0.025, "groesse": [20, 72, 80], "palette": ["#c0573e", "#393939"],
+  "voxel": "79*1,1*2,5600*1,…", "regal": { "kapazitaet": 20, "kuehlung": false }, "vorschau": "data:image/png;base64,…" }
+```
+
+`voxel` zählt alle Zellen (x außen, dann y, dann z innen) als `Anzahl*Farbe` auf; Farbe 0 = leer, sonst Nummer in `palette` (ab 1).
 
 ### Datenformate
 

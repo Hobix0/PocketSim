@@ -89,5 +89,8 @@
   "bericht_ruf": "Ruf",
   "bericht_fehlt": "Am häufigsten vermisst",
   "bericht_nichts_fehlt": "Nichts – alle Wünsche erfüllt",
-  "kunde": "Kunde"
+  "kunde": "Kunde",
+  "editor": "Editor",
+  "eigene_leer": "Noch keine eigenen Modelle. Bau welche im Voxel-Editor – sie erscheinen dann hier.",
+  "editor_oeffnen": "Editor öffnen"
 }

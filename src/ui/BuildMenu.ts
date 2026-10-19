@@ -49,6 +49,7 @@ export class BuildMenu {
       if (!b) return;
       b.blur();
       if (b.dataset.kategorie) { this.kategorie = b.dataset.kategorie; this.render(); }
+      else if (b.dataset.editor) { location.hash = 'editor'; location.reload(); }
       else if (b.dataset.tool === 'abreissen') this.toggle({ art: 'abreissen' });
       else if (b.dataset.tool === 'verschieben') this.toggle({ art: 'verschieben' });
       else if (b.dataset.bau) {
@@ -102,7 +103,8 @@ export class BuildMenu {
       `<button type="button" data-kategorie="${k.id}" class="${k.id === this.kategorie ? 'active' : ''}" aria-selected="${k.id === this.kategorie}">${esc(k.name)}</button>`,
     ).join('');
     const defs = this.content.bau.all().filter((d) => d.kategorie === this.kategorie);
-    this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('');
+    this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('')
+      || `<p class="empty-cat">${esc(this.content.text('eigene_leer'))} <button type="button" data-editor="1">${esc(this.content.text('editor_oeffnen'))}</button></p>`;
     this.hintEl.innerHTML = this.hint();
   }
 

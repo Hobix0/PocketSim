@@ -864,3 +864,251 @@ html, body {
   .toast { animation: none; }
   .topbar .meter .fill, .topbar .delta, .toast { transition: none; }
 }
+
+/* ── Voxel-Editor ── */
+.editor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 290px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "top top top" "left . right" "status status status";
+  gap: 10px;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.editor > * {
+  pointer-events: auto;
+}
+
+.editor button,
+.editor .button,
+.editor input,
+.editor select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--button-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+
+.editor button,
+.editor .button {
+  cursor: pointer;
+}
+
+.editor button:hover,
+.editor .button:hover {
+  background: var(--button-hover);
+}
+
+.editor button.active,
+.editor button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.editor h4 {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.editor-top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.editor-top .name {
+  width: min(260px, 40vw);
+}
+
+.editor-top .spacer {
+  flex: 1;
+}
+
+.editor-left,
+.editor-right {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  align-self: start;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+.editor-left { grid-area: left; }
+.editor-right { grid-area: right; }
+
+.editor .tools {
+  display: grid;
+  gap: 4px;
+}
+
+.editor .tools button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor .row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.editor .row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor .check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.editor .check input {
+  padding: 0;
+}
+
+.editor .current {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editor .current input {
+  width: 44px;
+  height: 28px;
+  padding: 0 2px;
+}
+
+.editor .palette {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+}
+
+.editor .palette button {
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.editor .palette button.active {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+.editor .dims {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.editor .dims label {
+  display: grid;
+  gap: 3px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.editor .dims input,
+.editor .dims select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.editor .hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.editor .library {
+  display: grid;
+  gap: 6px;
+}
+
+.editor .lib-item {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.editor .lib-item img,
+.editor .lib-item .noicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--key-bg);
+  object-fit: contain;
+}
+
+.editor .lib-item small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.editor-status {
+  grid-area: status;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.editor-status .msg {
+  color: var(--accent);
+}
+
+.editor-status .help {
+  margin-left: auto;
+  color: var(--text-dim);
+}
+
+.editor-status .help .key {
+  margin-left: 8px;
+}
+
+@media (max-width: 900px) {
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto;
+    grid-template-areas: "top" "left" "." "right" "status";
+  }
+
+  .editor-left, .editor-right {
+    max-height: 32vh;
+  }
+
+  .editor .tools {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Leere Kategorie im Baumenü ── */
+.catalog .empty-cat {
+  grid-column: 1 / -1;
+  margin: 4px 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
