@@ -1,5 +1,6 @@
 import { readData, readFolderEntries } from '../core/Data';
 import { Registry } from './Registry';
+import type { FigureSettings } from '../voxel/figure';
 import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
@@ -21,6 +22,8 @@ export class Content {
   readonly personal: StaffSettings;
   readonly namen: string[];
   readonly arbeit: WorkSettings;
+  /** Aussehen der Voxel-Figuren (data/figuren/standard.json) */
+  readonly figuren: FigureSettings;
   /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
@@ -41,6 +44,7 @@ export class Content {
     this.personal = readData<StaffSettings>('personal/standard');
     this.namen = readData<string[]>('personal/namen');
     this.arbeit = readData<WorkSettings>('arbeit/standard');
+    this.figuren = readData<FigureSettings>('figuren/standard');
     this.texte = readData<Record<string, string>>('texte/standard');
     this.crossCheck();
   }

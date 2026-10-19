@@ -1,0 +1,21 @@
+{
+  "_hinweis": "Voxel-Darstellung: Jedes Blender-Modell wird beim ersten Laden in Würfel umgerechnet. kantenlaenge in Metern. stufen: ab diesem Kameraabstand (m) werden faktor × faktor × faktor Würfel zu einem zusammengefasst – aus der Ferne sieht man den Unterschied nicht, gezeichnet wird viel weniger. Die erste passende Regel (Pfad beginnt mit …) gewinnt. Mit ?stil=lowpoly in der Adresse erscheinen die Original-Modelle.",
+  "aktiv": true,
+  "kantenlaenge": 0.025,
+  "stufen": [
+    { "ab": 0, "faktor": 1 },
+    { "ab": 16, "faktor": 2 }
+  ],
+  "regeln": [
+    {
+      "pfad": "3d/Produkte/",
+      "kantenlaenge": 0.004,
+      "stufen": [
+        { "ab": 0, "faktor": 1 },
+        { "ab": 3, "faktor": 2 },
+        { "ab": 7, "faktor": 4 },
+        { "ab": 14, "faktor": 8 }
+      ]
+    }
+  ]
+}

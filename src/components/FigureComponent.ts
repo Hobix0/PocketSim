@@ -1,33 +1,41 @@
 import * as THREE from 'three';
 import { Component } from '../ecs/Component';
+import { buildFigureGrid, type FigureLook } from '../voxel/figure';
+import { greedyMesh } from '../voxel/greedyMesh';
 
-// Einfache Spielfigur (Körper, Kopf), bis es Figuren aus Blender gibt.
-// Die Farbe des Körpers zeigt die Rolle. Ursprung unten in der Mitte.
+// Spielfigur aus Würfeln (Aussehen siehe voxel/figure.ts). Ursprung unten in der Mitte, Blick nach +Z.
+// Figuren mit gleichem Aussehen teilen sich die Geometrie; das Material teilen sich alle.
+
+const geometries = new Map<string, THREE.BufferGeometry>();
+let material: THREE.MeshStandardMaterial | null = null;
+
+function figureGeometry(look: FigureLook, size: number): THREE.BufferGeometry {
+  const key = `${size}|${look.haut}|${look.haare}|${look.oberteil}|${look.hose}|${look.schuhe}|${look.frisur}`;
+  let geo = geometries.get(key);
+  if (!geo) {
+    geo = greedyMesh(buildFigureGrid(look, size));
+    geometries.set(key, geo);
+  }
+  return geo;
+}
 
 export class FigureComponent extends Component {
-  private group: THREE.Group | null = null;
+  private mesh: THREE.Mesh | null = null;
 
-  constructor(private readonly farbe: string) {
+  constructor(readonly look: FigureLook, private readonly size: number) {
     super();
   }
 
   override onAttach(): void {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.75, 4, 10), new THREE.MeshStandardMaterial({ color: this.farbe, roughness: 0.8 }));
-    body.position.y = 0.6;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), new THREE.MeshStandardMaterial({ color: '#e8c4a0', roughness: 0.8 }));
-    head.position.y = 1.4;
-    for (const m of [body, head]) { m.castShadow = true; g.add(m); }
-    this.group = g;
-    this.entity.object.add(g);
+    material ??= new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0 });
+    this.mesh = new THREE.Mesh(figureGeometry(this.look, this.size), material);
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = true;
+    this.entity.object.add(this.mesh);
   }
 
   override onDetach(): void {
-    if (!this.group) return;
-    this.entity.object.remove(this.group);
-    this.group.traverse((o) => {
-      if (o instanceof THREE.Mesh) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); }
-    });
-    this.group = null;
+    if (this.mesh) this.entity.object.remove(this.mesh);
+    this.mesh = null;
   }
 }

@@ -127,14 +127,24 @@ export class ShelfComponent extends InteractableComponent implements Describable
     const rows = Math.max(1, Math.min(3, Math.floor(0.38 / deep)));
     const count = Math.min(f.menge, perRow * rows);
     const model = f.produkt.model;
+    const spots: THREE.Vector3[] = [];
     for (let k = 0; k < count; k++) {
       const row = Math.floor(k / perRow);
       const col = k % perRow;
-      const x = this.def.mitte + 0.12 - row * deep;
-      const z = (col - (perRow - 1) / 2) * along;
-      this.models.instance(model).then((obj) => {
-        if (this.visuals[i] !== group) return; // inzwischen neu aufgebaut
-        obj.position.set(x, ebenen[i] + 0.01, z);
+      spots.push(new THREE.Vector3(this.def.mitte + 0.12 - row * deep, ebenen[i] + 0.01, (col - (perRow - 1) / 2) * along));
+    }
+    const models = this.models;
+    if (models.instances) {
+      // Alle Packungen eines Fachs in einem Zeichenaufruf
+      models.instances(model, spots.map((p) => new THREE.Matrix4().makeTranslation(p))).then((obj) => {
+        if (this.visuals[i] === group) group.add(obj); // sonst inzwischen neu aufgebaut
+      });
+      return;
+    }
+    for (const p of spots) {
+      models.instance(model).then((obj) => {
+        if (this.visuals[i] !== group) return;
+        obj.position.copy(p);
         group.add(obj);
       });
     }

@@ -4,7 +4,7 @@ import { InputMap, type Bindings } from '../input/InputMap';
 import { Pointer } from '../input/Pointer';
 import { ManagementCamera, type CameraSettings } from '../camera/ManagementCamera';
 import { Level, expandObjects, type LevelData } from '../world/Level';
-import { ModelLibrary } from '../assets/ModelLibrary';
+import { ModelLibrary, type VoxelSettings } from '../assets/ModelLibrary';
 import { GridCursor } from '../world/GridCursor';
 import { Content } from '../content/Content';
 import { World } from '../ecs/World';
@@ -41,7 +41,7 @@ export class Game {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly content: Content;
-  readonly models = new ModelLibrary();
+  readonly models: ModelLibrary;
   readonly world: World;
   readonly input: InputMap;
   readonly pointer = new Pointer();
@@ -74,9 +74,13 @@ export class Game {
   private readonly timer = new THREE.Timer();
   private readonly sun: THREE.DirectionalLight;
 
-  constructor(container: HTMLElement, levelId: string) {
+  constructor(container: HTMLElement, levelId: string, options: { stil?: 'voxel' | 'lowpoly' } = {}) {
     // Inhalte zuerst: Fehler in den Daten sollen sofort auffallen
     this.content = new Content();
+
+    // Modelle: Voxel-Stil laut Daten, die Adresse kann ihn ein- oder ausschalten
+    const voxel = readData<VoxelSettings>('voxel/standard');
+    this.models = new ModelLibrary({ ...voxel, aktiv: options.stil ? options.stil === 'voxel' : voxel.aktiv });
 
     // Spielzustand ohne Darstellung (Koop-tauglich)
     this.player = new PlayerState('lokal', readData<PlayerStart>('spieler/start'), readData<LevelTable>('spieler/level'));

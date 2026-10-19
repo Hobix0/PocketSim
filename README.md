@@ -68,6 +68,13 @@ Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`
 
 Noch vereinfacht: Das Personal läuft in gerader Linie (Wegfindung kommt mit der Kunden-KI).
 
+**Voxel-Stil** ✅
+
+- Alle Blender-Modelle erscheinen als Würfel: beim ersten Laden einmal umgerechnet, Farben aus Palette und Etikett. Gebäude und Einrichtung mit 2,5 cm, Produkte mit 4 mm – Flaschen, Deckel und Etiketten bleiben erkennbar
+- **Schnell trotz Details:** gleichfarbige Würfelflächen werden zu großen Rechtecken zusammengefasst (Greedy Meshing), alle Exemplare teilen sich eine Geometrie, gleiche Ware im Regal ist ein einziger Zeichenaufruf (InstancedMesh), und aus der Ferne werden automatisch gröbere Detailstufen gezeigt
+- Figuren für Personal (und bald Kunden) sind aus Würfeln gebaut: Haut, Frisur, Kleidung aus `data/figuren/standard.json`; beim Personal hat das Oberteil die Farbe der Rolle
+- Alles einstellbar in `data/voxel/standard.json`; `?stil=lowpoly` in der Adresse zeigt die Original-Modelle (z. B. `…/?stil=lowpoly#testgelaende`)
+
 
 
 ## Starten
@@ -83,7 +90,7 @@ Weitere Befehle:
 
 | Befehl | Was passiert |
 |---|---|
-| `npm test` | automatische Tests (Entities, Daten, Modelle) |
+| `npm test` | automatische Tests (Entities, Daten, Modelle, Voxel) |
 | `npm run import:3d` | Blender-Exporte aus `data/3d` in die Spieldaten übernehmen |
 | `npm run check` | nur Typprüfung |
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
@@ -294,6 +301,35 @@ flowchart LR
 ```
 
 Jedes Bauelement hat eine **Ebene** (`boden`, `wand`, `anbau`, `objekt`, `decke`); sie bestimmt, was sich gegenseitig im Weg ist. Ein Regal bekommt `"regal": { "ebenen": [Bodenhöhen], "kapazitaet": 24, "kuehlung": false }`. Spieler und Personal benutzen dieselbe Einräum-Funktion.
+
+### Voxel-Stil
+
+```mermaid
+flowchart LR
+  F[FBX aus data/3d] --> L[ModelLibrary]
+  L -->|Dreiecke + Farben aus Palette/Etikett| V[voxelize]
+  V --> G[VoxelGrid]
+  G -->|downsample 2, 4, 8| G2[gröbere Gitter]
+  G --> M[greedyMesh]
+  G2 --> M
+  M -->|eine Geometrie je Stufe| LOD[THREE.LOD]
+  LOD --> E[Entities / Regal-Ware als InstancedMesh]
+  D[(data/voxel)] --> L
+  FD[(data/figuren)] --> FG[figure.ts] --> M
+```
+
+Die Umrechnung steckt nur in `ModelLibrary` und `src/voxel/`; Spiellogik und Komponenten merken davon nichts. Später können fertige Voxel-Modelle (z. B. aus MagicaVoxel) denselben Weg ab `VoxelGrid` nehmen.
+
+`data/voxel/standard.json`:
+
+```json
+{ "aktiv": true, "kantenlaenge": 0.025,
+  "stufen": [ { "ab": 0, "faktor": 1 }, { "ab": 16, "faktor": 2 } ],
+  "regeln": [ { "pfad": "3d/Produkte/", "kantenlaenge": 0.004,
+                "stufen": [ { "ab": 0, "faktor": 1 }, { "ab": 3, "faktor": 2 }, { "ab": 7, "faktor": 4 }, { "ab": 14, "faktor": 8 } ] } ] }
+```
+
+`stufen`: ab diesem Kameraabstand (m) werden faktor × faktor × faktor Würfel zu einem zusammengefasst (häufigste Farbe).
 
 ### Datenformate
 
