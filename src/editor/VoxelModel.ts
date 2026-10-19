@@ -118,6 +118,7 @@ export function toBuildDef(m: VoxelModelData, grid = decodeGrid(m)): BuildDef {
     kategorie: CUSTOM_CATEGORY,
     ebene: m.ebene,
     durchgang: false,
+    aussen: false,
     funktionen: [],
     preis: m.preis,
     freischaltLevel: 1,

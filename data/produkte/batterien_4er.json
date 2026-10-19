@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Batterien_4er.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Batterien_4er.png",
   "groesse": [0.023, 0.16, 0.101]

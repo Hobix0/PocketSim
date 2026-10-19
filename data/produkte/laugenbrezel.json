@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/02_Backwaren/SM_Laugenbrezel.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Laugenbrezel.png",
   "groesse": [0.155, 0.03, 0.147]

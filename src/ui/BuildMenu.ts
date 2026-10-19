@@ -1,5 +1,6 @@
 import type { Content } from '../content/Content';
-import type { BuildDef } from '../content/definitions';
+import { inBuildCategory, type BuildDef } from '../content/definitions';
+import type { Plots } from '../world/Plots';
 import type { InputMap } from '../input/InputMap';
 import type { PlayerState } from '../state/PlayerState';
 import type { BuildController, Tool } from '../building/BuildController';
@@ -16,6 +17,7 @@ export class BuildMenu {
   private readonly gridEl: HTMLElement;
   private readonly hintEl: HTMLElement;
   private kategorie: string;
+  private plotMessage = '';
 
   constructor(
     parent: HTMLElement,
@@ -23,6 +25,7 @@ export class BuildMenu {
     private readonly build: BuildController,
     private readonly player: PlayerState,
     private readonly input: InputMap,
+    private readonly plots?: Plots,
   ) {
     const t = (k: string) => esc(content.text(k));
     this.el = document.createElement('div');
@@ -50,6 +53,11 @@ export class BuildMenu {
       b.blur();
       if (b.dataset.kategorie) { this.kategorie = b.dataset.kategorie; this.render(); }
       else if (b.dataset.editor) { location.hash = 'editor'; location.reload(); }
+      else if (b.dataset.plot && this.plots) {
+        const r = this.plots.buy(b.dataset.plot);
+        this.plotMessage = r.ok ? '' : r.grund === 'geld' ? 'Dafür reicht das Geld nicht.' : r.grund === 'gesperrt' ? 'Noch nicht freigeschaltet.' : '';
+        this.render();
+      }
       else if (b.dataset.tool === 'abreissen') this.toggle({ art: 'abreissen' });
       else if (b.dataset.tool === 'verschieben') this.toggle({ art: 'verschieben' });
       else if (b.dataset.bau) {
@@ -102,10 +110,29 @@ export class BuildMenu {
     this.tabsEl.innerHTML = this.content.baumenue.kategorien.map((k) =>
       `<button type="button" data-kategorie="${k.id}" class="${k.id === this.kategorie ? 'active' : ''}" aria-selected="${k.id === this.kategorie}">${esc(k.name)}</button>`,
     ).join('');
-    const defs = this.content.bau.all().filter((d) => d.kategorie === this.kategorie);
+    const cat = this.content.baumenue.kategorien.find((k) => k.id === this.kategorie)!;
+    if (cat.spezial === 'grundstuecke') { this.gridEl.innerHTML = this.plotCards(); this.hintEl.innerHTML = this.hint(); return; }
+    const defs = this.content.bau.all().filter((d) => inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
     this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('')
       || `<p class="empty-cat">${esc(this.content.text('eigene_leer'))} <button type="button" data-editor="1">${esc(this.content.text('editor_oeffnen'))}</button></p>`;
     this.hintEl.innerHTML = this.hint();
+  }
+
+  private plotCards(): string {
+    if (!this.plots?.active) return '<p class="empty-cat">Auf diesem Gelände gibt es keine Grundstücke.</p>';
+    const cards = this.plots.list.map((p) => {
+      const own = this.plots!.isOwned(p.id);
+      const locked = p.freischaltLevel > this.player.level;
+      const w = p.rect.maxX - p.rect.minX, d = p.rect.maxZ - p.rect.minZ;
+      return `<div class="card plot ${own ? 'own' : ''} ${locked ? 'locked' : ''}">
+        <span class="name">${esc(p.name)}</span><small>${w} × ${d} m</small>
+        ${own ? '<span class="cost">gehört dir</span>'
+          : locked ? `<span class="cost">ab Level ${p.freischaltLevel}</span>`
+            : `<button type="button" class="primary" data-plot="${esc(p.id)}">Kaufen · ${formatMoney(p.preis)}</button>`}
+      </div>`;
+    }).join('');
+    return cards + (this.plotMessage ? `<p class="empty-cat">${esc(this.plotMessage)}</p>` : '')
+      + '<p class="empty-cat">Gebaut werden kann nur auf eigenen Grundstücken (grüne Linien, beim Bauen sichtbar).</p>';
   }
 
   private card(d: BuildDef, tool: Tool | null): string {

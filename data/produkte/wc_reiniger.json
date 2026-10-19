@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_WC_Reiniger.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_WC_Reiniger.png",
   "groesse": [0.086, 0.261, 0.1]

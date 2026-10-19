@@ -17,6 +17,8 @@ export class FootprintComponent extends Component {
     readonly groesse: [number, number, number],
     /** Tür oder Durchgang: steht im Weg beim Bauen, aber nicht beim Gehen */
     readonly durchgang = false,
+    /** Außenfläche (Gehweg) */
+    readonly aussen = false,
   ) {
     super();
   }

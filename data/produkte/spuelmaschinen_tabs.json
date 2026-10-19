@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Spuelmaschinen_Tabs.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Spuelmaschinen_Tabs.png",
   "groesse": [0.117, 0.132, 0.164]

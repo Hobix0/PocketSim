@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": true,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/03_Molkerei_Eier/SM_Sahne_200ml.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Sahne_200ml.png",
   "groesse": [0.046, 0.11, 0.046]

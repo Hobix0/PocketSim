@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/02_Backwaren/SM_Mehrkornbroetchen.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Mehrkornbroetchen.png",
   "groesse": [0.106, 0.052, 0.092]

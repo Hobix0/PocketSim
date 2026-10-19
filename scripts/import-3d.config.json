@@ -21,70 +21,80 @@
       "vk": 1.49,
       "frisch": true,
       "gebinde": 10,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 1
     },
     "backwaren": {
       "ek": 0.8,
       "vk": 1.39,
       "frisch": true,
       "gebinde": 10,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 2
     },
     "molkerei_eier": {
       "ek": 0.7,
       "vk": 1.19,
       "frisch": true,
       "gebinde": 12,
-      "kuehlung": true
+      "kuehlung": true,
+      "freischaltLevel": 2
     },
     "fleisch_wurst": {
       "ek": 2.5,
       "vk": 3.99,
       "frisch": true,
       "gebinde": 8,
-      "kuehlung": true
+      "kuehlung": true,
+      "freischaltLevel": 3
     },
     "tiefkuehl": {
       "ek": 1.6,
       "vk": 2.69,
       "frisch": true,
       "gebinde": 8,
-      "kuehlung": true
+      "kuehlung": true,
+      "freischaltLevel": 4
     },
     "getraenke": {
       "ek": 0.6,
       "vk": 1.19,
       "frisch": false,
       "gebinde": 12,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 1
     },
     "grundnahrung": {
       "ek": 0.8,
       "vk": 1.29,
       "frisch": false,
       "gebinde": 12,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 1
     },
     "suesswaren_snacks": {
       "ek": 0.8,
       "vk": 1.69,
       "frisch": false,
       "gebinde": 20,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 1
     },
     "haushalt_reinigung": {
       "ek": 1.2,
       "vk": 2.29,
       "frisch": false,
       "gebinde": 8,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 3
     },
     "drogerie_koerperpflege": {
       "ek": 1.1,
       "vk": 2.19,
       "frisch": false,
       "gebinde": 10,
-      "kuehlung": false
+      "kuehlung": false,
+      "freischaltLevel": 4
     }
   },
   "bauStandard": {
@@ -158,7 +168,8 @@
           1
         ],
         "abstand": 0.75
-      }
+      },
+      "freischaltLevel": 2
     },
     "kuehlregal_offen": {
       "preis": 900,
@@ -235,7 +246,8 @@
           1.15,
           2.05
         ]
-      }
+      },
+      "freischaltLevel": 2
     },
     "europalette": {
       "preis": 15,
@@ -285,7 +297,8 @@
       "ebene": "anbau"
     },
     "boden_gehweg": {
-      "ebene": "boden"
+      "ebene": "boden",
+      "aussen": true
     },
     "eingangsstufe": {
       "ebene": "anbau"
@@ -331,6 +344,9 @@
     },
     "wand_rolltor": {
       "durchgang": true
+    },
+    "store_cart_01": {
+      "freischaltLevel": 3
     }
   },
   "namen": {

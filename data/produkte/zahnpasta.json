@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 4,
   "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Zahnpasta.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Zahnpasta.png",
   "groesse": [0.041, 0.046, 0.2]

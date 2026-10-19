@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": true,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/03_Molkerei_Eier/SM_Mozzarella.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Mozzarella.png",
   "groesse": [0.049, 0.15, 0.13]

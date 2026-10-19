@@ -80,6 +80,8 @@ export interface BuildDef {
   kasse?: CheckoutDef;
   /** Türen und Durchgänge: Figuren dürfen hindurchgehen, obwohl es eine Wand ist. */
   durchgang: boolean;
+  /** Außenfläche (z. B. Gehweg): zählt beim Einrasten von Wänden nicht als Innenraum */
+  aussen: boolean;
   /** Interaktions-Kontext (data/interaktion/kontexte.json). Ohne Kontext ist das Element nicht anklickbar. */
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
@@ -104,7 +106,27 @@ export interface BuildSettings {
   raster: number;
   deckenhoehe: number;
   rueckerstattung: number;
-  kategorien: { id: string; name: string }[];
+  /** Wie weit Wände von der Fliesenkante nach außen rücken (halbe Wandstärke) */
+  wandVersatz?: number;
+  kategorien: BuildCategory[];
+}
+
+/**
+ * Ein Tab im Baumenü. Ein Bauteil gehört dazu, wenn seine Kategorie in `kategorien` steht
+ * (falls angegeben) und seine Ebene in `ebenen` (falls angegeben).
+ * `spezial` = eigener Inhalt statt Bauteilen (z. B. "grundstuecke").
+ */
+export interface BuildCategory {
+  id: string;
+  name: string;
+  kategorien?: string[];
+  ebenen?: BuildLayer[];
+  spezial?: 'grundstuecke';
+}
+
+export function inBuildCategory(def: BuildDef, c: BuildCategory): boolean {
+  if (c.spezial) return false;
+  return (!c.kategorien || c.kategorien.includes(def.kategorie)) && (!c.ebenen || c.ebenen.includes(def.ebene));
 }
 
 /** Eine Rolle für Angestellte (data/personal/rollen.json). */
@@ -224,6 +246,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     regal: o.regal === undefined ? undefined : shelf(o.regal, `${where} → regal`),
     kasse: o.kasse === undefined ? undefined : checkout(o.kasse, `${where} → kasse`),
     durchgang: o.durchgang === undefined ? false : bool(o, 'durchgang', where),
+    aussen: o.aussen === undefined ? false : bool(o, 'aussen', where),
     kontext: optStr(o, 'kontext', where),
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),

@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": true,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/04_Fleisch_Wurst/SM_Speckwuerfel.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Speckwuerfel.png",
   "groesse": [0.082, 0.02, 0.123]

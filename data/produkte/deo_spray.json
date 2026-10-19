@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 4,
   "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Deo_Spray.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Deo_Spray.png",
   "groesse": [0.054, 0.195, 0.054]

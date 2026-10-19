@@ -13,7 +13,10 @@ import { FootprintComponent } from '../components/FootprintComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
-import { checkPlacement, snap, type PlacementError } from './placement';
+import { checkPlacement, type PlacementError } from './placement';
+import { snapPlacement } from './snapping';
+import { inBuildCategory } from '../content/definitions';
+import type { Plots } from '../world/Plots';
 
 // Bauwerkzeuge des Spielers (entspricht dem BuilderComponent aus UE5):
 //   bauen      – Vorschau ("Ghost") folgt dem Zeiger, grün = frei, rot = geht nicht; Klick platziert
@@ -47,7 +50,7 @@ export class BuildController {
   private readonly raycaster = new THREE.Raycaster();
   private readonly plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private readonly hit = new THREE.Vector3();
-  private readonly menuKategorien: Set<string>;
+  private readonly plotLines = new THREE.Group();
 
   constructor(
     private readonly world: World,
@@ -58,8 +61,12 @@ export class BuildController {
     private readonly scene: THREE.Scene,
     private readonly ctx: FactoryContext,
     private readonly colors: { ok: string; fehler: string },
+    private readonly plots?: Plots,
   ) {
-    this.menuKategorien = new Set(content.baumenue.kategorien.map((k) => k.id));
+    this.plotLines.visible = false;
+    scene.add(this.plotLines);
+    plots?.events.on('bought', () => this.drawPlots());
+    this.drawPlots();
     this.ghostMaterial = new THREE.MeshStandardMaterial({ color: colors.ok, transparent: true, opacity: 0.45, depthWrite: false });
   }
 
@@ -69,7 +76,7 @@ export class BuildController {
 
   /** Darf dieses Element im Baumenü gebaut, abgerissen und verschoben werden? */
   isBuildable(def: BuildDef | undefined): def is BuildDef {
-    return !!def && this.menuKategorien.has(def.kategorie);
+    return !!def && this.content.baumenue.kategorien.some((k) => inBuildCategory(def, k));
   }
 
   startBuilding(def: BuildDef): void {
@@ -102,11 +109,12 @@ export class BuildController {
     if (!this.ghost) return;
     if (!this.pointer.inside || !this.groundPoint(camera)) { this.ghost.visible = false; return; }
 
-    const raster = this.content.baumenue.raster;
-    const x = snap(this.hit.x, raster), z = snap(this.hit.z, raster);
-    const rotY = this.quarter * Math.PI / 2;
+    const snapped = snapPlacement(this.world, tool.def, this.hit.x, this.hit.z, this.quarter, this.content.baumenue);
+    const { x, z } = snapped;
+    const rotY = THREE.MathUtils.degToRad(snapped.drehung);
     const check = checkPlacement(this.world, tool.def, x, z, rotY, this.content.baumenue, {
       moving: tool.moving, geld: this.player.geld, level: this.player.level,
+      plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
     });
     this.ghost.visible = true;
     this.ghost.position.set(x, check.y, z);
@@ -127,7 +135,7 @@ export class BuildController {
       this.setTool({ art: 'verschieben' }, true);
       this.events.emit('placed', { entity: moved, moved: true });
     } else if (this.player.spend(tool.def.preis, 'bau')) {
-      const entity = this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: this.quarter * 90 }, this.ctx));
+      const entity = this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: snapped.drehung }, this.ctx));
       this.events.emit('placed', { entity, moved: false });
     }
   }
@@ -150,8 +158,18 @@ export class BuildController {
     setHighlight(target, 'none', this.colors.fehler);
     this.hovered = null;
     if (art === 'abreissen') {
+      // Anbauteile (Markise, Dachkante …) hängen am Wandmodul und gehen mit
+      let preis = def.preis;
+      if (def.ebene === 'wand') {
+        for (const [e, f] of [...this.world.query(FootprintComponent)]) {
+          const p = e.object.position, t = target.object.position;
+          if (f.ebene !== 'anbau' || Math.hypot(p.x - t.x, p.z - t.z) > 0.05) continue;
+          preis += this.content.bau.find(e.typeId)?.preis ?? 0;
+          this.world.remove(e);
+        }
+      }
       this.world.remove(target);
-      const betrag = Math.round(def.preis * this.content.baumenue.rueckerstattung * 100) / 100;
+      const betrag = Math.round(preis * this.content.baumenue.rueckerstattung * 100) / 100;
       this.player.earn(betrag, 'abriss');
       this.events.emit('message', { key: 'bauen_abgerissen', werte: { name: def.name, betrag: `${betrag.toLocaleString('de-DE')} €` }, art: 'info' });
     } else {
@@ -187,6 +205,8 @@ export class BuildController {
     if (!keepRotation) this.quarter = 0;
     this.tool = tool;
     this.problem = null;
+    // Grundstücksgrenzen zeigen, solange gebaut wird
+    this.plotLines.visible = tool !== null && !!this.plots?.active;
     if (tool?.art === 'bauen') this.createGhost(tool.def);
     this.events.emit('toolChanged', tool);
   }
@@ -216,6 +236,28 @@ export class BuildController {
     this.scene.remove(this.ghost);
     this.ghost.traverse((o) => { if (o instanceof THREE.Mesh && o.geometry.type === 'BoxGeometry') o.geometry.dispose(); });
     this.ghost = null;
+  }
+
+  /** Umrisse der Grundstücke: eigene grün, kaufbare gestrichelt gelb. */
+  private drawPlots(): void {
+    this.plotLines.clear();
+    if (!this.plots?.active) return;
+    for (const p of this.plots.list) {
+      const own = this.plots.isOwned(p.id);
+      const { minX, maxX, minZ, maxZ } = p.rect;
+      const y = 0.2;
+      const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(minX, y, minZ), new THREE.Vector3(maxX, y, minZ), new THREE.Vector3(maxX, y, maxZ),
+        new THREE.Vector3(minX, y, maxZ), new THREE.Vector3(minX, y, minZ),
+      ]);
+      const mat = own
+        ? new THREE.LineBasicMaterial({ color: this.colors.ok, depthTest: false, transparent: true, opacity: 0.7 })
+        : new THREE.LineDashedMaterial({ color: '#e0b23c', dashSize: 0.4, gapSize: 0.25, depthTest: false, transparent: true, opacity: 0.8 });
+      const line = new THREE.Line(geo, mat);
+      if (!own) line.computeLineDistances();
+      line.renderOrder = 5;
+      this.plotLines.add(line);
+    }
   }
 
   private groundPoint(camera: THREE.Camera): boolean {

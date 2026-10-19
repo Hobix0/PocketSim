@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/02_Backwaren/SM_Donut_Schoko.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Donut_Schoko.png",
   "groesse": [0.097, 0.029, 0.097]

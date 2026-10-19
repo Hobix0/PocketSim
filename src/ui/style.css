@@ -1501,3 +1501,25 @@ html, body {
 .stats-table td.minus {
   color: var(--danger);
 }
+
+/* ── Grundstücke im Baumenü ── */
+.catalog .card.plot {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 10px;
+  cursor: default;
+}
+
+.catalog .card.plot small {
+  color: var(--text-dim);
+}
+
+.catalog .card.plot.own {
+  border-color: var(--accent);
+}
+
+.catalog .card.plot button {
+  font-size: 12px;
+  padding: 4px 6px;
+}

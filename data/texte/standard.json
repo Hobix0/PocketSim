@@ -94,5 +94,8 @@
   "eigene_leer": "Noch keine eigenen Modelle. Bau welche im Voxel-Editor – sie erscheinen dann hier.",
   "editor_oeffnen": "Editor öffnen",
   "sortiment": "Sortiment",
-  "bilanz": "Bilanz"
+  "bilanz": "Bilanz",
+  "bauen_fehler_grundstueck": "Nicht dein Grundstück – im Baumenü unter „Grundstücke“ kaufen",
+  "grundstueck_gekauft": "Grundstück gekauft: {name}",
+  "freigeschaltet": "Neu freigeschaltet: {liste}"
 }

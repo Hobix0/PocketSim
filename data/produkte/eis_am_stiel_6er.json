@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": true,
-  "freischaltLevel": 1,
+  "freischaltLevel": 4,
   "model": "3d/Produkte/05_Tiefkuehl/SM_Eis_am_Stiel_6er.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Eis_am_Stiel_6er.png",
   "groesse": [0.057, 0.2, 0.181]

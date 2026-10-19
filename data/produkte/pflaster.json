@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 4,
   "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Pflaster.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Pflaster.png",
   "groesse": [0.032, 0.071, 0.101]

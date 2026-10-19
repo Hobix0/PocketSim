@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { PlotDef } from './Plots';
 import type { Bounds } from '../camera/ManagementCamera';
 
 // Baut die feste Kulisse eines Levels aus seiner Datei (data/level/*.json).
@@ -62,6 +63,8 @@ export interface LevelData {
   kundenPunkte?: [number, number, number][];
   /** Ziele für dieses Level (Datei unter data/ziele/), z. B. "start" */
   ziele?: string;
+  /** Wo gebaut werden darf; ohne Angabe überall (siehe world/Plots.ts) */
+  grundstuecke?: PlotDef[];
   bloecke: BlockData[];                 // feste Kulisse (Wände, Straße …)
   objekte: LevelObject[];               // Entities aus dem Bau-Katalog
 }

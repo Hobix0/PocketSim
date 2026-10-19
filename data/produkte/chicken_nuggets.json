@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": true,
-  "freischaltLevel": 1,
+  "freischaltLevel": 4,
   "model": "3d/Produkte/05_Tiefkuehl/SM_Chicken_Nuggets.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Chicken_Nuggets.png",
   "groesse": [0.052, 0.16, 0.191]

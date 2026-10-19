@@ -47,6 +47,7 @@ import { downloadSave, newestSlot, readSaveFile, readSlot, restartWith, writeSlo
 import { GameMenu } from '../ui/GameMenu';
 import { AssortmentWindow } from '../ui/AssortmentWindow';
 import { StatsWindow } from '../ui/StatsWindow';
+import { Plots } from '../world/Plots';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -107,6 +108,8 @@ export class Game {
   readonly menu: GameMenu;
   readonly assortment: AssortmentWindow;
   readonly statsWindow: StatsWindow;
+  /** Grundstücke: wo gebaut werden darf */
+  readonly plots: Plots;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
   /** Lief die Uhr, bevor das Menü aufging? */
@@ -256,10 +259,21 @@ export class Game {
     this.player.events.on('transaction', ({ grund }) => { if (grund === 'einkauf') this.goals.complete('ware_kaufen'); });
     this.staff.events.on('hired', () => this.goals.complete('personal'));
 
-    // Bauen
+    // Bauen (nur auf eigenen Grundstücken)
+    this.plots = new Plots(this.level.data.grundstuecke ?? [], this.player);
+    this.plots.events.on('bought', (p) => this.hud.toasts.show(this.content.text('grundstueck_gekauft', { name: p.name }), 'gut'));
     this.build = new BuildController(this.world, this.content, this.player, this.input, this.pointer, this.scene, this.factory,
-      { ok: accent, fehler: danger });
-    this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input);
+      { ok: accent, fehler: danger }, this.plots);
+    this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots);
+    // Was mit einem neuen Level freigeschaltet wird
+    this.player.events.on('levelUp', ({ level }) => {
+      const neu = [
+        ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.build.isBuildable(d)).map((d) => d.name),
+        ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
+        ...this.plots.list.filter((p) => p.freischaltLevel === level && !p.besessen).map((p) => `Grundstück ${p.name}`),
+      ];
+      if (neu.length) this.hud.toasts.show(this.content.text('freigeschaltet', { liste: neu.join(', ') }), 'gut');
+    });
     this.build.events.on('message', ({ key, werte, art }) => this.hud.toasts.show(this.content.text(key, werte), art));
     this.build.events.on('placed', ({ entity, moved }) => {
       this.store.nav.invalidate();
@@ -454,7 +468,7 @@ export class Game {
       laden: this.store.stats.state(),
       ziele: this.goals.erledigt,
       preise: this.prices.state(),
-      systeme: {},
+      systeme: { grundstuecke: this.plots.state() },
     };
   }
 
@@ -467,6 +481,8 @@ export class Game {
     this.prices.restore(d.preise ?? {});
     this.goals.restore(d.ziele ?? []);
     this.staff.restore(d.personal);
+    const grund = d.systeme?.grundstuecke;
+    if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
     for (const e of this.staff.team) this.spawnWorker(e, true);
     this.store.nav.invalidate();
   }

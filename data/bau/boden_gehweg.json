@@ -6,6 +6,7 @@
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},
+  "aussen": true,
   "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Boden_Gehweg.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Boden_Gehweg.png",
   "platzhalter": {"groesse": [2, 0.14, 2], "farbe": "#b9c0c6"}

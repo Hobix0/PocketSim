@@ -5,7 +5,7 @@
   "ebene": "objekt",
   "kontext": "regal",
   "preis": 350,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "werte": {"lagerplaetze": 48},
   "ablage": {"boeden": [0.02, 1.15, 2.05]},
   "model": "3d/Baubar/Lager/SM_Build_Schwerlastregal_mit_Boeden.fbx",

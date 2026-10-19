@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Kuechenrolle.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Kuechenrolle.png",
   "groesse": [0.187, 0.2, 0.37]

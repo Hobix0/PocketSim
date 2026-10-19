@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": true,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 2,
   "model": "3d/Produkte/02_Backwaren/SM_Berliner.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Berliner.png",
   "groesse": [0.095, 0.049, 0.091]

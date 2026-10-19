@@ -5,19 +5,77 @@
   "kategorien": [
     {
       "id": "einrichtung",
-      "name": "Einrichtung"
-    },
-    {
-      "id": "store_props",
-      "name": "Ladenausstattung"
+      "name": "Einrichtung",
+      "kategorien": [
+        "einrichtung",
+        "store_props"
+      ],
+      "ebenen": [
+        "objekt"
+      ]
     },
     {
       "id": "lager",
-      "name": "Lager"
+      "name": "Lager",
+      "kategorien": [
+        "lager"
+      ]
+    },
+    {
+      "id": "licht",
+      "name": "Licht",
+      "kategorien": [
+        "einrichtung",
+        "lichtschienen"
+      ],
+      "ebenen": [
+        "decke"
+      ]
+    },
+    {
+      "id": "boden",
+      "name": "Böden",
+      "ebenen": [
+        "boden"
+      ]
+    },
+    {
+      "id": "waende",
+      "name": "Wände & Türen",
+      "ebenen": [
+        "wand"
+      ]
+    },
+    {
+      "id": "fassade",
+      "name": "Fassade",
+      "ebenen": [
+        "anbau"
+      ]
+    },
+    {
+      "id": "deko",
+      "name": "Deko",
+      "kategorien": [
+        "gebaeude_basis",
+        "gebaeude_erweiterung"
+      ],
+      "ebenen": [
+        "objekt"
+      ]
     },
     {
       "id": "eigene",
-      "name": "Eigene"
+      "name": "Eigene",
+      "kategorien": [
+        "eigene"
+      ]
+    },
+    {
+      "id": "grundstuecke",
+      "name": "Grundstücke",
+      "spezial": "grundstuecke"
     }
-  ]
+  ],
+  "wandVersatz": 0.1
 }

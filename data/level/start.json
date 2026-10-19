@@ -6,6 +6,13 @@
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
   "ziele": "start",
+  "grundstuecke": [
+    {"id": "laden", "name": "Ladenfläche", "rect": {"minX": -4, "maxX": 4, "minZ": -3, "maxZ": 3}, "preis": 0, "freischaltLevel": 1, "besessen": true},
+    {"id": "gehweg", "name": "Gehweg", "rect": {"minX": -10, "maxX": 10, "minZ": 3, "maxZ": 7.2}, "preis": 0, "freischaltLevel": 1, "besessen": true},
+    {"id": "ost", "name": "Anbau Ost", "rect": {"minX": 4, "maxX": 10, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 2},
+    {"id": "west", "name": "Anbau West", "rect": {"minX": -10, "maxX": -4, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 3},
+    {"id": "hof", "name": "Hof hinten", "rect": {"minX": -10, "maxX": 10, "minZ": -9, "maxZ": -3}, "preis": 6000, "freischaltLevel": 4}
+  ],
   "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6]],
   "bloecke": [
     {"name": "Straße", "position": [0, 0.02, 9.5], "groesse": [40, 0.04, 5], "farbe": "#4d5156"},

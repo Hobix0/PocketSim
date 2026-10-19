@@ -108,7 +108,7 @@ for (const row of readCsv(path.join(DATA, '3d/Baubar/_export_liste.csv'))) {
     model: `3d/Baubar/${posix(row.Datei)}`,
     icon: fs.existsSync(path.join(DATA, icon)) ? icon : undefined,
     platzhalter: { groesse: sizeOf(row), farbe: '#b9c0c6' },
-  }, ['id', 'name', 'kategorie', 'ebene', 'kontext', 'funktionen', 'preis', 'freischaltLevel', 'werte', 'regal', 'kasse', 'durchgang', 'ablage', 'model', 'icon', 'platzhalter']);
+  }, ['id', 'name', 'kategorie', 'ebene', 'kontext', 'funktionen', 'preis', 'freischaltLevel', 'werte', 'regal', 'kasse', 'durchgang', 'aussen', 'ablage', 'model', 'icon', 'platzhalter']);
   save('bau', id, fresh, ['model', 'icon', 'platzhalter']);
 }
 

@@ -8,7 +8,7 @@
   "preisOffen": true,
   "frisch": false,
   "kuehlung": false,
-  "freischaltLevel": 1,
+  "freischaltLevel": 3,
   "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Glasreiniger.fbx",
   "icon": "3d/Icons_Produkte/T_Icon_Glasreiniger.png",
   "groesse": [0.082, 0.263, 0.076]
