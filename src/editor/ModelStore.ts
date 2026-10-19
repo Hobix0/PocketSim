@@ -3,12 +3,12 @@ import type { Content } from '../content/Content';
 import type { ModelLibrary } from '../assets/ModelLibrary';
 import { CUSTOM_PREFIX, centeredGrid, decodeGrid, toBuildDef, validateVoxelModel, type VoxelModelData } from './VoxelModel';
 
-// Wo eigene Modelle liegen:
-//   1. data/modelle/*.json – gehören zum Projekt (im Entwicklungsmodus speichert der Editor dorthin)
-//   2. im Browser (localStorage) – z. B. im Artifact, wo es keinen Server zum Speichern gibt
-// Gleiche id im Browser ersetzt die Datei (zuletzt bearbeitet gewinnt).
+// Modelle aus dem Voxel-Editor liegen im Projekt unter data/modelle/*.json – sie gehören zum Spiel
+// wie die Bauteile in data/bau. Der Editor ist ein Entwicklerwerkzeug: Im Entwicklungsmodus speichert
+// er direkt dorthin; sonst wird exportiert und die Datei von Hand nach data/modelle gelegt.
+// Nur der Entwurf (die gerade offene Arbeit) wird zur Sicherheit im Browser gemerkt.
 
-const STORAGE_KEY = 'urbanevolution.modelle';
+const DRAFT_KEY = 'urbanevolution.editor.entwurf';
 
 export function projectModels(): VoxelModelData[] {
   const out: VoxelModelData[] = [];
@@ -19,49 +19,29 @@ export function projectModels(): VoxelModelData[] {
       if (m.id !== file) throw new Error(`${where}: id "${m.id}" passt nicht zum Dateinamen`);
       out.push(m);
     } catch (err) {
-      // Ein kaputtes eigenes Modell soll das Spiel nicht stoppen
+      // Ein kaputtes Modell soll das Spiel nicht stoppen
       console.warn(err);
     }
   }
-  return out;
+  return out.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
-export function browserModels(): VoxelModelData[] {
+/** Entwurf im Browser merken (nur für den Editor, gegen versehentliches Schließen). */
+export function saveDraft(m: VoxelModelData): void {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(m)); } catch { /* dann eben nicht */ }
+}
+
+export function loadDraft(): VoxelModelData | null {
   try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]') as unknown[];
-    return raw.flatMap((r, i) => {
-      try { return [validateVoxelModel(r, `Browser-Speicher #${i + 1}`)]; } catch (err) { console.warn(err); return []; }
-    });
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? validateVoxelModel(JSON.parse(raw), 'Entwurf') : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
-/** Alle eigenen Modelle (Projekt + Browser). */
-export function allModels(): VoxelModelData[] {
-  const map = new Map<string, VoxelModelData>();
-  for (const m of projectModels()) map.set(m.id, m);
-  for (const m of browserModels()) map.set(m.id, m);
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
-}
-
-export function saveToBrowser(m: VoxelModelData): boolean {
-  try {
-    const list = browserModels().filter((x) => x.id !== m.id);
-    list.push(m);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function deleteFromBrowser(id: string): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(browserModels().filter((x) => x.id !== id)));
-  } catch {
-    // nichts zu tun
-  }
+export function clearDraft(): void {
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* nichts zu tun */ }
 }
 
 /** Im Entwicklungsmodus: als Datei data/modelle/<id>.json ins Projekt schreiben. */
@@ -76,22 +56,27 @@ export async function saveToProject(m: VoxelModelData): Promise<string | null> {
   }
 }
 
-export async function deleteFromProject(id: string): Promise<void> {
-  if (!import.meta.env.DEV) return;
-  try { await fetch('/__editor/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }); } catch { /* egal */ }
+export async function deleteFromProject(id: string): Promise<boolean> {
+  if (!import.meta.env.DEV) return false;
+  try {
+    const res = await fetch('/__editor/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) });
+    return ((await res.json()) as { ok: boolean }).ok;
+  } catch {
+    return false;
+  }
 }
 
-/** Eigene Modelle ins Spiel bringen: als Bauelement (Baumenü „Eigene“) und als Modell. */
+/** Modelle ins Spiel bringen: als Bauteil im gewählten Reiter des Baumenüs und als Modell. */
 export function registerCustomModels(content: Content, models?: ModelLibrary): number {
   let n = 0;
-  for (const m of allModels()) {
+  for (const m of projectModels()) {
     models?.registerVoxelModel(CUSTOM_PREFIX + m.id, centeredGrid(m));
     // Bauteile aus data/bau, die dieses Modell benutzen, bekommen sein Vorschaubild (wenn sie keins haben)
     for (const d of content.bau.all()) if (d.model === CUSTOM_PREFIX + m.id && !d.icon && m.vorschau) d.icon = m.vorschau;
     // Nur-Modelle und Modelle mit derselben id wie ein Bauteil aus den Spieldaten werden kein eigenes Bauteil
     if (m.typ === 'modell') continue;
     if (content.bau.has(m.id) && !content.bau.get(m.id).model?.startsWith(CUSTOM_PREFIX)) continue;
-    content.bau.add(toBuildDef(m, decodeGrid(m)));
+    content.bau.add(toBuildDef(m, content.baumenue.kategorien, decodeGrid(m)));
     n++;
   }
   return n;

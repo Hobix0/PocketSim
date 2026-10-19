@@ -53,7 +53,6 @@ export class Hud {
           <button type="button" data-tool="sortiment"></button>
           <button type="button" data-tool="bilanz"></button>
           <button type="button" data-tool="versorgung"></button>
-          <button type="button" data-tool="editor"></button>
           <button type="button" data-tool="menue" aria-label="Menü">☰</button>
         </span>
       </div>
@@ -171,7 +170,6 @@ export class Hud {
     this.toolsEl.querySelector('[data-tool="sortiment"]')!.innerHTML = `${esc(this.texts('sortiment'))} ${key('sortiment_menue')}`;
     this.toolsEl.querySelector('[data-tool="bilanz"]')!.innerHTML = `${esc(this.texts('bilanz'))} ${key('bilanz_menue')}`;
     this.toolsEl.querySelector('[data-tool="versorgung"]')!.innerHTML = `${esc(this.texts('versorgung'))} ${key('versorgung_menue')}`;
-    this.toolsEl.querySelector('[data-tool="editor"]')!.textContent = this.texts('editor');
   }
 
   private renderHelp(): void {

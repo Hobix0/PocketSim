@@ -8,8 +8,11 @@ import {
 } from '../src/editor/VoxelModel';
 import { Content } from '../src/content/Content';
 import { registerCustomModels } from '../src/editor/ModelStore';
+import {
+  cellsBrush, cellsLine, cellsOfColor, cellsRect, crop, floodCells, mirror, mirrored, presetDims, resize, rotateY, shift, PRESETS,
+} from '../src/editor/gridOps';
 
-// Voxel-Editor: Dateiformat, Regalböden, Bauelement, Strahl durchs Gitter, Teil-Meshing.
+// Voxel-Editor: Dateiformat, Regalböden, Bauelement, Bearbeitungs-Operationen, Strahl durchs Gitter, Teil-Meshing.
 
 /** Regal: 4 Würfel tief (X), 20 hoch, 8 lang (Z), 10 cm-Würfel; Rückwand bei x = 0, Böden auf y = 0, 8, 16. */
 function shelfGrid(): VoxelGrid {
@@ -20,7 +23,7 @@ function shelfGrid(): VoxelGrid {
 }
 
 function model(g: VoxelGrid, extra: Partial<VoxelModelData> = {}): VoxelModelData {
-  return { id: 'eigen_test', name: 'Test', typ: 'deko', preis: 100, ebene: 'objekt', kantenlaenge: g.size, groesse: [...g.dims], ...encodeGrid(g), ...extra };
+  return { id: 'modell_test', name: 'Test', typ: 'deko', menue: 'deko', preis: 100, ebene: 'objekt', kantenlaenge: g.size, groesse: [...g.dims], ...encodeGrid(g), ...extra };
 }
 
 describe('Dateiformat', () => {
@@ -39,11 +42,15 @@ describe('Dateiformat', () => {
     expect(validateVoxelModel(JSON.parse(JSON.stringify(m)), 'modelle/x.json').groesse).toEqual([4, 20, 8]);
     expect(() => validateVoxelModel({ ...m, groesse: [4, 0, 8] }, 'modelle/x.json')).toThrow('modelle/x.json: "groesse"');
     expect(() => validateVoxelModel({ ...m, typ: 'tisch' }, 'modelle/x.json')).toThrow('"typ"');
+    // Ohne "menue": Reiter nach Art (Regal → Einrichtung, sonst Deko)
+    const { menue: _, ...ohne } = m;
+    expect(validateVoxelModel({ ...ohne, typ: 'regal' }, 'modelle/x.json').menue).toBe('einrichtung');
+    expect(validateVoxelModel(ohne, 'modelle/x.json').menue).toBe('deko');
   });
 
   it('id aus dem Namen: Umlaute ersetzt, nur erlaubte Zeichen', () => {
-    expect(idFromName('Großes Kühlregal Nr. 2')).toBe('eigen_grosses_kuehlregal_nr_2');
-    expect(idFromName('???')).toBe('eigen_modell');
+    expect(idFromName('Großes Kühlregal Nr. 2')).toBe('modell_grosses_kuehlregal_nr_2');
+    expect(idFromName('???')).toBe('modell_neu');
   });
 });
 
@@ -52,13 +59,21 @@ describe('Im Spiel', () => {
     expect(detectShelfLevels(shelfGrid())).toEqual([0.1, 0.9, 1.7]);
   });
 
-  it('wird zum Bauelement: Maße, Kategorie „Eigene“, Fächer je Boden', () => {
-    const def = toBuildDef(model(shelfGrid(), { typ: 'regal', regal: { kapazitaet: 12, kuehlung: true } }));
-    expect(def.kategorie).toBe('eigene');
+  const kategorien = new Content().baumenue.kategorien;
+
+  it('wird zum Bauelement im gewählten Reiter: Maße, Fächer je Boden', () => {
+    const def = toBuildDef(model(shelfGrid(), { typ: 'regal', menue: 'einrichtung', regal: { kapazitaet: 12, kuehlung: true } }), kategorien);
+    expect(def.kategorie).toBe('einrichtung');
+    expect(def.ebene).toBe('objekt');
     expect(def.platzhalter.groesse.map((v) => Math.round(v * 100) / 100)).toEqual([0.4, 2, 0.8]);
     expect(def.regal).toMatchObject({ ebenen: [0.1, 0.9, 1.7], faecher: 3, kapazitaet: 12, kuehlung: true });
     expect(def.kontext).toBe('regal');
-    expect(toBuildDef(model(shelfGrid())).regal).toBeUndefined();
+    expect(toBuildDef(model(shelfGrid()), kategorien).regal).toBeUndefined();
+  });
+
+  it('der Reiter bestimmt die Bau-Ebene (Licht → Decke), unbekannte Reiter fallen auf Deko zurück', () => {
+    expect(toBuildDef(model(shelfGrid(), { menue: 'licht' }), kategorien)).toMatchObject({ ebene: 'decke', kategorie: 'einrichtung' });
+    expect(toBuildDef(model(shelfGrid(), { menue: 'gibtsnicht' }), kategorien)).toMatchObject({ ebene: 'objekt', kategorie: 'deko' });
   });
 
   it('Ursprung unten in der Mitte; Deckenmodelle hängen vom Ursprung nach unten', () => {
@@ -71,6 +86,77 @@ describe('Im Spiel', () => {
     const vorher = content.bau.size;
     const n = registerCustomModels(content);
     expect(content.bau.size).toBe(vorher + n);
+  });
+});
+
+describe('Bearbeitungs-Operationen', () => {
+  /** 4 × 3 × 2 mit einer roten Säule bei (0, *, 0) und einem blauen Würfel bei (3, 0, 1) */
+  function small(): VoxelGrid {
+    const g = new VoxelGrid(0.1, [0, 0, 0], [4, 3, 2]);
+    for (let y = 0; y < 3; y++) g.set(0, y, 0, 0xff0000);
+    g.set(3, 0, 1, 0x0000ff);
+    return g;
+  }
+
+  it('Linie, Rechteck (voll und hohl), Pinsel', () => {
+    expect(cellsLine([0, 0, 0], [3, 0, 0])).toEqual([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0]]);
+    expect(cellsLine([0, 0, 0], [2, 2, 1])).toHaveLength(3);
+    expect(cellsRect([0, 5, 0], [2, 5, 2], 1)).toHaveLength(9);
+    expect(cellsRect([0, 5, 0], [2, 5, 2], 1, true)).toHaveLength(8);
+    expect(cellsRect([0, 5, 0], [2, 5, 2], 1).every((c) => c[1] === 5)).toBe(true);
+    expect(cellsBrush([5, 5, 5], 1, 1)).toEqual([[5, 5, 5]]);
+    expect(cellsBrush([5, 5, 5], 3, 0)).toHaveLength(9);
+    expect(cellsBrush([5, 5, 5], 3, 0).every((c) => c[0] === 5)).toBe(true);
+  });
+
+  it('Spiegeln beim Zeichnen ohne Doppelte', () => {
+    expect(mirrored([[0, 0, 0]], [4, 1, 4], true, true)).toHaveLength(4);
+    expect(mirrored([[1, 0, 0]], [3, 1, 1], true, false)).toEqual([[1, 0, 0]]); // Mitte bleibt einmal
+  });
+
+  it('Drehen tauscht Breite und Tiefe; viermal gedreht ist wieder das Original', () => {
+    const g = small();
+    const r = rotateY(g);
+    expect(r.dims).toEqual([2, 3, 4]);
+    expect(r.count).toBe(g.count);
+    expect([...rotateY(rotateY(rotateY(r))).data]).toEqual([...g.data]);
+  });
+
+  it('Spiegeln und Verschieben; Verschieben aus dem Bauraum hinaus geht nicht', () => {
+    const g = small();
+    expect(mirror(g, 0).get(3, 1, 0) & 0xffffff).toBe(0xff0000);
+    expect(mirror(g, 2).get(0, 1, 1) & 0xffffff).toBe(0xff0000);
+    expect(shift(g, [-1, 0, 0])).toBeNull();
+    const up = new VoxelGrid(0.1, [0, 0, 0], [2, 3, 2]);
+    up.set(1, 0, 1, 0x00ff00);
+    expect(shift(up, [0, 2, 0])!.get(1, 2, 1) & 0xffffff).toBe(0x00ff00);
+  });
+
+  it('Zuschneiden auf den Inhalt, unten bleibt der Boden; Größe ändern hält den Inhalt mittig', () => {
+    const g = new VoxelGrid(0.1, [0, 0, 0], [10, 10, 10]);
+    g.set(4, 3, 5, 0xffffff);
+    g.set(6, 5, 5, 0xffffff);
+    expect(crop(g)!.dims).toEqual([3, 6, 1]);
+    expect(crop(g, false)!.dims).toEqual([3, 3, 1]);
+    expect(crop(new VoxelGrid(0.1, [0, 0, 0], [2, 2, 2]))).toBeNull();
+    const big = resize(g, [20, 10, 20]);
+    expect(big.count).toBe(2);
+    expect(big.get(9, 3, 10)).not.toBe(0);
+  });
+
+  it('Füllen nimmt nur zusammenhängende gleiche Farbe, Farbe ersetzen alle', () => {
+    const g = small();
+    g.set(2, 2, 1, 0xff0000); // rot, aber nicht verbunden
+    expect(floodCells(g, [0, 0, 0])).toHaveLength(3);
+    expect(cellsOfColor(g, 0xff0000)).toHaveLength(4);
+    expect(floodCells(g, [1, 1, 1])).toEqual([]);
+  });
+
+  it('Größenvorlagen ergeben ganze Würfelzahlen innerhalb des Editors', () => {
+    for (const p of PRESETS) {
+      const d = presetDims(p);
+      expect(d.every((v) => Number.isInteger(v) && v >= 1 && v <= 160)).toBe(true);
+    }
   });
 });
 

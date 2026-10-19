@@ -72,13 +72,6 @@
       ]
     },
     {
-      "id": "eigene",
-      "name": "Eigene",
-      "kategorien": [
-        "eigene"
-      ]
-    },
-    {
       "id": "grundstuecke",
       "name": "Grundstücke",
       "spezial": "grundstuecke"

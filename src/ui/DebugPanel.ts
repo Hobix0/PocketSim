@@ -32,15 +32,19 @@ export class DebugPanel {
         <button type="button" data-geld="100">+100 €</button>
         <button type="button" data-geld="-100">−100 €</button>
         <button type="button" data-xp="50">+50 XP</button>
-      </div>`;
+      </div>
+      <h4>Entwicklung</h4>
+      <div class="buttons"><button type="button" data-editor="1">Voxel-Editor öffnen</button></div>`;
     parent.append(this.el);
     this.body = this.el.querySelector('.debug-body')!;
     this.cellEl = this.el.querySelector('.cell')!;
 
-    this.el.querySelector('.buttons')!.addEventListener('click', (e) => {
+    this.el.addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (!b) return;
       b.blur();
+      // Der Editor ist ein Werkzeug zum Erstellen des Spiels – nur hier und über …/#editor erreichbar
+      if (b.dataset.editor) { location.hash = 'editor'; location.reload(); return; }
       const geld = Number(b.dataset.geld ?? 0);
       if (geld > 0) player.earn(geld, 'debug');
       if (geld < 0) player.spend(-geld, 'debug');

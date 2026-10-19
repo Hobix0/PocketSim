@@ -1,11 +1,11 @@
 import { VoxelGrid } from '../voxel/VoxelGrid';
-import type { BuildDef, BuildLayer } from '../content/definitions';
+import type { BuildCategory, BuildDef, BuildLayer } from '../content/definitions';
 import { asObject, num, str, optStr, bool } from '../content/validate';
 
-// Eigene Modelle aus dem Voxel-Editor (data/modelle/*.json oder im Browser gespeichert).
+// Modelle aus dem Voxel-Editor (data/modelle/*.json) – Inhalte des Spiels, gebaut mit dem Entwicklerwerkzeug.
 //
 // Format:
-//   { "id", "name", "typ": "deko" | "regal", "preis", "ebene", "kantenlaenge",
+//   { "id", "name", "typ": "deko" | "regal" | "modell", "menue": Reiter im Baumenü, "preis", "ebene", "kantenlaenge",
 //     "groesse": [Breite, Höhe, Tiefe] in Würfeln, "palette": ["#rrggbb", …],
 //     "voxel": "Lauflängen-Code", "regal": { "kapazitaet", "kuehlung" }, "vorschau": "data:image/png;…" }
 //
@@ -20,6 +20,8 @@ export interface VoxelModelData {
   id: string;
   name: string;
   typ: ModelType;
+  /** Reiter im Baumenü (data/baumenue → kategorien[].id), z. B. "einrichtung" oder "deko" */
+  menue: string;
   preis: number;
   ebene: BuildLayer;
   kantenlaenge: number;
@@ -30,8 +32,19 @@ export interface VoxelModelData {
   vorschau?: string;
 }
 
-/** Kategorie im Baumenü, in der eigene Modelle erscheinen */
-export const CUSTOM_CATEGORY = 'eigene';
+/** Reiter, wenn in der Datei keiner steht */
+export function defaultMenu(typ: ModelType): string {
+  return typ === 'regal' ? 'einrichtung' : 'deko';
+}
+
+/** Asset-Kategorie und Bau-Ebene, die zu einem Reiter des Baumenüs passen */
+export function placeInMenu(menue: string, kategorien: BuildCategory[], fallbackEbene: BuildLayer): { kategorie: string; ebene: BuildLayer } {
+  const tab = kategorien.find((k) => k.id === menue && !k.spezial);
+  return {
+    kategorie: tab?.kategorien?.[0] ?? (tab ? 'gebaeude_basis' : 'deko'),
+    ebene: tab?.ebenen?.length ? (tab.ebenen.includes(fallbackEbene) ? fallbackEbene : tab.ebenen[0]) : fallbackEbene,
+  };
+}
 /** Pfad-Vorsilbe für eigene Modelle in der ModelLibrary */
 export const CUSTOM_PREFIX = 'eigen/';
 
@@ -109,15 +122,16 @@ export function detectShelfLevels(grid: VoxelGrid, minAnteil = 0.3, minLuft = 0.
   return levels;
 }
 
-/** Eigenes Modell → Bauelement für das Baumenü. */
-export function toBuildDef(m: VoxelModelData, grid = decodeGrid(m)): BuildDef {
+/** Modell → Bauelement im gewählten Reiter des Baumenüs. */
+export function toBuildDef(m: VoxelModelData, kategorien: BuildCategory[], grid = decodeGrid(m)): BuildDef {
   const [nx, ny, nz] = m.groesse;
   const s = m.kantenlaenge;
+  const place = placeInMenu(m.menue, kategorien, m.ebene);
   const def: BuildDef = {
     id: m.id,
     name: m.name,
-    kategorie: CUSTOM_CATEGORY,
-    ebene: m.ebene,
+    kategorie: place.kategorie,
+    ebene: place.ebene,
     durchgang: false,
     aussen: false,
     funktionen: [],
@@ -166,6 +180,7 @@ export function validateVoxelModel(raw: unknown, where: string): VoxelModelData 
     id: str(o, 'id', where),
     name: str(o, 'name', where),
     typ,
+    menue: optStr(o, 'menue', where) ?? defaultMenu(typ),
     preis: num(o, 'preis', where, 0),
     ebene,
     kantenlaenge: num(o, 'kantenlaenge', where, 0.001),
@@ -177,10 +192,10 @@ export function validateVoxelModel(raw: unknown, where: string): VoxelModelData 
   };
 }
 
-/** Name → gültige id (Kleinbuchstaben, Ziffern, Unterstrich) mit Vorsilbe "eigen_". */
+/** Name → gültige id (Kleinbuchstaben, Ziffern, Unterstrich) mit Vorsilbe "modell_". */
 export function idFromName(name: string): string {
   const base = name.toLowerCase()
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'modell';
-  return `eigen_${base}`.slice(0, 48);
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'neu';
+  return `modell_${base}`.slice(0, 48);
 }

@@ -319,7 +319,6 @@ export class Game {
     });
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
-    this.hud.onTool('editor', () => restartWith(null, 'editor'));
     this.hud.onTool('menue', () => this.openMenu('pause'));
     this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, () => this.player.level);
     this.statsWindow = new StatsWindow(this.hud.root, this.store.stats);

@@ -84,17 +84,61 @@ Noch offen: **Produktpreise** sind Startwerte je Kategorie (`"preisOffen": true`
 - **Ziele** für den Einstieg links oben (`data/ziele/start.json`) mit Belohnungen
 - Werte: `data/kunden/standard.json` (Öffnungszeiten, Andrang je Stunde, Geduld, Ruf), `data/navigation/standard.json`, Kassenplätze in `data/bau/kasse_*.json` (`"kasse"`)
 
-**Voxel-Editor** ✅
+**Voxel-Editor (Entwicklerwerkzeug)** ✅
 
-- Öffnen über den Knopf **Editor** oben im Spiel oder mit `#editor` in der Adresse
-- Werkzeuge: Setzen `1`, Entfernen `2`, Malen `3`, Füllen `4` (zusammenhängende gleiche Farbe), Pipette `5` (oder `Alt` + Klick), Spiegeln links/rechts `M`, Rückgängig `Strg+Z`, Wiederholen `Strg+Y`
-- Ziehen mit gedrückter Maustaste setzt/entfernt/malt eine ganze Fläche in derselben Schicht
-- Farben aus der Spiel-Palette oder frei wählbar; Bauraum und Würfelgröße (1 – 10 cm) einstellbar
+Der Editor gehört zur Entwicklung, nicht zum Spielen: Mit ihm entstehen neue Spielinhalte, die danach fest zum Projekt gehören. Im Spiel gibt es deshalb keinen Editor-Knopf mehr.
+
+- Öffnen: `#editor` in der Adresse, im Hauptmenü „Voxel-Editor (Entwicklung)“ oder in der Debug-Anzeige (`F3`) – die beiden Knöpfe nur mit `npm run dev`
+- **Werkzeuge:** Setzen `1`, Entfernen `2`, Malen `3`, Füllen `4` (zusammenhängende gleiche Farbe), Farbe ersetzen `5` (überall im Modell), Pipette `6` (oder `Alt` + Klick)
+- **Formen:** Punkt `P`, Linie `L`, Rechteck `R` – Linie und Rechteck zeigen beim Ziehen eine Vorschau. Pinselgröße 1–5 mit `[` `]`. Gezogen wird immer in der Schicht, in der man angefangen hat
+- **Spiegeln beim Zeichnen:** links/rechts `M`, vorne/hinten `N` – beide gleichzeitig gehen auch
+- **Ganzes Modell:** drehen `D`, spiegeln, verschieben (Pfeiltasten, `Bild ↑` `Bild ↓`), zuschneiden, Bauraum und Würfelgröße (0,4 mm … 10 cm) ändern. Alles lässt sich rückgängig machen (`Strg+Z` / `Strg+Y`)
+- **Neu …** mit Größenvorlagen (kleines Objekt, Regal, Theke/Maschine, Wandmodul, Bodenfliese, Deckenleuchte, Produkt)
+- **Ansicht:** „Schnitt bis Höhe“ blendet obere Schichten aus, eine **Figur** (1,70 m) zeigt den Maßstab, Koordinaten und Farbe unter dem Zeiger stehen unten in der Statuszeile
+- **Farben:** Palette der Spielmodelle, freie Farbwahl und die zuletzt benutzten Farben
 - **Vorlage aus dem Spiel:** jedes Bauteil und Produkt als Ausgangspunkt laden und umbauen
-- **Im Spiel:** Art (Dekoration oder Regal), Preis, Platz (Boden, Decke, Wand). Bei Regalen erkennt der Editor die Regalböden automatisch – dort steht später die Ware. Vorne ist +X (grüner Pfeil)
-- **Speichern:** im Entwicklungsmodus als Datei `data/modelle/<id>.json` (gehört dann zum Projekt), sonst im Browser. „Exportieren“/„Importieren“ für Dateien. Gespeicherte Modelle erscheinen im Baumenü unter **Eigene**
+- **Im Spiel:** Art (Dekoration, Regal oder „Nur Modell“), **Reiter im Baumenü** (alle Reiter aus `data/baumenue`, z. B. Einrichtung, Licht, Deko), Preis. Der Reiter bestimmt auch, wie das Teil gebaut wird – im Reiter „Licht“ hängt es an der Decke. Bei Regalen erkennt der Editor die Regalböden selbst; vorne ist +X (grüner Pfeil)
+- **„Nur Modell“** erscheint nicht selbst im Baumenü – ein Bauteil in `data/bau` verweist mit `"model": "eigen/<id>"` darauf (so sind Backstation, Saftpresse und Aufschnittmaschine gebaut)
+- **Speichern** (`Strg+S`): schreibt `data/modelle/<id>.json` ins Projekt (nur mit `npm run dev`). Sonst „Exportieren“ und die Datei von Hand nach `data/modelle/` legen. Die offene Arbeit wird zusätzlich als Entwurf im Browser gesichert und nach dem Neuladen wiederhergestellt
+- **Modelle im Projekt:** Liste aller Dateien in `data/modelle` mit Art und Reiter – öffnen, weiterbearbeiten, löschen
+- Hilfe mit allen Tasten: `H` oder „? Hilfe“
 
+**Etappe 1 – Speichern, Laden, Haupt- und Pausemenü** ✅
 
+- **Hauptmenü** beim Start: Weiterspielen, Neues Spiel, Spielstand laden, Datei laden, Darstellung (Voxel/Low-Poly)
+- **Pausemenü** mit `Esc` (wenn nichts anderes offen ist): Speichern, Laden, Als Datei sichern, Hauptmenü
+- **Drei Speicherplätze** plus automatischer Platz, der zum Tagesende geschrieben wird. Gespeichert wird der Zustand ohne Darstellung (`src/save/`): Geld, Level, Uhr, Bauteile, Ware, Personal, Preise, Statistik, Grundstücke, Versorgung, Maschinen
+- Jede Komponente, die etwas zu merken hat, speichert sich selbst (`persistKey`, `saveState`, `loadState`)
+
+**Etappe 2 – Preise und Bilanz** ✅
+
+- **Sortiment** (`O`): eigener Verkaufspreis je Produkt. Kunden vergleichen mit dem empfohlenen Preis – bis 10 % darüber kaufen fast alle, danach sinkt die Kaufchance; ab dem 2,5-Fachen kauft niemand. Werte in `data/kunden/standard.json` → `preis`
+- Zu teure Ware lässt Kunden ohne Kauf weitergehen („zu teuer“ im Tagesbericht)
+- **Bilanz** (`L`): Umsatz, Ergebnis, Kunden und Ruf der letzten 7 Tage, dazu Umsatz/Ausgaben je Tag und der Ruf als Diagramm – auch als Tabelle (14 Tage)
+
+**Etappe 3 – Ausbau: Grundstücke, Wände, Gehweg** ✅
+
+- **Grundstücke** im Baumenü (Reiter „Grundstücke“): Ost, West und Hof kosten Geld und werden mit dem Level freigeschaltet (`data/level/start.json` → `grundstuecke`). Gebaut werden darf nur auf eigenem Grund
+- **Einrasten:** Böden im Raster am gleichartigen Boden, Wände an Bodenkanten (Außenseite nach außen, `R` kehrt um), Eckpfeiler an Ecken, Anbauteile an das Wandmodul. Abreißen einer Wand nimmt ihre Anbauteile mit
+- Gehweg und Hof zählen als Außenfläche (`"aussen": true`), nicht als Ladenfläche
+
+**Etappe 4 – Wertschöpfung: Versorgung, Rohstoffe, Maschinen** ✅
+
+- **Versorgung** (`V`): Strom und Wasser über den Hausanschluss. Grundlast = Summe der Bauteil-Werte, dazu laufende Maschinen. Reicht der Anschluss nicht, starten keine Maschinen und neue Verbraucher lassen sich nicht bauen. Ausbaustufen und Preise in `data/versorgung/standard.json`, abgerechnet um Mitternacht
+- **Rohstoffe** (`data/rohstoffe/`) sind eigene Waren: Man kauft sie im Großhandel, sie kommen nicht ins Regal
+- **Maschinen** (Backstation, Saftpresse, Aufschnittmaschine) im Reiter „Maschinen“: anklicken, Rezept wählen, starten. Die Maschine holt die Rohstoffe selbst aus dem Lager und stellt das Ergebnis als Karton zurück – eingeräumt wird es wie gekaufte Ware. Eine Lampe zeigt den Zustand
+- **Rezepte** in `data/rezepte/` (Eingang, Ausgang, Dauer, Freischalt-Level)
+
+```mermaid
+flowchart LR
+  GH[Großhandel] -->|Kartons| LAGER[(Lager / Paletten)]
+  LAGER -->|Rohstoffe| M[Maschine + Rezept]
+  STROM[Versorgung: Strom, Wasser] --> M
+  M -->|Produkt-Karton| LAGER
+  LAGER -->|einräumen| REGAL[Regal]
+  REGAL -->|Preis, Kaufchance| KUNDE[Kunde]
+  KUNDE --> KASSE[Kasse] --> BILANZ[Bilanz / Tagesbericht]
+```
 
 ## Starten
 
@@ -114,6 +158,7 @@ Weitere Befehle:
 | `npm run check` | nur Typprüfung |
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
 | `npm run preview` | den Build lokal ansehen |
+| `npm run modelle:maschinen` | Voxel-Modelle der Maschinen neu erzeugen (`data/modelle/`) |
 | `npm run build:artifact` | Build für claude.ai-Artifacts in `dist-artifact/` (Modelle als JS eingebettet, weil Artifacts keine .fbx-Dateien ausliefern) |
 
 Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` erreichbar, z. B. `urbanEvolution.view.zoom(-2)`.
@@ -131,9 +176,13 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Auswahl aufheben | Klick ins Leere oder `Esc` |
 | Baumenü auf/zu | `B` |
 | Personal auf/zu | `P` |
+| Sortiment und Preise | `O` |
+| Bilanz | `L` |
+| Versorgung | `V` |
 | Bauvorschau drehen | `R` |
 | Karton aufnehmen / ins Regal | Linksklick auf Karton, dann auf Regal |
 | Abbrechen, Fenster schließen, Karton abstellen | `Esc` (schließt immer nur das Oberste) |
+| Pausemenü | `Esc`, wenn nichts anderes offen ist |
 | Kunden kassieren | Linksklick auf die Kasse, wenn jemand dran ist |
 | Debug-Anzeige an/aus | `F3` |
 
@@ -370,24 +419,28 @@ Die Umrechnung steckt nur in `ModelLibrary` und `src/voxel/`; Spiellogik und Kom
 
 `stufen`: ab diesem Kameraabstand (m) werden faktor × faktor × faktor Würfel zu einem zusammengefasst (häufigste Farbe).
 
-### Eigene Modelle (data/modelle)
+### Modelle aus dem Editor (data/modelle)
 
 ```mermaid
 flowchart LR
-  ED[VoxelEditor] -->|encodeGrid| F[(data/modelle/*.json<br>oder Browser)]
+  ED[VoxelEditor] -->|encodeGrid| F[(data/modelle/*.json)]
   F --> MS[ModelStore]
-  MS -->|toBuildDef| BAU[Baukatalog „Eigene“]
+  MS -->|toBuildDef + Reiter aus „menue“| BAU[Baumenü: gewählter Reiter]
   MS -->|registerVoxelModel| ML[ModelLibrary]
+  DB[data/bau: model = eigen/id] --> ML
   ML --> SPIEL[Entities im Spiel]
 ```
 
 ```json
-{ "id": "eigen_rotes_regal", "name": "Rotes Regal", "typ": "regal", "preis": 150, "ebene": "objekt",
+{ "id": "eigen_rotes_regal", "name": "Rotes Regal", "typ": "regal", "menue": "einrichtung", "preis": 150, "ebene": "objekt",
   "kantenlaenge": 0.025, "groesse": [20, 72, 80], "palette": ["#c0573e", "#393939"],
   "voxel": "79*1,1*2,5600*1,…", "regal": { "kapazitaet": 20, "kuehlung": false }, "vorschau": "data:image/png;base64,…" }
 ```
 
-`voxel` zählt alle Zellen (x außen, dann y, dann z innen) als `Anzahl*Farbe` auf; Farbe 0 = leer, sonst Nummer in `palette` (ab 1).
+- `typ`: `deko` oder `regal` = eigenes Bauteil im Baumenü, `modell` = nur das Modell (ein Bauteil in `data/bau` verweist darauf)
+- `menue`: Reiter im Baumenü (`id` aus `data/baumenue/standard.json`). Fehlt es, gilt Einrichtung für Regale und Deko für alles andere. Der Reiter legt Kategorie und Bau-Ebene fest
+- `voxel` zählt alle Zellen (x außen, dann y, dann z innen) als `Anzahl*Farbe` auf; Farbe 0 = leer, sonst Nummer in `palette` (ab 1)
+- Neue ids aus dem Editor beginnen mit `modell_` (aus dem Namen gebildet)
 
 ### Datenformate
 
@@ -426,6 +479,8 @@ Regeln, die überall gelten:
 5. ~~Einkaufsterminal und Produkte~~
 6. ~~Regale und Einräumen~~ (Slots per Anker-Klick folgen später)
 7. ~~Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben~~ – plus Personal
-8. Speichern/Laden mit 3 Slots, Haupt- und Pausemenü
+8. ~~Speichern/Laden mit 3 Slots, Haupt- und Pausemenü~~
 9. ~~Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange~~
-10. Danach: Versorgung, erweitertes Bausystem, Fabrik, Lager, Rohstoffe
+10. ~~Preise und Bilanz, Ausbau mit Grundstücken, Versorgung, Rohstoffe und Maschinen~~
+11. ~~Voxel-Editor als Entwicklerwerkzeug~~
+12. Danach: Fabrik und eigenes Lager, Lieferketten zwischen Standorten

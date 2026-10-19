@@ -33,7 +33,7 @@ function model(id, name, dims, draw) {
     else { if (count) runs.push(`${count}*${last}`); last = c; count = 1; }
   }
   if (count) runs.push(`${count}*${last}`);
-  const file = { id, name, typ: 'modell', preis: 0, ebene: 'objekt', kantenlaenge: S, groesse: dims, palette, voxel: runs.join(',') };
+  const file = { id, name, typ: 'modell', menue: 'maschinen', preis: 0, ebene: 'objekt', kantenlaenge: S, groesse: dims, palette, voxel: runs.join(',') };
   fs.mkdirSync(OUT, { recursive: true });
   // Ein schon vorhandenes Vorschaubild (aus dem Editor) bleibt erhalten
   const target = path.join(OUT, `${id}.json`);

@@ -52,7 +52,6 @@ export class BuildMenu {
       if (!b) return;
       b.blur();
       if (b.dataset.kategorie) { this.kategorie = b.dataset.kategorie; this.render(); }
-      else if (b.dataset.editor) { location.hash = 'editor'; location.reload(); }
       else if (b.dataset.plot && this.plots) {
         const r = this.plots.buy(b.dataset.plot);
         this.plotMessage = r.ok ? '' : r.grund === 'geld' ? 'Dafür reicht das Geld nicht.' : r.grund === 'gesperrt' ? 'Noch nicht freigeschaltet.' : '';
@@ -113,8 +112,7 @@ export class BuildMenu {
     const cat = this.content.baumenue.kategorien.find((k) => k.id === this.kategorie)!;
     if (cat.spezial === 'grundstuecke') { this.gridEl.innerHTML = this.plotCards(); this.hintEl.innerHTML = this.hint(); return; }
     const defs = this.content.bau.all().filter((d) => inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
-    this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('')
-      || `<p class="empty-cat">${esc(this.content.text('eigene_leer'))} <button type="button" data-editor="1">${esc(this.content.text('editor_oeffnen'))}</button></p>`;
+    this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('') || '<p class="empty-cat">Hier gibt es noch nichts.</p>';
     this.hintEl.innerHTML = this.hint();
   }
 

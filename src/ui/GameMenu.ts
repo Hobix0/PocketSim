@@ -95,14 +95,13 @@ export class GameMenu {
            ${hasSave ? btn('neu', 'Neues Spiel') : ''}
            ${btn('view', 'Spielstand laden', 'data-view="laden"')}
            <label class="button">Datei laden<input type="file" accept=".json,application/json" hidden></label>
-           ${btn('editor', 'Voxel-Editor')}
-           ${btn('stil', `Darstellung: ${stil}`)}`
+           ${btn('stil', `Darstellung: ${stil}`)}
+           ${import.meta.env.DEV ? btn('editor', 'Voxel-Editor (Entwicklung)') : ''}`
         : `${btn('weiter', 'Weiterspielen', '', 'primary')}
            ${btn('view', 'Speichern', 'data-view="speichern"')}
            ${btn('view', 'Laden', 'data-view="laden"')}
            ${btn('export', 'Als Datei sichern')}
            <label class="button">Datei laden<input type="file" accept=".json,application/json" hidden></label>
-           ${btn('editor', 'Voxel-Editor')}
            ${btn('hauptmenue', 'Hauptmenü')}`;
     } else {
       const saving = this.view === 'speichern';
