@@ -90,7 +90,7 @@ export class AssortmentWindow {
     const map = new Map<string, { regal: number; lager: number; produkt: ProductDef }>();
     const get = (p: ProductDef) => { let m = map.get(p.id); if (!m) { m = { regal: 0, lager: 0, produkt: p }; map.set(p.id, m); } return m; };
     for (const [, s] of this.world.query(ShelfComponent)) for (const f of s.faecher) if (f.produkt && f.menge) get(f.produkt).regal += f.menge;
-    for (const [, c] of this.world.query(CartonComponent)) get(c.produkt).lager += c.menge;
+    for (const [, c] of this.world.query(CartonComponent)) if (!c.produkt.rohstoff) get(c.produkt).lager += c.menge;
     return map;
   }
 

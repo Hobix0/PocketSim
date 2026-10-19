@@ -7,5 +7,6 @@
   "karton": {"name": "Karton"},
   "personal": {"name": "Personal"},
   "bauen": {"name": "Bauen"},
-  "kunde": {"name": "Kunde"}
+  "kunde": {"name": "Kunde"},
+  "maschine": {"name": "Maschine"}
 }

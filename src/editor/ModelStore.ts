@@ -85,11 +85,13 @@ export async function deleteFromProject(id: string): Promise<void> {
 export function registerCustomModels(content: Content, models?: ModelLibrary): number {
   let n = 0;
   for (const m of allModels()) {
-    // Ein Bauteil aus den Spieldaten mit derselben id hat Vorrang
-    if (content.bau.has(m.id) && !content.bau.get(m.id).model?.startsWith(CUSTOM_PREFIX)) continue;
-    const grid = decodeGrid(m);
-    content.bau.add(toBuildDef(m, grid));
     models?.registerVoxelModel(CUSTOM_PREFIX + m.id, centeredGrid(m));
+    // Bauteile aus data/bau, die dieses Modell benutzen, bekommen sein Vorschaubild (wenn sie keins haben)
+    for (const d of content.bau.all()) if (d.model === CUSTOM_PREFIX + m.id && !d.icon && m.vorschau) d.icon = m.vorschau;
+    // Nur-Modelle und Modelle mit derselben id wie ein Bauteil aus den Spieldaten werden kein eigenes Bauteil
+    if (m.typ === 'modell') continue;
+    if (content.bau.has(m.id) && !content.bau.get(m.id).model?.startsWith(CUSTOM_PREFIX)) continue;
+    content.bau.add(toBuildDef(m, decodeGrid(m)));
     n++;
   }
   return n;

@@ -1,0 +1,11 @@
+{
+  "id": "teiglinge_broetchen",
+  "name": "Teiglinge Brötchen",
+  "kategorie": "rohstoffe",
+  "ek": 0.35,
+  "vk": 0,
+  "gebinde": 20,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 2
+}

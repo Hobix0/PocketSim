@@ -119,12 +119,12 @@ export class PurchaseWindow {
   private render(): void {
     // Tabs: eine pro Warenkategorie; Punkt zeigt, wo schon etwas im Warenkorb liegt
     this.tabsEl.innerHTML = this.content.kategorien.all().map((k) => {
-      const inCart = this.content.produkte.all().some((p) => p.kategorie === k.id && this.cart.has(p.id));
+      const inCart = this.content.waren.all().some((p) => p.kategorie === k.id && this.cart.has(p.id));
       const active = k.id === this.kategorie;
       return `<button type="button" role="tab" aria-selected="${active}" class="${active ? 'active' : ''}" data-kategorie="${k.id}">${esc(k.name)}${inCart ? ' •' : ''}</button>`;
     }).join('');
 
-    const rows = this.content.produkte.all()
+    const rows = this.content.waren.all()
       .filter((p) => p.kategorie === this.kategorie)
       .map((p) => this.row(p))
       .join('');

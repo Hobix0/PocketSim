@@ -8,15 +8,17 @@ import { expandObjects, type LevelData } from '../src/world/Level';
 describe('Spieldaten in data/', () => {
   it('lassen sich vollständig laden und prüfen', () => {
     const c = new Content();
-    expect(c.kategorien.size).toBe(10);
+    expect(c.kategorien.size).toBe(11); // 10 Warengruppen + Rohstoffe
+    expect(c.rohstoffe.all().every((r) => r.rohstoff && r.kategorie === 'rohstoffe')).toBe(true);
     expect(c.produkte.size).toBeGreaterThan(0);
     expect(c.bau.size).toBeGreaterThan(0);
     for (const p of c.produkte.all()) expect(p.vk).toBeGreaterThan(p.ek);
+    expect(c.rezepte.size).toBeGreaterThan(0);
   });
 
   it('jedes Objekt in jedem Level verweist auf ein Bauelement oder Produkt', () => {
     const c = new Content();
-    for (const id of ['testgelaende', 'musterschau']) {
+    for (const id of ['start', 'testgelaende', 'musterschau']) {
       const level = readData<LevelData>(`level/${id}`);
       for (const o of level.objekte) {
         if (o.produkt !== undefined) expect(c.produkte.has(o.produkt), `${id}: ${o.produkt}`).toBe(true);
@@ -28,10 +30,11 @@ describe('Spieldaten in data/', () => {
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
     expect(c.produkte.size).toBe(150);
-    // 61 Bauelemente aus Blender; weitere (z. B. das Einkaufsterminal) dürfen noch ohne Modell sein
-    expect(c.bau.all().filter((d) => d.model).length).toBe(61);
+    // 61 Bauelemente aus Blender; weitere haben Voxel-Modelle (eigen/…) oder noch keins (Einkaufsterminal)
+    const fbx = c.bau.all().filter((d) => d.model && !d.model.startsWith('eigen/'));
+    expect(fbx.length).toBe(61);
     const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
-    for (const d of [...c.produkte.all(), ...c.bau.all().filter((b) => b.model)]) {
+    for (const d of [...c.produkte.all(), ...fbx]) {
       expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);
       expect(files.has(`/data/${d.icon}`), `${d.id}: Icon ${d.icon}`).toBe(true);
     }
@@ -39,7 +42,7 @@ describe('Spieldaten in data/', () => {
 
   it('jede Warenkategorie hat 15 Produkte', () => {
     const c = new Content();
-    for (const k of c.kategorien.all()) {
+    for (const k of c.kategorien.all().filter((k) => k.id !== 'rohstoffe')) {
       expect(c.produkte.all().filter((p) => p.kategorie === k.id).length, k.id).toBe(15);
     }
   });

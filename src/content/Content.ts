@@ -5,6 +5,7 @@ import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
   type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
+  type RecipeDef, type UtilitySettings, validateRecipe,
 } from './definitions';
 
 // Alle Spielinhalte an einem Ort. Wird einmal beim Start geladen und geprüft;
@@ -13,6 +14,12 @@ import {
 export class Content {
   readonly kategorien: Registry<CategoryDef>;
   readonly produkte: Registry<ProductDef>;
+  /** Rohstoffe für Maschinen (data/rohstoffe) – getrennt von Produkten und von der Versorgung */
+  readonly rohstoffe: Registry<ProductDef>;
+  /** Alles, was es im Großhandel und als Karton gibt: Produkte und Rohstoffe */
+  readonly waren: Registry<ProductDef>;
+  readonly rezepte: Registry<RecipeDef>;
+  readonly versorgung: UtilitySettings;
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
@@ -38,6 +45,14 @@ export class Content {
     this.kategorien = new Registry('sortiment/kategorien', kat, validateCategory);
     this.produkte = new Registry('produkte', readFolderEntries('produkte'), validateProduct);
     this.bau = new Registry('bau', readFolderEntries('bau'), validateBuild);
+    this.rohstoffe = new Registry('rohstoffe', readFolderEntries('rohstoffe'), (raw, where) => ({ ...validateProduct(raw, where), rohstoff: true }));
+    this.waren = new Registry('waren', [], validateProduct);
+    for (const p of [...this.produkte.all(), ...this.rohstoffe.all()]) {
+      if (this.waren.has(p.id)) throw new Error(`rohstoffe/${p.id}.json: id gibt es schon als Produkt`);
+      this.waren.add(p);
+    }
+    this.rezepte = new Registry('rezepte', readFolderEntries('rezepte'), validateRecipe);
+    this.versorgung = readData<UtilitySettings>('versorgung/standard');
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
     this.lager = readData<StorageSettings>('lager/standard');
@@ -59,8 +74,14 @@ export class Content {
 
   /** Querverweise prüfen: Kategorien, Kontexte und Werte müssen bekannt sein. */
   private crossCheck(): void {
-    for (const p of this.produkte.all()) {
-      if (!this.kategorien.has(p.kategorie)) throw new Error(`produkte/${p.id}.json: unbekannte Kategorie "${p.kategorie}"`);
+    for (const p of this.waren.all()) {
+      if (!this.kategorien.has(p.kategorie)) throw new Error(`${p.rohstoff ? 'rohstoffe' : 'produkte'}/${p.id}.json: unbekannte Kategorie "${p.kategorie}"`);
+    }
+    const maschinen = new Set(this.bau.all().flatMap((b) => (b.maschine ? [b.maschine.typ] : [])));
+    for (const r of this.rezepte.all()) {
+      const where = `rezepte/${r.id}.json`;
+      if (!maschinen.has(r.maschine)) throw new Error(`${where}: keine Maschine vom Typ "${r.maschine}" in data/bau`);
+      for (const l of [...r.eingang, r.ausgang]) if (!this.waren.has(l.ware)) throw new Error(`${where}: unbekannte Ware "${l.ware}"`);
     }
     for (const b of this.bau.all()) {
       if (b.kontext && !(b.kontext in this.kontexte)) throw new Error(`bau/${b.id}.json: unbekannter Kontext "${b.kontext}"`);

@@ -97,5 +97,12 @@
   "bilanz": "Bilanz",
   "bauen_fehler_grundstueck": "Nicht dein Grundstück – im Baumenü unter „Grundstücke“ kaufen",
   "grundstueck_gekauft": "Grundstück gekauft: {name}",
-  "freigeschaltet": "Neu freigeschaltet: {liste}"
+  "freigeschaltet": "Neu freigeschaltet: {liste}",
+  "maschine_bedienen": "Bedienen",
+  "einraeumen_rohstoff": "{produkt} ist ein Rohstoff – der gehört in eine Maschine, nicht ins Regal",
+  "bauen_fehler_strom": "Der Stromanschluss reicht nicht – unter „Versorgung“ ausbauen",
+  "versorgung": "Versorgung",
+  "produziert_fertig": "{menge}× {ware} fertig – steht im Lager",
+  "anschluss_ausgebaut": "Anschluss ausgebaut",
+  "bericht_versorgung": "Strom & Wasser"
 }

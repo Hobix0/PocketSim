@@ -8,11 +8,13 @@ import { ShelfComponent } from '../components/ShelfComponent';
 
 export type StockResult =
   | { ok: true; menge: number; leer: boolean }
-  | { ok: false; grund: 'kuehlung' | 'voll' };
+  | { ok: false; grund: 'kuehlung' | 'voll' | 'rohstoff' };
 
 export function stockFromCarton(carton: Entity, shelf: Entity): StockResult {
   const c = carton.require(CartonComponent);
   const s = shelf.require(ShelfComponent);
+  // Rohstoffe sind für Maschinen, nicht für Kunden
+  if (c.produkt.rohstoff) return { ok: false, grund: 'rohstoff' };
   if (c.produkt.kuehlung && !s.kuehlung) return { ok: false, grund: 'kuehlung' };
   const moved = s.add(c.produkt, c.menge);
   if (moved === 0) return { ok: false, grund: 'voll' };
@@ -35,7 +37,7 @@ export interface StockingTask {
 export function findStockingTask(world: World, isFree: (carton: Entity) => boolean): StockingTask | null {
   const shelves = [...world.query(ShelfComponent)];
   for (const [carton, c] of world.query(CartonComponent)) {
-    if (c.reservedBy !== null || !isFree(carton)) continue;
+    if (c.reservedBy !== null || c.produkt.rohstoff || !isFree(carton)) continue;
     let best: Entity | null = null;
     for (const [shelf, s] of shelves) {
       if (s.space(c.produkt) < c.menge) continue;

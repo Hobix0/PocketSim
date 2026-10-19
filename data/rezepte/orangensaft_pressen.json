@@ -1,0 +1,9 @@
+{
+  "id": "orangensaft_pressen",
+  "name": "Orangensaft pressen",
+  "maschine": "saftpresse",
+  "eingang": [{"ware": "saftorangen", "menge": 30}, {"ware": "leerflaschen", "menge": 12}],
+  "ausgang": {"ware": "orangensaft", "menge": 12},
+  "dauer": 60,
+  "freischaltLevel": 3
+}

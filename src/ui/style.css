@@ -1523,3 +1523,142 @@ html, body {
   font-size: 12px;
   padding: 4px 6px;
 }
+
+/* ── Maschine ── */
+.machine {
+  width: min(720px, calc(100% - 24px));
+}
+
+.machine-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.machine-state .lamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #444;
+}
+
+.machine-state .lamp.on { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.machine-state .lamp.wait { background: #e0b23c; }
+
+.machine-state .progress,
+.utility .meter {
+  flex: 1;
+  min-width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--key-bg);
+  overflow: hidden;
+}
+
+.machine-state .progress span,
+.utility .meter span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.utility .meter span.high {
+  background: var(--danger);
+}
+
+.machine .check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.machine .msg,
+.utilities .msg {
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.machine .recipes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.machine .recipe {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.machine .recipe.active {
+  border-color: var(--accent);
+}
+
+.machine .recipe.locked {
+  opacity: 0.55;
+}
+
+.machine .recipe ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.machine .recipe li.missing {
+  color: var(--danger);
+}
+
+.machine .recipe small {
+  color: var(--text-dim);
+}
+
+.machine .recipe .out {
+  font-weight: 600;
+}
+
+/* ── Versorgung ── */
+.utilities {
+  width: min(680px, calc(100% - 24px));
+}
+
+.utility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.utility {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+}
+
+.utility .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.utility .row b {
+  font-variant-numeric: tabular-nums;
+}
+
+.utility small {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.utility button {
+  justify-self: start;
+}

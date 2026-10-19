@@ -142,7 +142,7 @@ function mergeBack(shelf: ShelfComponent, back: { produkt: string; menge: number
 /** Welt aus dem Spielstand aufbauen. Unbekannte Typen und Produkte werden übersprungen (mit Warnung). */
 export function applyWorld(data: Pick<SaveData, 'bauten' | 'kartons' | 'waren'>, world: World, content: Content, ctx: FactoryContext): void {
   const built: (Entity | null)[] = [];
-  const produkt = (id: string) => content.produkte.find(id);
+  const produkt = (id: string) => content.waren.find(id);
   for (const b of data.bauten) {
     const def = content.bau.find(b.typ);
     if (!def) { console.warn(`Spielstand: Bauteil "${b.typ}" gibt es nicht mehr`); built.push(null); continue; }

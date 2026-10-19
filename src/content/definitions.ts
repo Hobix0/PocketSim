@@ -29,7 +29,42 @@ export interface ProductDef {
   icon?: string;
   /** Maße in Metern: Breite, Höhe, Tiefe. */
   groesse?: [number, number, number];
+  /** Rohstoff (data/rohstoffe): nur für Maschinen, nicht für Regale und Kunden */
+  rohstoff: boolean;
 }
+
+/** Maschine: welcher Typ (für die Rezepte) und was sie im Betrieb verbraucht. */
+export interface MachineDef {
+  typ: string;
+  /** kW, solange sie läuft */
+  strom: number;
+  /** l/h, solange sie läuft */
+  wasser: number;
+}
+
+/** Ein Rezept (data/rezepte/*.json): aus Waren wird in einer Maschine eine neue Ware. */
+export interface RecipeDef {
+  id: string;
+  name: string;
+  maschine: string;
+  eingang: { ware: string; menge: number }[];
+  ausgang: { ware: string; menge: number };
+  /** Spielminuten */
+  dauer: number;
+  freischaltLevel: number;
+}
+
+/** Eine Versorgungsart (Strom, Wasser) mit Hausanschluss und Ausbaustufen (data/versorgung). */
+export interface UtilityDef {
+  name: string;
+  einheit: string;
+  verbrauchEinheit: string;
+  /** € je verbrauchter Einheit (kWh, l) */
+  preis: number;
+  stufen: { anschluss: number; preis: number; freischaltLevel: number }[];
+}
+
+export type UtilitySettings = Record<'strom' | 'wasser', UtilityDef>;
 
 /** Maße und Ersatzfarbe. Die Maße gelten auch, wenn es ein Modell gibt (Grundfläche fürs Bauen). */
 export interface PlaceholderDef {
@@ -78,6 +113,7 @@ export interface BuildDef {
   ebene: BuildLayer;
   regal?: ShelfDef;
   kasse?: CheckoutDef;
+  maschine?: MachineDef;
   /** Türen und Durchgänge: Figuren dürfen hindurchgehen, obwohl es eine Wand ist. */
   durchgang: boolean;
   /** Außenfläche (z. B. Gehweg): zählt beim Einrasten von Wänden nicht als Innenraum */
@@ -155,6 +191,8 @@ export interface WorkSettings {
   xpProKundeVonHand: number;
   /** Jeder bezahlte Einkauf, auch über Kassierer */
   xpProKunde: number;
+  /** Maschine von Hand gestartet */
+  xpProProduktionVonHand?: number;
 }
 
 /** Kunden: Öffnungszeiten, Andrang, Verhalten, Ruf (data/kunden/standard.json). */
@@ -232,6 +270,22 @@ export function validateProduct(raw: unknown, where: string): ProductDef {
     model: optStr(o, 'model', where),
     icon: optStr(o, 'icon', where),
     groesse: o.groesse === undefined ? undefined : vec3(o, 'groesse', where),
+    rohstoff: o.rohstoff === undefined ? false : bool(o, 'rohstoff', where),
+  };
+}
+
+export function validateRecipe(raw: unknown, where: string): RecipeDef {
+  const o = asObject(raw, where);
+  const line = (r: unknown, w: string) => { const l = asObject(r, w); return { ware: str(l, 'ware', w), menge: num(l, 'menge', w, 1) }; };
+  if (!Array.isArray(o.eingang) || !o.eingang.length) throw new Error(`${where}: "eingang" muss eine Liste mit mindestens einer Ware sein`);
+  return {
+    id: str(o, 'id', where),
+    name: str(o, 'name', where),
+    maschine: str(o, 'maschine', where),
+    eingang: o.eingang.map((r, i) => line(r, `${where} → eingang[${i}]`)),
+    ausgang: line(o.ausgang, `${where} → ausgang`),
+    dauer: num(o, 'dauer', where, 1),
+    freischaltLevel: num(o, 'freischaltLevel', where, 1),
   };
 }
 
@@ -245,6 +299,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     ebene: layer(o, where),
     regal: o.regal === undefined ? undefined : shelf(o.regal, `${where} → regal`),
     kasse: o.kasse === undefined ? undefined : checkout(o.kasse, `${where} → kasse`),
+    maschine: o.maschine === undefined ? undefined : machine(o.maschine, `${where} → maschine`),
     durchgang: o.durchgang === undefined ? false : bool(o, 'durchgang', where),
     aussen: o.aussen === undefined ? false : bool(o, 'aussen', where),
     kontext: optStr(o, 'kontext', where),
@@ -276,6 +331,11 @@ function shelf(raw: unknown, where: string): ShelfDef {
     laenge: o.laenge === undefined ? 1 : num(o, 'laenge', where, 0),
     kuehlung: o.kuehlung === undefined ? false : bool(o, 'kuehlung', where),
   };
+}
+
+function machine(raw: unknown, where: string): MachineDef {
+  const o = asObject(raw, where);
+  return { typ: str(o, 'typ', where), strom: num(o, 'strom', where, 0), wasser: o.wasser === undefined ? 0 : num(o, 'wasser', where, 0) };
 }
 
 function checkout(raw: unknown, where: string): CheckoutDef {

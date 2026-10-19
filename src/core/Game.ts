@@ -48,6 +48,11 @@ import { GameMenu } from '../ui/GameMenu';
 import { AssortmentWindow } from '../ui/AssortmentWindow';
 import { StatsWindow } from '../ui/StatsWindow';
 import { Plots } from '../world/Plots';
+import { Utilities } from '../economy/Utilities';
+import { Production } from '../economy/Production';
+import { MachineComponent } from '../components/MachineComponent';
+import { MachineWindow } from '../ui/MachineWindow';
+import { UtilityWindow } from '../ui/UtilityWindow';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -110,6 +115,12 @@ export class Game {
   readonly statsWindow: StatsWindow;
   /** Grundstücke: wo gebaut werden darf */
   readonly plots: Plots;
+  /** Strom und Wasser */
+  readonly utilities: Utilities;
+  /** Maschinen, Rezepte, Rohstoffe */
+  readonly production: Production;
+  readonly machineWindow: MachineWindow;
+  readonly utilityWindow: UtilityWindow;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
   /** Lief die Uhr, bevor das Menü aufging? */
@@ -200,6 +211,7 @@ export class Game {
       pickUpCarton: (carton) => this.hand.take(carton),
       dropCarton: () => this.hand.clear(),
       stockInto: (shelf) => this.stockByHand(shelf),
+      openMachine: (m) => this.machineWindow.open(m),
     };
     this.factory = { content: this.content, models: this.models, actions };
 
@@ -210,7 +222,26 @@ export class Game {
 
     // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
     this.storage = new CartonStorage(this.world, this.factory);
-    this.purchasing = new Purchasing(this.content.produkte, this.player, this.storage);
+    this.purchasing = new Purchasing(this.content.waren, this.player, this.storage);
+    // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
+    this.utilities = new Utilities(this.content.versorgung, this.player);
+    this.production = new Production(this.world, this.content, this.storage, this.utilities, () => this.player.level,
+      () => [...this.world.query(MachineComponent)].map(([, m]) => m));
+    this.factory.machine = {
+      production: this.production,
+      minutesPerSecond: readData<ClockSettings>('zeit/standard').spielminutenProSekunde,
+      started: (byHand) => {
+        if (byHand) this.player.addXp(this.content.arbeit.xpProProduktionVonHand ?? 3);
+        this.goals.complete('maschine_starten');
+      },
+      finished: (r) => {
+        this.goals.complete('produziert');
+        this.hud.toasts.show(this.content.text('produziert_fertig', { menge: r.ausgang.menge, ware: this.content.waren.get(r.ausgang.ware).name }), 'gut');
+      },
+    };
+    this.machineWindow = new MachineWindow(this.hud.root, this.content, this.production, () => this.player.level);
+    this.utilityWindow = new UtilityWindow(this.hud.root, this.utilities, this.production, () => this.player.level);
+    this.utilities.events.on('upgraded', () => this.hud.toasts.show(this.content.text('anschluss_ausgebaut'), 'gut'));
     this.purchaseWindow = new PurchaseWindow(this.hud.root, this.content, this.purchasing, this.player, this.world, this.hud.toasts);
 
     // Personal: Verwaltung ohne Grafik, Spielfiguren entstehen über die Ereignisse
@@ -233,6 +264,8 @@ export class Game {
 
     // Tageswechsel: erst den Tag abschließen (Bericht), dann Löhne für den neuen Tag
     this.clock.events.on('newDay', ({ tag }) => {
+      // Strom und Wasser des abgelaufenen Tages bezahlen, dann den Tag abschließen
+      this.utilities.bill();
       const report = this.store.stats.closeDay(tag);
       this.staff.payDay();
       this.goals.complete('tag_beenden');
@@ -261,9 +294,12 @@ export class Game {
 
     // Bauen (nur auf eigenen Grundstücken)
     this.plots = new Plots(this.level.data.grundstuecke ?? [], this.player);
-    this.plots.events.on('bought', (p) => this.hud.toasts.show(this.content.text('grundstueck_gekauft', { name: p.name }), 'gut'));
+    this.plots.events.on('bought', (p) => {
+      this.hud.toasts.show(this.content.text('grundstueck_gekauft', { name: p.name }), 'gut');
+      this.goals.complete('grundstueck');
+    });
     this.build = new BuildController(this.world, this.content, this.player, this.input, this.pointer, this.scene, this.factory,
-      { ok: accent, fehler: danger }, this.plots);
+      { ok: accent, fehler: danger }, this.plots, () => this.utilities.anschluss('strom') - this.production.baseDemand().strom);
     this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots);
     // Was mit einem neuen Level freigeschaltet wird
     this.player.events.on('levelUp', ({ level }) => {
@@ -289,6 +325,7 @@ export class Game {
     this.statsWindow = new StatsWindow(this.hud.root, this.store.stats);
     this.hud.onTool('sortiment', () => this.assortment.toggleOpen());
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
+    this.hud.onTool('versorgung', () => this.utilityWindow.toggleOpen());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -363,7 +400,9 @@ export class Game {
     this.clock.boost = !this.store.offen && this.store.kundenImLaden === 0 ? this.content.kunden.nachtVorlauf : 1;
     const minutesBefore = this.clock.totalMinutes;
     const simDt = this.clock.update(realDt);
-    this.store.update(this.clock.totalMinutes - minutesBefore, this.clock.totalMinutes % (24 * 60));
+    const minutes = this.clock.totalMinutes - minutesBefore;
+    this.store.update(minutes, this.clock.totalMinutes % (24 * 60));
+    this.utilities.run(minutes, this.production.demand());
     this.world.update(simDt);
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
@@ -380,6 +419,9 @@ export class Game {
     this.hud.setToolActive('personal', this.personalWindow.isOpen);
     this.hud.setToolActive('sortiment', this.assortment.isOpen);
     this.hud.setToolActive('bilanz', this.statsWindow.isOpen);
+    this.hud.setToolActive('versorgung', this.utilityWindow.isOpen);
+    this.machineWindow.update();
+    this.utilityWindow.update();
     this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
@@ -401,6 +443,7 @@ export class Game {
     if (i.wasPressed('personal_menue')) this.personalWindow.toggleOpen();
     if (i.wasPressed('sortiment_menue')) this.assortment.toggleOpen();
     if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
+    if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();
@@ -408,6 +451,8 @@ export class Game {
       else if (this.personalWindow.isOpen) this.personalWindow.close();
       else if (this.assortment.isOpen) this.assortment.close();
       else if (this.statsWindow.isOpen) this.statsWindow.close();
+      else if (this.machineWindow.isOpen) this.machineWindow.close();
+      else if (this.utilityWindow.isOpen) this.utilityWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();
@@ -422,7 +467,7 @@ export class Game {
     const produkt = carton.require(CartonComponent).produkt;
     const result = stockFromCarton(carton, shelf);
     if (!result.ok) {
-      const key = result.grund === 'kuehlung' ? 'einraeumen_kuehlung' : 'einraeumen_voll';
+      const key = result.grund === 'kuehlung' ? 'einraeumen_kuehlung' : result.grund === 'rohstoff' ? 'einraeumen_rohstoff' : 'einraeumen_voll';
       this.hud.toasts.show(this.content.text(key, { produkt: produkt.name }), 'warnung');
       return;
     }
@@ -468,7 +513,7 @@ export class Game {
       laden: this.store.stats.state(),
       ziele: this.goals.erledigt,
       preise: this.prices.state(),
-      systeme: { grundstuecke: this.plots.state() },
+      systeme: { grundstuecke: this.plots.state(), versorgung: this.utilities.state() },
     };
   }
 
@@ -483,6 +528,8 @@ export class Game {
     this.staff.restore(d.personal);
     const grund = d.systeme?.grundstuecke;
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
+    const vers = d.systeme?.versorgung;
+    if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
     for (const e of this.staff.team) this.spawnWorker(e, true);
     this.store.nav.invalidate();
   }

@@ -18,5 +18,6 @@
   "zeit_stufe_3": ["Digit3"],
   "debug_anzeige": ["F3"],
   "sortiment_menue": ["KeyO"],
-  "bilanz_menue": ["KeyL"]
+  "bilanz_menue": ["KeyL"],
+  "versorgung_menue": ["KeyV"]
 }

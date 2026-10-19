@@ -8,5 +8,6 @@
   { "id": "grundnahrung",      "name": "Grundnahrung & Trockenwaren" },
   { "id": "suesswaren_snacks", "name": "Süßwaren & Snacks" },
   { "id": "haushalt_reinigung", "name": "Haushalt & Reinigung" },
-  { "id": "drogerie_koerperpflege", "name": "Drogerie & Körperpflege" }
+  { "id": "drogerie_koerperpflege", "name": "Drogerie & Körperpflege" },
+  { "id": "rohstoffe",         "name": "Rohstoffe" }
 ]

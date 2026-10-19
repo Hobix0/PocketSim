@@ -1,0 +1,44 @@
+{
+  "_hinweis": "Versorgung (getrennt von Rohstoffen). Grundverbrauch = Summe der werte aller Bauteile, dazu laufende Maschinen. preis in € je kWh bzw. je Liter, abgerechnet zum Tagesende. stufen = Hausanschluss und seine Ausbaustufen.",
+  "strom": {
+    "name": "Strom",
+    "einheit": "kW",
+    "verbrauchEinheit": "kWh",
+    "preis": 0.35,
+    "stufen": [
+      {
+        "anschluss": 8,
+        "preis": 0,
+        "freischaltLevel": 1
+      },
+      {
+        "anschluss": 20,
+        "preis": 2500,
+        "freischaltLevel": 2
+      },
+      {
+        "anschluss": 50,
+        "preis": 7000,
+        "freischaltLevel": 4
+      }
+    ]
+  },
+  "wasser": {
+    "name": "Wasser",
+    "einheit": "l/h",
+    "verbrauchEinheit": "l",
+    "preis": 0.004,
+    "stufen": [
+      {
+        "anschluss": 60,
+        "preis": 0,
+        "freischaltLevel": 1
+      },
+      {
+        "anschluss": 300,
+        "preis": 1500,
+        "freischaltLevel": 3
+      }
+    ]
+  }
+}

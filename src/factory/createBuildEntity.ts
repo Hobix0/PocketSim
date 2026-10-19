@@ -8,6 +8,7 @@ import { TerminalComponent } from '../components/TerminalComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { CheckoutComponent } from '../components/CheckoutComponent';
+import { MachineComponent } from '../components/MachineComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import { formatMoney } from '../ui/format';
@@ -32,6 +33,7 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   entity.add(new ValuesComponent(def.werte, content.werte));
   if (def.regal) entity.add(new ShelfComponent(def.regal, ctx.models, ctx.actions));
   if (def.kasse) entity.add(new CheckoutComponent(def.kasse, ctx.checkout));
+  if (def.maschine) entity.add(new MachineComponent(def.maschine, def.platzhalter.groesse[1], ctx.machine, ctx.actions));
   if (def.kontext) {
     const kontextName = content.kontexte[def.kontext].name;
     entity.add(new SelectableComponent(def.kontext, def.name, `${kontextName} · ${formatMoney(def.preis).replace(',00', '')}`));

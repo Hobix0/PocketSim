@@ -56,7 +56,7 @@ export class ShelfComponent extends InteractableComponent implements Describable
 
   /** Bis zu `menge` Stück einräumen: erst in Fächer mit demselben Produkt, dann in leere. Gibt die Anzahl zurück. */
   add(p: ProductDef, menge: number): number {
-    if (p.kuehlung && !this.def.kuehlung) return 0;
+    if (p.rohstoff || (p.kuehlung && !this.def.kuehlung)) return 0;
     let rest = menge;
     const order = [...this.faecher.keys()].sort((a, b) => Number(this.faecher[b].produkt?.id === p.id) - Number(this.faecher[a].produkt?.id === p.id));
     for (const i of order) {

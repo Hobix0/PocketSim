@@ -13,7 +13,8 @@ import { asObject, num, str, optStr, bool } from '../content/validate';
 // Farbe 0 = leer, sonst Nummer in der Palette (ab 1). So bleibt auch ein großes Modell klein.
 // Vorne ist +X (dorthin zeigt bei Regalen die Ware), der Ursprung liegt unten in der Mitte.
 
-export type ModelType = 'deko' | 'regal';
+/** deko/regal = eigenes Bauteil im Baumenü; modell = nur das Modell, ein Bauteil in data/bau verweist darauf */
+export type ModelType = 'deko' | 'regal' | 'modell';
 
 export interface VoxelModelData {
   id: string;
@@ -153,7 +154,7 @@ export function validateVoxelModel(raw: unknown, where: string): VoxelModelData 
     throw new Error(`${where}: "groesse" muss drei ganze Zahlen von 1 bis 256 sein`);
   }
   const typ = str(o, 'typ', where);
-  if (typ !== 'deko' && typ !== 'regal') throw new Error(`${where}: "typ" muss "deko" oder "regal" sein`);
+  if (typ !== 'deko' && typ !== 'regal' && typ !== 'modell') throw new Error(`${where}: "typ" muss "deko", "regal" oder "modell" sein`);
   const ebene = str(o, 'ebene', where) as BuildLayer;
   if (!LAYERS.includes(ebene)) throw new Error(`${where}: "ebene" muss eines von ${LAYERS.join(', ')} sein`);
   const palette = o.palette;

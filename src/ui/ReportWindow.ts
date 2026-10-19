@@ -28,7 +28,7 @@ export class ReportWindow {
   open(r: DayReport, onClose?: () => void): void {
     const t = (k: string, v?: Record<string, string | number>) => esc(this.content.text(k, v));
     const kosten = (g: string) => r.kosten[g] ?? 0;
-    const sonstige = Object.entries(r.kosten).filter(([g]) => !['einkauf', 'lohn', 'bau'].includes(g)).reduce((s, [, v]) => s + v, 0);
+    const sonstige = Object.entries(r.kosten).filter(([g]) => !['einkauf', 'lohn', 'bau', 'strom', 'wasser'].includes(g)).reduce((s, [, v]) => s + v, 0);
     const ergebnis = r.umsatz - Object.values(r.kosten).reduce((s, v) => s + v, 0);
     const ruf = r.rufNachher - r.rufVorher;
     const row = (label: string, value: string, cls = '') => `<div class="row ${cls}"><span>${label}</span><b>${value}</b></div>`;
@@ -45,6 +45,7 @@ export class ReportWindow {
           ${row(t('bericht_umsatz'), formatMoney(r.umsatz), 'plus')}
           ${row(t('bericht_einkauf'), `−${formatMoney(kosten('einkauf'))}`)}
           ${row(t('bericht_loehne'), `−${formatMoney(kosten('lohn'))}`)}
+          ${row(t('bericht_versorgung'), `−${formatMoney(kosten('strom') + kosten('wasser'))}`)}
           ${row(t('bericht_bau'), `−${formatMoney(kosten('bau') + sonstige)}`)}
           ${row(t('bericht_ergebnis'), formatMoney(ergebnis), ergebnis < 0 ? 'minus total' : 'plus total')}
         </section>

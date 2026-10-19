@@ -557,7 +557,7 @@ export class VoxelEditor {
           <button type="button" class="load-template">Laden</button></div>
         <h4>Im Spiel</h4>
         <div class="dims">
-          <label>Art<select class="typ"><option value="deko">Dekoration</option><option value="regal">Regal (mit Ware)</option></select></label>
+          <label>Art<select class="typ"><option value="deko">Dekoration</option><option value="regal">Regal (mit Ware)</option><option value="modell">Nur Modell (für ein Bauteil in data/bau)</option></select></label>
           <label>Preis (€)<input type="number" class="preis" min="0" step="10"></label>
           <label>Platz<select class="ebene"><option value="objekt">auf dem Boden</option><option value="decke">an der Decke</option><option value="anbau">an der Wand</option></select></label>
           <label class="regal-only">Stück pro Fach<input type="number" class="kapazitaet" min="1" max="200"></label>

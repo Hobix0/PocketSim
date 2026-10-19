@@ -62,6 +62,8 @@ export class BuildController {
     private readonly ctx: FactoryContext,
     private readonly colors: { ok: string; fehler: string },
     private readonly plots?: Plots,
+    /** Freier Stromanschluss für neue Verbraucher (kW) */
+    private readonly stromFrei?: () => number,
   ) {
     this.plotLines.visible = false;
     scene.add(this.plotLines);
@@ -115,6 +117,7 @@ export class BuildController {
     const check = checkPlacement(this.world, tool.def, x, z, rotY, this.content.baumenue, {
       moving: tool.moving, geld: this.player.geld, level: this.player.level,
       plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
+      stromFrei: this.stromFrei?.(),
     });
     this.ghost.visible = true;
     this.ghost.position.set(x, check.y, z);

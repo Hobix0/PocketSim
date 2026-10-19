@@ -9,7 +9,7 @@ import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect }
 //    Deckenleuchten nicht mit anderen Deckenleuchten.
 //  - Kostet Geld (außer beim Verschieben) und muss freigeschaltet sein.
 
-export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck';
+export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom';
 
 export interface PlacementResult {
   ok: boolean;
@@ -41,6 +41,8 @@ export interface PlacementOptions {
   level: number;
   /** Darf hier gebaut werden (eigenes Grundstück)? Ohne Angabe überall. */
   plotOk?: (x: number, z: number, rand: number) => boolean;
+  /** Freier Stromanschluss (kW) für neue Verbraucher; ohne Angabe unbegrenzt */
+  stromFrei?: number;
 }
 
 export function checkPlacement(
@@ -82,6 +84,7 @@ export function checkPlacement(
     if (def.ebene === 'wand' && f.ebene === 'wand' && wallOverlap(rect, other) < 0.35) continue;
     return { ok: false, grund: 'belegt', y };
   }
+  if (!opts.moving && opts.stromFrei !== undefined && (def.werte.strom ?? 0) > opts.stromFrei + 1e-9) return { ok: false, grund: 'strom', y };
   if (!opts.moving && def.preis > opts.geld) return { ok: false, grund: 'geld', y };
   return { ok: true, y };
 }

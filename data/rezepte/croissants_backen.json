@@ -1,0 +1,9 @@
+{
+  "id": "croissants_backen",
+  "name": "Croissants backen",
+  "maschine": "backstation",
+  "eingang": [{"ware": "teiglinge_croissant", "menge": 20}],
+  "ausgang": {"ware": "croissant", "menge": 20},
+  "dauer": 50,
+  "freischaltLevel": 2
+}

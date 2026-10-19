@@ -79,6 +79,14 @@ export class PlayerState {
     return true;
   }
 
+  /** Rechnung bezahlen (Strom, Wasser): wird immer abgebucht, auch wenn das Konto ins Minus geht. */
+  charge(betrag: number, grund: string): void {
+    if (betrag <= 0) return;
+    this.geldWert = round2(this.geldWert - betrag);
+    this.events.emit('transaction', { betrag: -betrag, grund });
+    this.emitChanged();
+  }
+
   canAfford(betrag: number): boolean {
     return betrag <= this.geldWert;
   }
