@@ -6,16 +6,18 @@ import type { Describable, InfoRow } from '../ui/describe';
 import { CartonComponent } from './CartonComponent';
 import { stockFromCarton, type StockingTask } from '../economy/Stocking';
 import { formatMoney } from '../ui/format';
+import { PathFollower, type PathFinder } from '../navigation/PathFollower';
 
 // Arbeitsverhalten eines Auffüllers als Zustandsmaschine:
 //   warten → zum Karton gehen → Karton aufnehmen → zum Regal gehen → einräumen → warten …
-// Läuft in Spielzeit (steht in der Pause). Gelaufen wird vorerst in gerader Linie –
-// Wegfindung um Hindernisse kommt mit der Kunden-KI (Meilenstein 9).
+// Läuft in Simulationszeit (steht in der Pause). Wege kommen aus der Wegfindung (findPath);
+// ohne sie (z. B. in Tests) wird direkt hingelaufen.
 
 export type WorkerState = 'wartet' | 'holt' | 'bringt' | 'raeumt';
 
 export interface WorkerServices {
   findTask(): StockingTask | null;
+  findPath?: PathFinder;
   gehgeschwindigkeit: number;
   sekundenProStueck: number;
   /** Anzeigename der Rolle, z. B. "Auffüller" */
@@ -29,7 +31,7 @@ export class WorkerComponent extends Component implements Describable {
   private task: StockingTask | null = null;
   private wait = 0;
   private stockTimer = 0;
-  private readonly target = new THREE.Vector3();
+  private readonly path = new PathFollower();
 
   constructor(readonly employee: Employee, private readonly services: WorkerServices) {
     super();
@@ -146,29 +148,21 @@ export class WorkerComponent extends Component implements Describable {
 
   private setTarget(p: THREE.Vector3, keepDistance: number): void {
     const pos = this.entity.object.position;
-    this.target.set(p.x, pos.y, p.z);
+    const target = new THREE.Vector3(p.x, pos.y, p.z);
     if (keepDistance > 0) {
-      const dir = new THREE.Vector3().subVectors(pos, this.target).setY(0);
-      if (dir.lengthSq() > 1e-6) this.target.addScaledVector(dir.normalize(), keepDistance);
+      const dir = new THREE.Vector3().subVectors(pos, target).setY(0);
+      if (dir.lengthSq() > 1e-6) target.addScaledVector(dir.normalize(), keepDistance);
     }
+    this.path.goTo(this.entity.object, target, this.services.findPath);
   }
 
   private arrived(): boolean {
-    const p = this.entity.object.position;
-    return Math.hypot(this.target.x - p.x, this.target.z - p.z) < 0.05;
+    return this.path.done;
   }
 
-  /** Ein Stück Richtung Ziel gehen; true, wenn angekommen. */
+  /** Ein Stück den Weg entlang gehen; true, wenn angekommen. */
   private walk(dt: number): boolean {
-    const p = this.entity.object.position;
-    const dx = this.target.x - p.x, dz = this.target.z - p.z;
-    const dist = Math.hypot(dx, dz);
-    const step = this.services.gehgeschwindigkeit * this.employee.tempo * dt;
-    if (dist <= step) { p.x = this.target.x; p.z = this.target.z; return true; }
-    p.x += (dx / dist) * step;
-    p.z += (dz / dist) * step;
-    this.entity.object.rotation.y = Math.atan2(dx, dz);
-    return false;
+    return this.path.step(this.entity.object, this.services.gehgeschwindigkeit * this.employee.tempo, dt);
   }
 
   /** Getragener Karton schwebt vor der Figur. */

@@ -28,6 +28,8 @@ export type Tool =
 
 export interface BuildEvents extends Record<string, unknown> {
   toolChanged: Tool | null;
+  /** Etwas wurde gebaut oder verschoben */
+  placed: { entity: Entity; moved: boolean };
   /** Meldung für den Spieler (Textschlüssel + Werte) */
   message: { key: string; werte?: Record<string, string | number>; art: 'info' | 'gut' | 'warnung' };
 }
@@ -121,9 +123,12 @@ export class BuildController {
       tool.moving.object.position.set(x, check.y, z);
       tool.moving.object.rotation.y = rotY;
       tool.moving.object.visible = true;
+      const moved = tool.moving;
       this.setTool({ art: 'verschieben' }, true);
+      this.events.emit('placed', { entity: moved, moved: true });
     } else if (this.player.spend(tool.def.preis, 'bau')) {
-      this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: this.quarter * 90 }, this.ctx));
+      const entity = this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: this.quarter * 90 }, this.ctx));
+      this.events.emit('placed', { entity, moved: false });
     }
   }
 

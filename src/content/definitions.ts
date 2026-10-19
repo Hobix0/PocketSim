@@ -59,6 +59,17 @@ export interface ShelfDef {
   kuehlung: boolean;
 }
 
+/**
+ * Kasse: wo Kunden anstehen und wo das Personal steht (lokale Koordinaten x, z des Modells).
+ * Die Warteschlange beginnt bei `kunde` und wächst in `richtung`, je Kunde um `abstand` Meter.
+ */
+export interface CheckoutDef {
+  kunde: [number, number];
+  personal: [number, number];
+  richtung: [number, number];
+  abstand: number;
+}
+
 /** Ein Bauelement (data/bau/*.json). `werte` werden auf Raum-/Gebäudeebene summiert. */
 export interface BuildDef {
   id: string;
@@ -66,6 +77,9 @@ export interface BuildDef {
   kategorie: string;
   ebene: BuildLayer;
   regal?: ShelfDef;
+  kasse?: CheckoutDef;
+  /** Türen und Durchgänge: Figuren dürfen hindurchgehen, obwohl es eine Wand ist. */
+  durchgang: boolean;
   /** Interaktions-Kontext (data/interaktion/kontexte.json). Ohne Kontext ist das Element nicht anklickbar. */
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
@@ -99,6 +113,8 @@ export interface RoleDef {
   beschreibung: string;
   lohnProTag: number;
   farbe: string;
+  /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
+  verhalten: 'auffuellen' | 'kassieren';
 }
 
 /** Einstellungen für Personal (data/personal/standard.json). */
@@ -113,6 +129,47 @@ export interface StaffSettings {
 /** Belohnungen für Arbeit (data/arbeit/standard.json). */
 export interface WorkSettings {
   xpProKartonVonHand: number;
+  /** Kassieren von Hand (Klick auf die Kasse) */
+  xpProKundeVonHand: number;
+  /** Jeder bezahlte Einkauf, auch über Kassierer */
+  xpProKunde: number;
+}
+
+/** Kunden: Öffnungszeiten, Andrang, Verhalten, Ruf (data/kunden/standard.json). */
+export interface CustomerSettings {
+  oeffnung: string;
+  schluss: string;
+  /** Neue Kunden pro Spielstunde, je Stunde des Tages (24 Werte), bei mittlerem Ruf */
+  kundenProStunde: number[];
+  maxImLaden: number;
+  wuensche: { min: number; max: number };
+  menge: { min: number; max: number };
+  /** Anteil der Wünsche, die aus dem aktuellen Sortiment kommen (der Rest: irgendein freigeschaltetes Produkt) */
+  wunschAusSortiment: number;
+  gehgeschwindigkeit: { min: number; max: number };
+  sekundenProGriff: number;
+  /** So lange (Sekunden) wartet ein Kunde an der Kasse, bevor er geht */
+  geduld: number;
+  kassierenSekundenProArtikel: number;
+  ruf: { start: number; zufrieden: number; jeFehlendemArtikel: number; keineKasse: number; zuLangeGewartet: number };
+  /** Andrang bei Ruf 0 und Ruf 100 (dazwischen gleichmäßig) */
+  rufFaktor: { min: number; max: number };
+  /** Zeitfaktor, wenn geschlossen ist und niemand mehr im Laden ist */
+  nachtVorlauf: number;
+}
+
+/** Raster für die Wegfindung (data/navigation/standard.json). */
+export interface NavSettings {
+  zelle: number;
+  /** Abstand der Figuren zu Hindernissen */
+  radius: number;
+}
+
+/** Ein Ziel für den Einstieg (data/ziele/start.json); wann es erfüllt ist, steht im Code. */
+export interface GoalDef {
+  id: string;
+  text: string;
+  belohnung: { geld?: number; xp?: number };
 }
 
 /** Einstellungen für Kartons (data/lager/standard.json). */
@@ -159,6 +216,8 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     kategorie: str(o, 'kategorie', where),
     ebene: layer(o, where),
     regal: o.regal === undefined ? undefined : shelf(o.regal, `${where} → regal`),
+    kasse: o.kasse === undefined ? undefined : checkout(o.kasse, `${where} → kasse`),
+    durchgang: o.durchgang === undefined ? false : bool(o, 'durchgang', where),
     kontext: optStr(o, 'kontext', where),
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),
@@ -188,6 +247,16 @@ function shelf(raw: unknown, where: string): ShelfDef {
     laenge: o.laenge === undefined ? 1 : num(o, 'laenge', where, 0),
     kuehlung: o.kuehlung === undefined ? false : bool(o, 'kuehlung', where),
   };
+}
+
+function checkout(raw: unknown, where: string): CheckoutDef {
+  const o = asObject(raw, where);
+  const pair = (key: string): [number, number] => {
+    const v = numList(o, key, where);
+    if (v.length !== 2) throw new Error(`${where}: "${key}" muss zwei Zahlen haben [x, z]`);
+    return [v[0], v[1]];
+  };
+  return { kunde: pair('kunde'), personal: pair('personal'), richtung: pair('richtung'), abstand: num(o, 'abstand', where, 0.1) };
 }
 
 function storage(raw: unknown, where: string): { ebenen?: number; boeden?: number[] } {

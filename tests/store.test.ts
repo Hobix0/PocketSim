@@ -118,12 +118,10 @@ describe('Personal', () => {
     const shelf = w.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [2, 0, 0], drehung: 0 }, ctx));
     const carton = w.add(createCartonEntity(cola, cola.gebinde, ctx));
     carton.object.position.set(-2, 0, 0);
-    const staff = new Staff(content.rollen, content.personal, content.namen, player(), rnd);
-    const employee = staff.hire(staff.candidates[0].id)!;
+    const employee = { id: 1, name: 'Test', rolle: 'auffueller', lohn: 80, tempo: 1 };
     const worker = w.add(createWorkerEntity(employee, {
-      findTask: () => findStockingTask(w, () => true),
-      gehgeschwindigkeit: 1.4,
-      sekundenProStueck: 0.1,
+      auffuellen: { findTask: () => findStockingTask(w, () => true), gehgeschwindigkeit: 1.4, sekundenProStueck: 0.1 },
+      kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1.4, sekundenProArtikel: 1 },
     }, ctx));
     const states = new Set<string>();
     for (let i = 0; i < 600 && shelf.require(ShelfComponent).bestand === 0; i++) {

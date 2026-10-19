@@ -6,6 +6,7 @@
   "preis": 150,
   "freischaltLevel": 1,
   "werte": {},
+  "durchgang": true,
   "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Eingang_Schiebetuer.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Eingang_Schiebetuer.png",
   "platzhalter": {"groesse": [0.5, 4, 2], "farbe": "#b9c0c6"}

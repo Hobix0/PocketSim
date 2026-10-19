@@ -3,6 +3,14 @@
     "name": "Auffüller",
     "beschreibung": "Holt Kartons aus dem Lager und räumt sie in passende Regale.",
     "lohnProTag": 80,
-    "farbe": "#3f7cac"
+    "farbe": "#3f7cac",
+    "verhalten": "auffuellen"
+  },
+  "kassierer": {
+    "name": "Kassierer",
+    "beschreibung": "Besetzt eine Kasse und kassiert die Kunden.",
+    "lohnProTag": 90,
+    "farbe": "#2f8f6f",
+    "verhalten": "kassieren"
   }
 }

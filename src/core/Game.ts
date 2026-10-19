@@ -11,7 +11,7 @@ import { World } from '../ecs/World';
 import type { Entity } from '../ecs/Entity';
 import { createBuildEntity } from '../factory/createBuildEntity';
 import { createProductEntity } from '../factory/createProductEntity';
-import { createWorkerEntity } from '../factory/createWorkerEntity';
+import { createWorkerEntity, staffStatus } from '../factory/createWorkerEntity';
 import type { FactoryContext, GameActions } from '../factory/FactoryContext';
 import { Selection } from '../interaction/Selection';
 import { Interactor } from '../interaction/Interactor';
@@ -20,11 +20,15 @@ import { PlayerState, type LevelTable, type PlayerStart } from '../state/PlayerS
 import { GameClock, type ClockSettings } from '../state/GameClock';
 import { Purchasing } from '../economy/Purchasing';
 import { Staff, type Employee } from '../economy/Staff';
-import { stockFromCarton, findStockingTask } from '../economy/Stocking';
+import { stockFromCarton } from '../economy/Stocking';
+import { StoreLoop } from './StoreLoop';
+import { Goals } from '../state/Goals';
+import type { GoalDef } from '../content/definitions';
 import { CartonStorage } from '../world/CartonStorage';
 import { BuildController } from '../building/BuildController';
 import { CartonComponent } from '../components/CartonComponent';
-import { WorkerComponent } from '../components/WorkerComponent';
+import { ShelfComponent } from '../components/ShelfComponent';
+import { CheckoutComponent } from '../components/CheckoutComponent';
 import { Hud } from '../ui/Hud';
 import { DebugPanel } from '../ui/DebugPanel';
 import { ContextHint } from '../ui/ContextHint';
@@ -32,7 +36,10 @@ import { InfoPanel } from '../ui/InfoPanel';
 import { PurchaseWindow } from '../ui/PurchaseWindow';
 import { BuildMenu } from '../ui/BuildMenu';
 import { PersonalWindow } from '../ui/PersonalWindow';
+import { ReportWindow } from '../ui/ReportWindow';
+import { GoalPanel } from '../ui/GoalPanel';
 import { esc } from '../ui/html';
+import { formatMoney } from '../ui/format';
 
 // Zentrale Spielklasse: Renderer, Szene, Spielschleife.
 // Sie verbindet die Systeme, enthält aber selbst keine Spiellogik.
@@ -68,6 +75,10 @@ export class Game {
   readonly personalWindow: PersonalWindow;
   readonly build: BuildController;
   readonly buildMenu: BuildMenu;
+  /** Ladenbetrieb: Kunden, Kassen, Wegfindung, Ruf */
+  readonly store: StoreLoop;
+  readonly goals: Goals;
+  readonly report: ReportWindow;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
 
@@ -157,6 +168,10 @@ export class Game {
     };
     this.factory = { content: this.content, models: this.models, actions };
 
+    // Ladenbetrieb (Kunden, Kassen, Wege, Ruf); die Kassen bekommen ihre Abrechnung über die Fabrik
+    this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, this.level.data.kundenPunkte ?? [], () => this.factory);
+    this.factory.checkout = this.store.checkoutServices;
+
     // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
     this.storage = new CartonStorage(this.world, this.factory);
     this.purchasing = new Purchasing(this.content.produkte, this.player, this.storage);
@@ -165,7 +180,7 @@ export class Game {
     // Personal: Verwaltung ohne Grafik, Spielfiguren entstehen über die Ereignisse
     this.staff = new Staff(this.content.rollen, this.content.personal, this.content.namen, this.player);
     this.personalWindow = new PersonalWindow(this.hud.root, this.content, this.staff,
-      (e) => this.workers.get(e.id)?.get(WorkerComponent));
+      (e) => { const w = this.workers.get(e.id); return w ? { statusText: () => staffStatus(w) ?? '' } : undefined; });
     this.staff.events.on('hired', (e) => this.spawnWorker(e));
     this.staff.events.on('left', ({ employee, grund }) => {
       const w = this.workers.get(employee.id);
@@ -173,13 +188,50 @@ export class Game {
       this.workers.delete(employee.id);
       if (grund === 'kein_lohn') this.hud.toasts.show(this.content.text('personal_gekuendigt', { name: employee.name }), 'warnung');
     });
-    this.clock.events.on('newDay', () => this.staff.payDay());
+
+    // Ziele für den Einstieg (nur, wenn das Level welche hat)
+    this.goals = new Goals(this.level.data.ziele ? readData<GoalDef[]>(`ziele/${this.level.data.ziele}`) : [], this.player);
+    new GoalPanel(this.hud.root, this.content, this.goals);
+    this.goals.events.on('completed', (g) => this.hud.toasts.show(this.content.text('ziel_erreicht', { text: g.text }), 'gut'));
+    this.report = new ReportWindow(this.hud.root, this.content);
+
+    // Tageswechsel: erst den Tag abschließen (Bericht), dann Löhne für den neuen Tag
+    this.clock.events.on('newDay', ({ tag }) => {
+      const report = this.store.stats.closeDay(tag);
+      this.staff.payDay();
+      this.goals.complete('tag_beenden');
+      const wasPaused = this.clock.paused;
+      this.clock.setPaused(true);
+      this.report.open(report, () => { if (!wasPaused) this.clock.setPaused(false); });
+    });
+    this.store.events.on('opened', () => this.hud.toasts.show(this.content.text('laden_oeffnet'), 'gut'));
+    this.store.events.on('closed', () => this.hud.toasts.show(this.content.text('laden_schliesst')));
+    this.store.events.on('sale', ({ betrag, artikel, byHand }) => {
+      if (byHand) {
+        this.hud.toasts.show(this.content.text('verkauft', { artikel, betrag: formatMoney(betrag) }), 'gut');
+        this.goals.complete('kassieren');
+      }
+      if (this.store.stats.heute.umsatz >= 500) this.goals.complete('umsatz_500');
+    });
+    let warnedNoCheckout = false;
+    this.store.events.on('visit', ({ outcome }) => {
+      if (outcome === 'keine_kasse' && !warnedNoCheckout) { warnedNoCheckout = true; this.hud.toasts.show(this.content.text('kunde_keine_kasse'), 'warnung'); }
+      if (outcome === 'zu_lange') this.hud.toasts.show(this.content.text('kunde_zu_lange'), 'warnung');
+    });
+    this.player.events.on('transaction', ({ grund }) => { if (grund === 'einkauf') this.goals.complete('ware_kaufen'); });
+    this.staff.events.on('hired', () => this.goals.complete('personal'));
 
     // Bauen
     this.build = new BuildController(this.world, this.content, this.player, this.input, this.pointer, this.scene, this.factory,
       { ok: accent, fehler: danger });
     this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input);
     this.build.events.on('message', ({ key, werte, art }) => this.hud.toasts.show(this.content.text(key, werte), art));
+    this.build.events.on('placed', ({ entity, moved }) => {
+      this.store.nav.invalidate();
+      if (moved) return;
+      if (entity.get(ShelfComponent)) this.goals.complete('regal_bauen');
+      if (entity.get(CheckoutComponent)) this.goals.complete('kasse_bauen');
+    });
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
 
@@ -190,7 +242,10 @@ export class Game {
       lastCarried = this.hand.carried;
       this.renderHand();
     });
-    this.world.events.on('changed', (e) => { if (e === this.hand.carried) this.renderHand(); });
+    this.world.events.on('changed', (e) => {
+      if (e === this.hand.carried) this.renderHand();
+      if ((e.get(ShelfComponent)?.bestand ?? 0) > 0) this.goals.complete('einraeumen');
+    });
     this.world.events.on('removed', (e) => { if (e === this.hand.carried) this.hand.clear(); });
 
     // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
@@ -218,7 +273,11 @@ export class Game {
 
     // Kamera in Echtzeit (gegen Ruckeln enger begrenzt), Simulation im Spieltempo (steht in der Pause)
     this.view.update(Math.min(realDt, 0.1));
+    // Nachts im leeren Laden läuft die Zeit schneller
+    this.clock.boost = !this.store.offen && this.store.kundenImLaden === 0 ? this.content.kunden.nachtVorlauf : 1;
+    const minutesBefore = this.clock.totalMinutes;
     const simDt = this.clock.update(realDt);
+    this.store.update(this.clock.totalMinutes - minutesBefore, this.clock.totalMinutes % (24 * 60));
     this.world.update(simDt);
 
     // Solange ein Bauwerkzeug aktiv ist, wird nichts angeklickt oder hervorgehoben
@@ -233,6 +292,7 @@ export class Game {
     this.personalWindow.update();
     this.hud.setToolActive('bauen', this.buildMenu.isOpen);
     this.hud.setToolActive('personal', this.personalWindow.isOpen);
+    this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
@@ -247,7 +307,8 @@ export class Game {
     if (i.wasPressed('bauen_menue')) this.buildMenu.toggleOpen();
     if (i.wasPressed('personal_menue')) this.personalWindow.toggleOpen();
     if (i.wasPressed('pause')) {
-      if (this.build.active) this.build.cancel();
+      if (this.report.isOpen) this.report.close();
+      else if (this.build.active) this.build.cancel();
       else if (this.purchaseWindow.isOpen) this.purchaseWindow.close();
       else if (this.personalWindow.isOpen) this.personalWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
@@ -272,12 +333,8 @@ export class Game {
   }
 
   private spawnWorker(e: Employee): void {
-    const entity = createWorkerEntity(e, {
-      // Was der Spieler gerade trägt, rührt das Personal nicht an
-      findTask: () => findStockingTask(this.world, (carton) => carton !== this.hand.carried),
-      gehgeschwindigkeit: this.content.personal.gehgeschwindigkeit,
-      sekundenProStueck: this.content.personal.sekundenProStueck,
-    }, this.factory);
+    // Was der Spieler gerade trägt, rührt das Personal nicht an
+    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried), this.factory);
     this.workers.set(e.id, entity);
     this.world.add(entity);
     this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');
@@ -291,6 +348,13 @@ export class Game {
       this.content.text('hand_traegt', { produkt: carton.produkt.name, menge: carton.menge }),
       `${key('auswaehlen')} ${esc(this.content.text('einraeumen'))} · ${key('pause')} ${esc(this.content.text('ablegen'))}`,
     );
+  }
+
+  /** Ladenstatus im HUD: geöffnet/geschlossen, Kunden, Ruf. */
+  private renderStore(): void {
+    const offen = this.store.offen;
+    const status = offen ? this.content.text('laden_offen') : this.content.text('laden_zu', { zeit: this.content.kunden.oeffnung });
+    this.hud.setStore(offen, status, this.store.kundenImLaden, this.store.stats.ruf);
   }
 
   private resize(): void {

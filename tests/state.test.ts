@@ -57,10 +57,10 @@ describe('PlayerState', () => {
 describe('GameClock', () => {
   const settings = { startTag: 1, startUhrzeit: '23:58', spielminutenProSekunde: 1, geschwindigkeiten: [1, 3, 8], wochentage: ['Mo', 'Di'] };
 
-  it('zählt Spielminuten und gibt Spielsekunden für die Simulation zurück', () => {
+  it('zählt Spielminuten und gibt Simulationssekunden (echte Sekunden × Tempo) zurück', () => {
     const c = new GameClock(settings);
     expect(c.uhrzeit).toBe('23:58');
-    expect(c.update(1)).toBe(60);
+    expect(c.update(1)).toBe(1);
     expect(c.uhrzeit).toBe('23:59');
   });
 
@@ -82,7 +82,7 @@ describe('GameClock', () => {
     expect(c.uhrzeit).toBe('23:58');
     c.setStufe(3); // hebt die Pause auf
     expect(c.paused).toBe(false);
-    expect(c.update(1)).toBe(8 * 60);
+    expect(c.update(1)).toBe(8);
     c.setStufe(99);
     expect(c.stufe).toBe(3);
   });

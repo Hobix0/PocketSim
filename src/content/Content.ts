@@ -4,7 +4,7 @@ import type { FigureSettings } from '../voxel/figure';
 import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
-  type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings,
+  type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
 } from './definitions';
 
 // Alle Spielinhalte an einem Ort. Wird einmal beim Start geladen und geprüft;
@@ -24,6 +24,8 @@ export class Content {
   readonly arbeit: WorkSettings;
   /** Aussehen der Voxel-Figuren (data/figuren/standard.json) */
   readonly figuren: FigureSettings;
+  /** Kunden: Öffnungszeiten, Andrang, Ruf (data/kunden/standard.json) */
+  readonly kunden: CustomerSettings;
   /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
@@ -45,6 +47,7 @@ export class Content {
     this.namen = readData<string[]>('personal/namen');
     this.arbeit = readData<WorkSettings>('arbeit/standard');
     this.figuren = readData<FigureSettings>('figuren/standard');
+    this.kunden = readData<CustomerSettings>('kunden/standard');
     this.texte = readData<Record<string, string>>('texte/standard');
     this.crossCheck();
   }

@@ -15,6 +15,8 @@ export class FootprintComponent extends Component {
     readonly ebene: BuildLayer,
     /** Breite (X), Höhe (Y), Tiefe (Z) in Metern, ungedreht */
     readonly groesse: [number, number, number],
+    /** Tür oder Durchgang: steht im Weg beim Bauen, aber nicht beim Gehen */
+    readonly durchgang = false,
   ) {
     super();
   }

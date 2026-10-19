@@ -75,6 +75,16 @@ Noch vereinfacht: Das Personal läuft in gerader Linie (Wegfindung kommt mit der
 - Figuren für Personal (und bald Kunden) sind aus Würfeln gebaut: Haut, Frisur, Kleidung aus `data/figuren/standard.json`; beim Personal hat das Oberteil die Farbe der Rolle
 - Alles einstellbar in `data/voxel/standard.json`; `?stil=lowpoly` in der Adresse zeigt die Original-Modelle (z. B. `…/?stil=lowpoly#testgelaende`)
 
+**Spielablauf: Kunden, Kasse, Ruf, Tagesbericht** ✅
+
+- **Kunden** kommen während der Öffnungszeiten (08–20 Uhr) über den Gehweg, suchen ihre Wünsche in den Regalen, legen sie in den Korb und stellen sich an der Kasse an
+- **Kassieren:** Klick auf die Kasse, wenn jemand dran ist (bringt extra XP) – oder einen **Kassierer** einstellen, der die Kasse besetzt
+- Fehlt Ware, gibt es keine Kasse oder dauert es zu lange, sinkt der **Ruf** – und damit der Andrang. Zufriedene Kunden heben ihn
+- **Wegfindung** (A* auf einem 25-cm-Raster): Kunden und Personal laufen um Regale herum und durch Türen (`"durchgang": true`)
+- Um Mitternacht kommt der **Tagesbericht**: Kunden, Umsatz, Ausgaben, Ergebnis, Ruf und die am häufigsten vermissten Produkte (= was man einkaufen sollte). Nachts im leeren Laden läuft die Zeit schneller
+- **Ziele** für den Einstieg links oben (`data/ziele/start.json`) mit Belohnungen
+- Werte: `data/kunden/standard.json` (Öffnungszeiten, Andrang je Stunde, Geduld, Ruf), `data/navigation/standard.json`, Kassenplätze in `data/bau/kasse_*.json` (`"kasse"`)
+
 
 
 ## Starten
@@ -115,6 +125,7 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Bauvorschau drehen | `R` |
 | Karton aufnehmen / ins Regal | Linksklick auf Karton, dann auf Regal |
 | Abbrechen, Fenster schließen, Karton abstellen | `Esc` (schließt immer nur das Oberste) |
+| Kunden kassieren | Linksklick auf die Kasse, wenn jemand dran ist |
 | Debug-Anzeige an/aus | `F3` |
 
 Die Belegung steht in `data/eingabe/standard.json`.
@@ -302,6 +313,25 @@ flowchart LR
 
 Jedes Bauelement hat eine **Ebene** (`boden`, `wand`, `anbau`, `objekt`, `decke`); sie bestimmt, was sich gegenseitig im Weg ist. Ein Regal bekommt `"regal": { "ebenen": [Bodenhöhen], "kapazitaet": 24, "kuehlung": false }`. Spieler und Personal benutzen dieselbe Einräum-Funktion.
 
+### Kunden
+
+```mermaid
+stateDiagram-v2
+  [*] --> sucht: Wunschliste
+  sucht --> greift: am Regal
+  greift --> sucht: nächster Wunsch
+  greift --> zur_kasse: alles erledigt
+  sucht --> geht: nichts gefunden
+  zur_kasse --> wartet
+  wartet --> an_kasse: vorne
+  an_kasse --> geht: bezahlt (Klick oder Kassierer)
+  wartet --> geht: Geduld vorbei
+  zur_kasse --> geht: keine Kasse
+  geht --> [*]
+```
+
+`StoreLoop` (src/core) verbindet Kundenzustrom (`CustomerSpawner`), Wege (`NavGrid`), Kassen (`CheckoutComponent`) und Kennzahlen (`StoreStats`). Die Oberfläche hängt sich nur an die Ereignisse.
+
 ### Voxel-Stil
 
 ```mermaid
@@ -369,5 +399,5 @@ Regeln, die überall gelten:
 6. ~~Regale und Einräumen~~ (Slots per Anker-Klick folgen später)
 7. ~~Bausystem: Vorschau, Katalog, Bauen, Abreißen, Verschieben~~ – plus Personal
 8. Speichern/Laden mit 3 Slots, Haupt- und Pausemenü
-9. Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange
+9. ~~Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange~~
 10. Danach: Versorgung, erweitertes Bausystem, Fabrik, Lager, Rohstoffe

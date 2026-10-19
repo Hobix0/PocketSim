@@ -5,6 +5,8 @@
   "boden": {"groesse": [40, 30], "farbe": "#8f9f72"},
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
+  "ziele": "start",
+  "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6]],
   "bloecke": [
     {"name": "Straße", "position": [0, 0.02, 9.5], "groesse": [40, 0.04, 5], "farbe": "#4d5156"},
     {"name": "Bordstein", "position": [0, 0.07, 6.95], "groesse": [40, 0.14, 0.3], "farbe": "#a7a29a"}

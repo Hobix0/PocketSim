@@ -1,8 +1,10 @@
 import { Emitter } from '../core/Emitter';
 
 // Spielzeit: Tag, Uhrzeit, Geschwindigkeit, Pause.
-// update() bekommt die echte Zeit und gibt die vergangene Spielzeit zurück –
-// damit läuft die Simulation (Kunden, Produktion …) im Spieltempo, die Kamera aber in Echtzeit.
+// update() bekommt die echte Zeit und gibt die Simulationszeit zurück: echte Sekunden × Tempo.
+// Figuren laufen dadurch bei Tempo 1 in natürlicher Geschwindigkeit, während die Uhr schneller läuft
+// (1 echte Sekunde = spielminutenProSekunde Spielminuten). Die Kamera läuft immer in Echtzeit.
+// Mit `boost` (z. B. nachts im leeren Laden) läuft alles zusätzlich schneller.
 // Keine three.js-Abhängigkeit, damit der Zustand später auch auf einem Server laufen kann.
 
 export interface ClockSettings {
@@ -48,10 +50,13 @@ export class GameClock {
   /** Spielminuten seit Spielbeginn (für Speichern und Berechnungen). */
   get totalMinutes(): number { return this.total; }
 
-  /** Echte Sekunden einrechnen; gibt die vergangenen Spielsekunden zurück (0 in der Pause). */
+  /** Zusätzlicher Zeitfaktor, z. B. nachts, wenn nichts passiert (1 = aus). */
+  boost = 1;
+
+  /** Echte Sekunden einrechnen; gibt die Simulationssekunden zurück (echte Sekunden × Tempo, 0 in der Pause). */
   update(realSeconds: number): number {
     if (this.pausedWert) return 0;
-    const factor = this.settings.geschwindigkeiten[this.stufeWert - 1];
+    const factor = this.settings.geschwindigkeiten[this.stufeWert - 1] * this.boost;
     const minutes = realSeconds * this.settings.spielminutenProSekunde * factor;
     const before = this.total;
     this.total += minutes;
@@ -60,7 +65,7 @@ export class GameClock {
       if (Math.floor(this.total / MINUTES_PER_DAY) !== dayBefore) this.events.emit('newDay', { tag: this.tag });
       this.events.emit('minute', { tag: this.tag, stunde: this.stunde, minute: this.minute });
     }
-    return minutes * 60;
+    return realSeconds * factor;
   }
 
   setPaused(paused: boolean): void {

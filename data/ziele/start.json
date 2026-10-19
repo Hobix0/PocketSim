@@ -1,0 +1,10 @@
+[
+  { "id": "ware_kaufen",   "text": "Kaufe Ware am Einkaufsterminal",            "belohnung": { "xp": 10 } },
+  { "id": "regal_bauen",   "text": "Baue ein Regal (Baumenü)",                   "belohnung": { "xp": 10 } },
+  { "id": "einraeumen",    "text": "Räume Ware ins Regal",                       "belohnung": { "xp": 15 } },
+  { "id": "kasse_bauen",   "text": "Baue eine Kasse",                            "belohnung": { "xp": 15 } },
+  { "id": "kassieren",     "text": "Kassiere einen Kunden (Klick auf die Kasse)", "belohnung": { "xp": 20, "geld": 100 } },
+  { "id": "personal",      "text": "Stelle jemanden ein (Personal)",             "belohnung": { "xp": 20 } },
+  { "id": "tag_beenden",   "text": "Bring den ersten Tag zu Ende",               "belohnung": { "xp": 30, "geld": 200 } },
+  { "id": "umsatz_500",    "text": "Mache 500 € Umsatz an einem Tag",            "belohnung": { "xp": 60, "geld": 300 } }
+]

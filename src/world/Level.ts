@@ -58,6 +58,10 @@ export interface LevelData {
   kameraStart: [number, number, number];
   /** Optionaler Kameraabstand zu Beginn (sonst aus data/kamera) */
   kameraAbstand?: number;
+  /** Wo Kunden auftauchen und wieder verschwinden (z. B. die Enden des Gehwegs). Ohne Angabe: keine Kunden. */
+  kundenPunkte?: [number, number, number][];
+  /** Ziele für dieses Level (Datei unter data/ziele/), z. B. "start" */
+  ziele?: string;
   bloecke: BlockData[];                 // feste Kulisse (Wände, Straße …)
   objekte: LevelObject[];               // Entities aus dem Bau-Katalog
 }

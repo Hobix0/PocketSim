@@ -736,6 +736,130 @@ html, body {
   overflow-y: auto;
 }
 
+/* ── Laden-Status in der Top-Bar ── */
+.topbar .store .label {
+  color: var(--accent);
+}
+
+.topbar .store.closed .label {
+  color: var(--text-dim);
+}
+
+.topbar .store small {
+  grid-column: 1 / -1;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.topbar .meter.ruf .fill {
+  background: #e0b23c;
+}
+
+/* ── Ziele ── */
+.goals {
+  position: fixed;
+  left: 12px;
+  top: calc(96px + env(safe-area-inset-top, 0px));
+  width: min(270px, calc(100% - 24px));
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.goals h4 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.goals .goal {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--text-dim);
+}
+
+.goals .goal.next {
+  color: var(--text);
+}
+
+.goals .box {
+  width: 10px;
+  height: 10px;
+  margin-top: 3px;
+  border: 2px solid var(--panel-line);
+  border-radius: 3px;
+}
+
+.goals .goal.next .box {
+  border-color: var(--accent);
+}
+
+.goals small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+@media (max-width: 720px) {
+  .goals {
+    top: auto;
+    bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Tagesbericht ── */
+.report .report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 24px;
+}
+
+.report .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--panel-line);
+  font-size: 14px;
+}
+
+.report .row b {
+  font-variant-numeric: tabular-nums;
+}
+
+.report .row.plus b {
+  color: var(--accent);
+}
+
+.report .row.minus b {
+  color: var(--danger);
+}
+
+.report .row.total {
+  border-bottom: none;
+  font-size: 15px;
+}
+
+.report .missing {
+  margin: 0;
+  font-size: 14px;
+}
+
+.report .missing small {
+  color: var(--text-dim);
+}
+
+.report .actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .toast { animation: none; }
   .topbar .meter .fill, .topbar .delta, .toast { transition: none; }

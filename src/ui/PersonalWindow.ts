@@ -1,6 +1,5 @@
 import type { Content } from '../content/Content';
 import type { Staff, Employee } from '../economy/Staff';
-import type { WorkerComponent } from '../components/WorkerComponent';
 import { esc } from './html';
 import { formatMoney } from './format';
 
@@ -17,7 +16,7 @@ export class PersonalWindow {
     private readonly content: Content,
     private readonly staff: Staff,
     /** Arbeitsverhalten zu einer angestellten Person (für den Status) */
-    private readonly workerOf: (e: Employee) => WorkerComponent | undefined,
+    private readonly workerOf: (e: Employee) => { statusText(): string } | undefined,
   ) {
     const t = (k: string) => esc(content.text(k));
     this.el = document.createElement('div');

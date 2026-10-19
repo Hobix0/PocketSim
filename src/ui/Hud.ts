@@ -26,6 +26,7 @@ export class Hud {
   private readonly toolHandlers = new Map<string, () => void>();
   private readonly texts: (key: string) => string;
   private deltaTimer = 0;
+  private storeKey = '';
 
   constructor(
     private readonly input: InputMap,
@@ -43,6 +44,8 @@ export class Hud {
         <span class="stat level"><span class="label">Level</span><b></b>
           <span class="meter"><span class="fill"></span></span><small class="xp"></small></span>
         <span class="stat time"><span class="label">Zeit</span><b></b></span>
+        <span class="stat store"><span class="label"></span><b></b>
+          <span class="meter ruf"><span class="fill"></span></span><small></small></span>
         <span class="speed"></span>
         <span class="tools">
           <button type="button" data-tool="bauen"></button>
@@ -103,6 +106,19 @@ export class Hud {
     this.levelEl.textContent = String(p.level);
     this.xpBar.style.width = `${Math.round(p.levelProgress * 100)}%`;
     this.xpEl.textContent = p.xpToNext > 0 ? `${p.xp} XP · noch ${p.xpToNext}` : `${p.xp} XP · Höchstlevel`;
+  }
+
+  /** Ladenstatus: geöffnet/geschlossen, Kunden im Laden, Ruf (0–100). Schreibt nur bei Änderung. */
+  setStore(offen: boolean, status: string, kunden: number, ruf: number): void {
+    const key = `${offen}|${status}|${kunden}|${Math.round(ruf)}`;
+    if (key === this.storeKey) return;
+    this.storeKey = key;
+    const el = this.root.querySelector('.store') as HTMLElement;
+    el.classList.toggle('closed', !offen);
+    (el.querySelector('.label') as HTMLElement).textContent = status;
+    (el.querySelector('b') as HTMLElement).textContent = `${kunden} ${this.texts(kunden === 1 ? 'kunde' : 'kunden')}`;
+    (el.querySelector('.fill') as HTMLElement).style.width = `${Math.round(ruf)}%`;
+    (el.querySelector('small') as HTMLElement).textContent = `${this.texts('ruf')} ${Math.round(ruf)}`;
   }
 
   /** Kurz anzeigen, wie viel Geld dazukam oder wegging. */

@@ -7,6 +7,7 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { TerminalComponent } from '../components/TerminalComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
+import { CheckoutComponent } from '../components/CheckoutComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import { formatMoney } from '../ui/format';
@@ -27,9 +28,10 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   entity.object.rotation.y = THREE.MathUtils.degToRad(placement.drehung);
 
   entity.add(new ModelComponent(def.platzhalter, def.model, ctx.models));
-  entity.add(new FootprintComponent(def.ebene, def.platzhalter.groesse));
+  entity.add(new FootprintComponent(def.ebene, def.platzhalter.groesse, def.durchgang));
   entity.add(new ValuesComponent(def.werte, content.werte));
   if (def.regal) entity.add(new ShelfComponent(def.regal, ctx.models, ctx.actions));
+  if (def.kasse) entity.add(new CheckoutComponent(def.kasse, ctx.checkout));
   if (def.kontext) {
     const kontextName = content.kontexte[def.kontext].name;
     entity.add(new SelectableComponent(def.kontext, def.name, `${kontextName} · ${formatMoney(def.preis).replace(',00', '')}`));
