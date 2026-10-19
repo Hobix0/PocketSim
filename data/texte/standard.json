@@ -92,5 +92,7 @@
   "kunde": "Kunde",
   "editor": "Editor",
   "eigene_leer": "Noch keine eigenen Modelle. Bau welche im Voxel-Editor – sie erscheinen dann hier.",
-  "editor_oeffnen": "Editor öffnen"
+  "editor_oeffnen": "Editor öffnen",
+  "sortiment": "Sortiment",
+  "bilanz": "Bilanz"
 }

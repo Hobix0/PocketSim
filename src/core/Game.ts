@@ -45,6 +45,8 @@ import { PriceBook } from '../economy/Prices';
 import { SAVE_VERSION, applyWorld, collectWorld, type SaveData } from '../save/SaveGame';
 import { downloadSave, newestSlot, readSaveFile, readSlot, restartWith, writeSlot, type SlotId } from '../save/SaveSlots';
 import { GameMenu } from '../ui/GameMenu';
+import { AssortmentWindow } from '../ui/AssortmentWindow';
+import { StatsWindow } from '../ui/StatsWindow';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -103,6 +105,8 @@ export class Game {
   /** Eigene Verkaufspreise */
   readonly prices: PriceBook;
   readonly menu: GameMenu;
+  readonly assortment: AssortmentWindow;
+  readonly statsWindow: StatsWindow;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
   /** Lief die Uhr, bevor das Menü aufging? */
@@ -267,6 +271,10 @@ export class Game {
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
     this.hud.onTool('editor', () => restartWith(null, 'editor'));
     this.hud.onTool('menue', () => this.openMenu('pause'));
+    this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, () => this.player.level);
+    this.statsWindow = new StatsWindow(this.hud.root, this.store.stats);
+    this.hud.onTool('sortiment', () => this.assortment.toggleOpen());
+    this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -356,6 +364,8 @@ export class Game {
     this.personalWindow.update();
     this.hud.setToolActive('bauen', this.buildMenu.isOpen);
     this.hud.setToolActive('personal', this.personalWindow.isOpen);
+    this.hud.setToolActive('sortiment', this.assortment.isOpen);
+    this.hud.setToolActive('bilanz', this.statsWindow.isOpen);
     this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
@@ -375,11 +385,15 @@ export class Game {
     for (let s = 1; s <= this.clock.stufen; s++) if (i.wasPressed(`zeit_stufe_${s}`)) this.clock.setStufe(s);
     if (i.wasPressed('bauen_menue')) this.buildMenu.toggleOpen();
     if (i.wasPressed('personal_menue')) this.personalWindow.toggleOpen();
+    if (i.wasPressed('sortiment_menue')) this.assortment.toggleOpen();
+    if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();
       else if (this.purchaseWindow.isOpen) this.purchaseWindow.close();
       else if (this.personalWindow.isOpen) this.personalWindow.close();
+      else if (this.assortment.isOpen) this.assortment.close();
+      else if (this.statsWindow.isOpen) this.statsWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();

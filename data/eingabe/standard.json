@@ -16,5 +16,7 @@
   "zeit_stufe_1": ["Digit1"],
   "zeit_stufe_2": ["Digit2"],
   "zeit_stufe_3": ["Digit3"],
-  "debug_anzeige": ["F3"]
+  "debug_anzeige": ["F3"],
+  "sortiment_menue": ["KeyO"],
+  "bilanz_menue": ["KeyL"]
 }

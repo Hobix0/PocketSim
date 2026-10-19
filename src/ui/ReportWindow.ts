@@ -51,6 +51,7 @@ export class ReportWindow {
       </div>
       <h4>${t('bericht_fehlt')}</h4>
       <p class="missing">${r.fehlt.length ? r.fehlt.map((f) => `${esc(f.produkt.name)} <small>${f.anzahl}×</small>`).join(' · ') : t('bericht_nichts_fehlt')}</p>
+      ${r.zuTeuer.length ? `<h4>Zu teuer (im Sortiment ändern)</h4><p class="missing">${r.zuTeuer.map((f) => `${esc(f.produkt.name)} <small>${f.anzahl}×</small>`).join(' · ')}</p>` : ''}
       <div class="actions"><button type="button" class="primary">${t('bericht_weiter')}</button></div>`;
     this.el.hidden = false;
     this.onClose = onClose ?? null;

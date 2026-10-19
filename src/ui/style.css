@@ -1232,3 +1232,272 @@ html, body {
   color: var(--danger);
   font-size: 13px;
 }
+
+/* ── Sortiment und Preise ── */
+.assortment {
+  width: min(980px, calc(100% - 24px));
+}
+
+.assortment .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.assortment .toolbar .spacer {
+  flex: 1;
+}
+
+.assortment .prices {
+  display: grid;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.price-head,
+.price-row {
+  display: grid;
+  grid-template-columns: 30px minmax(140px, 1.6fr) 70px 80px 170px 60px 110px 70px minmax(110px, 1fr);
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.price-head {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 4px 4px;
+}
+
+.price-row {
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.price-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.price-row img,
+.price-row .noicon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.price-row .name small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.price-row .num {
+  font-variant-numeric: tabular-nums;
+}
+
+.price-row .num.minus {
+  color: var(--danger);
+}
+
+.price-row .edit {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.price-row .edit input {
+  width: 56px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--key-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: 4px;
+  padding: 3px 5px;
+  text-align: right;
+}
+
+.price-row.own .edit input {
+  border-color: var(--accent);
+}
+
+.price-row .edit button {
+  padding: 2px 7px;
+}
+
+.price-row .chance {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-row .chance .bar {
+  width: 44px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--key-bg);
+  overflow: hidden;
+}
+
+.price-row .chance .bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+@media (max-width: 860px) {
+  .price-head { display: none; }
+  .price-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    grid-template-areas: "icon name edit";
+  }
+  .price-row > .num, .price-row > .chance { display: none; }
+}
+
+/* ── Bilanz ── */
+.stats {
+  width: min(760px, calc(100% - 24px));
+}
+
+.stats header .views {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.stats .tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.stats .tile {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+}
+
+.stats .tile span {
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stats .tile b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats .tile small {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.stats .chart {
+  display: grid;
+  gap: 4px;
+}
+
+.stats .legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.stats .legend i,
+.chart-tip i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.stats svg {
+  width: 100%;
+  height: auto;
+}
+
+.stats svg .grid {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.stats svg .tick {
+  fill: var(--text-dim);
+  font-size: 11px;
+}
+
+.stats svg .value {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stats svg .end {
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.stats svg .hit {
+  fill: transparent;
+  cursor: default;
+}
+
+.stats svg .hit.on {
+  fill: rgba(255, 255, 255, 0.05);
+}
+
+.chart-tip {
+  position: absolute;
+  z-index: 2;
+  width: 180px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-table th,
+.stats-table td {
+  padding: 5px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.stats-table th:first-child,
+.stats-table td:first-child {
+  text-align: left;
+}
+
+.stats-table th {
+  color: var(--text-dim);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.stats-table td.minus {
+  color: var(--danger);
+}
