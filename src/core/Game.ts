@@ -41,6 +41,26 @@ import { GoalPanel } from '../ui/GoalPanel';
 import { esc } from '../ui/html';
 import { registerCustomModels } from '../editor/ModelStore';
 import { formatMoney } from '../ui/format';
+import { PriceBook } from '../economy/Prices';
+import { SAVE_VERSION, applyWorld, collectWorld, type SaveData } from '../save/SaveGame';
+import { downloadSave, newestSlot, readSaveFile, readSlot, restartWith, writeSlot, type SlotId } from '../save/SaveSlots';
+import { GameMenu } from '../ui/GameMenu';
+
+/** Wie das Spiel startet */
+export interface GameOptions {
+  stil?: 'voxel' | 'lowpoly';
+  /** Spielstand laden statt mit dem Level-Aufbau zu beginnen */
+  save?: SaveData | null;
+  /** Mit dem Hauptmenü beginnen (Spiel steht dahinter still) */
+  menu?: boolean;
+}
+
+const STIL_KEY = 'urbanevolution.stil';
+
+/** Gespeicherte Darstellung (Voxel oder Low-Poly) */
+export function savedStil(): 'voxel' | 'lowpoly' | undefined {
+  try { const s = localStorage.getItem(STIL_KEY); return s === 'voxel' || s === 'lowpoly' ? s : undefined; } catch { return undefined; }
+}
 
 // Zentrale Spielklasse: Renderer, Szene, Spielschleife.
 // Sie verbindet die Systeme, enthält aber selbst keine Spiellogik.
@@ -80,13 +100,18 @@ export class Game {
   readonly store: StoreLoop;
   readonly goals: Goals;
   readonly report: ReportWindow;
+  /** Eigene Verkaufspreise */
+  readonly prices: PriceBook;
+  readonly menu: GameMenu;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
+  /** Lief die Uhr, bevor das Menü aufging? */
+  private resumeAfterMenu = false;
 
   private readonly timer = new THREE.Timer();
   private readonly sun: THREE.DirectionalLight;
 
-  constructor(container: HTMLElement, levelId: string, options: { stil?: 'voxel' | 'lowpoly' } = {}) {
+  constructor(container: HTMLElement, readonly levelId: string, private readonly options: GameOptions = {}) {
     // Inhalte zuerst: Fehler in den Daten sollen sofort auffallen
     this.content = new Content();
 
@@ -172,7 +197,8 @@ export class Game {
     this.factory = { content: this.content, models: this.models, actions };
 
     // Ladenbetrieb (Kunden, Kassen, Wege, Ruf); die Kassen bekommen ihre Abrechnung über die Fabrik
-    this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, this.level.data.kundenPunkte ?? [], () => this.factory);
+    this.prices = new PriceBook(this.content.kunden.preis);
+    this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, this.level.data.kundenPunkte ?? [], () => this.factory, this.prices);
     this.factory.checkout = this.store.checkoutServices;
 
     // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
@@ -203,6 +229,8 @@ export class Game {
       const report = this.store.stats.closeDay(tag);
       this.staff.payDay();
       this.goals.complete('tag_beenden');
+      // Automatisch speichern, damit kein Tag verloren geht
+      writeSlot('auto', this.toSave());
       const wasPaused = this.clock.paused;
       this.clock.setPaused(true);
       this.report.open(report, () => { if (!wasPaused) this.clock.setPaused(false); });
@@ -237,7 +265,8 @@ export class Game {
     });
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
-    this.hud.onTool('editor', () => { location.hash = 'editor'; location.reload(); });
+    this.hud.onTool('editor', () => restartWith(null, 'editor'));
+    this.hud.onTool('menue', () => this.openMenu('pause'));
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -252,13 +281,44 @@ export class Game {
     });
     this.world.events.on('removed', (e) => { if (e === this.hand.carried) this.hand.clear(); });
 
-    // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen
-    for (const o of expandObjects(this.level.data.objekte)) {
-      const entity = o.produkt !== undefined
-        ? createProductEntity(this.content.produkte.get(o.produkt), o, this.factory)
-        : createBuildEntity(this.content.bau.get(o.typ ?? ''), o, this.factory);
-      this.world.add(entity);
+    // Menü (Haupt- und Pausemenü)
+    this.menu = new GameMenu(this.hud.root, {
+      weiter: () => {
+        // Im Hauptmenü eines frischen Spiels: den letzten Stand laden, wenn es einen gibt
+        const newest = newestSlot();
+        if (this.options.menu && !this.options.save && newest && this.menuMode === 'haupt') this.loadSlot(newest);
+        else this.closeMenu();
+      },
+      neu: () => restartWith({ aktion: 'neu' }),
+      laden: (slot) => this.loadSlot(slot),
+      speichern: (slot) => writeSlot(slot, this.toSave()),
+      exportieren: () => downloadSave(this.toSave()),
+      importieren: (file) => {
+        readSaveFile(file).then((daten) => restartWith({ aktion: 'laden', daten }))
+          .catch((err: unknown) => this.hud.toasts.show(`Datei nicht lesbar: ${String(err)}`, 'warnung'));
+      },
+      editor: () => restartWith(null, 'editor'),
+      hauptmenue: () => restartWith(null),
+      stil: () => (this.models.voxelStyle ? 'voxel' : 'lowpoly'),
+      setStil: (s) => {
+        try { localStorage.setItem(STIL_KEY, s); } catch { /* dann nur für diesmal */ }
+        // Neu laden mit dem aktuellen Stand, damit nichts verloren geht
+        restartWith(this.options.menu && !this.options.save ? null : { aktion: 'laden', daten: this.toSave() });
+      },
+    });
+
+    // Erst jetzt Objekte setzen, damit die Anzeigen sie mitzählen: aus dem Spielstand oder aus dem Level
+    if (options.save) this.applySave(options.save);
+    else {
+      for (const o of expandObjects(this.level.data.objekte)) {
+        const entity = o.produkt !== undefined
+          ? createProductEntity(this.content.produkte.get(o.produkt), o, this.factory)
+          : createBuildEntity(this.content.bau.get(o.typ ?? ''), o, this.factory);
+        this.world.add(entity);
+      }
     }
+    this.store.sync(this.clock.totalMinutes % (24 * 60));
+    if (options.menu) this.openMenu('haupt');
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -284,8 +344,8 @@ export class Game {
     this.store.update(this.clock.totalMinutes - minutesBefore, this.clock.totalMinutes % (24 * 60));
     this.world.update(simDt);
 
-    // Solange ein Bauwerkzeug aktiv ist, wird nichts angeklickt oder hervorgehoben
-    this.interactor.enabled = !this.build.active;
+    // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
+    this.interactor.enabled = !this.build.active && !this.menu.isOpen;
     this.build.update(this.view.camera);
     this.interactor.update(this.view.camera);
     // Über einem Objekt zeigt der Hinweis am Zeiger, worum es geht – dann keine Feld-Markierung
@@ -305,6 +365,11 @@ export class Game {
   /** Tasten, die überall gelten. Esc schließt immer nur das Oberste. */
   private handleGlobalKeys(): void {
     const i = this.input;
+    // Im Menü gilt nur Esc (zurück bzw. weiterspielen)
+    if (this.menu.isOpen) {
+      if (i.wasPressed('pause')) this.menu.back();
+      return;
+    }
     if (i.wasPressed('debug_anzeige')) this.debug.toggle();
     if (i.wasPressed('zeit_anhalten')) this.clock.togglePause();
     for (let s = 1; s <= this.clock.stufen; s++) if (i.wasPressed(`zeit_stufe_${s}`)) this.clock.setStufe(s);
@@ -316,7 +381,9 @@ export class Game {
       else if (this.purchaseWindow.isOpen) this.purchaseWindow.close();
       else if (this.personalWindow.isOpen) this.personalWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
-      else this.hand.clear();
+      else if (this.hand.carried) this.hand.clear();
+      else if (this.selection.current) this.selection.clear();
+      else this.openMenu('pause');
     }
   }
 
@@ -336,12 +403,66 @@ export class Game {
     if (result.leer) this.hand.clear();
   }
 
-  private spawnWorker(e: Employee): void {
+  // ── Spielstand und Menü ─────────────────────────────────────────
+
+  private menuMode: 'haupt' | 'pause' = 'haupt';
+
+  private openMenu(mode: 'haupt' | 'pause'): void {
+    if (this.menu.isOpen) return;
+    this.menuMode = mode;
+    this.resumeAfterMenu = !this.clock.paused;
+    this.clock.setPaused(true);
+    this.build.cancel();
+    this.menu.open(mode);
+  }
+
+  private closeMenu(): void {
+    this.menu.close();
+    if (this.resumeAfterMenu) this.clock.setPaused(false);
+  }
+
+  private loadSlot(slot: SlotId): void {
+    const daten = readSlot(slot);
+    if (daten) restartWith({ aktion: 'laden', daten });
+    else this.hud.toasts.show('Dieser Spielstand ist nicht lesbar', 'warnung');
+  }
+
+  /** Alles für einen Spielstand einsammeln. */
+  toSave(): SaveData {
+    return {
+      version: SAVE_VERSION,
+      level: this.levelId,
+      gespeichert: new Date().toISOString(),
+      spieler: { geld: this.player.geld, xp: this.player.xp },
+      uhr: this.clock.state(),
+      ...collectWorld(this.world, this.content),
+      personal: this.staff.state(),
+      laden: this.store.stats.state(),
+      ziele: this.goals.erledigt,
+      preise: this.prices.state(),
+      systeme: {},
+    };
+  }
+
+  /** Spielstand übernehmen: Welt aufbauen, dann die Systeme. */
+  private applySave(d: SaveData): void {
+    applyWorld(d, this.world, this.content, this.factory);
+    this.player.restore(d.spieler);
+    this.clock.restore(d.uhr);
+    this.store.stats.restore(d.laden, (id) => this.content.produkte.find(id));
+    this.prices.restore(d.preise ?? {});
+    this.goals.restore(d.ziele ?? []);
+    this.staff.restore(d.personal);
+    for (const e of this.staff.team) this.spawnWorker(e, true);
+    this.store.nav.invalidate();
+  }
+
+  private spawnWorker(e: Employee, silent = false): void {
     // Was der Spieler gerade trägt, rührt das Personal nicht an
     const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried), this.factory);
     this.workers.set(e.id, entity);
     this.world.add(entity);
-    this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');
+    if (!silent) this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');
   }
 
   private renderHand(): void {

@@ -51,6 +51,20 @@ export class StorageSurfaceComponent extends Component implements Describable {
     return this.entity.object.localToWorld(this.slots[slot].clone());
   }
 
+  /** Platz-Nummer einer Entity (oder -1). */
+  slotOf(entityId: number): number {
+    for (const [slot, id] of this.occupied) if (id === entityId) return slot;
+    return -1;
+  }
+
+  /** Einen bestimmten Platz belegen (beim Laden); null, wenn er nicht frei ist. */
+  occupyAt(slot: number, entityId: number): THREE.Vector3 | null {
+    if (slot < 0 || slot >= this.slots.length || this.occupied.has(slot)) return null;
+    this.occupied.set(slot, entityId);
+    this.entity.object.updateWorldMatrix(true, false);
+    return this.entity.object.localToWorld(this.slots[slot].clone());
+  }
+
   /** Platz einer Entity wieder freigeben. */
   release(entityId: number): void {
     for (const [slot, id] of this.occupied) if (id === entityId) this.occupied.delete(slot);

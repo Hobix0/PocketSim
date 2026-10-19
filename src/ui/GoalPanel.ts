@@ -11,7 +11,7 @@ export class GoalPanel {
     this.el = document.createElement('div');
     this.el.className = 'goals panel';
     parent.append(this.el);
-    goals.events.on('completed', () => this.render());
+    goals.events.on('changed', () => this.render());
     this.render();
   }
 

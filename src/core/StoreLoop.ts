@@ -13,6 +13,7 @@ import { NavGrid, type Bounds, type Point } from '../navigation/NavGrid';
 import { CustomerSpawner, planWishes } from '../economy/Customers';
 import { StoreStats, basketTotal, type VisitOutcome } from '../economy/StoreStats';
 import { findStockingTask } from '../economy/Stocking';
+import { buyChance, type PriceBook } from '../economy/Prices';
 import { createCustomerEntity } from '../factory/createCustomerEntity';
 import { CustomerComponent } from '../components/CustomerComponent';
 import { CheckoutComponent } from '../components/CheckoutComponent';
@@ -50,6 +51,7 @@ export class StoreLoop {
     /** Wo Kunden auftauchen und verschwinden; leer = keine Kunden */
     private readonly kundenPunkte: [number, number, number][],
     private readonly ctx: () => FactoryContext,
+    readonly prices: PriceBook,
     private readonly random: () => number = Math.random,
   ) {
     this.settings = content.kunden;
@@ -91,6 +93,11 @@ export class StoreLoop {
     return this.wasOpen;
   }
 
+  /** Öffnungsstatus zur Uhrzeit übernehmen, ohne „hat geöffnet“ zu melden (z. B. nach dem Laden). */
+  sync(minuteOfDay: number): void {
+    this.wasOpen = this.spawner.isOpen(minuteOfDay);
+  }
+
   /** Den vordersten Kunden an einer Kasse abrechnen. */
   serve(checkout: Entity, byHand: boolean): void {
     const c = checkout.get(CheckoutComponent);
@@ -100,7 +107,7 @@ export class StoreLoop {
     const artikel = customer.artikel;
     const betrag = basketTotal(customer.basket);
     if (betrag > 0) this.player.earn(betrag, 'verkauf');
-    this.stats.recordSale(betrag, artikel);
+    this.stats.recordSale(betrag, artikel, customer.basket);
     const work = this.content.arbeit;
     this.player.addXp(work.xpProKunde + (byHand ? work.xpProKundeVonHand : 0));
     customer.paid();
@@ -146,8 +153,12 @@ export class StoreLoop {
       settings: s,
       speed,
       text: (k, v) => this.content.text(k, v),
-      left: (outcome, fehlend) => {
-        this.stats.recordVisit(outcome, fehlend);
+      priceOf: (p) => this.prices.get(p),
+      willBuy: (p) => this.random() < buyChance(s.preis, this.prices.ratio(p)),
+      isBargain: (p) => this.prices.ratio(p) <= s.preis.schnaeppchenAb,
+      left: (outcome, fehlend, zuTeuer, schnaeppchen) => {
+        this.stats.recordVisit(outcome, fehlend, zuTeuer);
+        this.stats.recordBargain(schnaeppchen);
         this.events.emit('visit', { outcome });
       },
     }, this.ctx());

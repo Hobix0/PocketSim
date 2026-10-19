@@ -57,8 +57,8 @@ export class CustomerSpawner {
 export interface Wish {
   produkt: ProductDef;
   menge: number;
-  /** offen → gefunden (genommen > 0) oder fehlt */
-  status: 'offen' | 'gefunden' | 'fehlt';
+  /** offen → gefunden (genommen > 0), fehlt (nicht da) oder zu_teuer (da, aber nicht gekauft) */
+  status: 'offen' | 'gefunden' | 'fehlt' | 'zu_teuer';
   genommen: number;
 }
 

@@ -7,6 +7,8 @@ import type { PlayerState } from '../state/PlayerState';
 
 export interface GoalEvents extends Record<string, unknown> {
   completed: GoalDef;
+  /** Liste hat sich geändert (erfüllt oder geladen) */
+  changed: undefined;
 }
 
 export class Goals {
@@ -17,6 +19,17 @@ export class Goals {
 
   isDone(id: string): boolean {
     return this.done.has(id);
+  }
+
+  get erledigt(): string[] {
+    return [...this.done];
+  }
+
+  /** Spielstand übernehmen: erledigte Ziele ohne erneute Belohnung. */
+  restore(ids: string[]): void {
+    this.done.clear();
+    for (const id of ids) this.done.add(id);
+    this.events.emit('changed', undefined);
   }
 
   /** Noch offene Ziele in der Reihenfolge der Datei. */
@@ -32,5 +45,6 @@ export class Goals {
     if (goal.belohnung.geld) this.player.earn(goal.belohnung.geld, 'ziel');
     if (goal.belohnung.xp) this.player.addXp(goal.belohnung.xp);
     this.events.emit('completed', goal);
+    this.events.emit('changed', undefined);
   }
 }

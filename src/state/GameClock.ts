@@ -68,6 +68,19 @@ export class GameClock {
     return realSeconds * factor;
   }
 
+  /** Stand für den Spielstand */
+  state(): { total: number; stufe: number } {
+    return { total: this.total, stufe: this.stufeWert };
+  }
+
+  /** Spielstand übernehmen (ohne Ereignisse für Tageswechsel o. Ä.) */
+  restore(s: { total: number; stufe: number }): void {
+    this.total = s.total;
+    this.stufeWert = Math.min(Math.max(1, Math.round(s.stufe)), this.stufen);
+    this.events.emit('minute', { tag: this.tag, stunde: this.stunde, minute: this.minute });
+    this.emitSpeed();
+  }
+
   setPaused(paused: boolean): void {
     if (paused === this.pausedWert) return;
     this.pausedWert = paused;
@@ -85,12 +98,6 @@ export class GameClock {
     this.stufeWert = s;
     this.pausedWert = false;
     this.emitSpeed();
-  }
-
-  /** Zeit aus einem Spielstand übernehmen. */
-  restore(totalMinutes: number): void {
-    this.total = totalMinutes;
-    this.events.emit('minute', { tag: this.tag, stunde: this.stunde, minute: this.minute });
   }
 
   private emitSpeed(): void {

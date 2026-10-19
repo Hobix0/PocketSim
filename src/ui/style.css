@@ -1112,3 +1112,123 @@ html, body {
   color: var(--text-dim);
   font-size: 13px;
 }
+
+/* ── Haupt- und Pausemenü ── */
+.game-menu {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: auto;
+  background: radial-gradient(ellipse at center, rgba(15, 20, 25, 0.35), rgba(15, 20, 25, 0.78));
+  z-index: 20;
+}
+
+.menu-card {
+  width: min(420px, 100%);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 22px 22px 18px;
+  display: grid;
+  gap: 12px;
+  background: var(--bg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.menu-card h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.menu-card h1 b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.menu-card .tag {
+  margin: -6px 0 4px;
+  color: var(--text-dim);
+}
+
+.menu-card h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.menu-body {
+  display: grid;
+  gap: 8px;
+}
+
+.game-menu button,
+.game-menu .button {
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--button-bg);
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  padding: 9px 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.game-menu button:hover,
+.game-menu .button:hover {
+  background: var(--button-hover);
+}
+
+.game-menu button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.game-menu .sub {
+  margin-top: -4px;
+  color: var(--text-dim);
+  text-align: center;
+  font-size: 12px;
+}
+
+.game-menu .slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+}
+
+.game-menu .slot small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.game-menu .slot.empty b {
+  color: var(--text-dim);
+}
+
+.game-menu .slot button {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.game-menu .msg {
+  margin: 0;
+  color: var(--accent);
+  text-align: center;
+}
+
+.game-menu .warn {
+  margin: 0;
+  color: var(--danger);
+  font-size: 13px;
+}

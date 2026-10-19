@@ -78,6 +78,19 @@ export class Staff {
     this.refreshCandidates();
   }
 
+  /** Stand für den Spielstand */
+  state(): { team: Employee[]; bewerber: Employee[]; naechsteId: number } {
+    return { team: this.team.map((e) => ({ ...e })), bewerber: this.candidates.map((e) => ({ ...e })), naechsteId: this.nextId };
+  }
+
+  /** Spielstand übernehmen. Unbekannte Rollen (z. B. aus alten Daten) fallen weg. Löst keine Ereignisse aus. */
+  restore(s: { team: Employee[]; bewerber: Employee[]; naechsteId: number }): void {
+    const known = (e: Employee) => e.rolle in this.rollen;
+    this.team.splice(0, this.team.length, ...s.team.filter(known));
+    this.candidates = s.bewerber.filter(known);
+    this.nextId = Math.max(s.naechsteId, ...this.team.map((e) => e.id + 1), ...this.candidates.map((e) => e.id + 1), 1);
+  }
+
   /** Summe aller Tageslöhne. */
   get dailyWages(): number {
     return this.team.reduce((s, e) => s + e.lohn, 0);

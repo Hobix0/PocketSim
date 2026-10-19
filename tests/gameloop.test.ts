@@ -9,6 +9,7 @@ import { CustomerSpawner, planWishes, parseTime, rufFaktor } from '../src/econom
 import { StoreStats } from '../src/economy/StoreStats';
 import { Goals } from '../src/state/Goals';
 import { StoreLoop } from '../src/core/StoreLoop';
+import { PriceBook } from '../src/economy/Prices';
 import { ShelfComponent } from '../src/components/ShelfComponent';
 import { CheckoutComponent } from '../src/components/CheckoutComponent';
 import { CustomerComponent } from '../src/components/CustomerComponent';
@@ -149,7 +150,7 @@ describe('Ein ganzer Einkauf', () => {
     shelf.require(ShelfComponent).add(cola, 24);
     const p = player();
     // Zufall: Wunsch aus dem Sortiment, eine Cola, ein Wunsch
-    const store = new StoreLoop(w, content, p, bounds, [[4, 0.05, 4]], () => fctx, seq(0, 0, 0, 0.5, 0, 0.5));
+    const store = new StoreLoop(w, content, p, bounds, [[4, 0.05, 4]], () => fctx, new PriceBook(content.kunden.preis), seq(0, 0, 0, 0.5, 0, 0.5));
     const fctx = { content, checkout: store.checkoutServices };
     const checkout = w.add(createBuildEntity(content.bau.get('kasse_schwarz'), { position: [2, 0.05, -1], drehung: 0 }, fctx));
 
@@ -182,7 +183,7 @@ describe('Ein ganzer Einkauf', () => {
     const cola = content.produkte.get('cola_0_5l');
     const shelf = w.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [-3, 0.05, -3], drehung: 0 }, ctx));
     shelf.require(ShelfComponent).add(cola, 24);
-    const store = new StoreLoop(w, content, player(), bounds, [[4, 0.05, 4]], () => ({ content }), seq(0, 0, 0, 0.5, 0, 0.5));
+    const store = new StoreLoop(w, content, player(), bounds, [[4, 0.05, 4]], () => ({ content }), new PriceBook(content.kunden.preis), seq(0, 0, 0, 0.5, 0, 0.5));
     store.update(10, parseTime('12:00'));
     const [, c] = [...w.query(CustomerComponent)][0];
     for (let i = 0; i < 2000 && c.state !== 'geht'; i++) w.update(0.05);

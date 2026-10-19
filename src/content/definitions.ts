@@ -156,6 +156,12 @@ export interface CustomerSettings {
   rufFaktor: { min: number; max: number };
   /** Zeitfaktor, wenn geschlossen ist und niemand mehr im Laden ist */
   nachtVorlauf: number;
+  /**
+   * Preisempfinden, bezogen auf den empfohlenen Verkaufspreis (vk aus den Produktdaten):
+   * bis vk × (1 + toleranz) kauft jeder; darüber sinkt die Kaufchance um `elastizitaet` je 100 % Aufschlag.
+   * Ab vk × schnaeppchenAb oder billiger freut sich der Kunde (kleiner Ruf-Bonus).
+   */
+  preis: { toleranz: number; elastizitaet: number; schnaeppchenAb: number; rufJeZuTeuer: number; rufJeSchnaeppchen: number; min: number; max: number };
 }
 
 /** Raster für die Wegfindung (data/navigation/standard.json). */

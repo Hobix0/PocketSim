@@ -90,6 +90,22 @@ export class ShelfComponent extends InteractableComponent implements Describable
     return menge - rest;
   }
 
+  /** Inhalt für den Spielstand: je Fach Produkt-id und Menge */
+  saveState(): { produkt: string | null; menge: number }[] {
+    return this.faecher.map((f) => ({ produkt: f.produkt?.id ?? null, menge: f.menge }));
+  }
+
+  /** Inhalt aus dem Spielstand übernehmen (unbekannte Produkte fallen weg). */
+  loadState(list: { produkt: string | null; menge: number }[], produkt: (id: string) => ProductDef | undefined): void {
+    list.slice(0, this.faecher.length).forEach((saved, i) => {
+      const p = saved.produkt ? produkt(saved.produkt) : undefined;
+      if (!p || saved.menge <= 0 || (p.kuehlung && !this.def.kuehlung)) return;
+      this.faecher[i] = { produkt: p, menge: Math.min(saved.menge, this.def.kapazitaet) };
+      this.renderFach(i);
+    });
+    this.notifyChanged();
+  }
+
   options(): InteractionOption[] {
     if (!this.actions?.carriedCarton()) return [];
     return [{ aktion: 'auswaehlen', text: 'einraeumen', prioritaet: 10, run: () => this.actions?.stockInto(this.entity) }];

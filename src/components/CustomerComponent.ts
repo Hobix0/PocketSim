@@ -31,8 +31,14 @@ export interface CustomerServices {
   /** Gehgeschwindigkeit dieses Kunden in m/s */
   speed: number;
   text(key: string, werte?: Record<string, string | number>): string;
+  /** Aktueller Verkaufspreis */
+  priceOf(produkt: ProductDef): number;
+  /** Kauft der Kunde zu diesem Preis? (Zufall nach Preisempfinden) */
+  willBuy(produkt: ProductDef): boolean;
+  /** Ist das ein Schnäppchen? */
+  isBargain(produkt: ProductDef): boolean;
   /** Der Besuch ist entschieden (für Ruf und Tagesbericht) */
-  left(outcome: VisitOutcome, fehlend: ProductDef[]): void;
+  left(outcome: VisitOutcome, fehlend: ProductDef[], zuTeuer: ProductDef[], schnaeppchen: number): void;
 }
 
 export interface BasketLine {
@@ -40,6 +46,8 @@ export interface BasketLine {
   menge: number;
   /** Aus welchem Regal (zum Zurücklegen) */
   regal: Entity;
+  /** Preis beim Griff ins Regal */
+  preis: number;
 }
 
 // Einkaufskorb in der Hand (eine Geometrie für alle)
@@ -142,7 +150,7 @@ export class CustomerComponent extends Component implements Describable {
   describe(): InfoRow[] {
     const rows: InfoRow[] = [{ label: 'Gerade', value: this.statusText() }];
     for (const w of this.wishes) {
-      const mark = w.status === 'gefunden' ? `✓ ${w.genommen}×` : w.status === 'fehlt' ? '✗ fehlt' : `${w.menge}× gesucht`;
+      const mark = w.status === 'gefunden' ? `✓ ${w.genommen}×` : w.status === 'fehlt' ? '✗ fehlt' : w.status === 'zu_teuer' ? '✗ zu teuer' : `${w.menge}× gesucht`;
       rows.push({ label: w.produkt.name, value: mark });
     }
     if (this.basket.length) rows.push({ label: 'Im Korb', value: `${this.artikel} Artikel · ${formatMoney(basketTotal(this.basket))}` });
@@ -187,11 +195,17 @@ export class CustomerComponent extends Component implements Describable {
   private take(): void {
     const w = this.current!;
     const shelf = this.shelf;
+    // Steht da, aber zu teuer: nicht kaufen
+    if (shelf?.world && !this.services.willBuy(w.produkt)) {
+      w.status = 'zu_teuer';
+      this.nextWish();
+      return;
+    }
     const n = shelf?.world ? shelf.get(ShelfComponent)?.take(w.produkt.id, w.menge) ?? 0 : 0;
     if (n > 0 && shelf) {
       w.genommen = n;
       w.status = 'gefunden';
-      this.basket.push({ produkt: w.produkt, menge: n, regal: shelf });
+      this.basket.push({ produkt: w.produkt, menge: n, regal: shelf, preis: this.services.priceOf(w.produkt) });
       this.renderBasket();
       this.nextWish();
     } else {
@@ -217,7 +231,13 @@ export class CustomerComponent extends Component implements Describable {
   }
 
   private leave(outcome: VisitOutcome): void {
-    this.services.left(outcome, this.wishes.filter((w) => w.status === 'fehlt').map((w) => w.produkt));
+    const bought = outcome === 'zufrieden' ? this.wishes.filter((w) => w.status === 'gefunden') : [];
+    this.services.left(
+      outcome,
+      this.wishes.filter((w) => w.status === 'fehlt').map((w) => w.produkt),
+      this.wishes.filter((w) => w.status === 'zu_teuer').map((w) => w.produkt),
+      bought.filter((w) => this.services.isBargain(w.produkt)).length,
+    );
     this.path.goTo(this.entity.object, this.services.exitPoint(), this.services.findPath);
     this.setState('geht');
   }

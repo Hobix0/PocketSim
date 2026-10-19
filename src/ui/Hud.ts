@@ -51,6 +51,7 @@ export class Hud {
           <button type="button" data-tool="bauen"></button>
           <button type="button" data-tool="personal"></button>
           <button type="button" data-tool="editor"></button>
+          <button type="button" data-tool="menue" aria-label="Menü">☰</button>
         </span>
       </div>
       <div class="hand panel" hidden></div>
