@@ -30,6 +30,10 @@ export interface VoxelModelData {
   voxel: string;
   regal?: { kapazitaet: number; kuehlung: boolean };
   vorschau?: string;
+  /** Bearbeitetes Original: Pfad des Modells, das ersetzt wird (z. B. "3d/Baubar/…/SM_Build_Kasse.fbx") */
+  ersetzt?: string;
+  /** Lage der Würfel zum Ursprung (Ecke in Würfeln) – nur bei ersetzten Originalen, damit nichts verrutscht */
+  ursprung?: [number, number, number];
 }
 
 /** Reiter, wenn in der Datei keiner steht */
@@ -89,9 +93,15 @@ export function decodeGrid(m: Pick<VoxelModelData, 'groesse' | 'kantenlaenge' | 
   return grid;
 }
 
-/** Gitter so verschieben, dass der Ursprung unten in der Mitte liegt (wie bei allen Modellen im Spiel). */
+/** Gitter so verschieben, dass der Ursprung unten in der Mitte liegt (wie bei allen Modellen im Spiel).
+ *  Bearbeitete Originale behalten ihre Lage (`ursprung`). */
 export function centeredGrid(m: VoxelModelData): VoxelGrid {
   const g = decodeGrid(m);
+  if (m.ursprung) {
+    const placed = new VoxelGrid(g.size, [...m.ursprung], [...g.dims]);
+    placed.data.set(g.data);
+    return placed;
+  }
   // Deckenleuchten & Co. hängen vom Ursprung nach unten, alles andere steht darauf
   const y = m.ebene === 'decke' ? -g.dims[1] : 0;
   const out = new VoxelGrid(g.size, [-Math.floor(g.dims[0] / 2), y, -Math.floor(g.dims[2] / 2)], [...g.dims]);
@@ -189,6 +199,8 @@ export function validateVoxelModel(raw: unknown, where: string): VoxelModelData 
     voxel: typeof o.voxel === 'string' ? o.voxel : '',
     regal: regal ? { kapazitaet: num(regal, 'kapazitaet', `${where} → regal`, 1), kuehlung: regal.kuehlung === undefined ? false : bool(regal, 'kuehlung', `${where} → regal`) } : undefined,
     vorschau: optStr(o, 'vorschau', where),
+    ersetzt: optStr(o, 'ersetzt', where),
+    ursprung: o.ursprung === undefined ? undefined : intVec3(o.ursprung, `${where} → ursprung`),
   };
 }
 
@@ -198,4 +210,14 @@ export function idFromName(name: string): string {
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
     .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'neu';
   return `modell_${base}`.slice(0, 48);
+}
+
+function intVec3(v: unknown, where: string): [number, number, number] {
+  if (!Array.isArray(v) || v.length !== 3 || !v.every((x) => Number.isInteger(x))) throw new Error(`${where}: drei ganze Zahlen erwartet`);
+  return v as [number, number, number];
+}
+
+/** id für ein bearbeitetes Original, z. B. "original_kasse_schwarz" */
+export function originalId(baseId: string): string {
+  return `original_${baseId}`.replace(/[^a-z0-9_]/g, '_').slice(0, 48);
 }

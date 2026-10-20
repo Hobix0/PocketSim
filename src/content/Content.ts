@@ -5,7 +5,7 @@ import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
   type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
-  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings,
+  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings, type DaylightSettings,
 } from './definitions';
 
 /** Funktionen, die ein Bauteil haben kann (je eine Komponente, siehe createBuildEntity) */
@@ -25,6 +25,8 @@ export class Content {
   readonly versorgung: UtilitySettings;
   /** Lieferungen per LKW (data/logistik/standard.json) */
   readonly logistik: LogisticsSettings;
+  /** Tag und Nacht, Lampen (data/licht/standard.json) */
+  readonly licht: DaylightSettings;
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
@@ -59,6 +61,7 @@ export class Content {
     this.rezepte = new Registry('rezepte', readFolderEntries('rezepte'), validateRecipe);
     this.versorgung = readData<UtilitySettings>('versorgung/standard');
     this.logistik = readData<LogisticsSettings>('logistik/standard');
+    this.licht = readData<DaylightSettings>('licht/standard');
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
     this.lager = readData<StorageSettings>('lager/standard');

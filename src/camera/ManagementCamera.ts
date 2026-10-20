@@ -27,6 +27,11 @@ export class ManagementCamera {
   // Zielwerte (wohin die Kamera will) und aktuelle Werte (geglättet)
   private readonly goalTarget = new THREE.Vector3();
   private readonly target = new THREE.Vector3();
+
+  /** Punkt, auf den die Kamera gerade schaut (am Boden) */
+  get focus(): THREE.Vector3 {
+    return this.target;
+  }
   private goalYaw: number;
   private yaw: number;
   private goalDistance: number;

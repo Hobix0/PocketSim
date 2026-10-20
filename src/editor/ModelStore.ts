@@ -72,6 +72,14 @@ export function registerCustomModels(content: Content, models?: ModelLibrary): n
   let n = 0;
   for (const m of projectModels()) {
     const grid = centeredGrid(m);
+    // Bearbeitetes Original: ersetzt das Modell überall, wo es benutzt wird (nur im Voxel-Stil)
+    if (m.ersetzt) {
+      if (models && !models.voxelStyle) continue;
+      models?.registerVoxelModel(m.ersetzt, grid);
+      provideThumbnail(m.ersetzt, grid);
+      for (const d of [...content.bau.all(), ...content.waren.all()]) if (d.model === m.ersetzt) d.icon = m.vorschau ?? d.icon;
+      continue;
+    }
     models?.registerVoxelModel(CUSTOM_PREFIX + m.id, grid);
     // Ohne gespeichertes Vorschaubild rendert das Baumenü eins aus dem Modell
     if (!m.vorschau) provideThumbnail(CUSTOM_PREFIX + m.id, grid);

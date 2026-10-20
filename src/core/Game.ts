@@ -58,6 +58,8 @@ import { TruckFleet } from '../world/TruckFleet';
 import { place } from '../world/CartonStorage';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
+import { LampLights } from '../world/LampLights';
+import { daylight } from '../world/DayCycle';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -137,6 +139,10 @@ export class Game {
 
   private readonly timer = new THREE.Timer();
   private readonly sun: THREE.DirectionalLight;
+  private readonly ambient: THREE.HemisphereLight;
+  private readonly lampLights: LampLights;
+  /** Farben für Tag und Nacht (Himmel, Sonne) */
+  private readonly sky: { tag: THREE.Color; nacht: THREE.Color; daemmerung: THREE.Color; sonne: THREE.Color; sonneNacht: THREE.Color; sonneDaemmerung: THREE.Color };
 
   constructor(container: HTMLElement, readonly levelId: string, private readonly options: GameOptions = {}) {
     // Inhalte zuerst: Fehler in den Daten sollen sofort auffallen
@@ -181,7 +187,8 @@ export class Game {
     this.world = new World(entities);
 
     // Licht: Himmel/Boden-Licht plus Sonne mit Schatten über das ganze Gelände
-    this.scene.add(new THREE.HemisphereLight('#e9f1f5', '#6b6355', 1.4));
+    this.ambient = new THREE.HemisphereLight('#e9f1f5', '#6b6355', 1.4);
+    this.scene.add(this.ambient);
     this.sun = new THREE.DirectionalLight('#fff1dc', 2.4);
     this.sun.position.set(18, 30, 14);
     this.sun.castShadow = true;
@@ -191,6 +198,13 @@ export class Game {
     Object.assign(this.sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 100 });
     this.sun.shadow.bias = -0.0005;
     this.scene.add(this.sun);
+    const licht = this.content.licht;
+    this.sky = {
+      tag: new THREE.Color(this.level.data.himmel), nacht: new THREE.Color(licht.nacht.himmel), daemmerung: new THREE.Color(licht.daemmerung.himmel),
+      sonne: new THREE.Color('#fff1dc'), sonneNacht: new THREE.Color(licht.nacht.sonnenfarbe), sonneDaemmerung: new THREE.Color(licht.daemmerung.sonnenfarbe),
+    };
+    // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
+    this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
 
     // Kamera
     const start = new THREE.Vector3(...this.level.data.kameraStart);
@@ -431,6 +445,7 @@ export class Game {
     this.deliveries?.update(this.clock.totalMinutes);
     this.fleet?.update(minutes);
     this.world.update(simDt);
+    this.updateDaylight(realDt);
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
     this.interactor.enabled = !this.build.active && !this.menu.isOpen;
@@ -455,6 +470,17 @@ export class Game {
 
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
+  }
+
+  /** Tag und Nacht: Sonne, Umgebungslicht und Himmel folgen der Uhrzeit; Lampen leuchten nachts stärker. */
+  private updateDaylight(realDt: number): void {
+    const l = this.content.licht;
+    const d = daylight(l, this.clock.totalMinutes % (24 * 60));
+    this.sun.intensity = d.sonne;
+    this.ambient.intensity = d.umgebung;
+    this.sun.color.copy(this.sky.sonneNacht).lerp(this.sky.sonne, d.tag).lerp(this.sky.sonneDaemmerung, d.daemmerung * 0.6);
+    (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5);
+    this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
   }
 
   /** Tasten, die überall gelten. Esc schließt immer nur das Oberste. */

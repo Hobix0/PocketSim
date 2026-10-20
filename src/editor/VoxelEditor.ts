@@ -9,12 +9,12 @@ import { loadPixels } from '../voxel/pixels';
 import { buildFigureGrid, lookFromSeed } from '../voxel/figure';
 import { raycastGrid, type GridHit } from './raycastGrid';
 import {
-  CUSTOM_PREFIX, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, placeInMenu, validateVoxelModel,
+  CUSTOM_PREFIX, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, originalId, placeInMenu, validateVoxelModel,
   type ModelType, type VoxelModelData,
 } from './VoxelModel';
 import { deleteFromProject, loadDraft, projectModels, saveDraft, saveToProject } from './ModelStore';
 import {
-  PRESETS, cellsBrush, cellsLine, cellsOfColor, cellsRect, crop, floodCells, mirror, mirrored, presetDims, resize, rotateY, shift,
+  PRESETS, bounds, cellsBrush, cellsLine, cellsOfColor, cellsRect, crop, floodCells, mirror, mirrored, presetDims, resize, rotateY, shift,
   type Cell,
 } from './gridOps';
 import { esc } from '../ui/html';
@@ -29,7 +29,8 @@ import { renderThumbnail } from '../assets/thumbnail';
 type Tool = 'setzen' | 'entfernen' | 'malen' | 'fuellen' | 'ersetzen' | 'pipette';
 type Form = 'punkt' | 'linie' | 'rechteck';
 type Change = { i: number; before: number; after: number };
-type Step = { kind: 'zellen'; changes: Change[] } | { kind: 'gitter'; before: VoxelGrid; after: VoxelGrid };
+type Origin = Cell | null;
+type Step = { kind: 'zellen'; changes: Change[] } | { kind: 'gitter'; before: VoxelGrid; after: VoxelGrid; uBefore: Origin; uAfter: Origin };
 
 const CHUNK = 16;
 const MAX_DIM = 160;
@@ -60,6 +61,10 @@ interface Meta {
   preis: number;
   kapazitaet: number;
   kuehlung: boolean;
+  /** Bearbeitetes Original: Pfad des ersetzten Modells */
+  ersetzt: string | null;
+  /** Lage der Würfel zum Ursprung (nur bei Originalen) – wandert bei Drehen, Zuschneiden … mit */
+  ursprung: Origin;
 }
 
 export class VoxelEditor {
@@ -99,7 +104,7 @@ export class VoxelEditor {
   private pointerInside = false;
   private hoverCell: Cell | null = null;
   private draftTimer = 0;
-  private meta: Meta = { id: null, name: 'Neues Modell', typ: 'deko', menue: 'deko', preis: 150, kapazitaet: 20, kuehlung: false };
+  private meta: Meta = { id: null, name: 'Neues Modell', typ: 'deko', menue: 'deko', preis: 150, kapazitaet: 20, kuehlung: false, ersetzt: null, ursprung: null };
 
   constructor(container: HTMLElement) {
     const voxel = readData<VoxelSettings>('voxel/standard');
@@ -450,19 +455,46 @@ export class VoxelEditor {
   }
 
   /** Ganzes Gitter ersetzen (Drehen, Spiegeln, Zuschneiden …) – rückgängig machbar. */
-  private replaceGrid(next: VoxelGrid | null, label: string, failMsg?: string): void {
+  private replaceGrid(next: VoxelGrid | null, label: string, failMsg?: string, ursprung: Origin = this.meta.ursprung): void {
     if (!next) { if (failMsg) this.status(failMsg); return; }
     const before = this.grid;
+    const uBefore = this.meta.ursprung;
+    this.meta.ursprung = uBefore ? ursprung : null;
     this.setGrid(next, false);
-    this.pushStep({ kind: 'gitter', before, after: next });
+    this.pushStep({ kind: 'gitter', before, after: next, uBefore, uAfter: this.meta.ursprung });
     this.status(label);
+  }
+
+  /**
+   * Neuer Ursprung nach einer Operation am ganzen Gitter – damit ein bearbeitetes Original im Spiel
+   * an derselben Stelle bleibt (Drehen und Spiegeln um den Ursprung des Bauteils).
+   */
+  private originAfter(op: 'drehen' | 'spiegeln-x' | 'spiegeln-z' | 'zuschneiden' | 'groesse', next?: VoxelGrid | null): Origin {
+    const u = this.meta.ursprung;
+    if (!u) return null;
+    const [nx, , nz] = this.grid.dims;
+    if (op === 'drehen') return [u[2], u[1], -u[0] - nx];
+    if (op === 'spiegeln-x') return [-u[0] - nx, u[1], u[2]];
+    if (op === 'spiegeln-z') return [u[0], u[1], -u[2] - nz];
+    if (op === 'zuschneiden') {
+      const b = bounds(this.grid);
+      return b ? [u[0] + b.lo[0], u[1], u[2] + b.lo[2]] : u;
+    }
+    // Größe: Inhalt bleibt unten in der Mitte; bei anderer Würfelgröße skaliert die Lage mit
+    if (!next) return u;
+    const f = this.grid.size / next.size;
+    const dx = Math.floor(next.dims[0] / 2) - Math.floor(nx / 2), dz = Math.floor(next.dims[2] / 2) - Math.floor(nz / 2);
+    return [Math.round(u[0] * f) - dx, Math.round(u[1] * f), Math.round(u[2] * f) - dz];
   }
 
   private undo(redo = false): void {
     const step = (redo ? this.redoStack : this.undoStack).pop();
     if (!step) return;
     (redo ? this.undoStack : this.redoStack).push(step);
-    if (step.kind === 'gitter') this.setGrid(redo ? step.after : step.before, false);
+    if (step.kind === 'gitter') {
+      this.meta.ursprung = redo ? step.uAfter : step.uBefore;
+      this.setGrid(redo ? step.after : step.before, false);
+    }
     else {
       const [, ny, nz] = this.grid.dims;
       for (const c of step.changes) {
@@ -501,7 +533,7 @@ export class VoxelEditor {
     if (e.key === ']') this.setBrush(this.brush + 1);
     if (k === 'm') this.setMirror(this.mirrorX, !this.mirrorZ);
     if (k === 'n') this.setMirror(!this.mirrorX, this.mirrorZ);
-    if (k === 'd') this.replaceGrid(rotateY(this.grid), 'Modell gedreht (90°)');
+    if (k === 'd') this.replaceGrid(rotateY(this.grid), 'Modell gedreht (90°)', undefined, this.originAfter('drehen'));
     if (k === 'f') this.frameCamera();
     if (k === 'h' || e.key === '?') this.toggleHelp();
     const move: Record<string, Cell> = { arrowup: [1, 0, 0], arrowdown: [-1, 0, 0], arrowleft: [0, 0, -1], arrowright: [0, 0, 1], pageup: [0, 1, 0], pagedown: [0, -1, 0] };
@@ -511,30 +543,44 @@ export class VoxelEditor {
   // ── Modelle: neu, öffnen, Vorlage, speichern ────────────────────
 
   private newModel(dims: [number, number, number], size: number): void {
-    this.meta = { ...this.meta, id: null, name: 'Neues Modell' };
+    this.meta = { ...this.meta, id: null, name: 'Neues Modell', ersetzt: null, ursprung: null };
     this.clip = Infinity;
     this.setGrid(new VoxelGrid(size, [0, 0, 0], dims), true);
     this.status(`Neues Modell: ${dims.join(' × ')} Würfel zu ${cm(size)}.`);
     this.changed();
   }
 
-  private async loadTemplate(path: string, name: string): Promise<void> {
+  /**
+   * Modell aus dem Spiel laden. `original`: das Original bearbeiten (beim Speichern ersetzt es das Modell
+   * überall im Spiel), sonst als Vorlage für ein neues Modell.
+   */
+  private async loadTemplate(path: string, name: string, baseId: string, original = false): Promise<void> {
+    // Schon bearbeitet? Dann die gespeicherte Fassung öffnen
+    const saved = original ? projectModels().find((m) => m.ersetzt === path) : undefined;
+    if (saved) { this.openModel(saved, `„${saved.name}“ – deine bearbeitete Fassung des Originals.`); return; }
     this.status(`Lade ${name} …`);
     const src = await this.models.voxelGridOf(path).catch(() => null);
     if (!src) { this.status('Dieses Modell hat keine Würfel-Fassung.'); return; }
-    let g = src;
-    while (Math.max(...g.dims) > MAX_DIM) g = g.downsample(2);
+    let g = src, f = 1;
+    while (Math.max(...g.dims) > MAX_DIM) { g = g.downsample(2); f *= 2; }
     const out = new VoxelGrid(g.size, [0, 0, 0], [...g.dims]);
     out.data.set(g.data);
-    this.meta = { ...this.meta, id: null, name: `${name} (Variante)` };
+    this.meta = original
+      ? { ...this.meta, id: originalId(baseId), name, typ: 'modell', ersetzt: path, ursprung: src.min.map((v) => Math.floor(v / f)) as Cell }
+      : { ...this.meta, id: null, name: `${name} (Variante)`, ersetzt: null, ursprung: null };
     this.clip = Infinity;
     this.setGrid(out, true);
-    this.status(`${name} als Vorlage geladen – ${g.dims.join(' × ')} Würfel zu ${cm(g.size)}.`);
+    this.status(original
+      ? `Original „${name}“ geöffnet – Speichern ersetzt es im Spiel, Löschen stellt das Original wieder her. Glasflächen werden nicht übernommen.`
+      : `${name} als Vorlage geladen – ${g.dims.join(' × ')} Würfel zu ${cm(g.size)}.`);
     this.changed();
   }
 
   private openModel(m: VoxelModelData, msg?: string): void {
-    this.meta = { id: m.id, name: m.name, typ: m.typ, menue: m.menue, preis: m.preis, kapazitaet: m.regal?.kapazitaet ?? 20, kuehlung: m.regal?.kuehlung ?? false };
+    this.meta = {
+      id: m.id, name: m.name, typ: m.typ, menue: m.menue, preis: m.preis, kapazitaet: m.regal?.kapazitaet ?? 20, kuehlung: m.regal?.kuehlung ?? false,
+      ersetzt: m.ersetzt ?? null, ursprung: m.ursprung ? [...m.ursprung] : null,
+    };
     this.clip = Infinity;
     this.setGrid(decodeGrid(m), true);
     this.status(msg ?? `„${m.name}“ geöffnet.`);
@@ -543,10 +589,15 @@ export class VoxelEditor {
   /** Datei-Inhalt aus dem aktuellen Stand (zugeschnitten auf den Inhalt). */
   private modelData(withPreview: boolean): VoxelModelData {
     const ebene = this.meta.typ === 'modell' ? 'objekt' : placeInMenu(this.meta.menue, this.content.baumenue.kategorien, 'objekt').ebene;
-    // Stehende Modelle bleiben auf dem Boden; Deckenmodelle werden auch unten zugeschnitten
-    const g = crop(this.grid, ebene !== 'decke') ?? this.grid;
+    // Stehende Modelle bleiben auf dem Boden; Deckenmodelle werden auch unten zugeschnitten.
+    // Originale: rundum zuschneiden, der Ursprung wandert mit
+    const u = this.meta.ursprung;
+    const lo = u ? bounds(this.grid)?.lo : undefined;
+    const g = crop(this.grid, !u && ebene !== 'decke') ?? this.grid;
     const { palette, voxel } = encodeGrid(g);
+    const original = this.meta.ersetzt && u ? { ersetzt: this.meta.ersetzt, ursprung: (lo ? [u[0] + lo[0], u[1] + lo[1], u[2] + lo[2]] : u) as Cell } : {};
     return {
+      ...original,
       id: this.meta.id ?? this.uniqueId(), name: this.meta.name.trim() || 'Modell', typ: this.meta.typ, menue: this.meta.menue,
       preis: this.meta.preis, ebene, kantenlaenge: g.size, groesse: [...g.dims], palette, voxel,
       regal: this.meta.typ === 'regal' ? { kapazitaet: this.meta.kapazitaet, kuehlung: this.meta.kuehlung } : undefined,
@@ -646,11 +697,11 @@ export class VoxelEditor {
     const tools = TOOLS.map((t) => `<button type="button" data-tool="${t.id}" title="${esc(t.hilfe)} (Taste ${t.taste})">${t.name}<span class="key">${t.taste}</span></button>`).join('');
     const forms = FORMS.map((f) => `<button type="button" data-form="${f.id}" title="Taste ${f.taste}">${f.name}</button>`).join('');
     const templates = [
-      ...this.content.bau.all().filter((d) => d.model && !d.model.startsWith(CUSTOM_PREFIX)).map((d) => ({ path: d.model!, name: d.name, gruppe: 'Bauteile' })),
-      ...this.content.produkte.all().filter((p) => p.model).map((p) => ({ path: p.model!, name: p.name, gruppe: 'Produkte' })),
+      ...this.content.bau.all().filter((d) => d.model && !d.model.startsWith(CUSTOM_PREFIX)).map((d) => ({ path: d.model!, id: d.id, name: d.name, gruppe: 'Bauteile' })),
+      ...this.content.produkte.all().filter((p) => p.model).map((p) => ({ path: p.model!, id: p.id, name: p.name, gruppe: 'Produkte' })),
     ];
     const options = (g: string) => templates.filter((t) => t.gruppe === g).sort((a, b) => a.name.localeCompare(b.name, 'de'))
-      .map((t) => `<option value="${esc(t.path)}">${esc(t.name)}</option>`).join('');
+      .map((t) => `<option value="${esc(t.path)}" data-id="${esc(t.id)}">${esc(t.name)}</option>`).join('');
     const menus = this.content.baumenue.kategorien.filter((k) => !k.spezial).map((k) => `<option value="${esc(k.id)}">${esc(k.name)}</option>`).join('');
     this.ui.innerHTML = `
       <header class="editor-top panel">
@@ -710,9 +761,11 @@ export class VoxelEditor {
           <label class="check"><input type="checkbox" class="figure"> Figur als Maßstab zeigen</label>
           <button type="button" data-action="einpassen" title="Taste F">Kamera einpassen</button>
         </details>
-        <details><summary>Vorlage aus dem Spiel</summary>
+        <details open><summary>Modelle aus dem Spiel</summary>
           <div class="row"><select class="template"><optgroup label="Bauteile">${options('Bauteile')}</optgroup><optgroup label="Produkte">${options('Produkte')}</optgroup></select>
-            <button type="button" data-action="vorlage">Laden</button></div>
+            </div>
+          <div class="row"><button type="button" data-action="vorlage" title="Kopie als neues, eigenes Modell">Als neues Modell</button>
+            <button type="button" data-action="original" title="Das Modell selbst ändern – es ändert sich überall im Spiel">Original bearbeiten</button></div>
         </details>
         <details open><summary>Modelle im Projekt</summary>
           <div class="row"><button type="button" data-action="export">Exportieren</button><label class="button">Importieren<input type="file" accept=".json,application/json" hidden></label></div>
@@ -776,16 +829,18 @@ export class VoxelEditor {
     else if (a === 'zurueck') { location.hash = ''; location.reload(); }
     else if (a === 'export') this.exportFile();
     else if (a === 'einpassen') this.frameCamera();
-    else if (a === 'drehen') this.replaceGrid(rotateY(this.grid), 'Modell gedreht (90°)');
-    else if (a === 'spiegeln-x') this.replaceGrid(mirror(this.grid, 0), 'Modell gespiegelt (vorne/hinten)');
-    else if (a === 'spiegeln-z') this.replaceGrid(mirror(this.grid, 2), 'Modell gespiegelt (links/rechts)');
-    else if (a === 'zuschneiden') this.replaceGrid(crop(this.grid), 'Auf den Inhalt zugeschnitten', 'Das Modell ist leer.');
+    else if (a === 'drehen') this.replaceGrid(rotateY(this.grid), 'Modell gedreht (90°)', undefined, this.originAfter('drehen'));
+    else if (a === 'spiegeln-x') this.replaceGrid(mirror(this.grid, 0), 'Modell gespiegelt (vorne/hinten)', undefined, this.originAfter('spiegeln-x'));
+    else if (a === 'spiegeln-z') this.replaceGrid(mirror(this.grid, 2), 'Modell gespiegelt (links/rechts)', undefined, this.originAfter('spiegeln-z'));
+    else if (a === 'zuschneiden') this.replaceGrid(crop(this.grid, !this.meta.ursprung), 'Auf den Inhalt zugeschnitten', 'Das Modell ist leer.', this.originAfter('zuschneiden'));
     else if (a === 'groesse') {
       const n = (c: string) => Math.max(1, Math.min(MAX_DIM, Math.round(Number(this.q<HTMLInputElement>(c).value) || 1)));
-      this.replaceGrid(resize(this.grid, [n('.nx'), n('.ny'), n('.nz')], Number(this.q<HTMLSelectElement>('.size').value)), 'Bauraum geändert');
-    } else if (a === 'vorlage') {
+      const next = resize(this.grid, [n('.nx'), n('.ny'), n('.nz')], Number(this.q<HTMLSelectElement>('.size').value));
+      this.replaceGrid(next, 'Bauraum geändert', undefined, this.originAfter('groesse', next));
+    } else if (a === 'vorlage' || a === 'original') {
       const sel = this.q<HTMLSelectElement>('.template');
-      void this.loadTemplate(sel.value, sel.selectedOptions[0]?.textContent ?? '');
+      const opt = sel.selectedOptions[0];
+      void this.loadTemplate(sel.value, opt?.textContent ?? '', opt?.dataset.id ?? 'modell', a === 'original');
     }
   }
 
@@ -863,7 +918,10 @@ export class VoxelEditor {
     const ebene = placeInMenu(this.meta.menue, this.content.baumenue.kategorien, 'objekt').ebene;
     const wie: Record<string, string> = { objekt: 'steht auf dem Boden', decke: 'hängt von der Decke (Ursprung oben)', wand: 'ist ein Wandmodul', anbau: 'hängt an einer Wand', boden: 'ist ein Bodenbelag' };
     const tab = this.content.baumenue.kategorien.find((k) => k.id === this.meta.menue)?.name ?? this.meta.menue;
-    q('.place-info').textContent = this.meta.typ === 'modell'
+    q<HTMLSelectElement>('.typ').disabled = !!this.meta.ersetzt;
+    q('.place-info').textContent = this.meta.ersetzt
+      ? `Bearbeitetes Original: ersetzt das Modell überall im Spiel (Bauteile bzw. Ware). Löschen in „Modelle im Projekt“ stellt das Original wieder her.`
+      : this.meta.typ === 'modell'
       ? `Erscheint nicht selbst im Baumenü. In data/bau als "model": "${CUSTOM_PREFIX}${this.meta.id ?? '<id>'}" verwenden.`
       : `Erscheint im Reiter „${tab}“ und ${wie[ebene] ?? ebene}. Vorne ist +X (grüner Pfeil).`;
     this.renderMeters();
@@ -882,9 +940,9 @@ export class VoxelEditor {
     const tabName = (id: string) => this.content.baumenue.kategorien.find((k) => k.id === id)?.name ?? id;
     this.q('.library').innerHTML = list.length ? list.map((m) => `
       <div class="lib-item${m.id === this.meta.id ? ' current' : ''}">${m.vorschau ? `<img src="${m.vorschau}" alt="">` : '<span class="noicon"></span>'}
-        <span>${esc(m.name)}<small>${label[m.typ]}${m.typ === 'modell' ? '' : ` · ${esc(tabName(m.menue))}`} · ${m.groesse.join('×')}</small></span>
+        <span>${esc(m.name)}<small>${m.ersetzt ? 'Original bearbeitet' : `${label[m.typ]}${m.typ === 'modell' ? '' : ` · ${esc(tabName(m.menue))}`}`} · ${m.groesse.join('×')}</small></span>
         <button type="button" data-open="${esc(m.id)}">Öffnen</button>
-        ${import.meta.env.DEV ? `<button type="button" data-delete="${esc(m.id)}" title="Aus dem Projekt löschen" aria-label="Löschen">✕</button>` : ''}</div>`).join('')
+        ${import.meta.env.DEV ? `<button type="button" data-delete="${esc(m.id)}" title="${m.ersetzt ? 'Löschen – das Original kommt zurück' : 'Aus dem Projekt löschen'}" aria-label="Löschen">✕</button>` : ''}</div>`).join('')
       : '<p class="hint">Noch keine Modelle in data/modelle.</p>';
   }
 

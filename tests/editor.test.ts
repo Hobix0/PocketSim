@@ -211,3 +211,14 @@ describe('Teil-Meshing (Blöcke im Editor)', () => {
     expect(parts).toBeCloseTo(full, 6);
   });
 });
+
+describe('Bearbeitete Originale', () => {
+  it('behalten ihre Lage zum Ursprung (statt mittig gesetzt zu werden) und werden geprüft gelesen', () => {
+    const m = model(shelfGrid(), { typ: 'modell', ersetzt: '3d/Baubar/Test.fbx', ursprung: [-3, 0, 5] });
+    expect(centeredGrid(m).min).toEqual([-3, 0, 5]);
+    const back = validateVoxelModel(JSON.parse(JSON.stringify(m)), 'modelle/x.json');
+    expect(back.ersetzt).toBe('3d/Baubar/Test.fbx');
+    expect(back.ursprung).toEqual([-3, 0, 5]);
+    expect(() => validateVoxelModel({ ...m, ursprung: [1, 2] }, 'modelle/x.json')).toThrow('ursprung');
+  });
+});

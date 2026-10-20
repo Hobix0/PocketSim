@@ -6,6 +6,7 @@
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},
+  "licht": {"position": [0, -0.53, 0], "groesse": [0.28, 0.03, 0.28], "farbe": "#ffd9a0", "staerke": 4, "reichweite": 5},
   "model": "3d/Baubar/Einrichtung/SM_Build_Schienenleuchte_Pendel_Kegel.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Schienenleuchte_Pendel_Kegel.png",
   "platzhalter": {"groesse": [0.34, 0.53, 0.34], "farbe": "#b9c0c6"}

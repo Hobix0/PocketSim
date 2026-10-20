@@ -144,6 +144,8 @@ export interface BuildDef {
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
   funktionen: string[];
+  /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
+  licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
   ablage?: { ebenen?: number; boeden?: number[] };
   preis: number;
@@ -152,6 +154,25 @@ export interface BuildDef {
   platzhalter: PlaceholderDef;
   model?: string;
   icon?: string;
+}
+
+export interface LightDef {
+  position: [number, number, number];
+  groesse: [number, number, number];
+  farbe: string;
+  staerke: number;
+  reichweite: number;
+}
+
+/** Tag und Nacht (data/licht/standard.json) */
+export interface DaylightSettings {
+  sonnenaufgang: string;
+  sonnenuntergang: string;
+  daemmerungMinuten: number;
+  tag: { sonne: number; umgebung: number };
+  nacht: { sonne: number; umgebung: number; himmel: string; sonnenfarbe: string };
+  daemmerung: { sonnenfarbe: string; himmel: string };
+  lampen: { anzahl: number; nachtVerstaerkung: number };
 }
 
 /** Ein Interaktions-Kontext, z. B. "Regal" (data/interaktion/kontexte.json). */
@@ -327,12 +348,24 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     kontext: optStr(o, 'kontext', where),
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),
+    licht: o.licht === undefined ? undefined : light(o.licht, `${where} → licht`),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),
     platzhalter: { groesse: vec3(ph, 'groesse', `${where} → platzhalter`), farbe: str(ph, 'farbe', `${where} → platzhalter`) },
     model: optStr(o, 'model', where),
     icon: optStr(o, 'icon', where),
+  };
+}
+
+function light(raw: unknown, where: string): LightDef {
+  const o = asObject(raw, where);
+  return {
+    position: vec3(o, 'position', where),
+    groesse: vec3(o, 'groesse', where),
+    farbe: str(o, 'farbe', where),
+    staerke: num(o, 'staerke', where, 0),
+    reichweite: num(o, 'reichweite', where, 0.1),
   };
 }
 

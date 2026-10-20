@@ -96,7 +96,7 @@ Der Editor gehört zur Entwicklung, nicht zum Spielen: Mit ihm entstehen neue Sp
 - **Neu …** mit Größenvorlagen (kleines Objekt, Regal, Theke/Maschine, Wandmodul, Bodenfliese, Deckenleuchte, Produkt)
 - **Ansicht:** „Schnitt bis Höhe“ blendet obere Schichten aus, eine **Figur** (1,70 m) zeigt den Maßstab, Koordinaten und Farbe unter dem Zeiger stehen unten in der Statuszeile
 - **Farben:** Palette der Spielmodelle, freie Farbwahl und die zuletzt benutzten Farben
-- **Vorlage aus dem Spiel:** jedes Bauteil und Produkt als Ausgangspunkt laden und umbauen
+- **Modelle aus dem Spiel:** jedes Bauteil und Produkt laden – entweder **„Als neues Modell“** (Kopie, ein eigenes neues Teil) oder **„Original bearbeiten“**: Die Änderung ersetzt das Modell überall im Spiel (alle Exemplare, auch Ware im Regal). Die Datei heißt `data/modelle/original_<id>.json` und merkt sich mit `ersetzt` und `ursprung`, welches Modell sie ersetzt und wo es liegt – Drehen, Zuschneiden und Größe ändern verschieben nichts. Löschen stellt das Original wieder her; die Blender-Datei bleibt unangetastet. Glasflächen werden dabei nicht übernommen
 - **Im Spiel:** Art (Dekoration, Regal oder „Nur Modell“), **Reiter im Baumenü** (alle Reiter aus `data/baumenue`, z. B. Einrichtung, Licht, Deko), Preis. Der Reiter bestimmt auch, wie das Teil gebaut wird – im Reiter „Licht“ hängt es an der Decke. Bei Regalen erkennt der Editor die Regalböden selbst; vorne ist +X (grüner Pfeil)
 - **„Nur Modell“** erscheint nicht selbst im Baumenü – ein Bauteil in `data/bau` verweist mit `"model": "eigen/<id>"` darauf (so sind Backstation, Saftpresse und Aufschnittmaschine gebaut)
 - **Speichern** (`Strg+S`): schreibt `data/modelle/<id>.json` ins Projekt (nur mit `npm run dev`). Sonst „Exportieren“ und die Datei von Hand nach `data/modelle/` legen. Die offene Arbeit wird zusätzlich als Entwurf im Browser gesichert und nach dem Neuladen wiederhergestellt
@@ -140,6 +140,40 @@ flowchart LR
   KUNDE --> KASSE[Kasse] --> BILANZ[Bilanz / Tagesbericht]
 ```
 
+**Etappe 7 – Lager und Logistik** ✅
+
+- **Lieferung per LKW:** Bestellte Ware kommt nicht mehr sofort, sondern zu festen Lieferzeiten (alle zwei Stunden) oder per **Express** (nach 20 Minuten, teurer). Lieferkosten: Grundbetrag + je Karton. Der Lagerplatz wird beim Bestellen eingeplant
+- Der LKW hält **auf der Straße** vor dem Laden – oder fährt über die Zufahrt **rückwärts an eine Laderampe** im Hof
+- **Abladen:** von Hand (Karton auf der Ladefläche anklicken, dann einen Lagerplatz – bringt XP), durch **Lageristen** (neue Rolle im Personal) oder nach der Wartezeit durch den Fahrer gegen Gebühr. Ist kein Platz frei, nimmt er die Ware zurück und erstattet den Einkaufspreis
+- **Umlagern von Hand:** jeden Karton auf jede freie Ablage stellen (Palette, Palettenregal, Gitterbox, Rollcontainer)
+- **Lager-Fenster** (`G`): Belegung der Lagerplätze, LKW am Laden, Lieferungen unterwegs, Bestand nach Ware
+- **25 neue Voxel-Assets** (`npm run modelle:lager`): Palettenregal, Gitterbox, Rollcontainer, Laderampe, Gabelstapler, Hubwagen, Sackkarre, Stehleiter, Feuerlöscher, Spind, Packtisch, Paletten, Folienpalette, Kartonstapel, Lagerschild, Poller, Mülltonne, Papiercontainer, Hallenstrahler, Trapezblech-Wände, Sektionaltor, Beton- und Asphaltböden, Liefer-LKW. Alle außer dem LKW stehen in der Musterschau (`#musterschau`, rechts)
+- Modelle ohne eigenes Icon bekommen ihr **Vorschaubild automatisch** aus den Würfeln
+- Werte: `data/logistik/standard.json`, Strecke im Level unter `"anlieferung"`
+
+```mermaid
+sequenceDiagram
+  participant S as Spieler
+  participant D as Deliveries
+  participant F as TruckFleet
+  participant L as Lager (Ablagen)
+  S->>D: bestellen (normal / express)
+  D-->>S: Ware + Lieferkosten abbuchen, Platz einplanen
+  D->>F: zum Termin fällig ("arrived")
+  F->>F: LKW fährt vor (Straße oder Rampe)
+  alt von Hand oder Lagerist
+    F->>L: Karton für Karton einlagern (+XP von Hand)
+  else Wartezeit vorbei
+    F->>L: Fahrer lädt den Rest ab (Gebühr je Karton)
+  end
+  F->>F: LKW fährt weg
+```
+
+**Licht: Tag und Nacht, leuchtende Lampen** ✅
+
+- Sonne, Umgebungslicht und Himmel folgen der Uhrzeit: Sonnenaufgang, Dämmerung in warmen Farben, dunkle Nacht (`data/licht/standard.json`)
+- **Lampen leuchten:** Bauteile mit `"licht"` (Pendelleuchte, Deckenstrahler, Schienenleuchten, Wandlampe, Hallenstrahler) bekommen eine glühende Leuchtfläche und echtes Licht. Damit das Spiel schnell bleibt, gibt es eine feste Zahl Lichtquellen, die immer zu den Lampen nahe der Kamera wandern; nachts sind sie stärker
+
 ## Starten
 
 Du brauchst [Node.js](https://nodejs.org) (Version 20 oder neuer).
@@ -159,6 +193,7 @@ Weitere Befehle:
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
 | `npm run preview` | den Build lokal ansehen |
 | `npm run modelle:maschinen` | Voxel-Modelle der Maschinen neu erzeugen (`data/modelle/`) |
+| `npm run modelle:lager` | Voxel-Modelle für Lager und Logistik neu erzeugen (Baukasten: `scripts/lib/voxel-model.mjs`) |
 | `npm run build:artifact` | Build für claude.ai-Artifacts in `dist-artifact/` (Modelle als JS eingebettet, weil Artifacts keine .fbx-Dateien ausliefern) |
 
 Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` erreichbar, z. B. `urbanEvolution.view.zoom(-2)`.
@@ -179,6 +214,8 @@ Im Entwicklungsmodus ist das Spiel in der Browser-Konsole als `urbanEvolution` e
 | Sortiment und Preise | `O` |
 | Bilanz | `L` |
 | Versorgung | `V` |
+| Lager & Lieferungen | `G` |
+| Karton umlagern / LKW abladen | Karton anklicken, dann eine Palette oder ein Lagerregal |
 | Bauvorschau drehen | `R` |
 | Karton aufnehmen / ins Regal | Linksklick auf Karton, dann auf Regal |
 | Abbrechen, Fenster schließen, Karton abstellen | `Esc` (schließt immer nur das Oberste) |
@@ -464,6 +501,14 @@ Bauelement (`data/bau/<id>.json`):
 
 `funktionen` schaltet besondere Fähigkeiten ein (z. B. `"einkauf"`), `ablage` macht es zur Lagerfläche für Kartons. `kontext` macht das Element anklickbar (Werte aus `data/interaktion/kontexte.json`). `model` und `icon` verweisen auf Dateien unter `data/`. `platzhalter.groesse` sind die Maße des Modells (Breite, Höhe, Tiefe in Metern); der Quader erscheint, bis das Modell geladen ist. Jeder Schlüssel unter `werte` braucht einen Eintrag in `data/werte/standard.json`.
 
+Lampe – zusätzliches Feld in `data/bau/<id>.json` (Position relativ zum Bauteil, Größe der Leuchtfläche, Stärke, Reichweite in m):
+
+```json
+"licht": { "position": [0, -1.45, 0], "groesse": [0.14, 0.05, 0.14], "farbe": "#ffd9a0", "staerke": 5, "reichweite": 6 }
+```
+
+Logistik (`data/logistik/standard.json`): `liefertermine`, `lieferkosten`, `express`, `wartezeitMinuten`, `fahrerAbladenProKarton`, `xpProKartonAbladen`, `lkw` (Modell, Größe, Ladefläche, Tempo). Laderampen sind Bauteile mit `"funktionen": ["rampe"]`.
+
 Regeln, die überall gelten:
 
 - **Logik in Code, Werte in Daten.** Zahlen und Inhalte stehen in `data/`, nicht im Code.
@@ -483,4 +528,6 @@ Regeln, die überall gelten:
 9. ~~Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange~~
 10. ~~Preise und Bilanz, Ausbau mit Grundstücken, Versorgung, Rohstoffe und Maschinen~~
 11. ~~Voxel-Editor als Entwicklerwerkzeug~~
-12. Danach: Fabrik und eigenes Lager, Lieferketten zwischen Standorten
+12. ~~Lager und Logistik: LKW, Laderampe, Lagerist, Umlagern~~
+13. ~~Licht: Tag und Nacht, leuchtende Lampen~~
+14. Danach: Animationen im Editor, mehrstufige Produktion, Standorte und Lieferketten

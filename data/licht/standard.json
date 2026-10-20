@@ -1,0 +1,10 @@
+{
+  "_hinweis": "Tag und Nacht. Zwischen Sonnenaufgang und -untergang ist Tag; die Dämmerung blendet über 'daemmerungMinuten'. lampen.anzahl = so viele echte Lichtquellen gibt es höchstens (die Lampen nahe der Kamera); alle anderen Lampen glühen nur.",
+  "sonnenaufgang": "06:30",
+  "sonnenuntergang": "20:30",
+  "daemmerungMinuten": 75,
+  "tag": { "sonne": 2.4, "umgebung": 1.4 },
+  "nacht": { "sonne": 0.08, "umgebung": 0.3, "himmel": "#1b2433", "sonnenfarbe": "#9db4ff" },
+  "daemmerung": { "sonnenfarbe": "#ffb27a", "himmel": "#e7a77e" },
+  "lampen": { "anzahl": 10, "nachtVerstaerkung": 1.6 }
+}

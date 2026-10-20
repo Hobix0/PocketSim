@@ -6,6 +6,7 @@
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},
+  "licht": {"position": [0, -0.48, 0], "groesse": [0.95, 0.03, 0.07], "farbe": "#f4f7ff", "staerke": 5, "reichweite": 6},
   "model": "3d/Baubar/Einrichtung/SM_Build_Schienenleuchte_Lichtleiste.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Schienenleuchte_Lichtleiste.png",
   "platzhalter": {"groesse": [1, 0.53, 0.06], "farbe": "#b9c0c6"}
