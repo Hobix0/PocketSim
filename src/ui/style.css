@@ -1975,3 +1975,8 @@ html, body {
 .hud .purchase .shipping button.active small {
   color: var(--accent-ink);
 }
+
+/* Haupt- und Pausemenü: Hauptknopf in voller Breite (nicht rechtsbündig wie in den Fenstern) */
+.hud .game-menu button.primary {
+  margin-left: 0;
+}
