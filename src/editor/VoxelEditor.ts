@@ -18,6 +18,7 @@ import {
   type Cell,
 } from './gridOps';
 import { esc } from '../ui/html';
+import { renderThumbnail } from '../assets/thumbnail';
 
 // Voxel-Editor – das Entwicklerwerkzeug zum Erstellen von Spielinhalten (nicht Teil des Spielens).
 // Modelle werden ins Projekt gespeichert (data/modelle/<id>.json) und erscheinen im gewählten
@@ -610,30 +611,7 @@ export class VoxelEditor {
 
   /** Vorschaubild für das Baumenü: das ganze Modell (ohne Schnitt) schräg von vorne. */
   private thumbnail(): string {
-    const size = 160;
-    const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    r.setSize(size, size, false);
-    r.toneMapping = THREE.ACESFilmicToneMapping;
-    const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight('#ffffff', '#7a7468', 1.8));
-    const light = new THREE.DirectionalLight('#fff4e6', 1.8);
-    light.position.set(3, 5, 2);
-    scene.add(light);
-    const geo = greedyMesh(this.grid);
-    const mesh = new THREE.Mesh(geo, this.material);
-    mesh.position.copy(this.offset);
-    scene.add(mesh);
-    const box = new THREE.Box3().setFromObject(mesh);
-    const center = box.getCenter(new THREE.Vector3());
-    const radius = box.getSize(new THREE.Vector3()).length() / 2 || 0.5;
-    const cam = new THREE.PerspectiveCamera(30, 1, radius / 50, radius * 20);
-    cam.position.copy(center).add(new THREE.Vector3(1.3, 0.9, 1.0).normalize().multiplyScalar(radius / Math.sin(THREE.MathUtils.degToRad(15))));
-    cam.lookAt(center);
-    r.render(scene, cam);
-    const url = r.domElement.toDataURL('image/png');
-    r.dispose();
-    geo.dispose();
-    return url;
+    return renderThumbnail(this.grid);
   }
 
   private async loadPalette(): Promise<void> {

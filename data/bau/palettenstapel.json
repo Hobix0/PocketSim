@@ -1,0 +1,11 @@
+{
+  "id": "palettenstapel",
+  "name": "Palettenstapel",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 40,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/palettenstapel",
+  "platzhalter": {"groesse": [1.2, 0.9, 0.8], "farbe": "#c9a26b"}
+}

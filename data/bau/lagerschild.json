@@ -1,0 +1,11 @@
+{
+  "id": "lagerschild",
+  "name": "Lagerschild",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/lagerschild",
+  "platzhalter": {"groesse": [0.1, 2.2, 1.6], "farbe": "#2f5d9e"}
+}

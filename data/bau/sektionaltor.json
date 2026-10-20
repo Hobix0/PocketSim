@@ -1,0 +1,12 @@
+{
+  "id": "sektionaltor",
+  "name": "Sektionaltor",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
+  "durchgang": true,
+  "preis": 600,
+  "freischaltLevel": 2,
+  "werte": {},
+  "model": "eigen/sektionaltor",
+  "platzhalter": {"groesse": [0.4, 4, 2], "farbe": "#6d7b85"}
+}

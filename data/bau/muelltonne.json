@@ -1,0 +1,11 @@
+{
+  "id": "muelltonne",
+  "name": "Mülltonne",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/muelltonne",
+  "platzhalter": {"groesse": [0.7, 1.1, 0.6], "farbe": "#3b6e4f"}
+}

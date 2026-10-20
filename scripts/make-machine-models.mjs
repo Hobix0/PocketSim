@@ -2,47 +2,19 @@
 // Würfel zu 2,5 cm; Vorderseite ist +X (wie bei allen Modellen), Ursprung unten in der Mitte.
 // Im Voxel-Editor lassen sich die Modelle danach weiter bearbeiten (öffnen, ändern, speichern).
 //
-// Aufruf: node scripts/make-machine-models.mjs
+// Aufruf: npm run modelle:maschinen   (Baukasten: scripts/lib/voxel-model.mjs)
 
-import fs from 'node:fs';
-import path from 'node:path';
+import { model as voxelModel } from './lib/voxel-model.mjs';
 
-const OUT = path.resolve('data/modelle');
-const S = 0.025;
-
+/** Maschine zeichnen (Würfel zu 2,5 cm, Reiter „Maschinen“) */
 function model(id, name, dims, draw) {
-  const [nx, ny, nz] = dims;
-  const data = new Array(nx * ny * nz).fill(0);
-  const idx = (x, y, z) => (x * ny + y) * nz + z;
-  const set = (x, y, z, c) => { if (x >= 0 && y >= 0 && z >= 0 && x < nx && y < ny && z < nz) data[idx(x, y, z)] = c; };
-  const box = (x0, x1, y0, y1, z0, z1, c) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) set(x, y, z, c); };
-  const disc = (cx, cy, cz, r, x0, x1, c) => { for (let x = x0; x <= x1; x++) for (let y = cy - r; y <= cy + r; y++) for (let z = cz - r; z <= cz + r; z++) if ((y - cy) ** 2 + (z - cz) ** 2 <= r * r) set(x, y, z, c); };
-  draw({ box, set, disc, nx, ny, nz });
-  // Lauflängen-Code wie im Editor (VoxelModel.encodeGrid)
-  const palette = [];
-  const index = new Map();
-  const runs = [];
-  let last = -1, count = 0;
-  for (const v of data) {
-    let c = 0;
-    if (v) {
-      if (!index.has(v)) { palette.push(v); index.set(v, palette.length); }
-      c = index.get(v);
-    }
-    if (c === last) count++;
-    else { if (count) runs.push(`${count}*${last}`); last = c; count = 1; }
-  }
-  if (count) runs.push(`${count}*${last}`);
-  const file = { id, name, typ: 'modell', menue: 'maschinen', preis: 0, ebene: 'objekt', kantenlaenge: S, groesse: dims, palette, voxel: runs.join(',') };
-  fs.mkdirSync(OUT, { recursive: true });
-  // Ein schon vorhandenes Vorschaubild (aus dem Editor) bleibt erhalten
-  const target = path.join(OUT, `${id}.json`);
-  if (fs.existsSync(target)) {
-    const old = JSON.parse(fs.readFileSync(target, 'utf8'));
-    if (old.vorschau) file.vorschau = old.vorschau;
-  }
-  fs.writeFileSync(target, JSON.stringify(file, null, 2) + '\n');
-  console.log(`${id}: ${dims.join('×')} Würfel, ${palette.length} Farben`);
+  voxelModel({
+    id, name, dims, menue: 'maschinen',
+    draw: ({ box, set }) => {
+      const disc = (cx, cy, cz, r, x0, x1, c) => { for (let x = x0; x <= x1; x++) for (let y = cy - r; y <= cy + r; y++) for (let z = cz - r; z <= cz + r; z++) if ((y - cy) ** 2 + (z - cz) ** 2 <= r * r) set(x, y, z, c); };
+      draw({ box, set, disc, nx: dims[0], ny: dims[1], nz: dims[2] });
+    },
+  });
 }
 
 const STAHL = '#b8bec4', STAHL_D = '#8f969d', STAHL_H = '#d6dbdf', SCHWARZ = '#1f1f22', DUNKEL = '#2f3a45';

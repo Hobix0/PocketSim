@@ -1,0 +1,11 @@
+{
+  "id": "trapezblech_lichtband",
+  "name": "Wand Lichtband",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "wand",
+  "preis": 220,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/trapezblech_lichtband",
+  "platzhalter": {"groesse": [0.4, 4, 2], "farbe": "#8fa0ac"}
+}

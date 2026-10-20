@@ -1,12 +1,18 @@
 import type { Content } from '../content/Content';
 import type { ProductDef } from '../content/definitions';
-import type { Purchasing, OrderError } from '../economy/Purchasing';
+import type { Purchasing, OrderError, ShippingKind } from '../economy/Purchasing';
 import type { PlayerState } from '../state/PlayerState';
 import type { World } from '../ecs/World';
 import type { Toasts } from './Toasts';
 import { iconUrl } from '../assets/icons';
 import { esc } from './html';
-import { formatMoney } from './format';
+import { formatClock, formatMoney } from './format';
+
+/** Für die Anzeige der Lieferung: wann sie käme und wie spät es ist */
+export interface ShippingInfo {
+  arrival(art: ShippingKind): number;
+  now(): number;
+}
 
 // Großhandel-Fenster: Produkte nach Warenkategorie (Tabs), Kartons wählen, bestellen.
 // Die Produktliste kommt automatisch aus data/produkte.
@@ -21,6 +27,8 @@ export class PurchaseWindow {
   /** Produkt-id → gewählte Kartons */
   private readonly cart = new Map<string, number>();
   private kategorie: string;
+  private versand: ShippingKind = 'normal';
+  private readonly shippingEl: HTMLElement;
 
   constructor(
     parent: HTMLElement,
@@ -29,6 +37,7 @@ export class PurchaseWindow {
     private readonly player: PlayerState,
     world: World,
     private readonly toasts: Toasts,
+    private readonly shipping?: ShippingInfo,
   ) {
     const t = (k: string) => esc(content.text(k));
     this.el = document.createElement('div');
@@ -40,6 +49,7 @@ export class PurchaseWindow {
       <nav class="tabs" role="tablist"></nav>
       <div class="list"></div>
       <footer>
+        <div class="shipping" role="radiogroup" aria-label="${t('einkauf_versand')}"></div>
         <div class="summary"></div>
         <div class="error" role="alert"></div>
         <button type="button" class="primary order">${t('einkauf_bestellen')}</button>
@@ -51,6 +61,15 @@ export class PurchaseWindow {
     this.summaryEl = q('.summary');
     this.errorEl = q('.error');
     this.orderBtn = q<HTMLButtonElement>('.order');
+    this.shippingEl = q('.shipping');
+    this.shippingEl.hidden = !purchasing.shipping;
+    this.shippingEl.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('button');
+      if (!b?.dataset.versand) return;
+      b.blur();
+      this.versand = b.dataset.versand as ShippingKind;
+      this.renderSummary();
+    });
     this.kategorie = content.kategorien.all()[0].id;
 
     q('.close').addEventListener('click', () => this.close());
@@ -95,14 +114,16 @@ export class PurchaseWindow {
 
   private order(): void {
     const lines = [...this.cart].map(([produkt, kartons]) => ({ produkt, kartons }));
-    const result = this.purchasing.order(lines);
+    const result = this.purchasing.order(lines, this.versand);
     if (!result.ok) {
       this.errorEl.textContent = this.errorText(result.fehler);
       return;
     }
     this.cart.clear();
     this.errorEl.textContent = '';
-    this.toasts.show(this.content.text('einkauf_geliefert', { kartons: result.kartons }), 'gut');
+    if (result.ankunft !== undefined && this.shipping) {
+      this.toasts.show(this.content.text('einkauf_bestellt', { kartons: result.kartons, zeit: formatClock(result.ankunft, this.shipping.now()) }), 'gut');
+    } else this.toasts.show(this.content.text('einkauf_geliefert', { kartons: result.kartons }), 'gut');
     this.render();
   }
 
@@ -155,10 +176,20 @@ export class PurchaseWindow {
 
   private renderSummary(): void {
     const lines = [...this.cart].map(([produkt, kartons]) => ({ produkt, kartons }));
-    const { kosten, kartons } = this.purchasing.quote(lines);
+    const { kosten, kartons, versand } = this.purchasing.quote(lines, this.versand);
     const frei = this.purchasing.freeSlots();
-    const t = (k: string) => esc(this.content.text(k));
+    const t = (k: string, v?: Record<string, string | number>) => esc(this.content.text(k, v));
+    if (this.shipping) {
+      const option = (art: ShippingKind) => {
+        const fee = this.purchasing.quote(lines, art).versand;
+        const zeit = formatClock(this.shipping!.arrival(art), this.shipping!.now());
+        return `<button type="button" role="radio" data-versand="${art}" aria-checked="${this.versand === art}" class="${this.versand === art ? 'active' : ''}">
+          <b>${t(`einkauf_versand_${art}`)}</b><small>${t('einkauf_ankunft', { zeit })}${kartons ? ` · ${formatMoney(fee)}` : ''}</small></button>`;
+      };
+      this.shippingEl.innerHTML = option('normal') + option('express');
+    }
     this.summaryEl.innerHTML = `
+      ${versand ? `<span>${t('einkauf_lieferkosten')} <b>${formatMoney(versand)}</b></span>` : ''}
       <span>${t('einkauf_summe')} <b class="${kosten > this.player.geld ? 'bad' : ''}">${formatMoney(kosten)}</b></span>
       <span>${kartons} Kartons</span>
       <span>${t('einkauf_platz')} <b class="${kartons > frei ? 'bad' : ''}">${frei}</b></span>`;

@@ -103,7 +103,8 @@ export function collectWorld(world: World, content: Content): Pick<SaveData, 'ba
   for (const e of world.all()) {
     const carton = e.get(CartonComponent);
     if (carton) {
-      if (carton.menge <= 0) continue;
+      // Kartons auf einem LKW speichert die Logistik (sie kommen beim Laden wieder per LKW)
+      if (carton.menge <= 0 || carton.ablage?.temporaer) continue;
       const pos = vec(e.object.position);
       // Getragene Kartons schweben – beim Laden stehen sie auf dem Boden
       if (!carton.ablage && carton.reservedBy !== null) pos[1] = round(Math.max(0, pos[1] - 0.75));

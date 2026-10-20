@@ -1,0 +1,11 @@
+{
+  "id": "folienpalette",
+  "name": "Palette mit Folie",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/folienpalette",
+  "platzhalter": {"groesse": [1.2, 1.5, 0.8], "farbe": "#d5dde0"}
+}

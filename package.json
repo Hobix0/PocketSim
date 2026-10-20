@@ -11,7 +11,8 @@
     "test": "vitest run",
     "import:3d": "node scripts/import-3d.mjs",
     "build:artifact": "tsc --noEmit && VITE_INLINE_MODELS=1 vite build --outDir dist-artifact",
-    "modelle:maschinen": "node scripts/make-machine-models.mjs"
+    "modelle:maschinen": "node scripts/make-machine-models.mjs",
+    "modelle:lager": "node scripts/make-lager-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

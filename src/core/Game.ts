@@ -53,6 +53,11 @@ import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
 import { MachineWindow } from '../ui/MachineWindow';
 import { UtilityWindow } from '../ui/UtilityWindow';
+import { Deliveries, type DeliveriesState, type ShipmentLine } from '../economy/Deliveries';
+import { TruckFleet } from '../world/TruckFleet';
+import { place } from '../world/CartonStorage';
+import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
+import { LogisticsWindow } from '../ui/LogisticsWindow';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -121,6 +126,10 @@ export class Game {
   readonly production: Production;
   readonly machineWindow: MachineWindow;
   readonly utilityWindow: UtilityWindow;
+  /** Lieferungen per LKW (null, wenn das Level keine Anlieferung hat – dann kommt Ware sofort) */
+  readonly deliveries: Deliveries | null;
+  readonly fleet: TruckFleet | null;
+  readonly logisticsWindow: LogisticsWindow;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
   /** Lief die Uhr, bevor das Menü aufging? */
@@ -211,6 +220,7 @@ export class Game {
       pickUpCarton: (carton) => this.hand.take(carton),
       dropCarton: () => this.hand.clear(),
       stockInto: (shelf) => this.stockByHand(shelf),
+      placeCarton: (surface) => this.placeByHand(surface),
       openMachine: (m) => this.machineWindow.open(m),
     };
     this.factory = { content: this.content, models: this.models, actions };
@@ -222,7 +232,13 @@ export class Game {
 
     // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
     this.storage = new CartonStorage(this.world, this.factory);
-    this.purchasing = new Purchasing(this.content.waren, this.player, this.storage);
+    // Lieferungen per LKW, wenn das Level eine Anlieferung hat (sonst kommt die Ware sofort)
+    const route = this.level.data.anlieferung;
+    this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player) : null;
+    this.deliveries = this.fleet
+      ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
+      : null;
+    this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage);
     // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
     this.utilities = new Utilities(this.content.versorgung, this.player);
     this.production = new Production(this.world, this.content, this.storage, this.utilities, () => this.player.level,
@@ -242,7 +258,16 @@ export class Game {
     this.machineWindow = new MachineWindow(this.hud.root, this.content, this.production, () => this.player.level);
     this.utilityWindow = new UtilityWindow(this.hud.root, this.utilities, this.production, () => this.player.level);
     this.utilities.events.on('upgraded', () => this.hud.toasts.show(this.content.text('anschluss_ausgebaut'), 'gut'));
-    this.purchaseWindow = new PurchaseWindow(this.hud.root, this.content, this.purchasing, this.player, this.world, this.hud.toasts);
+    this.purchaseWindow = new PurchaseWindow(this.hud.root, this.content, this.purchasing, this.player, this.world, this.hud.toasts,
+      this.deliveries ? { arrival: (art) => this.deliveries!.arrival(art), now: () => this.clock.totalMinutes } : undefined);
+    this.logisticsWindow = new LogisticsWindow(this.hud.root, this.content, this.world, this.storage, this.deliveries, this.fleet, () => this.clock.totalMinutes);
+    if (this.deliveries && this.fleet) {
+      const fleet = this.fleet;
+      this.deliveries.events.on('arrived', (s) => fleet.receive(s));
+      fleet.events.on('arrived', ({ kartons }) => this.hud.toasts.show(this.content.text('lkw_da', { kartons }), 'gut'));
+      fleet.events.on('driverUnloaded', ({ kartons, kosten }) => this.hud.toasts.show(this.content.text('lkw_fahrer_abgeladen', { kartons, kosten: formatMoney(kosten) })));
+      fleet.events.on('returned', ({ kartons, betrag }) => this.hud.toasts.show(this.content.text('lkw_zurueck', { kartons, betrag: formatMoney(betrag) }), 'warnung'));
+    }
 
     // Personal: Verwaltung ohne Grafik, Spielfiguren entstehen über die Ereignisse
     this.staff = new Staff(this.content.rollen, this.content.personal, this.content.namen, this.player);
@@ -325,6 +350,7 @@ export class Game {
     this.hud.onTool('sortiment', () => this.assortment.toggleOpen());
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
     this.hud.onTool('versorgung', () => this.utilityWindow.toggleOpen());
+    this.hud.onTool('lager', () => this.logisticsWindow.toggleOpen());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -402,6 +428,8 @@ export class Game {
     const minutes = this.clock.totalMinutes - minutesBefore;
     this.store.update(minutes, this.clock.totalMinutes % (24 * 60));
     this.utilities.run(minutes, this.production.demand());
+    this.deliveries?.update(this.clock.totalMinutes);
+    this.fleet?.update(minutes);
     this.world.update(simDt);
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
@@ -421,6 +449,8 @@ export class Game {
     this.hud.setToolActive('versorgung', this.utilityWindow.isOpen);
     this.machineWindow.update();
     this.utilityWindow.update();
+    this.logisticsWindow.update();
+    this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
     this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
@@ -443,6 +473,7 @@ export class Game {
     if (i.wasPressed('sortiment_menue')) this.assortment.toggleOpen();
     if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
+    if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();
@@ -452,6 +483,7 @@ export class Game {
       else if (this.statsWindow.isOpen) this.statsWindow.close();
       else if (this.machineWindow.isOpen) this.machineWindow.close();
       else if (this.utilityWindow.isOpen) this.utilityWindow.close();
+      else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();
@@ -473,6 +505,23 @@ export class Game {
     this.hud.toasts.show(this.content.text('eingeraeumt', { menge: result.menge, produkt: produkt.name }), 'gut');
     this.player.addXp(Math.max(1, Math.round(this.content.arbeit.xpProKartonVonHand * result.menge / produkt.gebinde)));
     if (result.leer) this.hand.clear();
+  }
+
+  /** Getragenen Karton auf eine Ablage stellen (umlagern) – vom LKW abladen bringt XP. */
+  private placeByHand(surfaceEntity: Entity): void {
+    const carton = this.hand.carried;
+    const target = surfaceEntity.get(StorageSurfaceComponent);
+    const c = carton?.get(CartonComponent);
+    if (!carton || !target || !c || c.reservedBy !== null) return;
+    if (target.free <= 0) { this.hud.toasts.show(this.content.text('abstellen_voll'), 'warnung'); return; }
+    const vomLkw = c.ablage?.temporaer ?? false;
+    c.leaveStorage();
+    place(carton, target);
+    this.hand.clear();
+    if (vomLkw) {
+      this.player.addXp(this.content.logistik.xpProKartonAbladen);
+      this.goals.complete('lieferung');
+    }
   }
 
   // ── Spielstand und Menü ─────────────────────────────────────────
@@ -512,7 +561,12 @@ export class Game {
       laden: this.store.stats.state(),
       ziele: this.goals.erledigt,
       preise: this.prices.state(),
-      systeme: { grundstuecke: this.plots.state(), versorgung: this.utilities.state() },
+      systeme: {
+        grundstuecke: this.plots.state(),
+        versorgung: this.utilities.state(),
+        // Was noch auf einem LKW steht, kommt beim Laden gleich wieder per LKW
+        ...(this.deliveries && this.fleet ? { logistik: { ...this.deliveries.state(), aufLkw: this.fleet.cargo() } } : {}),
+      },
     };
   }
 
@@ -529,13 +583,19 @@ export class Game {
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
+    const log = d.systeme?.logistik as (Partial<DeliveriesState> & { aufLkw?: ShipmentLine[] }) | undefined;
+    if (log && this.deliveries) {
+      const known = (id: string) => this.content.waren.has(id);
+      this.deliveries.restore(log, known);
+      this.deliveries.addNow((log.aufLkw ?? []).filter((k) => known(k.produkt) && k.menge > 0));
+    }
     for (const e of this.staff.team) this.spawnWorker(e, true);
     this.store.nav.invalidate();
   }
 
   private spawnWorker(e: Employee, silent = false): void {
     // Was der Spieler gerade trägt, rührt das Personal nicht an
-    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried), this.factory);
+    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried, this.storage), this.factory);
     this.workers.set(e.id, entity);
     this.world.add(entity);
     if (!silent) this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');

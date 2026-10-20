@@ -40,7 +40,7 @@ export class ContextHint {
       return;
     }
     const sel = entity.get(SelectableComponent);
-    const titel = sel?.titel ?? entity.typeId;
+    const titel = sel?.titel ?? this.content.bau.find(entity.typeId)?.name ?? entity.typeId;
     // Kontext nur zeigen, wenn er etwas Neues sagt ("Kühlregal · Regal", aber nicht "Kasse · Kasse")
     const name = this.content.kontexte[this.interactor.getContext()]?.name ?? '';
     const kontext = name !== titel ? name : '';

@@ -12,5 +12,12 @@
     "lohnProTag": 90,
     "farbe": "#2f8f6f",
     "verhalten": "kassieren"
+  },
+  "lagerist": {
+    "name": "Lagerist",
+    "beschreibung": "Lädt den LKW ab und bringt lose Kartons auf freie Lagerplätze.",
+    "lohnProTag": 75,
+    "farbe": "#c98a2e",
+    "verhalten": "abladen"
   }
 }

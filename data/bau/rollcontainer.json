@@ -1,0 +1,13 @@
+{
+  "id": "rollcontainer",
+  "name": "Rollcontainer",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "kontext": "ablage",
+  "preis": 45,
+  "freischaltLevel": 1,
+  "werte": {"lagerplaetze": 6},
+  "ablage": {"boeden": [0.225, 0.775, 1.325]},
+  "model": "eigen/rollcontainer",
+  "platzhalter": {"groesse": [0.8, 1.7, 0.7], "farbe": "#a9b2b8"}
+}

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { DeliveryRoute } from './TruckFleet';
 import type { PlotDef } from './Plots';
 import type { Bounds } from '../camera/ManagementCamera';
 
@@ -63,6 +64,8 @@ export interface LevelData {
   kundenPunkte?: [number, number, number][];
   /** Ziele für dieses Level (Datei unter data/ziele/), z. B. "start" */
   ziele?: string;
+  /** Strecke der Liefer-LKW (siehe world/TruckFleet.ts); ohne Angabe wird sofort ins Lager geliefert */
+  anlieferung?: DeliveryRoute;
   /** Wo gebaut werden darf; ohne Angabe überall (siehe world/Plots.ts) */
   grundstuecke?: PlotDef[];
   bloecke: BlockData[];                 // feste Kulisse (Wände, Straße …)

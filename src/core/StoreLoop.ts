@@ -12,7 +12,8 @@ import type { CheckoutServices } from '../components/CheckoutComponent';
 import { NavGrid, type Bounds, type Point } from '../navigation/NavGrid';
 import { CustomerSpawner, planWishes } from '../economy/Customers';
 import { StoreStats, basketTotal, type VisitOutcome } from '../economy/StoreStats';
-import { findStockingTask } from '../economy/Stocking';
+import { findHaulTask, findStockingTask } from '../economy/Stocking';
+import type { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { buyChance, type PriceBook } from '../economy/Prices';
 import { createCustomerEntity } from '../factory/createCustomerEntity';
 import { CustomerComponent } from '../components/CustomerComponent';
@@ -115,11 +116,20 @@ export class StoreLoop {
   }
 
   /** Was das Personal braucht (Auffüller und Kassierer). */
-  staffServices(isCartonFree: (carton: Entity) => boolean): StaffServices {
+  staffServices(
+    isCartonFree: (carton: Entity) => boolean,
+    storage: { nearestFree(near: THREE.Vector3): StorageSurfaceComponent | null } = { nearestFree: () => null },
+  ): StaffServices {
     const personal = this.content.personal;
     return {
       auffuellen: {
         findTask: () => findStockingTask(this.world, isCartonFree),
+        findPath: this.findPath,
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        sekundenProStueck: personal.sekundenProStueck,
+      },
+      abladen: {
+        findTask: () => findHaulTask(this.world, storage, isCartonFree),
         findPath: this.findPath,
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
         sekundenProStueck: personal.sekundenProStueck,

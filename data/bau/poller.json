@@ -1,0 +1,11 @@
+{
+  "id": "poller",
+  "name": "Poller",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 40,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/poller",
+  "platzhalter": {"groesse": [0.2, 0.95, 0.2], "farbe": "#e6b929"}
+}

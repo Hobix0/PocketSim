@@ -9,6 +9,8 @@ import { FootprintComponent } from '../components/FootprintComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { CheckoutComponent } from '../components/CheckoutComponent';
 import { MachineComponent } from '../components/MachineComponent';
+import { StorageDropComponent } from '../components/StorageDropComponent';
+import { RampComponent } from '../components/RampComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import { formatMoney } from '../ui/format';
@@ -40,9 +42,11 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   }
   if (def.ablage) {
     entity.add(new StorageSurfaceComponent(def.platzhalter.groesse, def.ablage, content.lager.karton.groesse));
+    entity.add(new StorageDropComponent(ctx.actions));
   }
   for (const f of def.funktionen) {
     if (f === 'einkauf') entity.add(new TerminalComponent(() => ctx.actions?.openPurchase()));
+    else if (f === 'rampe') entity.add(new RampComponent(def.platzhalter.groesse[0]));
     else console.warn(`${def.id}: unbekannte Funktion "${f}"`);
   }
   return entity;

@@ -6,6 +6,7 @@
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
   "ziele": "start",
+  "anlieferung": {"strasseZ": 9.0, "hoehe": 0.04, "von": -27, "bis": 27, "halt": -0.8, "zufahrtX": 13},
   "grundstuecke": [
     {"id": "laden", "name": "Ladenfläche", "rect": {"minX": -4, "maxX": 4, "minZ": -3, "maxZ": 3}, "preis": 0, "freischaltLevel": 1, "besessen": true},
     {"id": "gehweg", "name": "Gehweg", "rect": {"minX": -10, "maxX": 10, "minZ": 3, "maxZ": 7.2}, "preis": 0, "freischaltLevel": 1, "besessen": true},

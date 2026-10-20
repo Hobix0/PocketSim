@@ -6,6 +6,7 @@ import type { Describable, InfoRow } from '../ui/describe';
 // Aus Grundfläche und Kartonmaß ergibt sich ein Raster je Ebene. Die Ebenen sind
 // entweder gestapelt auf der Oberseite (Palette) oder die Regalböden (Schwerlastregal).
 // Belegt wird von unten nach oben.
+// `temporaer`: nur zum Abholen, z. B. die Ladefläche eines LKW – zählt nicht als Lagerplatz.
 
 export class StorageSurfaceComponent extends Component implements Describable {
   /** Platz-Mittelpunkte (Unterkante des Kartons) in lokalen Koordinaten der Entity. */
@@ -13,8 +14,17 @@ export class StorageSurfaceComponent extends Component implements Describable {
   /** Platz-Nummer → id der Karton-Entity */
   private readonly occupied = new Map<number, number>();
 
-  constructor(footprint: [number, number, number], ablage: { ebenen?: number; boeden?: number[] }, karton: [number, number, number]) {
+  readonly temporaer: boolean;
+
+  constructor(
+    footprint: [number, number, number],
+    ablage: { ebenen?: number; boeden?: number[] },
+    karton: [number, number, number],
+    options: { temporaer?: boolean; versatz?: [number, number, number] } = {},
+  ) {
     super();
+    this.temporaer = options.temporaer ?? false;
+    const [ox, oy, oz] = options.versatz ?? [0, 0, 0];
     const [w, h, d] = footprint;
     const [kw, kh, kd] = karton;
     const nx = Math.max(1, Math.floor(w / kw));
@@ -23,7 +33,7 @@ export class StorageSurfaceComponent extends Component implements Describable {
     for (const y of heights) {
       for (let iz = 0; iz < nz; iz++) {
         for (let ix = 0; ix < nx; ix++) {
-          this.slots.push(new THREE.Vector3((ix - (nx - 1) / 2) * kw, y, (iz - (nz - 1) / 2) * kd));
+          this.slots.push(new THREE.Vector3(ox + (ix - (nx - 1) / 2) * kw, oy + y, oz + (iz - (nz - 1) / 2) * kd));
         }
       }
     }
@@ -40,6 +50,17 @@ export class StorageSurfaceComponent extends Component implements Describable {
 
   get free(): number {
     return this.slots.length - this.occupied.size;
+  }
+
+  /** Weltposition eines Platzes */
+  slotPosition(slot: number): THREE.Vector3 {
+    this.entity.object.updateWorldMatrix(true, false);
+    return this.entity.object.localToWorld(this.slots[slot].clone());
+  }
+
+  /** Kartons auf dieser Ablage (ids) */
+  get entityIds(): number[] {
+    return [...this.occupied.values()];
   }
 
   /** Nächsten freien Platz für eine Entity belegen; gibt die Weltposition zurück (null, wenn voll). */

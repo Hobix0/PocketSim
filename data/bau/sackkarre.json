@@ -1,0 +1,11 @@
+{
+  "id": "sackkarre",
+  "name": "Sackkarre",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 60,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/sackkarre",
+  "platzhalter": {"groesse": [0.5, 1.2, 0.55], "farbe": "#c8382f"}
+}

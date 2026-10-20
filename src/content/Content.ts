@@ -5,8 +5,11 @@ import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
   type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
-  type RecipeDef, type UtilitySettings, validateRecipe,
+  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings,
 } from './definitions';
+
+/** Funktionen, die ein Bauteil haben kann (je eine Komponente, siehe createBuildEntity) */
+export const FUNKTIONEN = ['einkauf', 'rampe'];
 
 // Alle Spielinhalte an einem Ort. Wird einmal beim Start geladen und geprüft;
 // fehlerhafte Daten stoppen den Start mit einer klaren Meldung.
@@ -20,6 +23,8 @@ export class Content {
   readonly waren: Registry<ProductDef>;
   readonly rezepte: Registry<RecipeDef>;
   readonly versorgung: UtilitySettings;
+  /** Lieferungen per LKW (data/logistik/standard.json) */
+  readonly logistik: LogisticsSettings;
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
@@ -53,6 +58,7 @@ export class Content {
     }
     this.rezepte = new Registry('rezepte', readFolderEntries('rezepte'), validateRecipe);
     this.versorgung = readData<UtilitySettings>('versorgung/standard');
+    this.logistik = readData<LogisticsSettings>('logistik/standard');
     this.werte = readData<Record<string, ValueInfo>>('werte/standard');
     this.kontexte = readData<Record<string, ContextInfo>>('interaktion/kontexte');
     this.lager = readData<StorageSettings>('lager/standard');
@@ -84,6 +90,7 @@ export class Content {
       for (const l of [...r.eingang, r.ausgang]) if (!this.waren.has(l.ware)) throw new Error(`${where}: unbekannte Ware "${l.ware}"`);
     }
     for (const b of this.bau.all()) {
+      for (const f of b.funktionen) if (!FUNKTIONEN.includes(f)) throw new Error(`bau/${b.id}.json: unbekannte Funktion "${f}" (bekannt: ${FUNKTIONEN.join(', ')})`);
       if (b.kontext && !(b.kontext in this.kontexte)) throw new Error(`bau/${b.id}.json: unbekannter Kontext "${b.kontext}"`);
       for (const key of Object.keys(b.werte)) {
         if (!(key in this.werte)) throw new Error(`bau/${b.id}.json: Wert "${key}" fehlt in werte/standard.json`);

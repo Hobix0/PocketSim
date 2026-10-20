@@ -1,0 +1,12 @@
+{
+  "id": "asphalt_hof",
+  "name": "Asphalt Hof",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
+  "aussen": true,
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/asphalt_hof",
+  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#4a4d52"}
+}

@@ -1,0 +1,13 @@
+{
+  "id": "palettenregal",
+  "name": "Palettenregal",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "kontext": "ablage",
+  "preis": 600,
+  "freischaltLevel": 2,
+  "werte": {"lagerplaetze": 42},
+  "ablage": {"boeden": [0.15, 1.15, 2.15]},
+  "model": "eigen/palettenregal",
+  "platzhalter": {"groesse": [1.1, 3.0, 2.7], "farbe": "#2f5d9e"}
+}

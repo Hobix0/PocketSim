@@ -1,6 +1,7 @@
 import { readFolderEntries } from '../core/Data';
 import type { Content } from '../content/Content';
 import type { ModelLibrary } from '../assets/ModelLibrary';
+import { provideThumbnail } from '../assets/thumbnail';
 import { CUSTOM_PREFIX, centeredGrid, decodeGrid, toBuildDef, validateVoxelModel, type VoxelModelData } from './VoxelModel';
 
 // Modelle aus dem Voxel-Editor liegen im Projekt unter data/modelle/*.json – sie gehören zum Spiel
@@ -70,7 +71,10 @@ export async function deleteFromProject(id: string): Promise<boolean> {
 export function registerCustomModels(content: Content, models?: ModelLibrary): number {
   let n = 0;
   for (const m of projectModels()) {
-    models?.registerVoxelModel(CUSTOM_PREFIX + m.id, centeredGrid(m));
+    const grid = centeredGrid(m);
+    models?.registerVoxelModel(CUSTOM_PREFIX + m.id, grid);
+    // Ohne gespeichertes Vorschaubild rendert das Baumenü eins aus dem Modell
+    if (!m.vorschau) provideThumbnail(CUSTOM_PREFIX + m.id, grid);
     // Bauteile aus data/bau, die dieses Modell benutzen, bekommen sein Vorschaubild (wenn sie keins haben)
     for (const d of content.bau.all()) if (d.model === CUSTOM_PREFIX + m.id && !d.icon && m.vorschau) d.icon = m.vorschau;
     // Nur-Modelle und Modelle mit derselben id wie ein Bauteil aus den Spieldaten werden kein eigenes Bauteil

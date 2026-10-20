@@ -4,19 +4,20 @@ import type { Entity } from '../ecs/Entity';
 import type { Employee } from '../economy/Staff';
 import type { Describable, InfoRow } from '../ui/describe';
 import { CartonComponent } from './CartonComponent';
-import { stockFromCarton, type StockingTask } from '../economy/Stocking';
+import { isHaulTask, stockFromCarton, type WorkTask } from '../economy/Stocking';
 import { formatMoney } from '../ui/format';
 import { PathFollower, type PathFinder } from '../navigation/PathFollower';
 
-// Arbeitsverhalten eines Auffüllers als Zustandsmaschine:
-//   warten → zum Karton gehen → Karton aufnehmen → zum Regal gehen → einräumen → warten …
+// Arbeitsverhalten von Auffüllern und Lageristen als Zustandsmaschine:
+//   warten → zum Karton gehen → Karton aufnehmen → zum Regal (bzw. Lagerplatz) gehen → einräumen → warten …
+// Welche Aufgabe es gibt, entscheidet findTask: Auffüller räumen in Regale, Lageristen laden LKW ab.
 // Läuft in Simulationszeit (steht in der Pause). Wege kommen aus der Wegfindung (findPath);
 // ohne sie (z. B. in Tests) wird direkt hingelaufen.
 
 export type WorkerState = 'wartet' | 'holt' | 'bringt' | 'raeumt';
 
 export interface WorkerServices {
-  findTask(): StockingTask | null;
+  findTask(): WorkTask | null;
   findPath?: PathFinder;
   gehgeschwindigkeit: number;
   sekundenProStueck: number;
@@ -28,7 +29,7 @@ export interface WorkerServices {
 
 export class WorkerComponent extends Component implements Describable {
   state: WorkerState = 'wartet';
-  private task: StockingTask | null = null;
+  private task: WorkTask | null = null;
   private wait = 0;
   private stockTimer = 0;
   private readonly path = new PathFollower();
@@ -59,7 +60,9 @@ export class WorkerComponent extends Component implements Describable {
         this.carry();
         if (this.arrived()) {
           this.state = 'raeumt';
-          this.stockTimer = this.carton.menge * this.services.sekundenProStueck / this.employee.tempo;
+          // Einlagern geht schnell, Einräumen dauert je Stück
+          const t = this.task!;
+          this.stockTimer = (isHaulTask(t) ? 2 : this.carton.menge * this.services.sekundenProStueck) / this.employee.tempo;
           this.notifyChanged();
         }
         break;
@@ -85,7 +88,8 @@ export class WorkerComponent extends Component implements Describable {
   }
 
   statusText(): string {
-    return this.services.text(`status_${this.state}`, { produkt: this.produktName ?? '' });
+    const lager = this.task && isHaulTask(this.task) && (this.state === 'bringt' || this.state === 'raeumt');
+    return this.services.text(lager ? 'status_lagert' : `status_${this.state}`, { produkt: this.produktName ?? '' });
   }
 
   private get carton(): CartonComponent {
@@ -104,13 +108,29 @@ export class WorkerComponent extends Component implements Describable {
 
   private pickUp(): void {
     this.carton.leaveStorage();
-    this.setTarget(frontOf(this.task!.shelf), 0);
+    const t = this.task!;
+    if (isHaulTask(t)) this.setTarget(t.ziel, 0.6);
+    else this.setTarget(frontOf(t.shelf), 0);
     this.state = 'bringt';
     this.notifyChanged();
   }
 
   private finish(): void {
-    const { carton, shelf } = this.task!;
+    const t = this.task!;
+    if (isHaulTask(t)) {
+      // Platz war reserviert: Karton hinstellen
+      const c = t.carton.require(CartonComponent);
+      t.carton.object.position.copy(t.ziel);
+      t.carton.object.rotation.y = t.ablage.entity.object.rotation.y;
+      c.ablage = t.ablage;
+      c.reservedBy = null;
+      this.task = null;
+      this.state = 'wartet';
+      this.wait = 0.3;
+      this.notifyChanged();
+      return;
+    }
+    const { carton, shelf } = t;
     const result = stockFromCarton(carton, shelf);
     if (result.ok && !result.leer) {
       // Rest bleibt übrig (Regal inzwischen voller): Karton neben dem Regal abstellen
@@ -129,6 +149,10 @@ export class WorkerComponent extends Component implements Describable {
 
   /** Aufgabe abbrechen (Karton oder Regal verschwunden, Figur entlassen). */
   private reset(): void {
+    // Reservierten Lagerplatz wieder freigeben
+    if (this.task && isHaulTask(this.task) && this.task.carton.get(CartonComponent)?.ablage !== this.task.ablage) {
+      this.task.ablage.release(this.task.carton.id);
+    }
     if (this.task?.carton.world) {
       const c = this.task.carton.get(CartonComponent);
       if (c && c.reservedBy === this.entity.id) {
@@ -143,7 +167,9 @@ export class WorkerComponent extends Component implements Describable {
   }
 
   private taskValid(): boolean {
-    return !!this.task && !!this.task.carton.world && !!this.task.shelf.world;
+    const t = this.task;
+    if (!t || !t.carton.world) return false;
+    return isHaulTask(t) ? !!t.ablage.entity.world : !!t.shelf.world;
   }
 
   private setTarget(p: THREE.Vector3, keepDistance: number): void {

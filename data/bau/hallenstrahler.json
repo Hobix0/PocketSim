@@ -1,0 +1,11 @@
+{
+  "id": "hallenstrahler",
+  "name": "Hallenstrahler",
+  "kategorie": "einrichtung",
+  "ebene": "decke",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {"strom": 0.25},
+  "model": "eigen/hallenstrahler",
+  "platzhalter": {"groesse": [0.5, 0.7, 0.5], "farbe": "#2f3a45"}
+}

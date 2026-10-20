@@ -17,6 +17,8 @@ export interface GameActions {
   pickUpCarton(carton: Entity): void;
   /** Hand leeren (der Karton bleibt, wo er steht). */
   dropCarton(): void;
+  /** Getragenen Karton auf diese Ablage (Palette, Lagerregal …) stellen. */
+  placeCarton(surface: Entity): void;
   /** Getragenen Karton in dieses Regal räumen. */
   stockInto(shelf: Entity): void;
   /** Bedienfenster einer Maschine öffnen. */

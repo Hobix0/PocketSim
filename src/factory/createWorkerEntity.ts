@@ -14,6 +14,8 @@ type Common = 'rollenName' | 'text';
 
 export interface StaffServices {
   auffuellen: Omit<WorkerServices, Common>;
+  /** Lageristen: LKW abladen, lose Kartons einlagern */
+  abladen: Omit<WorkerServices, Common>;
   kassieren: Omit<CashierServices, Common>;
 }
 
@@ -27,6 +29,7 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   entity.add(new SelectableComponent('personal', employee.name, rolle.name));
   const common = { rollenName: rolle.name, text: (k: string, v?: Record<string, string | number>) => content.text(k, v) };
   if (rolle.verhalten === 'kassieren') entity.add(new CashierComponent(employee, { ...services.kassieren, ...common }));
+  else if (rolle.verhalten === 'abladen') entity.add(new WorkerComponent(employee, { ...services.abladen, ...common }));
   else entity.add(new WorkerComponent(employee, { ...services.auffuellen, ...common }));
   return entity;
 }

@@ -66,6 +66,28 @@ export interface UtilityDef {
 
 export type UtilitySettings = Record<'strom' | 'wasser', UtilityDef>;
 
+/** Lieferungen per LKW (data/logistik/standard.json) */
+export interface LogisticsSettings {
+  /** Uhrzeiten "HH:MM", zu denen normale Lieferungen kommen */
+  liefertermine: string[];
+  lieferkosten: { grund: number; proKarton: number };
+  /** Express: kommt nach `minuten` Spielminuten, kostet `aufschlag` zusätzlich */
+  express: { aufschlag: number; minuten: number };
+  /** So lange wartet der LKW aufs Abladen, dann lädt der Fahrer selbst ab */
+  wartezeitMinuten: number;
+  fahrerAbladenProKarton: number;
+  xpProKartonAbladen: number;
+  lkw: {
+    model: string;
+    /** Länge (entlang der Fahrtrichtung), Höhe, Breite in m */
+    groesse: [number, number, number];
+    /** Ladefläche in Längsrichtung von … bis (m ab Mitte), Breite, Höhe über dem Boden, Kartonlagen */
+    ladeflaeche: { von: number; bis: number; breite: number; hoehe: number; ebenen: number };
+    /** m pro Sekunde (Simulationszeit) */
+    geschwindigkeit: number;
+  };
+}
+
 /** Maße und Ersatzfarbe. Die Maße gelten auch, wenn es ein Modell gibt (Grundfläche fürs Bauen). */
 export interface PlaceholderDef {
   groesse: [number, number, number]; // Breite, Höhe, Tiefe in Metern
@@ -172,7 +194,7 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen';
 }
 
 /** Einstellungen für Personal (data/personal/standard.json). */

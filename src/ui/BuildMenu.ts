@@ -5,6 +5,7 @@ import type { InputMap } from '../input/InputMap';
 import type { PlayerState } from '../state/PlayerState';
 import type { BuildController, Tool } from '../building/BuildController';
 import { iconUrl } from '../assets/icons';
+import { cachedThumbnail, hasThumbnail, requestThumbnail } from '../assets/thumbnail';
 import { esc } from './html';
 import { formatMoney } from './format';
 
@@ -114,6 +115,12 @@ export class BuildMenu {
     const defs = this.content.bau.all().filter((d) => inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
     this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('') || '<p class="empty-cat">Hier gibt es noch nichts.</p>';
     this.hintEl.innerHTML = this.hint();
+    for (const img of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]:not([src])')) {
+      const path = img.dataset.thumb!;
+      requestThumbnail(path, (url) => {
+        for (const el of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]')) if (el.dataset.thumb === path) el.src = url;
+      });
+    }
   }
 
   private plotCards(): string {
@@ -137,9 +144,14 @@ export class BuildMenu {
     const locked = d.freischaltLevel > this.player.level;
     const active = tool?.art === 'bauen' && tool.def === d && !tool.moving;
     const icon = iconUrl(d.icon);
+    // Ohne Icon: Vorschaubild aus dem Würfelmodell (wird nachgeladen)
+    const thumb = !icon && hasThumbnail(d.model) ? d.model : null;
+    const img = icon ? `<img src="${icon}" alt="" loading="lazy">`
+      : thumb ? `<img data-thumb="${esc(thumb)}" alt="" ${cachedThumbnail(thumb) ? `src="${cachedThumbnail(thumb)}"` : ''}>`
+        : '<span class="noicon"></span>';
     return `
       <button type="button" class="card ${active ? 'active' : ''} ${locked ? 'locked' : ''}" data-bau="${d.id}" ${locked ? 'disabled' : ''} title="${esc(d.name)}">
-        ${icon ? `<img src="${icon}" alt="" loading="lazy">` : '<span class="noicon"></span>'}
+        ${img}
         <span class="name">${esc(d.name)}</span>
         <span class="cost">${locked ? esc(this.content.text('bauen_fehler_gesperrt', { level: d.freischaltLevel })) : formatMoney(d.preis)}</span>
       </button>`;

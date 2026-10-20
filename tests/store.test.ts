@@ -121,6 +121,7 @@ describe('Personal', () => {
     const employee = { id: 1, name: 'Test', rolle: 'auffueller', lohn: 80, tempo: 1 };
     const worker = w.add(createWorkerEntity(employee, {
       auffuellen: { findTask: () => findStockingTask(w, () => true), gehgeschwindigkeit: 1.4, sekundenProStueck: 0.1 },
+      abladen: { findTask: () => null, gehgeschwindigkeit: 1.4, sekundenProStueck: 0.1 },
       kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1.4, sekundenProArtikel: 1 },
     }, ctx));
     const states = new Set<string>();
