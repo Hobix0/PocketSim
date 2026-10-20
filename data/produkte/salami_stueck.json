@@ -1,0 +1,15 @@
+{
+  "id": "salami_stueck",
+  "name": "Salami Stück",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Salami_Stueck.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Salami_Stueck.png",
+  "groesse": [0.061, 0.071, 0.243]
+}

@@ -1,0 +1,387 @@
+{
+  "_hinweis": "Startwerte für neu importierte Einträge. Bestehende JSON-Dateien behalten ihre Werte; aktualisiert werden nur Modell, Icon und Maße.",
+  "ignorieren": [
+    "SM_Build_Cube"
+  ],
+  "produktKategorien": {
+    "01_Obst_Gemuese": "obst_gemuese",
+    "02_Backwaren": "backwaren",
+    "03_Molkerei_Eier": "molkerei_eier",
+    "04_Fleisch_Wurst": "fleisch_wurst",
+    "05_Tiefkuehl": "tiefkuehl",
+    "06_Getraenke": "getraenke",
+    "07_Grundnahrung": "grundnahrung",
+    "08_Suesswaren_Snacks": "suesswaren_snacks",
+    "09_Haushalt_Reinigung": "haushalt_reinigung",
+    "10_Drogerie_Koerperpflege": "drogerie_koerperpflege"
+  },
+  "produktStandard": {
+    "obst_gemuese": {
+      "ek": 0.9,
+      "vk": 1.49,
+      "frisch": true,
+      "gebinde": 10,
+      "kuehlung": false,
+      "freischaltLevel": 1
+    },
+    "backwaren": {
+      "ek": 0.8,
+      "vk": 1.39,
+      "frisch": true,
+      "gebinde": 10,
+      "kuehlung": false,
+      "freischaltLevel": 2
+    },
+    "molkerei_eier": {
+      "ek": 0.7,
+      "vk": 1.19,
+      "frisch": true,
+      "gebinde": 12,
+      "kuehlung": true,
+      "freischaltLevel": 2
+    },
+    "fleisch_wurst": {
+      "ek": 2.5,
+      "vk": 3.99,
+      "frisch": true,
+      "gebinde": 8,
+      "kuehlung": true,
+      "freischaltLevel": 3
+    },
+    "tiefkuehl": {
+      "ek": 1.6,
+      "vk": 2.69,
+      "frisch": true,
+      "gebinde": 8,
+      "kuehlung": true,
+      "freischaltLevel": 4
+    },
+    "getraenke": {
+      "ek": 0.6,
+      "vk": 1.19,
+      "frisch": false,
+      "gebinde": 12,
+      "kuehlung": false,
+      "freischaltLevel": 1
+    },
+    "grundnahrung": {
+      "ek": 0.8,
+      "vk": 1.29,
+      "frisch": false,
+      "gebinde": 12,
+      "kuehlung": false,
+      "freischaltLevel": 1
+    },
+    "suesswaren_snacks": {
+      "ek": 0.8,
+      "vk": 1.69,
+      "frisch": false,
+      "gebinde": 20,
+      "kuehlung": false,
+      "freischaltLevel": 1
+    },
+    "haushalt_reinigung": {
+      "ek": 1.2,
+      "vk": 2.29,
+      "frisch": false,
+      "gebinde": 8,
+      "kuehlung": false,
+      "freischaltLevel": 3
+    },
+    "drogerie_koerperpflege": {
+      "ek": 1.1,
+      "vk": 2.19,
+      "frisch": false,
+      "gebinde": 10,
+      "kuehlung": false,
+      "freischaltLevel": 4
+    }
+  },
+  "bauStandard": {
+    "einrichtung": {
+      "preis": 250,
+      "ebene": "objekt"
+    },
+    "gebaeude_basis": {
+      "preis": 80,
+      "ebene": "wand"
+    },
+    "gebaeude_erweiterung": {
+      "preis": 150,
+      "ebene": "wand"
+    },
+    "lager": {
+      "preis": 120,
+      "ebene": "objekt"
+    },
+    "lichtschienen": {
+      "preis": 30,
+      "ebene": "decke"
+    },
+    "store_props": {
+      "preis": 400,
+      "ebene": "objekt"
+    }
+  },
+  "bauEinzeln": {
+    "kasse_schwarz": {
+      "preis": 1200,
+      "kontext": "kasse",
+      "werte": {
+        "kassen": 1,
+        "strom": 0.2
+      },
+      "kasse": {
+        "kunde": [
+          -0.85,
+          -0.7
+        ],
+        "personal": [
+          0.8,
+          -0.7
+        ],
+        "richtung": [
+          0,
+          1
+        ],
+        "abstand": 0.75
+      }
+    },
+    "store_checkout_01": {
+      "preis": 1500,
+      "kontext": "kasse",
+      "werte": {
+        "kassen": 1,
+        "strom": 0.3
+      },
+      "kasse": {
+        "kunde": [
+          0.85,
+          -0.3
+        ],
+        "personal": [
+          -0.8,
+          -0.3
+        ],
+        "richtung": [
+          0,
+          1
+        ],
+        "abstand": 0.75
+      },
+      "freischaltLevel": 2
+    },
+    "kuehlregal_offen": {
+      "preis": 900,
+      "kontext": "regal",
+      "werte": {
+        "slots": 3,
+        "strom": 0.9
+      },
+      "freischaltLevel": 2,
+      "regal": {
+        "ebenen": [
+          0.55,
+          1.0,
+          1.44
+        ],
+        "mitte": -0.07,
+        "laenge": 1.85,
+        "kapazitaet": 20,
+        "kuehlung": true
+      }
+    },
+    "wandregal_weiss": {
+      "preis": 180,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
+      },
+      "regal": {
+        "ebenen": [
+          0.1,
+          0.55,
+          1.0,
+          1.45
+        ],
+        "mitte": 0.03,
+        "laenge": 1.85,
+        "kapazitaet": 24
+      }
+    },
+    "store_shelf_wall_01": {
+      "preis": 450,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
+      },
+      "regal": {
+        "faecher": 4,
+        "kapazitaet": 24
+      }
+    },
+    "store_fridge_upright_01": {
+      "preis": 1100,
+      "kontext": "regal",
+      "werte": {
+        "slots": 3,
+        "strom": 1.1
+      },
+      "freischaltLevel": 2,
+      "regal": {
+        "faecher": 3,
+        "kapazitaet": 18,
+        "kuehlung": true
+      }
+    },
+    "schwerlastregal_mit_boeden": {
+      "preis": 350,
+      "kontext": "regal",
+      "werte": {
+        "lagerplaetze": 48
+      },
+      "ablage": {
+        "boeden": [
+          0.02,
+          1.15,
+          2.05
+        ]
+      },
+      "freischaltLevel": 2
+    },
+    "europalette": {
+      "preis": 15,
+      "werte": {
+        "lagerplaetze": 12
+      },
+      "ablage": {
+        "ebenen": 2
+      }
+    },
+    "pendelleuchte": {
+      "preis": 90,
+      "werte": {
+        "strom": 0.05
+      },
+      "ebene": "decke"
+    },
+    "deckenstrahler_schiene": {
+      "preis": 120,
+      "werte": {
+        "strom": 0.08
+      },
+      "ebene": "decke"
+    },
+    "wandlampe_aussen": {
+      "preis": 70,
+      "werte": {
+        "strom": 0.03
+      },
+      "ebene": "anbau"
+    },
+    "store_producestand_01": {
+      "preis": 600,
+      "kontext": "regal",
+      "werte": {
+        "slots": 4
+      },
+      "regal": {
+        "faecher": 4,
+        "kapazitaet": 20
+      }
+    },
+    "boden_fliese_innen": {
+      "ebene": "boden"
+    },
+    "attika_dachkante": {
+      "ebene": "anbau"
+    },
+    "boden_gehweg": {
+      "ebene": "boden",
+      "aussen": true
+    },
+    "eingangsstufe": {
+      "ebene": "anbau"
+    },
+    "ladenschild_band": {
+      "ebene": "anbau"
+    },
+    "markise_rot_weiss": {
+      "ebene": "anbau"
+    },
+    "pflanzkuebel_boden": {
+      "ebene": "objekt"
+    },
+    "pflanzentop_schwarz": {
+      "ebene": "objekt"
+    },
+    "pflanzentop_weiss": {
+      "ebene": "objekt"
+    },
+    "deckenstrahler_schiene_einzel": {
+      "ebene": "decke"
+    },
+    "schienenleuchte_lichtleiste": {
+      "ebene": "decke"
+    },
+    "schienenleuchte_pendel_kegel": {
+      "ebene": "decke"
+    },
+    "schienenleuchte_pendel_kugel": {
+      "ebene": "decke"
+    },
+    "dach": {
+      "ebene": "decke"
+    },
+    "eingang_schiebetuer": {
+      "durchgang": true
+    },
+    "tuer": {
+      "durchgang": true
+    },
+    "wand_innen_durchgang": {
+      "durchgang": true
+    },
+    "wand_rolltor": {
+      "durchgang": true
+    },
+    "store_cart_01": {
+      "freischaltLevel": 3
+    }
+  },
+  "namen": {
+    "Gruen": "Grün",
+    "Broetchen": "Brötchen",
+    "Kaese": "Käse",
+    "Stueck": "Stück",
+    "Haehnchen": "Hähnchen",
+    "Wuerfel": "Würfel",
+    "Wuerstchen": "Würstchen",
+    "Staebchen": "Stäbchen",
+    "Gemuese": "Gemüse",
+    "Muesli": "Müsli",
+    "Sosse": "Soße",
+    "Nuesse": "Nüsse",
+    "Baerchen": "Bärchen",
+    "Kuechen": "Küchen",
+    "Muell": "Müll",
+    "Schwaemme": "Schwämme",
+    "Spuel": "Spül",
+    "Fluessig": "Flüssig",
+    "Tuecher": "Tücher",
+    "Buerste": "Bürste",
+    "Oel": "Öl",
+    "Haenger": "Hänger"
+  },
+  "bauNamen": {
+    "store_cart_01": "Einkaufswagen",
+    "store_checkout_01": "Kassentresen",
+    "store_fridge_upright_01": "Getränkekühlschrank",
+    "store_shelf_wall_01": "Wandregal Markt",
+    "wand_weiss_schwarz_schmal": "Wand Weiß/Schwarz schmal",
+    "ziegelwand": "Ziegelwand",
+    "pflanzentop_schwarz": "Pflanzentopf Schwarz",
+    "pflanzentop_weiss": "Pflanzentopf Weiß",
+    "store_producestand_01": "Obst- und Gemüsestand"
+  }
+}

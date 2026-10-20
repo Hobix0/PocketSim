@@ -1,0 +1,15 @@
+{
+  "id": "mundspuelung",
+  "name": "Mundspülung",
+  "kategorie": "drogerie_koerperpflege",
+  "ek": 1.1,
+  "vk": 2.19,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 4,
+  "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Mundspuelung.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Mundspuelung.png",
+  "groesse": [0.061, 0.24, 0.08]
+}

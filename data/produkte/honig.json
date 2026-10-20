@@ -1,0 +1,15 @@
+{
+  "id": "honig",
+  "name": "Honig",
+  "kategorie": "grundnahrung",
+  "ek": 0.8,
+  "vk": 1.29,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/07_Grundnahrung/SM_Honig.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Honig.png",
+  "groesse": [0.074, 0.095, 0.065]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "broetchen_backen",
+  "name": "Brötchen backen",
+  "maschine": "backstation",
+  "eingang": [{"ware": "teiglinge_broetchen", "menge": 20}],
+  "ausgang": {"ware": "broetchen", "menge": 20},
+  "dauer": 40,
+  "freischaltLevel": 2
+}

@@ -1,0 +1,15 @@
+{
+  "id": "croissant",
+  "name": "Croissant",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/02_Backwaren/SM_Croissant.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Croissant.png",
+  "groesse": [0.122, 0.055, 0.078]
+}

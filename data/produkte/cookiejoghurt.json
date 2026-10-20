@@ -1,0 +1,15 @@
+{
+  "id": "cookiejoghurt",
+  "name": "Cookiejoghurt",
+  "kategorie": "molkerei_eier",
+  "ek": 0.7,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/03_Molkerei_Eier/SM_Cookiejoghurt.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Cookiejoghurt.png",
+  "groesse": [0.084, 0.072, 0.075]
+}

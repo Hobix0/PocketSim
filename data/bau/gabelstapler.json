@@ -1,0 +1,11 @@
+{
+  "id": "gabelstapler",
+  "name": "Gabelstapler",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 1200,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/gabelstapler",
+  "platzhalter": {"groesse": [2.4, 2.2, 1.2], "farbe": "#e6b929"}
+}

@@ -1,0 +1,15 @@
+{
+  "id": "mehl",
+  "name": "Mehl",
+  "kategorie": "grundnahrung",
+  "ek": 0.8,
+  "vk": 1.29,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/07_Grundnahrung/SM_Mehl.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Mehl.png",
+  "groesse": [0.071, 0.21, 0.11]
+}

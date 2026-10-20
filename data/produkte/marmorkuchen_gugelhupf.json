@@ -1,0 +1,15 @@
+{
+  "id": "marmorkuchen_gugelhupf",
+  "name": "Marmorkuchen Gugelhupf",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/02_Backwaren/SM_Marmorkuchen_Gugelhupf.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Marmorkuchen_Gugelhupf.png",
+  "groesse": [0.231, 0.086, 0.231]
+}

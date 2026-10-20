@@ -1,1 +1,27 @@
-{"type":"module","name":"pocketsim","private":true,"scripts":{"test":"node --test tests/*.test.mjs"}}
+{
+  "name": "urbanevolution",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "import:3d": "node scripts/import-3d.mjs",
+    "build:artifact": "tsc --noEmit && VITE_INLINE_MODELS=1 vite build --outDir dist-artifact",
+    "modelle:maschinen": "node scripts/make-machine-models.mjs",
+    "modelle:lager": "node scripts/make-lager-models.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/three": "0.186.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

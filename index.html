@@ -2,75 +2,12 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>PocketSim Café</title>
-  <meta name="description" content="Richte dein eigenes Café ein, verkaufe Kaffee und Snacks und baue Etage für Etage aus.">
-  <meta name="theme-color" content="#2f4a42">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-      }
-    }
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>UrbanEvolution</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%231b2229%22/%3E%3Crect x=%223%22 y=%226%22 width=%224%22 height=%227%22 fill=%22%235fd08a%22/%3E%3Crect x=%228%22 y=%223%22 width=%225%22 height=%2210%22 fill=%22%23e8ecef%22/%3E%3C/svg%3E">
 </head>
 <body>
-  <canvas id="scene"></canvas>
-
-  <div id="ui">
-    <header class="topbar">
-      <div class="brand">PocketSim <em>Café</em></div>
-      <div class="stats">
-        <div class="stat"><label>Kasse</label><b id="money">–</b></div>
-        <div class="stat"><label id="dayLabel">Tag 1</label><b id="clock">07:00</b></div>
-        <div class="stat"><label>Ruf</label><b id="rep" class="stars"></b></div>
-      </div>
-      <div class="speed" id="speed"></div>
-      <nav class="menu" id="menu"></nav>
-    </header>
-
-    <aside class="side">
-      <section class="card shop" id="shopCard"></section>
-      <section class="card steps" id="steps"></section>
-    </aside>
-
-    <nav class="floors" id="floors"></nav>
-
-    <section class="card inspector hidden" id="inspector"></section>
-
-    <footer class="dock">
-      <div class="tools" id="tools"></div>
-      <div class="catalog hidden" id="catalog">
-        <div class="cats" id="cats"></div>
-        <div class="items" id="items"></div>
-      </div>
-      <div class="hint" id="hint"></div>
-    </footer>
-
-    <div id="toasts"></div>
-    <div id="modal" class="modal hidden"><div class="sheet"><button class="close" data-close aria-label="Schließen">×</button><div id="modalBody"></div></div></div>
-  </div>
-
-  <div id="title" class="title">
-    <div class="title-card">
-      <div class="eyebrow">Wirtschaftssimulation</div>
-      <h1>PocketSim <em>Café</em></h1>
-      <p>Ein leeres Ladenlokal in der Altstadt, drei Etagen und ein Startkapital. Richte dein Café ein, stell Baristas ein, finde die richtigen Preise – und miete später die oberen Etagen dazu.</p>
-      <div class="title-actions" id="titleActions"></div>
-      <div class="loading" id="loading">Lade 3D-Engine …</div>
-    </div>
-  </div>
-
-  <script type="module" src="src/main.js"></script>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

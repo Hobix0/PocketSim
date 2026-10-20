@@ -1,0 +1,15 @@
+{
+  "id": "toilettenpapier",
+  "name": "Toilettenpapier",
+  "kategorie": "haushalt_reinigung",
+  "ek": 1.2,
+  "vk": 2.29,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Toilettenpapier.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Toilettenpapier.png",
+  "groesse": [0.187, 0.109, 0.37]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "saftaepfel",
+  "name": "Saftäpfel",
+  "kategorie": "rohstoffe",
+  "ek": 0.09,
+  "vk": 0,
+  "gebinde": 30,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3
+}

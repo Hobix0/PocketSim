@@ -1,0 +1,15 @@
+{
+  "id": "waschmittel_fluessig",
+  "name": "Waschmittel Flüssig",
+  "kategorie": "haushalt_reinigung",
+  "ek": 1.2,
+  "vk": 2.29,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/09_Haushalt_Reinigung/SM_Waschmittel_Fluessig.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Waschmittel_Fluessig.png",
+  "groesse": [0.091, 0.27, 0.16]
+}

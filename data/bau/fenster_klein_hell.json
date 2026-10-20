@@ -1,0 +1,12 @@
+{
+  "id": "fenster_klein_hell",
+  "name": "Fenster klein hell",
+  "kategorie": "gebaeude_basis",
+  "ebene": "wand",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_Fenster_klein_hell.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Fenster_klein_hell.png",
+  "platzhalter": {"groesse": [0.2, 4, 2], "farbe": "#b9c0c6"}
+}

@@ -1,0 +1,15 @@
+{
+  "id": "kroketten",
+  "name": "Kroketten",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 4,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Kroketten.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Kroketten.png",
+  "groesse": [0.047, 0.14, 0.171]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "birne",
+  "name": "Birne",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Birne.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Birne.png",
+  "groesse": [0.072, 0.114, 0.072]
+}

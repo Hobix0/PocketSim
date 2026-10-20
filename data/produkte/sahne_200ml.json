@@ -1,0 +1,15 @@
+{
+  "id": "sahne_200ml",
+  "name": "Sahne 200 ml",
+  "kategorie": "molkerei_eier",
+  "ek": 0.7,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/03_Molkerei_Eier/SM_Sahne_200ml.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Sahne_200ml.png",
+  "groesse": [0.046, 0.11, 0.046]
+}

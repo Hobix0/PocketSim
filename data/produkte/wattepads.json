@@ -1,0 +1,15 @@
+{
+  "id": "wattepads",
+  "name": "Wattepads",
+  "kategorie": "drogerie_koerperpflege",
+  "ek": 1.1,
+  "vk": 2.19,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 4,
+  "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Wattepads.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Wattepads.png",
+  "groesse": [0.062, 0.141, 0.061]
+}

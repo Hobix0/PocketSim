@@ -1,0 +1,15 @@
+{
+  "id": "haehnchenschenkel",
+  "name": "Hähnchenschenkel",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Haehnchenschenkel.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Haehnchenschenkel.png",
+  "groesse": [0.152, 0.038, 0.212]
+}

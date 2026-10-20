@@ -1,0 +1,15 @@
+{
+  "id": "lasagne",
+  "name": "Lasagne",
+  "kategorie": "tiefkuehl",
+  "ek": 1.6,
+  "vk": 2.69,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 4,
+  "model": "3d/Produkte/05_Tiefkuehl/SM_Lasagne.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Lasagne.png",
+  "groesse": [0.166, 0.07, 0.221]
+}

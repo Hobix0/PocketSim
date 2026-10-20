@@ -1,0 +1,12 @@
+{
+  "id": "wand_rot",
+  "name": "Wand Rot",
+  "kategorie": "gebaeude_basis",
+  "ebene": "wand",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_Wand_Rot.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Wand_Rot.png",
+  "platzhalter": {"groesse": [0.2, 4, 2], "farbe": "#b9c0c6"}
+}

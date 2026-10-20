@@ -1,0 +1,11 @@
+{
+  "id": "betonboden_markierung",
+  "name": "Boden Beton Markierung",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
+  "preis": 130,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/betonboden_markierung",
+  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#b2b1ab"}
+}

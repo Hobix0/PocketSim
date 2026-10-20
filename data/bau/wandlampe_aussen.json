@@ -1,0 +1,13 @@
+{
+  "id": "wandlampe_aussen",
+  "name": "Wandlampe Außen",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
+  "preis": 70,
+  "freischaltLevel": 1,
+  "werte": {"strom": 0.03},
+  "licht": {"position": [0.45, 2.67, 0], "groesse": [0.14, 0.04, 0.2], "farbe": "#ffcf8a", "staerke": 4, "reichweite": 6},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Wandlampe_Aussen.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Wandlampe_Aussen.png",
+  "platzhalter": {"groesse": [0.405, 0.165, 0.22], "farbe": "#b9c0c6"}
+}

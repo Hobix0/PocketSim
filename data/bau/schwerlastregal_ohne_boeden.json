@@ -1,0 +1,12 @@
+{
+  "id": "schwerlastregal_ohne_boeden",
+  "name": "Schwerlastregal ohne Böden",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Lager/SM_Build_Schwerlastregal_ohne_Boeden.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Schwerlastregal_ohne_Boeden.png",
+  "platzhalter": {"groesse": [1.11, 2.73, 2.9], "farbe": "#b9c0c6"}
+}

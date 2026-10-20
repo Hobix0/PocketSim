@@ -1,0 +1,15 @@
+{
+  "id": "schokoriegel",
+  "name": "Schokoriegel",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "gebinde": 20,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Schokoriegel.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Schokoriegel.png",
+  "groesse": [0.031, 0.022, 0.14]
+}

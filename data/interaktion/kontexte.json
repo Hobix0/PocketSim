@@ -1,0 +1,41 @@
+{
+  "nichts": {
+    "name": ""
+  },
+  "regal": {
+    "name": "Regal"
+  },
+  "kasse": {
+    "name": "Kasse"
+  },
+  "produkt": {
+    "name": "Produkt"
+  },
+  "terminal": {
+    "name": "Terminal"
+  },
+  "karton": {
+    "name": "Karton"
+  },
+  "personal": {
+    "name": "Personal"
+  },
+  "bauen": {
+    "name": "Bauen"
+  },
+  "kunde": {
+    "name": "Kunde"
+  },
+  "maschine": {
+    "name": "Maschine"
+  },
+  "lkw": {
+    "name": "Liefer-LKW"
+  },
+  "ablage": {
+    "name": "Lagerplatz"
+  },
+  "rampe": {
+    "name": "Laderampe"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "leerflaschen",
+  "name": "Leerflaschen",
+  "kategorie": "rohstoffe",
+  "ek": 0.06,
+  "vk": 0,
+  "gebinde": 24,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3
+}

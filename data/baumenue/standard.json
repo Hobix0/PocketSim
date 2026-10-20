@@ -1,0 +1,81 @@
+{
+  "raster": 0.25,
+  "deckenhoehe": 4,
+  "rueckerstattung": 0.5,
+  "kategorien": [
+    {
+      "id": "einrichtung",
+      "name": "Einrichtung",
+      "kategorien": [
+        "einrichtung",
+        "store_props"
+      ],
+      "ebenen": [
+        "objekt"
+      ]
+    },
+    {
+      "id": "lager",
+      "name": "Lager",
+      "kategorien": [
+        "lager"
+      ]
+    },
+    {
+      "id": "maschinen",
+      "name": "Maschinen",
+      "kategorien": [
+        "maschinen"
+      ]
+    },
+    {
+      "id": "licht",
+      "name": "Licht",
+      "kategorien": [
+        "einrichtung",
+        "lichtschienen"
+      ],
+      "ebenen": [
+        "decke"
+      ]
+    },
+    {
+      "id": "boden",
+      "name": "Böden",
+      "ebenen": [
+        "boden"
+      ]
+    },
+    {
+      "id": "waende",
+      "name": "Wände & Türen",
+      "ebenen": [
+        "wand"
+      ]
+    },
+    {
+      "id": "fassade",
+      "name": "Fassade",
+      "ebenen": [
+        "anbau"
+      ]
+    },
+    {
+      "id": "deko",
+      "name": "Deko",
+      "kategorien": [
+        "gebaeude_basis",
+        "gebaeude_erweiterung"
+      ],
+      "ebenen": [
+        "objekt"
+      ]
+    },
+    {
+      "id": "grundstuecke",
+      "name": "Grundstücke",
+      "spezial": "grundstuecke"
+    }
+  ],
+  "wandVersatz": 0.1
+}

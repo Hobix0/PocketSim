@@ -1,0 +1,9 @@
+{
+  "id": "aufschnitt_schneiden",
+  "name": "Salami aufschneiden",
+  "maschine": "aufschnittmaschine",
+  "eingang": [{"ware": "salami_stueck", "menge": 2}],
+  "ausgang": {"ware": "aufschnitt_salami", "menge": 8},
+  "dauer": 20,
+  "freischaltLevel": 3
+}

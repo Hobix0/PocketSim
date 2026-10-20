@@ -1,0 +1,15 @@
+{
+  "id": "cola_dose_0_33l",
+  "name": "Cola Dose 0,33 L",
+  "kategorie": "getraenke",
+  "ek": 0.6,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/06_Getraenke/SM_Cola_Dose_0_33L.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Cola_Dose_0_33L.png",
+  "groesse": [0.067, 0.117, 0.066]
+}

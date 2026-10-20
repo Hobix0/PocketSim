@@ -1,0 +1,12 @@
+{
+  "id": "schwerlastregal_rahmen",
+  "name": "Schwerlastregal Rahmen",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Lager/SM_Build_Schwerlastregal_Rahmen.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Schwerlastregal_Rahmen.png",
+  "platzhalter": {"groesse": [1.1, 2.73, 0.1], "farbe": "#b9c0c6"}
+}

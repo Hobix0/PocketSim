@@ -1,0 +1,12 @@
+{
+  "id": "markise_rot_weiss",
+  "name": "Markise Rot-Weiß",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Markise_Rot_Weiss.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Markise_Rot_Weiss.png",
+  "platzhalter": {"groesse": [1.26, 0.681, 2], "farbe": "#b9c0c6"}
+}

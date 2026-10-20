@@ -1,0 +1,13 @@
+{
+  "id": "backstation",
+  "name": "Backstation",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 2500,
+  "freischaltLevel": 2,
+  "werte": {},
+  "maschine": {"typ": "backstation", "strom": 3.5, "wasser": 0},
+  "model": "eigen/backstation",
+  "platzhalter": {"groesse": [0.8, 1.6, 1.4], "farbe": "#9aa3ab"}
+}

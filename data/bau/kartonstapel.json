@@ -1,0 +1,11 @@
+{
+  "id": "kartonstapel",
+  "name": "Kartonstapel",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 30,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/kartonstapel",
+  "platzhalter": {"groesse": [1.0, 1.2, 1.0], "farbe": "#c39b6a"}
+}

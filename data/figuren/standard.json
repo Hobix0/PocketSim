@@ -1,0 +1,10 @@
+{
+  "_hinweis": "Voxel-Figuren für Kunden und Personal. Jede Figur bekommt aus diesen Listen ein Aussehen; beim Personal ist das Oberteil die Farbe der Rolle.",
+  "kantenlaenge": 0.025,
+  "haut": ["#f1c9a5", "#e0ac84", "#c68863", "#8d5a3b", "#5e3b28"],
+  "haare": ["#2b2220", "#4a3121", "#7a4b28", "#b8833f", "#d9c38a", "#8c8c8c", "#a3412c"],
+  "oberteile": ["#c0573e", "#3f7cac", "#6a8f3c", "#8a5fb0", "#e0b23c", "#e8e4dc", "#2f3a45", "#d0708c"],
+  "hosen": ["#2f3a45", "#3d4f6b", "#5a4a3a", "#26282b", "#6b6f74"],
+  "schuhe": ["#1f1f22", "#5a3d2a", "#e8e6e1"],
+  "frisuren": ["kurz", "kurz", "lang", "keine"]
+}

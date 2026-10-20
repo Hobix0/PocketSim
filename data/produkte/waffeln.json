@@ -1,0 +1,15 @@
+{
+  "id": "waffeln",
+  "name": "Waffeln",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "gebinde": 20,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Waffeln.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Waffeln.png",
+  "groesse": [0.054, 0.08, 0.161]
+}

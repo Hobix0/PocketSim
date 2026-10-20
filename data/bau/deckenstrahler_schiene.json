@@ -1,0 +1,13 @@
+{
+  "id": "deckenstrahler_schiene",
+  "name": "Deckenstrahler Schiene",
+  "kategorie": "einrichtung",
+  "ebene": "decke",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {"strom": 0.08},
+  "licht": {"position": [0, -0.23, 0], "groesse": [0.8, 0.03, 0.18], "farbe": "#fff1d6", "staerke": 5, "reichweite": 6},
+  "model": "3d/Baubar/Einrichtung/SM_Build_Deckenstrahler_Schiene.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Deckenstrahler_Schiene.png",
+  "platzhalter": {"groesse": [0.823, 0.254, 0.219], "farbe": "#b9c0c6"}
+}

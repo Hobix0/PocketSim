@@ -1,0 +1,15 @@
+{
+  "id": "mehrkornbroetchen",
+  "name": "Mehrkornbrötchen",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/02_Backwaren/SM_Mehrkornbroetchen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Mehrkornbroetchen.png",
+  "groesse": [0.106, 0.052, 0.092]
+}

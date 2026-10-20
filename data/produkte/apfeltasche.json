@@ -1,0 +1,15 @@
+{
+  "id": "apfeltasche",
+  "name": "Apfeltasche",
+  "kategorie": "backwaren",
+  "ek": 0.8,
+  "vk": 1.39,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/02_Backwaren/SM_Apfeltasche.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Apfeltasche.png",
+  "groesse": [0.104, 0.032, 0.09]
+}

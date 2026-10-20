@@ -1,0 +1,13 @@
+[
+  { "id": "obst_gemuese",      "name": "Obst & Gemüse" },
+  { "id": "backwaren",         "name": "Backwaren" },
+  { "id": "molkerei_eier",     "name": "Molkerei & Eier" },
+  { "id": "fleisch_wurst",     "name": "Fleisch & Wurst" },
+  { "id": "tiefkuehl",         "name": "Tiefkühl" },
+  { "id": "getraenke",         "name": "Getränke" },
+  { "id": "grundnahrung",      "name": "Grundnahrung & Trockenwaren" },
+  { "id": "suesswaren_snacks", "name": "Süßwaren & Snacks" },
+  { "id": "haushalt_reinigung", "name": "Haushalt & Reinigung" },
+  { "id": "drogerie_koerperpflege", "name": "Drogerie & Körperpflege" },
+  { "id": "rohstoffe",         "name": "Rohstoffe" }
+]

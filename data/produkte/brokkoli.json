@@ -1,0 +1,15 @@
+{
+  "id": "brokkoli",
+  "name": "Brokkoli",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Brokkoli.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Brokkoli.png",
+  "groesse": [0.127, 0.124, 0.134]
+}

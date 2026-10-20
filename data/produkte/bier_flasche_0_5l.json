@@ -1,0 +1,15 @@
+{
+  "id": "bier_flasche_0_5l",
+  "name": "Bier Flasche 0,5 L",
+  "kategorie": "getraenke",
+  "ek": 0.6,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/06_Getraenke/SM_Bier_Flasche_0_5L.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Bier_Flasche_0_5L.png",
+  "groesse": [0.068, 0.256, 0.068]
+}

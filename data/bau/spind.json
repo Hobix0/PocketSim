@@ -1,0 +1,11 @@
+{
+  "id": "spind",
+  "name": "Spind",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 180,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/spind",
+  "platzhalter": {"groesse": [0.5, 1.8, 0.9], "farbe": "#7f93a3"}
+}

@@ -1,0 +1,15 @@
+{
+  "id": "pralinen",
+  "name": "Pralinen",
+  "kategorie": "suesswaren_snacks",
+  "ek": 0.8,
+  "vk": 1.69,
+  "gebinde": 20,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/08_Suesswaren_Snacks/SM_Pralinen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Pralinen.png",
+  "groesse": [0.038, 0.132, 0.202]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "frikadellen",
+  "name": "Frikadellen",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Frikadellen.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Frikadellen.png",
+  "groesse": [0.152, 0.035, 0.212]
+}

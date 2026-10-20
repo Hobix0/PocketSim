@@ -1,0 +1,15 @@
+{
+  "id": "gurke",
+  "name": "Gurke",
+  "kategorie": "obst_gemuese",
+  "ek": 0.9,
+  "vk": 1.49,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/01_Obst_Gemuese/SM_Gurke.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Gurke.png",
+  "groesse": [0.324, 0.05, 0.05]
+}

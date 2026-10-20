@@ -1,0 +1,15 @@
+{
+  "id": "gouda_stueck",
+  "name": "Gouda Stück",
+  "kategorie": "molkerei_eier",
+  "ek": 0.7,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 2,
+  "model": "3d/Produkte/03_Molkerei_Eier/SM_Gouda_Stueck.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Gouda_Stueck.png",
+  "groesse": [0.135, 0.062, 0.07]
+}

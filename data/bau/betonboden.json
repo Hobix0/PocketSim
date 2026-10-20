@@ -1,0 +1,11 @@
+{
+  "id": "betonboden",
+  "name": "Boden Beton",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/betonboden",
+  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#b2b1ab"}
+}

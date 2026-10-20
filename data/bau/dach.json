@@ -1,0 +1,12 @@
+{
+  "id": "dach",
+  "name": "Dach",
+  "kategorie": "gebaeude_basis",
+  "ebene": "decke",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Basis/SM_Build_Dach.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Dach.png",
+  "platzhalter": {"groesse": [2, 0.2, 2], "farbe": "#b9c0c6"}
+}

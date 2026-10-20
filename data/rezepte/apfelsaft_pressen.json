@@ -1,0 +1,9 @@
+{
+  "id": "apfelsaft_pressen",
+  "name": "Apfelsaft pressen",
+  "maschine": "saftpresse",
+  "eingang": [{"ware": "saftaepfel", "menge": 30}, {"ware": "leerflaschen", "menge": 12}],
+  "ausgang": {"ware": "apfelsaft", "menge": 12},
+  "dauer": 60,
+  "freischaltLevel": 3
+}

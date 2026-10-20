@@ -1,0 +1,15 @@
+{
+  "id": "orangensaft",
+  "name": "Orangensaft",
+  "kategorie": "getraenke",
+  "ek": 0.6,
+  "vk": 1.19,
+  "gebinde": 12,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 1,
+  "model": "3d/Produkte/06_Getraenke/SM_Orangensaft.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Orangensaft.png",
+  "groesse": [0.061, 0.193, 0.061]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "leberwurst_dose",
+  "name": "Leberwurst Dose",
+  "kategorie": "fleisch_wurst",
+  "ek": 2.5,
+  "vk": 3.99,
+  "gebinde": 8,
+  "preisOffen": true,
+  "frisch": true,
+  "kuehlung": true,
+  "freischaltLevel": 3,
+  "model": "3d/Produkte/04_Fleisch_Wurst/SM_Leberwurst_Dose.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Leberwurst_Dose.png",
+  "groesse": [0.076, 0.053, 0.073]
+}

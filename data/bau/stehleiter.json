@@ -1,0 +1,11 @@
+{
+  "id": "stehleiter",
+  "name": "Stehleiter",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/stehleiter",
+  "platzhalter": {"groesse": [0.6, 1.8, 0.5], "farbe": "#a9b2b8"}
+}

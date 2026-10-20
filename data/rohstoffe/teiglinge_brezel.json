@@ -1,0 +1,11 @@
+{
+  "id": "teiglinge_brezel",
+  "name": "Teiglinge Brezel",
+  "kategorie": "rohstoffe",
+  "ek": 0.4,
+  "vk": 0,
+  "gebinde": 20,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 2
+}

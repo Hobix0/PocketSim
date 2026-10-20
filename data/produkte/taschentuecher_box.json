@@ -1,0 +1,15 @@
+{
+  "id": "taschentuecher_box",
+  "name": "Taschentücher Box",
+  "kategorie": "drogerie_koerperpflege",
+  "ek": 1.1,
+  "vk": 2.19,
+  "gebinde": 10,
+  "preisOffen": true,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 4,
+  "model": "3d/Produkte/10_Drogerie_Koerperpflege/SM_Taschentuecher_Box.fbx",
+  "icon": "3d/Icons_Produkte/T_Icon_Taschentuecher_Box.png",
+  "groesse": [0.121, 0.128, 0.241]
+}

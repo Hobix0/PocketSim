@@ -1,0 +1,12 @@
+{
+  "id": "pflanzkuebel_boden",
+  "name": "Pflanzkübel Boden",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 150,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Pflanzkuebel_Boden.fbx",
+  "icon": "3d/Icons_Baubar/T_Build_Pflanzkuebel_Boden.png",
+  "platzhalter": {"groesse": [0.6, 0.984, 0.6], "farbe": "#b9c0c6"}
+}

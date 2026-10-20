@@ -1,0 +1,9 @@
+{
+  "id": "brezeln_backen",
+  "name": "Laugenbrezeln backen",
+  "maschine": "backstation",
+  "eingang": [{"ware": "teiglinge_brezel", "menge": 20}],
+  "ausgang": {"ware": "laugenbrezel", "menge": 20},
+  "dauer": 45,
+  "freischaltLevel": 2
+}

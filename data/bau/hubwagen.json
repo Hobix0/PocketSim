@@ -1,0 +1,11 @@
+{
+  "id": "hubwagen",
+  "name": "Hubwagen",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 250,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/hubwagen",
+  "platzhalter": {"groesse": [1.6, 1.2, 0.6], "farbe": "#e07b24"}
+}
