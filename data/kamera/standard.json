@@ -17,7 +17,7 @@
   "look": {
     "_hinweis": "Nachbearbeitung: Bloom (Glühen heller Flächen, nachts stärker), Tilt-Shift (Miniatur-Unschärfe oben/unten, Pixel am Rand, fokus = Bildhöhe 0..1), Vignette, Wärme, Sättigung.",
     "an": true,
-    "bloom": { "staerke": 0.18, "radius": 0.55, "schwelle": 0.82, "nachtStaerke": 0.55 },
+    "bloom": { "staerke": 0.14, "radius": 0.5, "schwelle": 0.93, "nachtStaerke": 0.5 },
     "tiltShift": { "staerke": 3.2, "fokus": 0.5 },
     "vignette": 0.28,
     "waerme": 0.025,

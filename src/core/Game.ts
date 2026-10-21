@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { readData } from './Data';
+import { hasData, readData } from './Data';
 import { InputMap, type Bindings } from '../input/InputMap';
 import { Pointer } from '../input/Pointer';
 import { ManagementCamera, type CameraSettings } from '../camera/ManagementCamera';
@@ -530,6 +530,7 @@ export class Game {
       },
       editor: () => restartWith(null, 'editor'),
       hauptmenue: () => restartWith(null),
+      testmarkt: hasData('spielstaende/testmarkt') ? () => restartWith(null, 'testmarkt') : undefined,
       stil: () => (this.models.voxelStyle ? 'voxel' : 'lowpoly'),
       optionen: () => ({ look: this.look.an, effekte: this.effects.settings.an, musik: this.audio?.musik ?? 0, toene: this.audio?.toene ?? 0 }),
       setOption: (k, v) => {
