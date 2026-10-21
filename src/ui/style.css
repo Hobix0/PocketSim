@@ -1980,3 +1980,29 @@ html, body {
 .hud .game-menu button.primary {
   margin-left: 0;
 }
+
+/* Baumenü: Gelände-Werkzeug */
+.card.terrain .terrain-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  color: var(--accent);
+  font-size: 28px;
+}
+
+.catalog .terrain-sizes {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+.hud .catalog .terrain-sizes button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}

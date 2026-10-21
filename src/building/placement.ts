@@ -9,7 +9,7 @@ import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect }
 //    Deckenleuchten nicht mit anderen Deckenleuchten.
 //  - Kostet Geld (außer beim Verschieben) und muss freigeschaltet sein.
 
-export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom';
+export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende';
 
 export interface PlacementResult {
   ok: boolean;
@@ -41,6 +41,8 @@ export interface PlacementOptions {
   level: number;
   /** Darf hier gebaut werden (eigenes Grundstück)? Ohne Angabe überall. */
   plotOk?: (x: number, z: number, rand: number) => boolean;
+  /** Ist das Gelände hier eben genug zum Bauen? (Hügel und Gruben aus dem Gelände-Werkzeug) */
+  gelaendeOk?: (r: Rect) => boolean;
   /** Freier Stromanschluss (kW) für neue Verbraucher; ohne Angabe unbegrenzt */
   stromFrei?: number;
 }
@@ -67,6 +69,7 @@ export function checkPlacement(
 
   if (!opts.moving && def.freischaltLevel > opts.level) return { ok: false, grund: 'gesperrt', y };
   if (opts.plotOk && !opts.plotOk(x, z, def.ebene === 'wand' || def.ebene === 'anbau' ? 0.4 : 0)) return { ok: false, grund: 'grundstueck', y };
+  if (opts.gelaendeOk && !def.absenkung && def.ebene !== 'decke' && !opts.gelaendeOk(rect)) return { ok: false, grund: 'gelaende', y };
   if (needsFloor && floor === null) return { ok: false, grund: 'boden', y };
   // Wände brauchen Boden auf mindestens einer Seite
   if (def.ebene === 'wand' && !floorNear(world, rect, opts.moving)) return { ok: false, grund: 'boden', y };

@@ -1,0 +1,9 @@
+{
+  "_hinweis": "Gelände-Werkzeug: Raster der Höhenpunkte (m), höchste Erhebung/Tiefe (m), Kosten je bewegtem Kubikmeter Erde, wie schnell der Pinsel arbeitet (m pro Sekunde in der Mitte), Pinselgrößen (Radius m), Farbe an steilen Stellen.",
+  "zelle": 0.5,
+  "maxHoehe": 2.5,
+  "preisProKubikmeter": 6,
+  "tempo": 0.9,
+  "pinsel": [1, 2, 3.5],
+  "erde": "#8b7355"
+}

@@ -318,6 +318,38 @@ model({
   },
 });
 
+// Rampenabfahrt (5-cm-Würfel): abgesenkte Laderampe vor einem Ladetor. Das Gelände wird darunter abgesenkt,
+// der LKW fährt rückwärts hinunter und steht so tief, dass seine Ladefläche bündig mit dem Hallenboden ist.
+// Lokal −X ist die Torseite (Index 0), dann 8 m flach in 1,1 m Tiefe, dann 6 m Schräge hinauf. Innen 2,6 m breit.
+model({
+  id: 'rampenabfahrt', name: 'Rampenabfahrt', dims: [280, 37, 72], size: 0.05, menue: 'lager', ursprung: [-140, -22, -36],
+  draw: ({ box, rough, nx, nz }) => {
+    const BETON_D = '#8f8a80', BETON_H = '#b7b1a5';
+    const boden = (x) => (x < 160 ? 1 : Math.round(1 + ((x - 160) / 119) * 21));
+    // Sohle und Schräge (gefüllt bis zur Oberfläche), Rillen auf der Schräge, Ablaufrinne vorne
+    for (let x = 0; x < nx; x++) {
+      const top = boden(x);
+      box(x, x, 0, top, 10, nz - 11, (xx, y) => (y === top ? (x >= 160 && x % 6 === 0 ? BETON_D : BETON_H) : BETON_D));
+    }
+    box(150, 157, 1, 1, 12, nz - 13, (x, y, z) => (z % 2 ? '#3a3d40' : '#55595d'));
+    // Spurlinien gelb auf der Sohle
+    box(6, 159, 1, 1, 15, 15, GELB); box(6, 159, 1, 1, nz - 16, nz - 16, GELB);
+    // Seitenwände bis Geländehöhe, Kante gelb-schwarz
+    for (const [z0, z1] of [[0, 9], [nz - 10, nz - 1]]) {
+      rough(0, nx - 1, 0, 22, z0, z1, BETON, 0.04);
+      box(0, nx - 1, 23, 23, z0, z1, (x) => (Math.floor(x / 6) % 2 ? GELB : SCHWARZ));
+    }
+    // Torseite: Betonwand mit Gummipuffern
+    rough(0, 4, 0, 22, 10, nz - 11, BETON, 0.04);
+    for (const z of [16, nz - 22]) box(5, 6, 9, 15, z, z + 5, GUMMI);
+    // Geländer oben auf den Wänden (nur am tiefen Teil)
+    for (const z of [2, nz - 3]) {
+      for (let x = 10; x < 200; x += 30) box(x, x, 24, 35, z, z, GELB_D);
+      box(10, 190, 35, 36, z, z, GELB); box(10, 190, 29, 29, z, z, GELB_D);
+    }
+  },
+});
+
 // Poller (Deko, außen)
 model({
   id: 'poller', name: 'Poller', dims: [8, 38, 8],

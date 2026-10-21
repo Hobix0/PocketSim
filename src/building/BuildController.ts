@@ -9,7 +9,7 @@ import type { Pointer } from '../input/Pointer';
 import type { PlayerState } from '../state/PlayerState';
 import type { FactoryContext } from '../factory/FactoryContext';
 import { createBuildEntity } from '../factory/createBuildEntity';
-import { FootprintComponent } from '../components/FootprintComponent';
+import { type Rect, FootprintComponent } from '../components/FootprintComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
@@ -64,6 +64,8 @@ export class BuildController {
     private readonly plots?: Plots,
     /** Freier Stromanschluss für neue Verbraucher (kW) */
     private readonly stromFrei?: () => number,
+    /** Größte Geländeveränderung in einem Rechteck (zum Bauen muss es eben sein) */
+    private readonly gelaende?: (r: Rect) => number,
   ) {
     this.plotLines.visible = false;
     scene.add(this.plotLines);
@@ -118,6 +120,7 @@ export class BuildController {
       moving: tool.moving, geld: this.player.geld, level: this.player.level,
       plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
       stromFrei: this.stromFrei?.(),
+      gelaendeOk: this.gelaende ? (r) => this.gelaende!(r) <= 0.05 : undefined,
     });
     this.ghost.visible = true;
     this.ghost.position.set(x, check.y, z);

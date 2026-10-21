@@ -148,6 +148,10 @@ export interface BuildDef {
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
   funktionen: string[];
+  /** Senkt das Gelände ab (Rampenabfahrt vor einem Ladetor): Tiefe, flacher Teil und Schräge (m) entlang +X, Breite */
+  absenkung?: { tiefe: number; flach: number; schraege: number; breite: number };
+  /** Nur befahrbar (LKW), nicht begehbar */
+  fahrbahn: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
@@ -170,6 +174,16 @@ export interface LightDef {
   reichweite: number;
   /** Weitere Leuchtflächen ohne eigenes Licht (z. B. Rückleuchten); `blinkt`: Blinker/Warnblinker */
   zusatz?: { position: [number, number, number]; groesse: [number, number, number]; farbe: string; blinkt?: boolean }[];
+}
+
+/** Gelände-Werkzeug (data/gelaende/standard.json) */
+export interface TerrainSettings {
+  zelle: number;
+  maxHoehe: number;
+  preisProKubikmeter: number;
+  tempo: number;
+  pinsel: number[];
+  erde: string;
 }
 
 /** Tag und Nacht (data/licht/standard.json) */
@@ -212,7 +226,7 @@ export interface BuildCategory {
   name: string;
   kategorien?: string[];
   ebenen?: BuildLayer[];
-  spezial?: 'grundstuecke';
+  spezial?: 'grundstuecke' | 'gelaende';
 }
 
 export function inBuildCategory(def: BuildDef, c: BuildCategory): boolean {
@@ -366,6 +380,11 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),
     licht: o.licht === undefined ? undefined : light(o.licht, `${where} → licht`),
+    absenkung: o.absenkung === undefined ? undefined : (() => {
+      const w = `${where} → absenkung`, x = asObject(o.absenkung, w);
+      return { tiefe: num(x, 'tiefe', w, 0.1), flach: num(x, 'flach', w, 1), schraege: num(x, 'schraege', w, 1), breite: num(x, 'breite', w, 1) };
+    })(),
+    fahrbahn: o.fahrbahn === undefined ? false : bool(o, 'fahrbahn', where),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),

@@ -13,6 +13,8 @@ import { CartonComponent } from '../components/CartonComponent';
 import { RampComponent } from '../components/RampComponent';
 import { LampComponent } from '../components/LampComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
+import { TerrainCutComponent } from '../components/TerrainCutComponent';
+import type { TerrainCut } from './Terrain';
 import { NavGrid, type Bounds } from '../navigation/NavGrid';
 import { TruckComponent, type RoutePoint } from '../components/TruckComponent';
 import { createCartonEntity } from '../factory/createProductEntity';
@@ -61,9 +63,12 @@ export class TruckFleet {
     private readonly player: PlayerState,
     /** Gelände, auf dem LKW fahren (für das Fahrraster) */
     private readonly bounds: Bounds,
+    /** Eigene Geländeveränderung an einer Stelle (m); über Hügel und durch Gruben fährt kein LKW */
+    gelaende?: (x: number, z: number) => number,
   ) {
     const l = settings.lkw;
-    this.drive = new NavGrid(bounds, { zelle: l.fahrraster, radius: l.groesse[2] / 2 + 0.2 }, world, 'fahren');
+    this.drive = new NavGrid(bounds, { zelle: l.fahrraster, radius: l.groesse[2] / 2 + 0.2 }, world, 'fahren',
+      gelaende ? (x, z) => Math.abs(gelaende(x, z)) > 0.3 : undefined);
     // Nach dem Bauen neu berechnen
     world.events.on('added', (e) => { if (e.get(FootprintComponent)) this.drive.invalidate(); });
     world.events.on('removed', (e) => { if (e.get(FootprintComponent)) this.drive.invalidate(); });
@@ -164,7 +169,7 @@ export class TruckFleet {
   private spawn(ladung: ShipmentLine[], dock: Entity | null): void {
     const way = this.paths(dock);
     if (!way) { this.queue.unshift(...ladung); return; }
-    const { anfahrt, abfahrt } = way;
+    const { anfahrt, abfahrt, abgesenkt } = way;
     const lkw = this.settings.lkw;
     const [laenge, hoehe, breite] = lkw.groesse;
     const e = new Entity('lkw');
@@ -179,7 +184,10 @@ export class TruckFleet {
       left: (t) => this.remove(t),
       text: (k, v) => this.ctx.content.text(k, v),
     }, laenge);
+    truck.abgesenkt = !!abgesenkt;
     e.add(truck);
+    // Erst drehen (Fahrtrichtung), dann neigen (an der Schräge)
+    e.object.rotation.order = 'YZX';
     if (dock) dock.require(RampComponent).belegt = true;
     // Startrichtung: zum ersten Wegpunkt
     const first = anfahrt[1]?.p ?? anfahrt[0].p;
@@ -238,7 +246,7 @@ export class TruckFleet {
    * Strecken hin und zurück. Straße: vorbeifahren bis zum Halteplatz. Ladetor/Rampe: über das Fahrraster
    * bis vor das Tor, dann rückwärts heran (Heck am Tor, Front nach außen). null, wenn kein Weg frei ist.
    */
-  private paths(dock: Entity | null): { anfahrt: RoutePoint[]; abfahrt: RoutePoint[] } | null {
+  private paths(dock: Entity | null): { anfahrt: RoutePoint[]; abfahrt: RoutePoint[]; abgesenkt?: boolean } | null {
     const r = this.route;
     const v = (x: number, z: number, y = r.hoehe) => new THREE.Vector3(x, y, z);
     const start = v(r.von, r.strasseZ), ende = v(r.bis, r.strasseZ);
@@ -250,19 +258,54 @@ export class TruckFleet {
     const fwd = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), o.rotation.y);
     const tiefe = dock.require(RampComponent).tiefe;
     const laenge = this.settings.lkw.groesse[0];
-    const stop = o.position.clone().setY(0).addScaledVector(fwd, tiefe / 2 + laenge / 2 + 0.05);
-    const vor = stop.clone().addScaledVector(fwd, laenge * 0.4 + 1);
     // Wegsuche nur im Gelände: vom Rand der Straße aus
     const rand = (x: number) => v(Math.min(this.bounds.maxX - 1, Math.max(this.bounds.minX + 1, x)), r.strasseZ);
-    if (!this.corridorFree(dock, stop, vor, fwd)) return null;
-    const hin = this.drive.findPath(rand(r.von), vor);
-    const weg = this.drive.findPath(vor, rand(r.bis));
-    if (!hin || !weg) return null;
     const pts = (list: { x: number; z: number }[]) => list.map((q) => ({ p: v(q.x, q.z, this.heightAt(q.z)) }));
-    return {
-      anfahrt: [{ p: start }, ...pts(hin), { p: vor }, { p: stop, rueckwaerts: true }],
-      abfahrt: [{ p: vor }, ...pts(weg), { p: ende }],
+    const wege = (vor: THREE.Vector3) => {
+      const hin = this.drive.findPath(rand(r.von), vor);
+      const weg = this.drive.findPath(vor, rand(r.bis));
+      return hin && weg ? { hin: pts(hin), weg: pts(weg) } : null;
     };
+
+    // Abgesenkte Rampe davor? Dann rückwärts die Schräge hinunter bis ans Tor (Ladefläche bündig mit dem Hallenboden)
+    const cut = this.descentFor(dock, fwd);
+    if (cut) {
+      const s0 = new THREE.Vector3(cut.x, 0, cut.z);
+      const stop = s0.clone().addScaledVector(fwd, 0.3 + laenge / 2).setY(-cut.tiefe);
+      const unten = s0.clone().addScaledVector(fwd, cut.flach).setY(-cut.tiefe);
+      const oben = s0.clone().addScaledVector(fwd, cut.flach + cut.schraege).setY(0);
+      const vor = oben.clone().addScaledVector(fwd, laenge * 0.4 + 1);
+      if (!this.corridorFree(dock, oben, vor, fwd)) return null;
+      const w = wege(vor);
+      if (!w) return null;
+      return {
+        anfahrt: [{ p: start }, ...w.hin, { p: vor }, { p: oben, rueckwaerts: true }, { p: unten, rueckwaerts: true }, { p: stop, rueckwaerts: true }],
+        abfahrt: [{ p: unten }, { p: oben }, { p: vor }, ...w.weg, { p: ende }],
+        abgesenkt: true,
+      };
+    }
+
+    // Ebenerdiges Tor: davor halten, rückwärts heran, Ladebordwand herunter
+    const stop = o.position.clone().setY(0).addScaledVector(fwd, tiefe / 2 + laenge / 2 + 0.05);
+    const vor = stop.clone().addScaledVector(fwd, laenge * 0.4 + 1);
+    if (!this.corridorFree(dock, stop, vor, fwd)) return null;
+    const w = wege(vor);
+    if (!w) return null;
+    return {
+      anfahrt: [{ p: start }, ...w.hin, { p: vor }, { p: stop, rueckwaerts: true }],
+      abfahrt: [{ p: vor }, ...w.weg, { p: ende }],
+    };
+  }
+
+  /** Rampenabfahrt direkt vor diesem Tor (gleiche Richtung), sonst null */
+  private descentFor(dock: Entity, fwd: THREE.Vector3): TerrainCut | null {
+    const tiefe = dock.require(RampComponent).tiefe;
+    const p = dock.object.position.clone().addScaledVector(fwd, tiefe / 2);
+    for (const [, c] of this.world.query(TerrainCutComponent)) {
+      const cut = c.cut();
+      if (Math.hypot(cut.x - p.x, cut.z - p.z) < 0.4 && cut.dx * fwd.x + cut.dz * fwd.z > 0.99) return cut;
+    }
+    return null;
   }
 
   /** Ist die Fläche frei, auf der der LKW vor dem Tor steht und rangiert? (Stichproben alle 0,5 m) */

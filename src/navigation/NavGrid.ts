@@ -41,6 +41,8 @@ export class NavGrid {
     private readonly settings: NavSettings,
     private readonly world: World,
     private readonly mode: NavMode = 'gehen',
+    /** Fahren: hier zusätzlich nicht befahrbar (z. B. Hügel aus dem Gelände-Werkzeug) */
+    private readonly blocked?: (x: number, z: number) => boolean,
   ) {
     this.nx = Math.ceil((bounds.maxX - bounds.minX) / settings.zelle);
     this.nz = Math.ceil((bounds.maxZ - bounds.minZ) / settings.zelle);
@@ -101,11 +103,20 @@ export class NavGrid {
         else if (f.ebene === 'objekt' || f.ebene === 'wand') blockers.push(f.rect());
       }
       for (const r of blockers) this.mark(r, this.settings.radius, (c) => { this.walk[c] = 0; });
+      if (this.blocked) {
+        for (let c = 0; c < this.walk.length; c++) {
+          if (!this.walk[c]) continue;
+          const p = this.center(c);
+          if (this.blocked(p.x, p.z)) this.walk[c] = 0;
+        }
+      }
       return;
     }
     for (const [, f] of this.world.query(FootprintComponent)) {
       const r = f.rect();
       if (f.ebene === 'boden') {
+        // Fahrbahnen (Rampenabfahrt) sind nur für LKW
+        if (f.fahrbahn) continue;
         const top = f.top();
         this.mark(r, 0, (c) => {
           this.walk[c] = 1;

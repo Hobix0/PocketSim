@@ -1,0 +1,14 @@
+{
+  "id": "rampenabfahrt",
+  "name": "Rampenabfahrt (abgesenkt)",
+  "kategorie": "lager",
+  "ebene": "boden",
+  "aussen": true,
+  "fahrbahn": true,
+  "preis": 3200,
+  "freischaltLevel": 3,
+  "werte": {},
+  "absenkung": {"tiefe": 1.1, "flach": 8, "schraege": 6, "breite": 3.6},
+  "model": "eigen/rampenabfahrt",
+  "platzhalter": {"groesse": [14, 0.05, 3.6], "farbe": "#a3a39e"}
+}

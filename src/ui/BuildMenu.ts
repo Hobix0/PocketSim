@@ -5,6 +5,7 @@ import type { InputMap } from '../input/InputMap';
 import type { PlayerState } from '../state/PlayerState';
 import type { BuildController, Tool } from '../building/BuildController';
 import { iconUrl } from '../assets/icons';
+import type { TerrainMode, TerrainTool } from '../building/TerrainTool';
 import { cachedThumbnail, hasThumbnail, requestThumbnail } from '../assets/thumbnail';
 import { esc } from './html';
 import { formatMoney } from './format';
@@ -27,6 +28,8 @@ export class BuildMenu {
     private readonly player: PlayerState,
     private readonly input: InputMap,
     private readonly plots?: Plots,
+    /** Gelände-Werkzeug (Reiter „Gelände“) */
+    private readonly terrain?: TerrainTool,
   ) {
     const t = (k: string) => esc(content.text(k));
     this.el = document.createElement('div');
@@ -58,15 +61,22 @@ export class BuildMenu {
         this.plotMessage = r.ok ? '' : r.grund === 'geld' ? 'Dafür reicht das Geld nicht.' : r.grund === 'gesperrt' ? 'Noch nicht freigeschaltet.' : '';
         this.render();
       }
+      else if (b.dataset.gelaende && this.terrain) {
+        const mode = b.dataset.gelaende as TerrainMode;
+        if (this.terrain.mode === mode) this.terrain.cancel();
+        else { build.cancel(); this.terrain.start(mode); }
+      } else if (b.dataset.pinsel && this.terrain) this.terrain.setRadius(Number(b.dataset.pinsel));
       else if (b.dataset.tool === 'abreissen') this.toggle({ art: 'abreissen' });
       else if (b.dataset.tool === 'verschieben') this.toggle({ art: 'verschieben' });
       else if (b.dataset.bau) {
         const def = content.bau.get(b.dataset.bau);
+        this.terrain?.cancel();
         if (build.tool?.art === 'bauen' && build.tool.def === def && !build.tool.moving) build.cancel();
         else build.startBuilding(def);
       }
     });
     build.events.on('toolChanged', () => this.isOpen && this.render());
+    terrain?.events.on('changed', () => this.isOpen && this.render());
     player.events.on('changed', () => this.isOpen && this.render());
     input.onChange(() => this.isOpen && this.render());
   }
@@ -83,6 +93,7 @@ export class BuildMenu {
   close(): void {
     this.el.hidden = true;
     this.build.cancel();
+    this.terrain?.cancel();
   }
 
   toggleOpen(): void {
@@ -112,6 +123,7 @@ export class BuildMenu {
     ).join('');
     const cat = this.content.baumenue.kategorien.find((k) => k.id === this.kategorie)!;
     if (cat.spezial === 'grundstuecke') { this.gridEl.innerHTML = this.plotCards(); this.hintEl.innerHTML = this.hint(); return; }
+    if (cat.spezial === 'gelaende') { this.gridEl.innerHTML = this.terrainCards(); this.hintEl.innerHTML = this.hint(); return; }
     const defs = this.content.bau.all().filter((d) => inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
     this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('') || '<p class="empty-cat">Hier gibt es noch nichts.</p>';
     this.hintEl.innerHTML = this.hint();
@@ -121,6 +133,18 @@ export class BuildMenu {
         for (const el of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]')) if (el.dataset.thumb === path) el.src = url;
       });
     }
+  }
+
+  private terrainCards(): string {
+    const t = this.terrain;
+    if (!t) return '<p class="empty-cat">Hier lässt sich das Gelände nicht verändern.</p>';
+    const g = this.content.gelaende;
+    const tools: [TerrainMode, string, string][] = [['heben', 'Anheben', '▲'], ['senken', 'Absenken', '▼'], ['ebnen', 'Ebnen', '▬']];
+    const cards = tools.map(([m, name, icon]) => `<button type="button" class="card terrain ${t.mode === m ? 'active' : ''}" data-gelaende="${m}">
+        <span class="terrain-icon">${icon}</span><span class="name">${name}</span><span class="cost">${formatMoney(g.preisProKubikmeter)} je m³</span></button>`).join('');
+    const sizes = g.pinsel.map((r) => `<button type="button" class="${t.radius === r ? 'active' : ''}" data-pinsel="${r}">${r.toLocaleString('de-DE')} m</button>`).join('');
+    return cards + `<div class="terrain-sizes"><span>Pinsel</span>${sizes}</div>
+      <p class="empty-cat">Linke Maustaste gedrückt halten. Nur auf eigenem Grund und wo nichts gebaut ist. Gebaut werden kann danach nur auf ebenem Boden; LKW fahren nicht über Hügel.</p>`;
   }
 
   private plotCards(): string {
@@ -161,6 +185,7 @@ export class BuildMenu {
     const tool = this.build.tool;
     const k = (a: string) => `<span class="key">${esc(this.input.keyLabel(a))}</span>`;
     const t = (key: string) => esc(this.content.text(key));
+    if (this.terrain?.mode) return `<b>${esc(this.content.text(`gelaende_${this.terrain.mode}`))}</b><br>${k('auswaehlen')}${t('gelaende_halten')} ${k('pause')}${t('bauen_abbrechen')}`;
     if (!tool) return '';
     if (tool.art === 'bauen') {
       const problem = this.build.problem ? `<span class="problem">${esc(this.content.text(`bauen_fehler_${this.build.problem}`, { level: tool.def.freischaltLevel }))}</span>` : '';
