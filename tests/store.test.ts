@@ -123,6 +123,7 @@ describe('Personal', () => {
       auffuellen: { findTask: () => findStockingTask(w, () => true), gehgeschwindigkeit: 1.4, sekundenProStueck: 0.1 },
       abladen: { findTask: () => null, gehgeschwindigkeit: 1.4, sekundenProStueck: 0.1 },
       kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1.4, sekundenProArtikel: 1 },
+      einkaufen: { findTerminal: () => null, gehgeschwindigkeit: 1.4 },
     }, ctx));
     const states = new Set<string>();
     for (let i = 0; i < 600 && shelf.require(ShelfComponent).bestand === 0; i++) {

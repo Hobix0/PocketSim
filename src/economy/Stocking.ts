@@ -35,14 +35,18 @@ export interface StockingTask {
 /**
  * Nächste sinnvolle Aufgabe suchen: ein freier Karton, dessen ganzer Inhalt in ein Regal passt.
  * Bevorzugt Regale, in denen das Produkt schon steht (damit Fächer nicht zersplittern).
+ * Hat ein Produkt feste Fächer, kommt es nur dorthin.
  */
 export function findStockingTask(world: World, isFree: (carton: Entity) => boolean): StockingTask | null {
   const shelves = [...world.query(ShelfComponent)];
+  // Produkte mit festen Fächern kommen nur in diese Fächer
+  const fest = new Set(shelves.flatMap(([, s]) => s.faecher.map((f) => f.fest?.id).filter((id): id is string => !!id)));
   for (const [carton, c] of world.query(CartonComponent)) {
     if (c.reservedBy !== null || c.produkt.rohstoff || !isFree(carton)) continue;
+    const nurFest = fest.has(c.produkt.id);
     let best: Entity | null = null;
     for (const [shelf, s] of shelves) {
-      if (s.space(c.produkt) < c.menge) continue;
+      if (s.space(c.produkt, nurFest) < c.menge) continue;
       const hasProduct = s.faecher.some((f) => f.produkt?.id === c.produkt.id);
       if (hasProduct) { best = shelf; break; }
       best ??= shelf;

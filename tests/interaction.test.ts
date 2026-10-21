@@ -95,7 +95,7 @@ describe('Priorität', () => {
     for (const e of [...world.all()]) world.remove(e);
     let opened = 0;
     const { createBuildEntity: create } = await import('../src/factory/createBuildEntity');
-    const t = world.add(create(content.bau.get('einkaufsterminal'), { position: [0, 0, 0], drehung: 0 }, { content, actions: { openPurchase: () => opened++, carriedCarton: () => null, pickUpCarton: () => {}, dropCarton: () => {}, stockInto: () => {}, placeCarton: () => {}, openMachine: () => {} } }));
+    const t = world.add(create(content.bau.get('einkaufsterminal'), { position: [0, 0, 0], drehung: 0 }, { content, actions: { openPurchase: () => opened++, carriedCarton: () => null, pickUpCarton: () => {}, dropCarton: () => {}, stockInto: () => {}, placeCarton: () => {}, openMachine: () => {}, openShelf: () => {} } }));
     t.object.updateMatrixWorld(true);
     interactor.update(camera);
     expect(interactor.options().map((o) => o.text)).toEqual(['einkaufen']);

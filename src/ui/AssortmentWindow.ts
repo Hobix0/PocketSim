@@ -4,6 +4,7 @@ import type { World } from '../ecs/World';
 import type { PriceBook } from '../economy/Prices';
 import type { StoreStats } from '../economy/StoreStats';
 import { buyChance } from '../economy/Prices';
+import type { Listing } from '../economy/Buyer';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { iconUrl } from '../assets/icons';
@@ -27,6 +28,8 @@ export class AssortmentWindow {
     private readonly stats: StoreStats,
     private readonly world: World,
     private readonly level: () => number,
+    /** Was der Einkäufer nachkauft (Haken je Produkt) */
+    private readonly listing?: Listing,
   ) {
     this.el = document.createElement('div');
     this.el.className = 'window assortment panel';
@@ -60,6 +63,7 @@ export class AssortmentWindow {
     });
     this.el.addEventListener('change', (e) => {
       const input = e.target as HTMLInputElement;
+      if (input.dataset.nachkaufen && this.listing) { this.listing.setAktiv(input.dataset.nachkaufen, input.checked); return; }
       if (!input.dataset.preis) return;
       const v = Number(input.value.replace(',', '.'));
       if (Number.isFinite(v)) this.prices.set(content.produkte.get(input.dataset.preis), v);
@@ -95,7 +99,11 @@ export class AssortmentWindow {
   }
 
   private products(): ProductDef[] {
-    if (this.filter === 'laden') return [...this.stock().values()].map((s) => s.produkt);
+    if (this.filter === 'laden') {
+      // Was da ist, plus was der Einkäufer führt (auch wenn es gerade ausverkauft ist)
+      const ids = new Set([...this.stock().keys(), ...(this.listing?.gelistet ?? [])]);
+      return [...ids].map((id) => this.content.produkte.find(id)).filter((p): p is ProductDef => !!p);
+    }
     return this.content.produkte.all().filter((p) => p.freischaltLevel <= this.level());
   }
 
@@ -107,7 +115,7 @@ export class AssortmentWindow {
     const products = this.products().sort((a, b) => a.kategorie.localeCompare(b.kategorie) || a.name.localeCompare(b.name, 'de'));
     const s = this.content.kunden.preis;
     this.listEl.innerHTML = products.length ? `
-      <div class="price-head"><span></span><span>Produkt</span><span>EK</span><span>Empfohlen</span><span>Dein Preis</span><span>Marge</span><span>Kaufchance</span><span>Bestand</span><span>Gestern</span></div>
+      <div class="price-head"><span></span><span>Produkt</span><span>EK</span><span>Empfohlen</span><span>Dein Preis</span><span>Marge</span><span>Kaufchance</span><span>Bestand</span><span>Gestern</span>${this.listing ? '<span title="Der Einkäufer kauft nach">Nachkaufen</span>' : ''}</div>
       ${products.map((p) => {
         const preis = this.prices.get(p);
         const marge = preis > 0 ? Math.round(((preis - p.ek) / preis) * 100) : 0;
@@ -130,9 +138,10 @@ export class AssortmentWindow {
           <span class="chance"><span class="bar"><span style="width:${chance}%"></span></span>${chance} %</span>
           <span class="num">${st ? `${st.regal} · ${st.lager}` : '–'}</span>
           <span class="num">${count(gestern?.verkauft, p)} verkauft${count(gestern?.zuTeuer, p) ? ` · ${count(gestern?.zuTeuer, p)}× zu teuer` : ''}</span>
+          ${this.listing ? `<label class="nachkaufen" title="Der Einkäufer kauft ${esc(p.name)} nach"><input type="checkbox" data-nachkaufen="${p.id}" ${this.listing.aktiv(p.id) ? 'checked' : ''}></label>` : ''}
         </div>`;
       }).join('')}
-      <p class="hint">Bestand: im Regal · im Lager (Stück)</p>`
+      <p class="hint">Bestand: im Regal · im Lager (Stück). Nachkaufen: Ein Einkäufer bestellt das Produkt automatisch nach, sobald ein Karton fehlt – gesetzt wird der Haken, sobald es einmal im Regal stand.</p>`
       : '<p class="empty">Noch keine Ware im Laden – kauf am Einkaufsterminal ein.</p>';
   }
 }

@@ -1475,7 +1475,7 @@ html, body {
 .price-head,
 .price-row {
   display: grid;
-  grid-template-columns: 30px minmax(140px, 1.6fr) 70px 80px 170px 60px 110px 70px minmax(110px, 1fr);
+  grid-template-columns: 30px minmax(140px, 1.6fr) 70px 80px 170px 60px 110px 70px minmax(110px, 1fr) 76px;
   gap: 8px;
   align-items: center;
   font-size: 13px;
@@ -1573,6 +1573,12 @@ html, body {
     grid-template-areas: "icon name edit";
   }
   .price-row > .num, .price-row > .chance { display: none; }
+  .price-row > .nachkaufen { grid-column: 3; }
+}
+
+.price-row .nachkaufen {
+  display: flex;
+  justify-content: center;
 }
 
 /* ── Bilanz ── */
@@ -2040,4 +2046,59 @@ html, body {
   height: 56px;
   border-radius: 8px;
   background: #5d6166;
+}
+
+/* Regal belegen: ein Fach je Zeile */
+.shelf-window .faecher {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shelf-window .fach-row {
+  display: grid;
+  grid-template-columns: 64px 1fr minmax(160px, 220px) 64px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--panel-line);
+  border-radius: 8px;
+}
+
+.shelf-window .fach-row.fest {
+  border-color: var(--accent);
+}
+
+.shelf-window .fach-inhalt {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shelf-window .fuellung {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--panel-line);
+  overflow: hidden;
+}
+
+.shelf-window .fuellung span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.shelf-window select {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-line);
+  background: var(--button-bg);
+  color: inherit;
+}
+
+@media (max-width: 560px) {
+  .shelf-window .fach-row {
+    grid-template-columns: 56px 1fr;
+  }
 }

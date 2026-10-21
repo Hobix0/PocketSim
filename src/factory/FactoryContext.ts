@@ -23,6 +23,8 @@ export interface GameActions {
   stockInto(shelf: Entity): void;
   /** Bedienfenster einer Maschine öffnen. */
   openMachine(machine: Entity): void;
+  /** Regal belegen: feste Produkte je Fach festlegen. */
+  openShelf(shelf: Entity): void;
 }
 
 export interface FactoryContext {

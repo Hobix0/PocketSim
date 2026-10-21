@@ -279,7 +279,19 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen';
+}
+
+/** Einkäufer: automatisches Nachbestellen (data/personal/standard.json → "einkauf") */
+export interface BuyerSettings {
+  /** Wie oft der Einkäufer die Bestände prüft (Spielminuten) */
+  pruefenAlleMinuten: number;
+  /** So viele volle Kartons je Produkt sollen zusätzlich zum Regalplatz da sein */
+  reserveKartons: number;
+  /** Unter diesen Kontostand bestellt der Einkäufer nichts */
+  mindestGuthaben: number;
+  /** "normal" (nächster Liefertermin) oder "express" */
+  versand: 'normal' | 'express';
 }
 
 /** Einstellungen für Personal (data/personal/standard.json). */
@@ -289,6 +301,7 @@ export interface StaffSettings {
   gehgeschwindigkeit: number;
   sekundenProStueck: number;
   startPunkt: [number, number, number];
+  einkauf: BuyerSettings;
 }
 
 /** Belohnungen für Arbeit (data/arbeit/standard.json). */
