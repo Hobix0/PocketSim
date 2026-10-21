@@ -367,8 +367,15 @@ export class BuildController {
     }
   }
 
+  /**
+   * Wohin zeigt der Zeiger? Für Bodenteile und Objekte auf den Boden, für Deckenteile (Schienen, Leuchten,
+   * Hängeschilder) auf die Höhe, in der sie hängen – sonst landet man wegen der Schrägsicht meterweit daneben.
+   */
   private groundPoint(camera: THREE.Camera): boolean {
     this.raycaster.setFromCamera(this.pointer.ndc, camera);
+    const tool = this.tool;
+    const decke = tool?.art === 'bauen' && tool.def.ebene === 'decke';
+    this.plane.constant = decke ? -(this.content.baumenue.deckenhoehe - 0.5) : 0;
     return this.raycaster.ray.intersectPlane(this.plane, this.hit) !== null;
   }
 }
