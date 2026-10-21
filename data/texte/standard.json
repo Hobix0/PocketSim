@@ -38,6 +38,8 @@
   "bauen_fehler_gesperrt": "Erst ab Level {level}",
   "bauen_fehler_nicht_leer": "Erst leeren: Hier liegt noch Ware",
   "bauen_abgerissen": "{name} abgerissen (+{betrag})",
+  "bauen_flaeche": "{anzahl} Platten gelegt (−{betrag})",
+  "bauen_flaeche_ziehen": "gedrückt halten und ziehen: Fläche",
   "personal": "Personal",
   "personal_titel": "Personal",
   "personal_hinweis": "Angestellte arbeiten selbstständig. Der Lohn wird zu Beginn jedes Tages fällig. Wer selbst anpackt, sammelt XP – Personal nicht.",

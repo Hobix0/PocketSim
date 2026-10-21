@@ -5,6 +5,8 @@ import type { Bounds } from '../navigation/NavGrid';
 //  - eigenen Bearbeitungen (Gelände-Werkzeug: anheben, absenken, ebnen) – werden gespeichert
 //  - Absenkungen durch Bauteile (z. B. die Rampenabfahrt vor einem Ladetor) – ergeben sich aus der Welt
 // Keine three.js-Abhängigkeit; die Darstellung (TerrainView) liest nur die Höhen.
+// Dargestellt wird im Voxel-Stil: jede Zelle (0,5 m) ist eine Säule mit flacher Oberseite,
+// ihre Höhe auf Stufen (Standard 0,25 m) gerundet – siehe cellHeight().
 
 /** Absenkung durch ein Bauteil: ein Graben mit flachem Teil und Schräge nach außen */
 export interface TerrainCut {
@@ -28,7 +30,7 @@ export class Terrain {
   private readonly edits: Float32Array;
   private cuts: TerrainCut[] = [];
 
-  constructor(readonly bounds: Bounds, readonly zelle = 0.5, readonly maxHoehe = 2.5) {
+  constructor(readonly bounds: Bounds, readonly zelle = 0.5, readonly maxHoehe = 2.5, readonly stufe = 0.25) {
     this.nx = Math.round((bounds.maxX - bounds.minX) / zelle) + 1;
     this.nz = Math.round((bounds.maxZ - bounds.minZ) / zelle) + 1;
     this.edits = new Float32Array(this.nx * this.nz);
@@ -44,6 +46,21 @@ export class Terrain {
   vertexHeight(ix: number, iz: number, rand = 0.5): number {
     const x = this.bounds.minX + ix * this.zelle, z = this.bounds.minZ + iz * this.zelle;
     return this.edits[ix * this.nz + iz] + Math.min(0, ...this.cuts.map((c) => cutDepth(c, x, z, rand)));
+  }
+
+  /**
+   * Voxel-Höhe einer Zelle (zwischen den Eckpunkten ix..ix+1, iz..iz+1) für die Darstellung:
+   * eigene Bearbeitung gemittelt und auf Stufen gerundet, Absenkungen ab der Zellmitte gemessen.
+   * Abgesenkt wird abgerundet, damit die Erde sicher unter Bauteilen wie der Rampe bleibt.
+   */
+  cellHeight(ix: number, iz: number): number {
+    const x = this.bounds.minX + (ix + 0.5) * this.zelle, z = this.bounds.minZ + (iz + 0.5) * this.zelle;
+    const e = (a: number, b: number) => this.edits[a * this.nz + b];
+    const edit = (e(ix, iz) + e(ix + 1, iz) + e(ix, iz + 1) + e(ix + 1, iz + 1)) / 4;
+    const cut = Math.min(0, ...this.cuts.map((c) => cutDepth(c, x, z, 0.5, this.zelle / 2)));
+    const h = edit + cut;
+    const q = h < -0.02 ? Math.floor(h / this.stufe) : Math.round(h / this.stufe);
+    return q * this.stufe;
   }
 
   /** Höhe an einer beliebigen Stelle (bearbeitetes Gelände und genaue Absenkungen) */
@@ -135,14 +152,17 @@ export class Terrain {
   }
 }
 
-/** Tiefe einer Absenkung an einer Stelle (≤ 0). `rand`: so weit innen fängt sie erst an (für die Darstellung). */
-export function cutDepth(c: TerrainCut, x: number, z: number, rand: number): number {
+/**
+ * Tiefe einer Absenkung an einer Stelle (≤ 0). `rand`: so weit reicht sie für die Darstellung unter das Gebäude.
+ * `seite`: seitlich so viel schmaler (Voxel-Zellen ragen sonst über die Wände hinaus).
+ */
+export function cutDepth(c: TerrainCut, x: number, z: number, rand: number, seite = 0): number {
   const px = x - c.x, pz = z - c.z;
   const a = px * c.dx + pz * c.dz;
   const b = Math.abs(px * -c.dz + pz * c.dx);
   const laenge = c.flach + c.schraege;
   // Seitlich bis unter die Wände absenken, sonst ragt die Erde zwischen den Rasterpunkten über die Sohle
-  if (b > c.breite / 2 || a < -rand || a > laenge - rand * 0.2) return 0;
+  if (b > c.breite / 2 - seite || a < -rand || a > laenge - rand * 0.2) return 0;
   // Gras etwas unter den Betonboden legen, damit nichts durchscheint
   const extra = rand > 0 ? 0.15 : 0;
   if (a <= c.flach) return -(c.tiefe + extra);

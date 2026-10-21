@@ -22,6 +22,8 @@ import type { Plots } from '../world/Plots';
 //   bauen      – Vorschau ("Ghost") folgt dem Zeiger, grün = frei, rot = geht nicht; Klick platziert
 //   abreissen  – Klick auf ein Bauelement entfernt es (Teil des Preises zurück)
 //   verschieben – Klick nimmt ein Bauelement auf, danach wie bauen (kostenlos)
+// Böden werden flächig aufgezogen: Maustaste gedrückt halten und ein Rechteck ziehen, beim Loslassen
+// entstehen alle Platten auf einmal (bereits belegte Stellen werden übersprungen).
 // Gebaut werden nur Elemente aus den Kategorien des Baumenüs (data/baumenue).
 
 export type Tool =
@@ -51,6 +53,10 @@ export class BuildController {
   private readonly plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private readonly hit = new THREE.Vector3();
   private readonly plotLines = new THREE.Group();
+  /** Böden aufziehen: Startpunkt und Vorschau je Platte */
+  private dragStart: { x: number; z: number } | null = null;
+  private dragGhosts: THREE.Object3D[] = [];
+  private readonly ghostBad: THREE.MeshStandardMaterial;
 
   constructor(
     private readonly world: World,
@@ -72,6 +78,12 @@ export class BuildController {
     plots?.events.on('bought', () => this.drawPlots());
     this.drawPlots();
     this.ghostMaterial = new THREE.MeshStandardMaterial({ color: colors.ok, transparent: true, opacity: 0.45, depthWrite: false });
+    this.ghostBad = new THREE.MeshStandardMaterial({ color: colors.fehler, transparent: true, opacity: 0.45, depthWrite: false });
+  }
+
+  /** Wird gerade eine Bodenfläche aufgezogen? */
+  get dragging(): boolean {
+    return this.dragStart !== null;
   }
 
   get active(): boolean {
@@ -128,6 +140,7 @@ export class BuildController {
     this.ghostMaterial.color.set(check.ok ? this.colors.ok : this.colors.fehler);
     this.problem = check.ok ? null : check.grund ?? null;
 
+    if (isAreaPiece(tool)) { this.updateArea(tool.def, x, z, snapped.drehung); return; }
     if (!this.input.wasPressed('auswaehlen')) return;
     if (!check.ok) {
       this.events.emit('message', { key: `bauen_fehler_${check.grund}`, werte: { level: tool.def.freischaltLevel }, art: 'warnung' });
@@ -144,6 +157,80 @@ export class BuildController {
       const entity = this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: snapped.drehung }, this.ctx));
       this.events.emit('placed', { entity, moved: false });
     }
+  }
+
+  // ── Böden flächig aufziehen ─────────────────────────────────────
+
+  private updateArea(def: BuildDef, x: number, z: number, drehung: number): void {
+    if (this.input.wasPressed('auswaehlen')) this.dragStart = { x, z };
+    if (!this.dragStart) return;
+    this.ghostMaterial.color.set(this.colors.ok);
+    const tiles = this.areaTiles(def, this.dragStart, { x, z }, drehung);
+    this.ghost!.visible = false;
+    this.showAreaGhosts(tiles, drehung);
+    const ok = tiles.filter((t) => t.ok);
+    this.problem = ok.length ? null : tiles[0]?.grund ?? null;
+    if (this.input.isHeld('auswaehlen')) return;
+
+    // Losgelassen: alle freien Platten bauen
+    this.clearAreaGhosts();
+    this.dragStart = null;
+    if (!ok.length) {
+      this.events.emit('message', { key: `bauen_fehler_${tiles[0]?.grund ?? 'belegt'}`, werte: { level: def.freischaltLevel }, art: 'warnung' });
+      return;
+    }
+    if (!this.player.spend(def.preis * ok.length, 'bau')) return;
+    for (const t of ok) {
+      const entity = this.world.add(createBuildEntity(def, { position: [t.x, t.y, t.z], drehung }, this.ctx));
+      this.events.emit('placed', { entity, moved: false });
+    }
+    if (ok.length > 1) this.events.emit('message', { key: 'bauen_flaeche', werte: { anzahl: ok.length, betrag: `${(def.preis * ok.length).toLocaleString('de-DE')} €` }, art: 'gut' });
+  }
+
+  /** Alle Platten im aufgezogenen Rechteck (höchstens 20 × 20), jede mit Prüfung; Geld reicht für die ersten */
+  private areaTiles(def: BuildDef, a: { x: number; z: number }, b: { x: number; z: number }, drehung: number) {
+    const [w, , d] = def.platzhalter.groesse;
+    const quer = Math.abs(drehung) % 180 === 90;
+    const sx = quer ? d : w, sz = quer ? w : d;
+    const nx = Math.min(20, Math.round(Math.abs(b.x - a.x) / sx) + 1), nz = Math.min(20, Math.round(Math.abs(b.z - a.z) / sz) + 1);
+    const dx = Math.sign(b.x - a.x) * sx, dz = Math.sign(b.z - a.z) * sz;
+    const rotY = THREE.MathUtils.degToRad(drehung);
+    const tiles: { x: number; z: number; y: number; ok: boolean; grund?: PlacementError }[] = [];
+    let geld = this.player.geld;
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+      const x = a.x + i * dx, z = a.z + j * dz;
+      const check = checkPlacement(this.world, def, x, z, rotY, this.content.baumenue, {
+        geld, level: this.player.level,
+        plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
+        gelaendeOk: this.gelaende ? (r) => this.gelaende!(r) <= 0.05 : undefined,
+      });
+      if (check.ok) geld -= def.preis;
+      tiles.push({ x, z, y: check.y, ok: check.ok, grund: check.grund });
+    }
+    return tiles;
+  }
+
+  private showAreaGhosts(tiles: { x: number; z: number; y: number; ok: boolean }[], drehung: number): void {
+    const source = this.ghost!;
+    while (this.dragGhosts.length < tiles.length) {
+      const g = source.clone(true);
+      this.scene.add(g);
+      this.dragGhosts.push(g);
+    }
+    this.dragGhosts.forEach((g, i) => {
+      const t = tiles[i];
+      g.visible = !!t;
+      if (!t) return;
+      g.position.set(t.x, t.y, t.z);
+      g.rotation.y = THREE.MathUtils.degToRad(drehung);
+      const mat = t.ok ? this.ghostMaterial : this.ghostBad;
+      g.traverse((o) => { if (o instanceof THREE.Mesh) o.material = mat; });
+    });
+  }
+
+  private clearAreaGhosts(): void {
+    for (const g of this.dragGhosts) this.scene.remove(g);
+    this.dragGhosts = [];
   }
 
   // ── Abreißen / Verschieben (Objekt auswählen) ───────────────────
@@ -208,6 +295,8 @@ export class BuildController {
     if (this.tool?.art === 'bauen' && this.tool.moving && this.tool !== tool) this.tool.moving.object.visible = true;
     if (this.hovered) { setHighlight(this.hovered, 'none', this.colors.fehler); this.hovered = null; }
     this.removeGhost();
+    this.clearAreaGhosts();
+    this.dragStart = null;
     if (!keepRotation) this.quarter = 0;
     this.tool = tool;
     this.problem = null;
@@ -270,6 +359,11 @@ export class BuildController {
     this.raycaster.setFromCamera(this.pointer.ndc, camera);
     return this.raycaster.ray.intersectPlane(this.plane, this.hit) !== null;
   }
+}
+
+/** Bodenteile (außer der Rampenabfahrt) werden flächig aufgezogen – nicht beim Verschieben */
+function isAreaPiece(tool: Extract<Tool, { art: 'bauen' }>): boolean {
+  return tool.def.ebene === 'boden' && !tool.def.absenkung && !tool.moving;
 }
 
 /** Abreißen nur ohne Ware; Verschieben von Lagerflächen nur ohne Kartons (Regale dürfen voll umziehen). */

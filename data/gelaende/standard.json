@@ -1,7 +1,8 @@
 {
-  "_hinweis": "Gelände-Werkzeug: Raster der Höhenpunkte (m), höchste Erhebung/Tiefe (m), Kosten je bewegtem Kubikmeter Erde, wie schnell der Pinsel arbeitet (m pro Sekunde in der Mitte), Pinselgrößen (Radius m), Farbe an steilen Stellen.",
+  "_hinweis": "Gelände-Werkzeug: Raster der Höhenpunkte (m), höchste Erhebung/Tiefe (m), Kosten je bewegtem Kubikmeter Erde, wie schnell der Pinsel arbeitet (m pro Sekunde in der Mitte), Pinselgrößen (Radius m), Farbe der Erde an den Voxel-Seiten. stufe: Höhe einer Voxel-Stufe (m).",
   "zelle": 0.5,
   "maxHoehe": 2.5,
+  "stufe": 0.25,
   "preisProKubikmeter": 6,
   "tempo": 0.9,
   "pinsel": [1, 2, 3.5],

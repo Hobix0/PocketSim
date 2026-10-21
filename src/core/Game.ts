@@ -196,7 +196,7 @@ export class Game {
     this.level = new Level(readData<LevelData>(`level/${levelId}`));
     this.scene.add(this.level.root);
     // Gelände: verformbares Höhenfeld unter dem ganzen Level
-    this.terrain = new Terrain(this.level.bounds, this.content.gelaende.zelle, this.content.gelaende.maxHoehe);
+    this.terrain = new Terrain(this.level.bounds, this.content.gelaende.zelle, this.content.gelaende.maxHoehe, this.content.gelaende.stufe);
     this.terrainView = new TerrainView(this.level.ground, this.terrain, this.level.data.boden.farbe, this.content.gelaende.erde);
     this.scene.background = new THREE.Color(this.level.data.himmel);
 

@@ -189,7 +189,8 @@ export class BuildMenu {
     if (!tool) return '';
     if (tool.art === 'bauen') {
       const problem = this.build.problem ? `<span class="problem">${esc(this.content.text(`bauen_fehler_${this.build.problem}`, { level: tool.def.freischaltLevel }))}</span>` : '';
-      return `<b>${esc(tool.def.name)}</b> ${problem}<br>${k('auswaehlen')}${t('bauen_platzieren')} ${k('objekt_drehen')}${t('bauen_drehen')} ${k('pause')}${t('bauen_abbrechen')}`;
+      const flaeche = tool.def.ebene === 'boden' && !tool.def.absenkung && !tool.moving ? ` · ${t('bauen_flaeche_ziehen')}` : '';
+      return `<b>${esc(tool.def.name)}</b> ${problem}<br>${k('auswaehlen')}${t('bauen_platzieren')}${flaeche} ${k('objekt_drehen')}${t('bauen_drehen')} ${k('pause')}${t('bauen_abbrechen')}`;
     }
     return `${k('auswaehlen')}${t(tool.art === 'abreissen' ? 'bauen_werkzeug_abreissen' : 'bauen_werkzeug_verschieben')} ${k('pause')}${t('bauen_abbrechen')}`;
   }

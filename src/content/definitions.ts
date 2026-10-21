@@ -180,6 +180,8 @@ export interface LightDef {
 export interface TerrainSettings {
   zelle: number;
   maxHoehe: number;
+  /** Höhenstufe der Voxel-Darstellung (m) */
+  stufe: number;
   preisProKubikmeter: number;
   tempo: number;
   pinsel: number[];
