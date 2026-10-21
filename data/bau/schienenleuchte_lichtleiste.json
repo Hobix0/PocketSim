@@ -2,7 +2,7 @@
   "id": "schienenleuchte_lichtleiste",
   "name": "Schienenleuchte Lichtleiste",
   "kategorie": "einrichtung",
-  "ebene": "decke",
+  "ebene": "decke", "anSchiene": true,
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},

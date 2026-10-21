@@ -116,6 +116,7 @@
   "status_bestellt": "zuletzt {kartons} Kartons bestellt ({betrag})",
   "einraeumen_rohstoff": "{produkt} ist ein Rohstoff – der gehört in eine Maschine, nicht ins Regal",
   "bauen_fehler_strom": "Der Stromanschluss reicht nicht – unter „Versorgung“ ausbauen",
+  "bauen_fehler_schiene": "Schienenleuchten hängen nur an einer Lichtschiene – erst eine Schiene bauen (Reiter Licht)",
   "bauen_fehler_gelaende": "Der Boden ist hier nicht eben – erst mit dem Gelände-Werkzeug ebnen",
   "versorgung": "Versorgung",
   "produziert_fertig": "{menge}× {ware} fertig – steht im Lager",

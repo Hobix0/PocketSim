@@ -7,9 +7,10 @@ import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect }
 //  - Objekte und Deckenleuchten brauchen Boden (Fliesen, Gehweg) unter sich.
 //  - Objekte dürfen sich nicht mit anderen Objekten oder Wänden überschneiden,
 //    Deckenleuchten nicht mit anderen Deckenleuchten.
+//  - Schienenleuchten hängen nur unter einer Lichtschiene (und stören die Schiene dabei nicht).
 //  - Kostet Geld (außer beim Verschieben) und muss freigeschaltet sein.
 
-export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende';
+export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende' | 'schiene';
 
 export interface PlacementResult {
   ok: boolean;
@@ -71,6 +72,7 @@ export function checkPlacement(
   if (opts.plotOk && !opts.plotOk(x, z, def.ebene === 'wand' || def.ebene === 'anbau' ? 0.4 : 0)) return { ok: false, grund: 'grundstueck', y };
   if (opts.gelaendeOk && !def.absenkung && def.ebene !== 'decke' && !opts.gelaendeOk(rect)) return { ok: false, grund: 'gelaende', y };
   if (needsFloor && floor === null) return { ok: false, grund: 'boden', y };
+  if (def.anSchiene && !railAt(world, x, z, opts.moving)) return { ok: false, grund: 'schiene', y };
   // Wände brauchen Boden auf mindestens einer Seite
   if (def.ebene === 'wand' && !floorNear(world, rect, opts.moving)) return { ok: false, grund: 'boden', y };
   for (const [e, f] of world.query(FootprintComponent)) {
@@ -81,6 +83,8 @@ export function checkPlacement(
       continue;
     }
     if (!COLLIDES[def.ebene].includes(f.ebene)) continue;
+    // Leuchte und Schiene gehören zusammen
+    if ((def.anSchiene && f.schiene) || (def.schiene && f.anSchiene)) continue;
     const other = f.rect();
     if (!overlaps(rect, other)) continue;
     // Wandteile dürfen sich an Enden und Ecken überlappen (Eckpfeiler) – erst ab 35 cm entlang der Wand ist es „belegt“
@@ -90,6 +94,16 @@ export function checkPlacement(
   if (!opts.moving && opts.stromFrei !== undefined && (def.werte.strom ?? 0) > opts.stromFrei + 1e-9) return { ok: false, grund: 'strom', y };
   if (!opts.moving && def.preis > opts.geld) return { ok: false, grund: 'geld', y };
   return { ok: true, y };
+}
+
+/** Hängt an dieser Stelle eine Lichtschiene? */
+export function railAt(world: World, x: number, z: number, moving?: Entity): Entity | null {
+  for (const [e, f] of world.query(FootprintComponent)) {
+    if (e === moving || !f.schiene) continue;
+    const r = f.rect(), t = 0.06;
+    if (x >= r.minX - t && x <= r.maxX + t && z >= r.minZ - t && z <= r.maxZ + t) return e;
+  }
+  return null;
 }
 
 /** Liegt Boden direkt neben (oder unter) diesem Rechteck? */

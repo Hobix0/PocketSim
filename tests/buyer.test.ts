@@ -114,3 +114,35 @@ describe('Einkäufer', () => {
     expect(buyers.stock().length).toBe(0);
   });
 });
+
+describe('Schienenleuchten', () => {
+  const s = content.baumenue;
+  const leuchte = content.bau.get('schienenleuchte_pendel_kegel');
+  const schiene = content.bau.get('lichtschiene_gerade_200');
+  const opts = { geld: 10000, level: 99 };
+  function raum() {
+    const w = new World(new THREE.Group());
+    for (const x of [-1, 1]) for (const z of [-1, 1]) w.add(createBuildEntity(content.bau.get('boden_fliese_innen'), { position: [x, 0, z], drehung: 0 }, ctx));
+    return w;
+  }
+
+  it('hängen nur unter einer Lichtschiene', async () => {
+    const { checkPlacement } = await import('../src/building/placement');
+    const w = raum();
+    expect(checkPlacement(w, leuchte, 0.5, 0, 0, s, opts)).toMatchObject({ ok: false, grund: 'schiene' });
+    w.add(createBuildEntity(schiene, { position: [0, s.deckenhoehe, 0], drehung: 0 }, ctx));
+    expect(checkPlacement(w, leuchte, 0.5, 0, 0, s, opts).ok).toBe(true);
+    expect(checkPlacement(w, leuchte, 0.5, 0.8, 0, s, opts)).toMatchObject({ ok: false, grund: 'schiene' });
+  });
+
+  it('rasten auf der Mittellinie der Schiene ein, in ihrer Richtung', async () => {
+    const { snapPlacement } = await import('../src/building/snapping');
+    const w = raum();
+    w.add(createBuildEntity(schiene, { position: [0, s.deckenhoehe, 0], drehung: 90 }, ctx));
+    // Schiene läuft entlang Z: Leuchte springt auf x = 0, z auf 25 cm gerundet
+    const p = snapPlacement(w, leuchte, 0.3, 0.62, 0, s);
+    expect(p.x).toBeCloseTo(0);
+    expect(p.z).toBeCloseTo(0.5);
+    expect(p.drehung).toBe(90);
+  });
+});

@@ -2,7 +2,7 @@
   "id": "deckenstrahler_schiene",
   "name": "Deckenstrahler Schiene",
   "kategorie": "einrichtung",
-  "ebene": "decke",
+  "ebene": "decke", "anSchiene": true,
   "preis": 120,
   "freischaltLevel": 1,
   "werte": {"strom": 0.08},

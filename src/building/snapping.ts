@@ -57,6 +57,25 @@ export function snapPlacement(world: World, def: BuildDef, x: number, z: number,
     }
     if (best) return best;
   }
+  if (def.anSchiene) {
+    // Schienenleuchte: auf die Mittellinie der nächsten Lichtschiene, in deren Richtung
+    let best: Snapped | null = null, bestD = 0.8 ** 2;
+    for (const [e, f] of world.query(FootprintComponent)) {
+      if (!f.schiene) continue;
+      const o = e.object, rot = o.rotation.y;
+      const ax = Math.cos(rot), az = -Math.sin(rot);
+      const [len, , breit] = f.groesse;
+      // Gerade Schienen: entlang der Schiene verschiebbar (25-cm-Raster); Kreuz, T, Kurve: in die Mitte
+      const gerade = len > breit * 2.5;
+      const halb = Math.max(0, len / 2 - w / 2);
+      const along = gerade ? Math.max(-halb, Math.min(halb, snap((x - o.position.x) * ax + (z - o.position.z) * az, 0.25))) : 0;
+      const cx = o.position.x + ax * along, cz = o.position.z + az * along;
+      const dd = (cx - x) ** 2 + (cz - z) ** 2;
+      // Quer zur Schiene drehen geht mit „Drehen“ (für runde Leuchten egal)
+      if (dd < bestD) { bestD = dd; best = { x: cx, z: cz, drehung: Math.round((rot * 180) / Math.PI) + (quarter % 2) * 90 }; }
+    }
+    if (best) return best;
+  }
   if (def.ebene === 'boden') {
     // Am nächsten Boden derselben Art ausrichten (Gehweg liegt anders als die Fliesen innen)
     const r = floorRef(world, x, z, def.aussen);

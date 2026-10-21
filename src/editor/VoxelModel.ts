@@ -145,6 +145,8 @@ export function toBuildDef(m: VoxelModelData, kategorien: BuildCategory[], grid 
     durchgang: false,
     aussen: false,
     fahrbahn: false,
+    schiene: false,
+    anSchiene: false,
     funktionen: [],
     preis: m.preis,
     freischaltLevel: 1,

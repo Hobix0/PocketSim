@@ -13,7 +13,7 @@ import { type Rect, FootprintComponent } from '../components/FootprintComponent'
 import { ShelfComponent } from '../components/ShelfComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
-import { checkPlacement, type PlacementError } from './placement';
+import { checkPlacement, railAt, type PlacementError } from './placement';
 import { snapPlacement } from './snapping';
 import { inBuildCategory } from '../content/definitions';
 import type { Plots } from '../world/Plots';
@@ -257,6 +257,18 @@ export class BuildController {
         for (const [e, f] of [...this.world.query(FootprintComponent)]) {
           const p = e.object.position, t = target.object.position;
           if (f.ebene !== 'anbau' || Math.hypot(p.x - t.x, p.z - t.z) > 0.05) continue;
+          preis += this.content.bau.find(e.typeId)?.preis ?? 0;
+          this.world.remove(e);
+        }
+      }
+      // Schienenleuchten hängen an der Lichtschiene und gehen mit
+      if (def.schiene) {
+        const r = target.require(FootprintComponent).rect(), t = 0.06;
+        for (const [e, f] of [...this.world.query(FootprintComponent)]) {
+          const p = e.object.position;
+          if (!f.anSchiene || p.x < r.minX - t || p.x > r.maxX + t || p.z < r.minZ - t || p.z > r.maxZ + t) continue;
+          // Hängt sie noch an einer anderen Schiene, bleibt sie
+          if (railAt(this.world, p.x, p.z, target)) continue;
           preis += this.content.bau.find(e.typeId)?.preis ?? 0;
           this.world.remove(e);
         }

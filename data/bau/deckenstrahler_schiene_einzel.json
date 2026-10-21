@@ -2,7 +2,7 @@
   "id": "deckenstrahler_schiene_einzel",
   "name": "Deckenstrahler Schiene Einzel",
   "kategorie": "einrichtung",
-  "ebene": "decke",
+  "ebene": "decke", "anSchiene": true,
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},
