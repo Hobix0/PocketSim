@@ -1452,7 +1452,7 @@ html, body {
 
 /* ── Sortiment und Preise ── */
 .assortment {
-  width: min(980px, calc(100% - 24px));
+  width: min(1100px, calc(100% - 24px));
 }
 
 .assortment .toolbar {
@@ -1468,6 +1468,7 @@ html, body {
 
 .assortment .prices {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2px;
   overflow-y: auto;
 }
@@ -2101,4 +2102,9 @@ html, body {
   .shelf-window .fach-row {
     grid-template-columns: 56px 1fr;
   }
+}
+
+/* Längere Erklärung unter der Preisliste darf umbrechen (die globale .hint-Klasse ist einzeilig) */
+.assortment .prices .hint {
+  white-space: normal;
 }

@@ -1,0 +1,11 @@
+{
+  "id": "schild_backwaren",
+  "name": "Hängeschild Backwaren",
+  "kategorie": "schilder",
+  "ebene": "decke",
+  "preis": 45,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/schild_backwaren",
+  "platzhalter": {"groesse": [0.1, 1.4, 1.5], "farbe": "#f1ead9"}
+}

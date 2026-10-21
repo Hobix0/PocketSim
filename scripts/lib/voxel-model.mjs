@@ -21,16 +21,25 @@ export function hash(x, y, z) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
-// 3 × 5 Pixel-Schrift für Schilder
+// Pixel-Schrift für Schilder: 5 Zeilen hoch, meist 3 breit (W, M und % sind 5 breit)
 const FONT = {
   A: ['010', '101', '111', '101', '101'], B: ['110', '101', '110', '101', '110'], E: ['111', '100', '110', '100', '111'],
   G: ['011', '100', '101', '101', '011'], L: ['100', '100', '100', '100', '111'], R: ['110', '101', '110', '101', '101'],
   N: ['101', '111', '111', '111', '101'], O: ['010', '101', '101', '101', '010'], P: ['110', '101', '110', '100', '100'],
   U: ['101', '101', '101', '101', '111'], S: ['011', '100', '010', '001', '110'], T: ['111', '010', '010', '010', '010'],
-  I: ['111', '010', '010', '010', '111'], K: ['101', '110', '100', '110', '101'], W: ['101', '101', '111', '111', '101'],
+  I: ['111', '010', '010', '010', '111'], K: ['101', '110', '100', '110', '101'], W: ['10001', '10001', '10101', '10101', '01010'],
   C: ['011', '100', '100', '100', '011'], D: ['110', '101', '101', '101', '110'], F: ['111', '100', '110', '100', '100'],
-  H: ['101', '101', '111', '101', '101'], M: ['101', '111', '111', '101', '101'], Z: ['111', '001', '010', '100', '111'],
-  ' ': ['000', '000', '000', '000', '000'], '!': ['010', '010', '010', '000', '010'],
+  H: ['101', '101', '111', '101', '101'], M: ['10001', '11011', '10101', '10001', '10001'], Z: ['111', '001', '010', '100', '111'],
+  V: ['101', '101', '101', '101', '010'], Y: ['101', '101', '010', '010', '010'], J: ['001', '001', '001', '101', '010'],
+  X: ['101', '101', '010', '101', '101'], Q: ['010', '101', '101', '110', '011'],
+  Ä: ['101', '010', '101', '111', '101'], Ö: ['101', '010', '101', '101', '010'], Ü: ['101', '000', '101', '101', '111'],
+  0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'], 2: ['110', '001', '010', '100', '111'],
+  3: ['110', '001', '010', '001', '110'], 4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '110', '001', '110'],
+  6: ['011', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010'], 8: ['111', '101', '111', '101', '111'],
+  9: ['111', '101', '111', '001', '110'],
+  ' ': ['000', '000', '000', '000', '000'], '!': ['010', '010', '010', '000', '010'], '&': ['010', '101', '010', '101', '011'],
+  '-': ['000', '000', '111', '000', '000'], '.': ['000', '000', '000', '000', '010'], '%': ['11001', '11010', '00100', '01011', '10011'],
+  ':': ['000', '010', '000', '010', '000'], '€': ['011', '100', '110', '100', '011'],
 };
 
 /**
@@ -75,20 +84,29 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   /**
    * Text auf eine Fläche schreiben, die nach +X zeigt (in Ebene x), von links nach rechts gelesen.
    * zLeft = linker Rand (von vorne gesehen ist links das größere z), yTop = obere Kante. scale = Würfel je Pixel.
+   * `seite` wählt die Fläche: '+x' (Standard), '-x', '+z' oder '-z' – dann ist `x` die Lage der Fläche
+   * und `zLeft` der linke Rand entlang der anderen Achse, so wie man von dieser Seite draufschaut.
    */
-  const text = (x, yTop, zLeft, str, c, scale = 1) => {
-    let z = zLeft;
+  const text = (x, yTop, zLeft, str, c, scale = 1, seite = '+x') => {
+    // Von +X gesehen läuft der Text nach −Z, von −X nach +Z, von +Z nach +X, von −Z nach −X
+    const dir = seite === '+x' || seite === '-z' ? -1 : 1;
+    const onZ = seite === '+z' || seite === '-z';
+    let u = zLeft;
     for (const ch of str.toUpperCase()) {
       const g = FONT[ch] ?? FONT[' '];
-      for (let row = 0; row < 5; row++) for (let col = 0; col < 3; col++) {
+      const breite = g[0].length;
+      for (let row = 0; row < 5; row++) for (let col = 0; col < breite; col++) {
         if (g[row][col] !== '1') continue;
-        box(x, x, yTop - (row + 1) * scale + 1, yTop - row * scale, z - (col + 1) * scale + 1, z - col * scale, c);
+        const a = u + dir * col * scale, b = a + dir * (scale - 1);
+        const y0 = yTop - (row + 1) * scale + 1, y1 = yTop - row * scale;
+        if (onZ) box(a, b, y0, y1, x, x, c);
+        else box(x, x, y0, y1, a, b, c);
       }
-      z -= 4 * scale;
+      u += dir * (breite + 1) * scale;
     }
   };
   /** Breite eines Textes in Würfeln */
-  const textWidth = (str, scale = 1) => str.length * 4 * scale - scale;
+  const textWidth = (str, scale = 1) => [...str.toUpperCase()].reduce((n, ch) => n + ((FONT[ch] ?? FONT[' '])[0].length + 1) * scale, 0) - scale;
 
   draw({ nx, ny, nz, set, get, clear, box, hole, rough, cyl, frame, text, textWidth, shade, hash, range });
 

@@ -13,7 +13,8 @@
     "build:artifact": "tsc --noEmit && VITE_INLINE_MODELS=1 vite build --outDir dist-artifact",
     "modelle:maschinen": "node scripts/make-machine-models.mjs",
     "modelle:lager": "node scripts/make-lager-models.mjs",
-    "modelle:deko": "node scripts/make-deko-models.mjs"
+    "modelle:deko": "node scripts/make-deko-models.mjs",
+    "modelle:store": "node scripts/make-store-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"
