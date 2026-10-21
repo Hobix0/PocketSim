@@ -11,6 +11,9 @@ import { StorageSurfaceComponent } from './StorageSurfaceComponent';
 
 export type TruckState = 'anfahrt' | 'steht' | 'abfahrt';
 
+/** Geometrie der Ladebordwand (einmal für alle LKW) */
+let lift: { plate: THREE.BoxGeometry; post: THREE.BoxGeometry; metal: THREE.Material; stripe: THREE.Material } | null = null;
+
 /** Wie schnell der LKW einlenkt (rad pro Sekunde) */
 const TURN_RATE = 1.6;
 
@@ -32,6 +35,7 @@ export class TruckComponent extends Component implements Describable {
   wartet = 0;
   private route: RoutePoint[];
   private leg = 0;
+  private lift: THREE.Group | null = null;
 
   constructor(
     /** Kartons, die er bringt (werden bei Ankunft auf die Ladefläche gestellt) */
@@ -42,6 +46,8 @@ export class TruckComponent extends Component implements Describable {
     /** Wo er steht: eine Laderampe oder null (Straße) */
     readonly dock: Entity | null,
     private readonly services: TruckServices,
+    /** Länge des LKW (für die Ladebordwand am Heck) */
+    private readonly laenge = 7,
   ) {
     super();
     this.route = anfahrt;
@@ -58,6 +64,7 @@ export class TruckComponent extends Component implements Describable {
 
   depart(): void {
     if (this.state !== 'steht') return;
+    this.setLift(false);
     this.state = 'abfahrt';
     this.route = this.abfahrt;
     this.leg = 0;
@@ -98,10 +105,37 @@ export class TruckComponent extends Component implements Describable {
           o.rotation.y = Math.atan2(-d.z, d.x);
         }
         this.state = 'steht';
+        this.setLift(true);
         this.services.arrived(this);
         this.notifyChanged();
       } else this.services.left(this);
     }
+  }
+
+  /** Ladebordwand: heruntergeklappt liegt sie ebenerdig hinter dem Heck (so wird am Tor ohne Rampe entladen) */
+  private setLift(down: boolean): void {
+    if (this.lift) { this.entity.object.remove(this.lift); this.lift = null; }
+    if (!down) return;
+    lift ??= {
+      plate: new THREE.BoxGeometry(1.1, 0.06, 2.2),
+      post: new THREE.BoxGeometry(0.08, 1.2, 0.08),
+      metal: new THREE.MeshStandardMaterial({ color: '#9aa1a6', roughness: 0.6, metalness: 0.3 }),
+      stripe: new THREE.MeshStandardMaterial({ color: '#e6b929', roughness: 0.7 }),
+    };
+    const g = new THREE.Group();
+    const plate = new THREE.Mesh(lift.plate, lift.metal);
+    plate.position.set(-this.laenge / 2 - 0.55, 0.04, 0);
+    plate.receiveShadow = true;
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.07, 2.2), lift.stripe);
+    edge.position.set(-this.laenge / 2 - 1.08, 0.045, 0);
+    g.add(plate, edge);
+    for (const z of [-1.05, 1.05]) {
+      const post = new THREE.Mesh(lift.post, lift.metal);
+      post.position.set(-this.laenge / 2 - 0.05, 0.6, z);
+      g.add(post);
+    }
+    this.lift = g;
+    this.entity.object.add(g);
   }
 
   describe(): InfoRow[] {

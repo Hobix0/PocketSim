@@ -1,0 +1,11 @@
+{
+  "id": "kreidetafel",
+  "name": "Kreidetafel",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 40,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/kreidetafel",
+  "platzhalter": {"groesse": [0.5, 1.1, 0.7], "farbe": "#2c3330"}
+}

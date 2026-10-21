@@ -1,7 +1,7 @@
 {
   "id": "sektionaltor",
   "name": "Sektionaltor",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "wand",
   "durchgang": true,
   "preis": 600,

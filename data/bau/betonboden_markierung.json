@@ -1,7 +1,7 @@
 {
   "id": "betonboden_markierung",
   "name": "Boden Beton Markierung",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "boden",
   "preis": 130,
   "freischaltLevel": 1,

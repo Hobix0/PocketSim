@@ -1,0 +1,13 @@
+{
+  "id": "holzregal",
+  "name": "Holzregal",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "kontext": "ablage",
+  "preis": 180,
+  "freischaltLevel": 1,
+  "werte": {"lagerplaetze": 15},
+  "ablage": {"boeden": [0.1, 0.75, 1.4]},
+  "model": "eigen/holzregal",
+  "platzhalter": {"groesse": [0.6, 2.0, 2.0], "farbe": "#c9a26b"}
+}

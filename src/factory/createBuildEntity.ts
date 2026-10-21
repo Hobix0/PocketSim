@@ -12,6 +12,7 @@ import { MachineComponent } from '../components/MachineComponent';
 import { StorageDropComponent } from '../components/StorageDropComponent';
 import { RampComponent } from '../components/RampComponent';
 import { LampComponent } from '../components/LampComponent';
+import { CartStationComponent } from '../components/CartStationComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import { formatMoney } from '../ui/format';
@@ -42,6 +43,7 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
     entity.add(new SelectableComponent(def.kontext, def.name, `${kontextName} · ${formatMoney(def.preis).replace(',00', '')}`));
   }
   if (def.licht) entity.add(new LampComponent(def.licht));
+  if (def.wagenbox) entity.add(new CartStationComponent(def.wagenbox.anzahl, content.kunden.einkaufswagen?.model, ctx.models));
   if (def.ablage) {
     entity.add(new StorageSurfaceComponent(def.platzhalter.groesse, def.ablage, content.lager.karton.groesse));
     entity.add(new StorageDropComponent(ctx.actions));

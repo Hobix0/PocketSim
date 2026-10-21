@@ -22,7 +22,8 @@ import type { GameActions } from '../src/factory/FactoryContext';
 // Lager und Logistik: Liefertermine, Lieferkosten, LKW, Abladen (Fahrer, Lagerist, von Hand), Laderampe.
 
 const content = new Content();
-const route: DeliveryRoute = { strasseZ: 9, hoehe: 0.04, von: -27, bis: 27, halt: -0.8, zufahrtX: 13 };
+const route: DeliveryRoute = { strasseZ: 9, hoehe: 0.04, von: -27, bis: 27, halt: -0.8 };
+const bounds = { minX: -20, maxX: 20, minZ: -15, maxZ: 15 };
 const DAY = 24 * 60;
 
 function setup(geld = 1000) {
@@ -33,7 +34,7 @@ function setup(geld = 1000) {
   const storage = new CartonStorage(world, ctx);
   let now = 7 * 60; // Tag 1, 07:00
   const clock = { get: () => now, set: (m: number) => { now = m; } };
-  const fleet = new TruckFleet(world, ctx, content.logistik, route, storage, player);
+  const fleet = new TruckFleet(world, ctx, content.logistik, route, storage, player, bounds);
   const deliveries = new Deliveries(content.logistik, storage, clock.get, () => fleet.onTrucks());
   deliveries.events.on('arrived', (s) => fleet.receive(s));
   const purchasing = new Purchasing(content.waren, player, deliveries);
@@ -190,21 +191,39 @@ describe('LKW', () => {
     expect(fleet.list[0].state).toBe('abfahrt');
   });
 
-  it('mit einer Laderampe hält der LKW dort – rückwärts, die Ladefläche an der Rampe', () => {
+  it('mit einem Ladetor in der Lagerwand fährt der LKW über das Gelände heran und setzt rückwärts an', () => {
     const { world, fleet, ctx } = setup();
-    const rampe = world.add(createBuildEntity(content.bau.get('laderampe'), { position: [0, 0, -6], drehung: 90 }, ctx));
+    // Kleine Halle: Betonboden, Ladetor in der Ostwand (Außenseite +X)
+    for (const z of [-2, 0, 2]) world.add(createBuildEntity(content.bau.get('betonboden'), { position: [9, 0, z], drehung: 0 }, ctx));
+    const tor = world.add(createBuildEntity(content.bau.get('ladetor'), { position: [10.1, 0, 0], drehung: 0 }, ctx));
     fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }] });
-    expect(fleet.list[0].dock).toBe(rampe);
-    expect(rampe.require(RampComponent).belegt).toBe(true);
-    expect(runUntil(world, () => fleet.list[0]?.state === 'steht', 4000)).toBe(true);
+    expect(fleet.list[0].dock).toBe(tor);
+    expect(tor.require(RampComponent).belegt).toBe(true);
+    expect(runUntil(world, () => fleet.list[0]?.state === 'steht', 6000)).toBe(true);
     const truck = fleet.list[0].entity.object;
-    // Rampe zeigt mit drehung 90 nach −Z: der LKW steht dahinter, Front zeigt weg (−Z)
-    expect(truck.position.z).toBeLessThan(-6 - 1);
+    // Heck am Tor, Front zeigt nach außen (+X)
+    const laenge = content.logistik.lkw.groesse[0];
+    expect(truck.position.x).toBeCloseTo(10.1 + 0.2 + laenge / 2 + 0.05, 1);
+    expect(truck.position.z).toBeCloseTo(0, 1);
     const front = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), truck.rotation.y);
-    expect(front.z).toBeCloseTo(-1);
-    // Zweite Lieferung: Rampe belegt → Straße
+    expect(front.x).toBeCloseTo(1);
+    // Unterwegs nie durch die Halle (Innenboden x 8–10)
+    // Zweite Lieferung: Tor belegt → Straße
     fleet.receive({ id: 2, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }] });
     expect(fleet.list[1].dock).toBeNull();
+  });
+
+  it('ist das Tor zugebaut, hält der LKW auf der Straße und es gibt eine Meldung', () => {
+    const { world, fleet, ctx } = setup();
+    world.add(createBuildEntity(content.bau.get('betonboden'), { position: [9, 0, 0], drehung: 0 }, ctx));
+    world.add(createBuildEntity(content.bau.get('ladetor'), { position: [10.1, 0, 0], drehung: 0 }, ctx));
+    // Direkt vor dem Tor steht ein Gabelstapler
+    world.add(createBuildEntity(content.bau.get('gabelstapler'), { position: [12, 0, 0], drehung: 0 }, ctx));
+    const meldungen: unknown[] = [];
+    fleet.events.on('unreachable', (m) => meldungen.push(m));
+    fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }] });
+    expect(fleet.list[0].dock).toBeNull();
+    expect(meldungen).toHaveLength(1);
   });
 
   it('Kartons auf dem LKW landen nicht als lose Kartons im Spielstand, sondern in der Ladung', () => {

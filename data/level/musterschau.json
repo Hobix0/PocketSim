@@ -218,7 +218,7 @@
     {"produkt": "zahnbuerste", "position": [2.7, 0, 16.91], "drehung": -90},
     {"produkt": "zahnpasta", "position": [3.15, 0, 16.91], "drehung": -90},
     {"typ": "palettenregal", "position": [15, 0, -14], "drehung": -90},
-    {"typ": "laderampe", "position": [18.5, 0, -14], "drehung": -90},
+    {"typ": "holzregal", "position": [18.5, 0, -14], "drehung": -90},
     {"typ": "gabelstapler", "position": [21.5, 0, -14], "drehung": -90},
     {"typ": "packtisch", "position": [24.5, 0, -14], "drehung": -90},
     {"typ": "spind", "position": [27.5, 0, -14], "drehung": -90},
@@ -241,6 +241,16 @@
     {"typ": "betonboden", "position": [15, 0, 3], "drehung": 0},
     {"typ": "betonboden_markierung", "position": [17.5, 0, 3], "drehung": 0},
     {"typ": "asphalt_hof", "position": [20, 0, 3], "drehung": 0},
-    {"typ": "hallenstrahler", "position": [22.5, 3, 3], "drehung": 0}
+    {"typ": "hallenstrahler", "position": [22.5, 3, 3], "drehung": 0},
+    {"typ": "ladetor", "position": [25.5, 0, -1], "drehung": -90},
+    {"typ": "holzkisten", "position": [15, 0, 7], "drehung": -90},
+    {"typ": "fass", "position": [17, 0, 7], "drehung": -90},
+    {"typ": "wagenbox", "position": [20, 0, 7.5], "drehung": -90},
+    {"typ": "holzbank", "position": [23, 0, 7], "drehung": -90},
+    {"typ": "strassenlaterne", "position": [25, 0, 7], "drehung": 0},
+    {"typ": "lavendelkuebel", "position": [26.5, 0, 7], "drehung": 0},
+    {"typ": "fahrradstaender", "position": [15, 0, 11], "drehung": -90},
+    {"typ": "kreidetafel", "position": [18, 0, 11], "drehung": -90},
+    {"typ": "holzdielen", "position": [22.5, 0, 3], "drehung": 0}
   ]
 }

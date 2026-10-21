@@ -10,6 +10,7 @@
     "model": "eigen/lkw",
     "groesse": [7.2, 3.3, 2.5],
     "ladeflaeche": { "von": -3.5, "bis": 1.4, "breite": 2.2, "hoehe": 1.15, "ebenen": 2 },
-    "geschwindigkeit": 7
+    "geschwindigkeit": 7,
+    "fahrraster": 0.5
   }
 }

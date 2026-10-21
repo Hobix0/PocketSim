@@ -2,9 +2,11 @@ import type { World } from '../ecs/World';
 import type { NavSettings } from '../content/definitions';
 import { FootprintComponent, type Rect } from '../components/FootprintComponent';
 
-// Raster für die Wegfindung von Kunden und Personal.
-// Begehbar ist, was auf Boden (Fliesen, Gehweg) liegt oder eine Tür/ein Durchgang ist –
-// außer dort, wo Objekte oder Wände stehen (mit etwas Abstand, damit Figuren nicht hineinragen).
+// Raster für die Wegfindung.
+//  - "gehen" (Kunden und Personal): begehbar ist, was auf Boden (Fliesen, Gehweg) liegt oder eine
+//    Tür/ein Durchgang ist – außer dort, wo Objekte oder Wände stehen (mit Abstand, damit niemand hineinragt).
+//  - "fahren" (LKW): befahrbar ist das ganze Gelände außer Innenräumen (Innenboden), Wänden und Objekten –
+//    mit so viel Abstand, wie der LKW breit ist. Außenflächen wie Asphalt oder Gehweg sind befahrbar.
 // Wege werden mit A* gesucht und danach geglättet (gerade Linien, wo frei).
 // Keine three.js-Abhängigkeit; neu aufgebaut wird nur, wenn sich etwas Gebautes ändert.
 
@@ -24,6 +26,8 @@ const DIRS: [number, number, number][] = [
   [1, 1, SQRT2], [1, -1, SQRT2], [-1, 1, SQRT2], [-1, -1, SQRT2],
 ];
 
+export type NavMode = 'gehen' | 'fahren';
+
 export class NavGrid {
   readonly nx: number;
   readonly nz: number;
@@ -36,6 +40,7 @@ export class NavGrid {
     private readonly bounds: Bounds,
     private readonly settings: NavSettings,
     private readonly world: World,
+    private readonly mode: NavMode = 'gehen',
   ) {
     this.nx = Math.ceil((bounds.maxX - bounds.minX) / settings.zelle);
     this.nz = Math.ceil((bounds.maxZ - bounds.minZ) / settings.zelle);
@@ -88,6 +93,16 @@ export class NavGrid {
     this.height.fill(NaN);
     const blockers: Rect[] = [];
     const doors: Rect[] = [];
+    if (this.mode === 'fahren') {
+      // Alles befahrbar außer Innenräumen und allem Gebauten (Türen sind für LKW zu schmal)
+      this.walk.fill(1);
+      for (const [, f] of this.world.query(FootprintComponent)) {
+        if (f.ebene === 'boden') { if (!f.aussen) blockers.push(f.rect()); }
+        else if (f.ebene === 'objekt' || f.ebene === 'wand') blockers.push(f.rect());
+      }
+      for (const r of blockers) this.mark(r, this.settings.radius, (c) => { this.walk[c] = 0; });
+      return;
+    }
     for (const [, f] of this.world.query(FootprintComponent)) {
       const r = f.rect();
       if (f.ebene === 'boden') {

@@ -21,6 +21,7 @@ import { CheckoutComponent } from '../components/CheckoutComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
+import { CartStationComponent } from '../components/CartStationComponent';
 
 // Ladenbetrieb: Kunden kommen, kaufen ein, bezahlen an der Kasse, gehen wieder.
 // Verbindet Wegfindung, Kundenzustrom, Kassen und Kennzahlen. Die Darstellung (HUD, Fenster)
@@ -163,6 +164,16 @@ export class StoreLoop {
       settings: s,
       speed,
       text: (k, v) => this.content.text(k, v),
+      findCartStation: (from) => {
+        let best: Entity | null = null, bestD = Infinity;
+        for (const [e, st] of this.world.query(CartStationComponent)) {
+          const d = e.object.position.distanceToSquared(from);
+          if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
+        }
+        return best;
+      },
+      einkaufswagen: s.einkaufswagen,
+      models: this.ctx().models,
       priceOf: (p) => this.prices.get(p),
       willBuy: (p) => this.random() < buyChance(s.preis, this.prices.ratio(p)),
       isBargain: (p) => this.prices.ratio(p) <= s.preis.schnaeppchenAb,

@@ -1,0 +1,11 @@
+{
+  "id": "holzbank",
+  "name": "Holzbank",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/holzbank",
+  "platzhalter": {"groesse": [0.6, 0.9, 1.6], "farbe": "#c9a26b"}
+}
