@@ -60,6 +60,7 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
 import { LampLights } from '../world/LampLights';
 import { daylight } from '../world/DayCycle';
+import { RoofLayer } from '../world/RoofLayer';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -141,6 +142,8 @@ export class Game {
   private readonly sun: THREE.DirectionalLight;
   private readonly ambient: THREE.HemisphereLight;
   private readonly lampLights: LampLights;
+  /** Dach über den Innenräumen (herausgezoomt sichtbar, Taste „Dach“ blendet aus) */
+  private readonly roof: RoofLayer | null;
   /** Farben für Tag und Nacht (Himmel, Sonne) */
   private readonly sky: { tag: THREE.Color; nacht: THREE.Color; daemmerung: THREE.Color; sonne: THREE.Color; sonneNacht: THREE.Color; sonneDaemmerung: THREE.Color };
 
@@ -211,6 +214,8 @@ export class Game {
     };
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
     this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
+    const dach = this.content.baumenue.dach;
+    this.roof = dach ? new RoofLayer(this.scene, this.world, { hoehe: this.content.baumenue.deckenhoehe, ...dach }) : null;
 
     // Kamera
     const start = new THREE.Vector3(...this.level.data.kameraStart);
@@ -360,6 +365,7 @@ export class Game {
     this.build.events.on('placed', ({ entity, moved }) => {
       this.store.nav.invalidate();
       this.fleet?.invalidate();
+      this.roof?.invalidate();
       if (moved) return;
       if (entity.get(ShelfComponent)) this.goals.complete('regal_bauen');
       if (entity.get(CheckoutComponent)) this.goals.complete('kasse_bauen');
@@ -373,6 +379,7 @@ export class Game {
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
     this.hud.onTool('versorgung', () => this.utilityWindow.toggleOpen());
     this.hud.onTool('lager', () => this.logisticsWindow.toggleOpen());
+    this.hud.onTool('dach', () => this.toggleRoof());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -454,6 +461,7 @@ export class Game {
     this.fleet?.update(minutes);
     this.world.update(simDt);
     this.updateDaylight(realDt);
+    this.roof?.update(realDt, this.view.abstand, this.build.active);
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
     this.interactor.enabled = !this.build.active && !this.menu.isOpen;
@@ -474,10 +482,18 @@ export class Game {
     this.utilityWindow.update();
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
+    this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
+  }
+
+  /** Dach ausblenden bzw. wieder zeigen (herausgezoomt) */
+  private toggleRoof(): void {
+    if (!this.roof) return;
+    this.roof.hidden = !this.roof.hidden;
+    this.hud.toasts.show(this.content.text(this.roof.hidden ? 'dach_aus' : 'dach_an'));
   }
 
   /** Tag und Nacht: Sonne, Umgebungslicht und Himmel folgen der Uhrzeit; Lampen leuchten nachts stärker. */
@@ -509,6 +525,7 @@ export class Game {
     if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
+    if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();

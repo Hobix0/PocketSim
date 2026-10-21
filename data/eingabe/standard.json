@@ -20,5 +20,6 @@
   "sortiment_menue": ["KeyO"],
   "bilanz_menue": ["KeyL"],
   "versorgung_menue": ["KeyV"],
-  "lager_menue": ["KeyG"]
+  "lager_menue": ["KeyG"],
+  "dach_umschalten": ["KeyT"]
 }

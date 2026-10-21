@@ -7,7 +7,11 @@ import type { LightDef } from '../content/definitions';
 // so bleibt das Spiel schnell, auch mit vielen Lampen.
 
 export class LampComponent extends Component {
+  /** Blinker an (z. B. Warnblinker eines stehenden LKW) */
+  blinken = false;
   private glow: THREE.Mesh | null = null;
+  private readonly extras: { mesh: THREE.Mesh; blinkt: boolean }[] = [];
+  private blinkTime = 0;
   private readonly material: THREE.MeshBasicMaterial;
   private readonly hell: THREE.Color;
   private readonly aus: THREE.Color;
@@ -37,9 +41,24 @@ export class LampComponent extends Component {
     this.glow.position.set(...this.def.position);
     this.glow.name = 'leuchtflaeche';
     this.entity.object.add(this.glow);
+    for (const z of this.def.zusatz ?? []) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...z.groesse), new THREE.MeshBasicMaterial({ color: z.farbe, toneMapped: false }));
+      mesh.position.set(...z.position);
+      this.entity.object.add(mesh);
+      this.extras.push({ mesh, blinkt: !!z.blinkt });
+    }
+  }
+
+  override update(dt: number): void {
+    if (!this.extras.some((e) => e.blinkt)) return;
+    this.blinkTime += dt;
+    const an = this.blinken && Math.floor(this.blinkTime * 2.8) % 2 === 0;
+    for (const e of this.extras) if (e.blinkt) e.mesh.visible = an;
   }
 
   override onDetach(): void {
+    for (const e of this.extras) { this.entity.object.remove(e.mesh); e.mesh.geometry.dispose(); }
+    this.extras.length = 0;
     if (this.glow) {
       this.entity.object.remove(this.glow);
       this.glow.geometry.dispose();

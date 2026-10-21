@@ -20,7 +20,7 @@ export class StorageSurfaceComponent extends Component implements Describable {
     footprint: [number, number, number],
     ablage: { ebenen?: number; boeden?: number[] },
     karton: [number, number, number],
-    options: { temporaer?: boolean; versatz?: [number, number, number] } = {},
+    options: { temporaer?: boolean; versatz?: [number, number, number]; vonHinten?: boolean } = {},
   ) {
     super();
     this.temporaer = options.temporaer ?? false;
@@ -37,6 +37,8 @@ export class StorageSurfaceComponent extends Component implements Describable {
         }
       }
     }
+    // Ladeflächen: von hinten (lokal −X) nach vorne belegen, je Reihe erst unten
+    if (options.vonHinten) this.slots.sort((a, b) => a.x - b.x || a.y - b.y || a.z - b.z);
   }
 
   /** Belegte Plätze */

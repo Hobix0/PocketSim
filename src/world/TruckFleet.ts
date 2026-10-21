@@ -11,6 +11,7 @@ import { SelectableComponent } from '../components/SelectableComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { RampComponent } from '../components/RampComponent';
+import { LampComponent } from '../components/LampComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
 import { NavGrid, type Bounds } from '../navigation/NavGrid';
 import { TruckComponent, type RoutePoint } from '../components/TruckComponent';
@@ -157,7 +158,7 @@ export class TruckFleet {
     const l = this.settings.lkw.ladeflaeche;
     const karton = this.ctx.content.lager.karton.groesse;
     const boeden = Array.from({ length: l.ebenen }, (_, i) => l.hoehe + i * karton[1]);
-    return new StorageSurfaceComponent([l.bis - l.von, 0, l.breite], { boeden }, karton, { temporaer: true, versatz: [(l.von + l.bis) / 2, 0, 0] });
+    return new StorageSurfaceComponent([l.bis - l.von, 0, l.breite], { boeden }, karton, { temporaer: true, versatz: [(l.von + l.bis) / 2, 0, 0], vonHinten: true });
   }
 
   private spawn(ladung: ShipmentLine[], dock: Entity | null): void {
@@ -171,6 +172,8 @@ export class TruckFleet {
     e.add(new ModelComponent({ groesse: [laenge, hoehe, breite], farbe: '#d9dde0' }, lkw.model, this.ctx.models));
     e.add(new SelectableComponent('lkw', this.ctx.content.text('lkw_name'), this.ctx.content.kontexte.lkw?.name ?? 'LKW'));
     e.add(this.makeSurface());
+    // Scheinwerfer, Rück- und Begrenzungsleuchten, Blinker
+    if (lkw.licht) e.add(new LampComponent(lkw.licht));
     const truck = new TruckComponent(ladung, anfahrt.slice(1), abfahrt, lkw.geschwindigkeit, dock, {
       arrived: (t) => this.unloadOntoBed(t),
       left: (t) => this.remove(t),

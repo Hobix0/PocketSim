@@ -30,9 +30,9 @@ describe('Spieldaten in data/', () => {
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
     expect(c.produkte.size).toBe(150);
-    // 61 Bauelemente aus Blender; weitere haben Voxel-Modelle (eigen/…) oder noch keins (Einkaufsterminal)
+    // 61 Bauelemente aus Blender, davon eins (Markise) durch ein Voxel-Modell ersetzt; weitere haben Voxel-Modelle (eigen/…)
     const fbx = c.bau.all().filter((d) => d.model && !d.model.startsWith('eigen/'));
-    expect(fbx.length).toBe(61);
+    expect(fbx.length).toBe(60);
     const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
     for (const d of [...c.produkte.all(), ...fbx]) {
       expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);

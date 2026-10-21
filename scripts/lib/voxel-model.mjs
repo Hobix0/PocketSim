@@ -36,9 +36,9 @@ const FONT = {
 /**
  * Ein Modell zeichnen und speichern.
  * @param {{ id: string, name: string, dims: [number, number, number], size?: number, ebene?: string, menue?: string,
- *           draw: (api: object) => void }} opts
+ *           ursprung?: [number, number, number], draw: (api: object) => void }} opts
  */
-export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 'lager', draw }) {
+export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 'lager', ursprung, draw }) {
   const [nx, ny, nz] = dims;
   const data = new Array(nx * ny * nz).fill(0);
   const idx = (x, y, z) => (x * ny + y) * nz + z;
@@ -108,6 +108,8 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   }
   if (count) runs.push(`${count}*${last}`);
   const file = { id, name, typ: 'modell', menue, preis: 0, ebene, kantenlaenge: size, groesse: dims, palette, voxel: runs.join(',') };
+  // Eigene Lage zum Ursprung (Ecke in Würfeln), z. B. für Teile, die außen an der Wand hängen
+  if (ursprung) file.ursprung = ursprung;
   fs.mkdirSync(OUT, { recursive: true });
   // Ein schon vorhandenes Vorschaubild (aus dem Editor) bleibt erhalten
   const target = path.join(OUT, `${id}.json`);

@@ -3,6 +3,7 @@ import { Component } from '../ecs/Component';
 import type { Entity } from '../ecs/Entity';
 import type { Describable, InfoRow } from '../ui/describe';
 import { StorageSurfaceComponent } from './StorageSurfaceComponent';
+import { LampComponent } from './LampComponent';
 
 // Ein Liefer-LKW: fährt eine Strecke ab, steht zum Abladen und fährt wieder weg.
 // Die Kartons stehen nach der Ankunft auf seiner Ladefläche (StorageSurfaceComponent, temporaer).
@@ -72,6 +73,9 @@ export class TruckComponent extends Component implements Describable {
   }
 
   override update(dt: number): void {
+    // Warnblinker beim Stehen und beim Rückwärtsfahren
+    const lamp = this.entity.get(LampComponent);
+    if (lamp) lamp.blinken = this.state === 'steht' || !!this.route[this.leg]?.rueckwaerts;
     if (dt <= 0 || this.state === 'steht') return;
     const o = this.entity.object;
     let rest = this.speed * dt;

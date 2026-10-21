@@ -87,6 +87,8 @@ export interface LogisticsSettings {
     geschwindigkeit: number;
     /** Zellgröße (m) des Fahrrasters, auf dem LKW ihren Weg zu Ladetoren suchen */
     fahrraster: number;
+    /** Scheinwerfer, Rück-, Begrenzungsleuchten und Blinker */
+    licht?: LightDef;
   };
 }
 
@@ -166,6 +168,8 @@ export interface LightDef {
   farbe: string;
   staerke: number;
   reichweite: number;
+  /** Weitere Leuchtflächen ohne eigenes Licht (z. B. Rückleuchten); `blinkt`: Blinker/Warnblinker */
+  zusatz?: { position: [number, number, number]; groesse: [number, number, number]; farbe: string; blinkt?: boolean }[];
 }
 
 /** Tag und Nacht (data/licht/standard.json) */
@@ -193,6 +197,8 @@ export interface BuildSettings {
   rueckerstattung: number;
   /** Wie weit Wände von der Fliesenkante nach außen rücken (halbe Wandstärke) */
   wandVersatz?: number;
+  /** Dach über allen Innenräumen: ab diesem Kameraabstand sichtbar, Dicke, Überstand über die Wände, Farben */
+  dach?: { abAbstand: number; dicke: number; ueberstand: number; farbe: string; kante: string };
   kategorien: BuildCategory[];
 }
 
@@ -378,6 +384,10 @@ function light(raw: unknown, where: string): LightDef {
     farbe: str(o, 'farbe', where),
     staerke: num(o, 'staerke', where, 0),
     reichweite: num(o, 'reichweite', where, 0.1),
+    zusatz: o.zusatz === undefined ? undefined : (Array.isArray(o.zusatz) ? o.zusatz : []).map((z, i) => {
+      const w = `${where} → zusatz[${i}]`, x = asObject(z, w);
+      return { position: vec3(x, 'position', w), groesse: vec3(x, 'groesse', w), farbe: str(x, 'farbe', w), blinkt: x.blinkt === undefined ? false : bool(x, 'blinkt', w) };
+    }),
   };
 }
 
