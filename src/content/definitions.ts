@@ -368,6 +368,16 @@ export interface CustomerSettings {
    * (wenn eine da ist), packt nach dem Bezahlen ein (`packSekundenProArtikel`) und bringt ihn zurück.
    */
   einkaufswagen?: { model: string; abArtikel: number; packSekundenProArtikel: number };
+  /**
+   * Auswahl (Balancing): Je mehr verschiedene Produkte im Regal stehen, desto mehr Kunden kommen
+   * (Faktor `min` bei keinem, 1 bei `referenz` Produkten, bis `max`) und desto größer ist der Einkauf
+   * (je `wunschJeProdukte` Produkte ein Wunsch mehr, höchstens `wunschBonusMax`).
+   */
+  auswahl?: { referenz: number; min: number; max: number; wunschJeProdukte: number; wunschBonusMax: number };
+  /** Zusätzliche Kunden gleichzeitig im Laden je weiterer Kasse */
+  maxImLadenProKasse?: number;
+  /** Ruf-Gewinne werden nach oben hin kleiner (0 = gleichbleibend, 1 = bei 100 kein Gewinn mehr) */
+  rufSaettigung?: number;
 }
 
 /** Raster für die Wegfindung (data/navigation/standard.json). */

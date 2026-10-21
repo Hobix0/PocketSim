@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "check": "tsc --noEmit",
     "test": "vitest run",
+    "sim": "vitest run --config scripts/sim/vitest.config.ts",
     "import:3d": "node scripts/import-3d.mjs",
     "build:artifact": "tsc --noEmit && VITE_INLINE_MODELS=1 vite build --outDir dist-artifact",
     "modelle:maschinen": "node scripts/make-machine-models.mjs",

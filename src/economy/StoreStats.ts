@@ -83,6 +83,8 @@ export class StoreStats {
     if (outcome === 'keine_kasse') delta += r.keineKasse;
     if (outcome === 'zu_lange') delta += r.zuLangeGewartet;
     for (const p of fehlend) count(this.missing, p);
+    // Gewinne werden nach oben hin kleiner – ein sehr guter Ruf will verdient sein
+    if (delta > 0) delta *= 1 - (this.settings.rufSaettigung ?? 0) * (this.rufWert / 100);
     this.setRuf(this.rufWert + delta);
   }
 

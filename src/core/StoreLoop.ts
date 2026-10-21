@@ -89,7 +89,8 @@ export class StoreLoop {
       this.events.emit(open ? 'opened' : 'closed', undefined);
     }
     if (!this.kundenPunkte.length || minutes <= 0) return;
-    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden);
+    const kassen = [...this.world.query(CheckoutComponent)].length;
+    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen));
     for (let i = 0; i < n; i++) this.spawnCustomer();
   }
 

@@ -107,9 +107,11 @@ describe('Ruf und Tagesbericht', () => {
     const r = content.kunden.ruf;
     const cola = content.produkte.get('cola_0_5l');
     stats.recordVisit('zufrieden', []);
-    expect(stats.ruf).toBeCloseTo(r.start + r.zufrieden);
+    // Gewinne werden nach oben hin kleiner (Sättigung beim aktuellen Ruf)
+    const gewinn = r.zufrieden * (1 - (content.kunden.rufSaettigung ?? 0) * (r.start / 100));
+    expect(stats.ruf).toBeCloseTo(r.start + gewinn, 1);
     stats.recordVisit('keine_kasse', [cola, cola]);
-    expect(stats.ruf).toBeCloseTo(r.start + r.zufrieden + r.keineKasse + 2 * r.jeFehlendemArtikel);
+    expect(stats.ruf).toBeCloseTo(r.start + gewinn + r.keineKasse + 2 * r.jeFehlendemArtikel, 1);
   });
 
   it('der Bericht zählt Umsatz, Ausgaben nach Grund und vermisste Produkte – danach beginnt ein neuer Tag', () => {
@@ -154,7 +156,8 @@ describe('Ein ganzer Einkauf', () => {
     const fctx = { content, checkout: store.checkoutServices };
     const checkout = w.add(createBuildEntity(content.bau.get('kasse_schwarz'), { position: [2, 0.05, -1], drehung: 0 }, fctx));
 
-    store.update(10, parseTime('12:00'));
+    // 20 Minuten: bei nur einem Produkt im Regal kommen wegen der kleinen Auswahl weniger Kunden
+    store.update(20, parseTime('12:00'));
     const customer = [...w.query(CustomerComponent)][0];
     expect(customer).toBeDefined();
     const [entity, c] = customer;
@@ -187,7 +190,8 @@ describe('Ein ganzer Einkauf', () => {
     const shelf = w.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [-3, 0.05, -3], drehung: 0 }, ctx));
     shelf.require(ShelfComponent).add(cola, 24);
     const store = new StoreLoop(w, content, player(), bounds, [[4, 0.05, 4]], () => ({ content }), new PriceBook(content.kunden.preis), seq(0, 0, 0, 0.5, 0, 0.5));
-    store.update(10, parseTime('12:00'));
+    // 20 Minuten: bei nur einem Produkt im Regal kommen wegen der kleinen Auswahl weniger Kunden
+    store.update(20, parseTime('12:00'));
     const [, c] = [...w.query(CustomerComponent)][0];
     for (let i = 0; i < 2000 && c.state !== 'geht'; i++) w.update(0.05);
     expect(c.state).toBe('geht');
@@ -232,4 +236,25 @@ describe('Einkaufswagen', () => {
     expect(left).toEqual(['zufrieden']);
   });
 
+});
+
+describe('Balancing: Auswahl', () => {
+  it('mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe', async () => {
+    const { auswahlFaktor, wunschBonus } = await import('../src/economy/Customers');
+    const s = content.kunden, a = s.auswahl!;
+    expect(auswahlFaktor(s, 0)).toBeCloseTo(a.min);
+    expect(auswahlFaktor(s, a.referenz)).toBeCloseTo(1);
+    expect(auswahlFaktor(s, 4 * a.referenz)).toBeCloseTo(a.max);
+    expect(auswahlFaktor(s, 1000)).toBeCloseTo(a.max);
+    expect(wunschBonus(s, a.wunschJeProdukte - 1)).toBe(0);
+    expect(wunschBonus(s, 1000)).toBe(a.wunschBonusMax);
+    // Mehr Kassen: mehr Kunden gleichzeitig
+    const sp = new CustomerSpawner(s, () => 1);
+    let eine = 0, drei = 0;
+    for (let m = 0; m < 60; m++) eine += sp.spawns(1, 18 * 60 + m, 100, eine, 100, 1);
+    const sp3 = new CustomerSpawner(s, () => 1);
+    for (let m = 0; m < 60; m++) drei += sp3.spawns(1, 18 * 60 + m, 100, drei, 100, 3);
+    expect(eine).toBe(s.maxImLaden);
+    expect(drei).toBeGreaterThan(eine);
+  });
 });

@@ -10,10 +10,10 @@
   "grundstuecke": [
     {"id": "laden", "name": "Ladenfläche", "rect": {"minX": -4, "maxX": 4, "minZ": -3, "maxZ": 3}, "preis": 0, "freischaltLevel": 1, "besessen": true},
     {"id": "gehweg", "name": "Gehweg", "rect": {"minX": -10, "maxX": 10, "minZ": 3, "maxZ": 7.2}, "preis": 0, "freischaltLevel": 1, "besessen": true},
-    {"id": "ost", "name": "Anbau Ost", "rect": {"minX": 4, "maxX": 10, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 2},
-    {"id": "west", "name": "Anbau West", "rect": {"minX": -10, "maxX": -4, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 3},
-    {"id": "gewerbehof", "name": "Gewerbehof (freies Lager)", "rect": {"minX": 10, "maxX": 20, "minZ": -13, "maxZ": 7.2}, "preis": 4000, "freischaltLevel": 2},
-    {"id": "hof", "name": "Hof hinten", "rect": {"minX": -10, "maxX": 10, "minZ": -9, "maxZ": -3}, "preis": 6000, "freischaltLevel": 4}
+    {"id": "ost", "name": "Anbau Ost", "rect": {"minX": 4, "maxX": 10, "minZ": -3, "maxZ": 3}, "preis": 2500, "freischaltLevel": 2},
+    {"id": "west", "name": "Anbau West", "rect": {"minX": -10, "maxX": -4, "minZ": -3, "maxZ": 3}, "preis": 3000, "freischaltLevel": 3},
+    {"id": "gewerbehof", "name": "Gewerbehof (freies Lager)", "rect": {"minX": 10, "maxX": 20, "minZ": -13, "maxZ": 7.2}, "preis": 3500, "freischaltLevel": 2},
+    {"id": "hof", "name": "Hof hinten", "rect": {"minX": -10, "maxX": 10, "minZ": -9, "maxZ": -3}, "preis": 4500, "freischaltLevel": 4}
   ],
   "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6]],
   "bloecke": [
