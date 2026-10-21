@@ -3,6 +3,7 @@ import { FigureComponent } from '../components/FigureComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
 import { WorkerComponent, type WorkerServices } from '../components/WorkerComponent';
 import { CashierComponent, type CashierServices } from '../components/CashierComponent';
+import { BuyerComponent, type BuyerServices } from '../components/BuyerComponent';
 import type { Employee } from '../economy/Staff';
 import type { FactoryContext } from './FactoryContext';
 import { lookFromSeed } from '../voxel/figure';
@@ -17,6 +18,8 @@ export interface StaffServices {
   /** Lageristen: LKW abladen, lose Kartons einlagern */
   abladen: Omit<WorkerServices, Common>;
   kassieren: Omit<CashierServices, Common>;
+  /** Einkäufer: zum Einkaufsterminal gehen, dort nachbestellen */
+  einkaufen: Omit<BuyerServices, Common>;
 }
 
 export function createWorkerEntity(employee: Employee, services: StaffServices, ctx: FactoryContext): Entity {
@@ -29,6 +32,7 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   entity.add(new SelectableComponent('personal', employee.name, rolle.name));
   const common = { rollenName: rolle.name, text: (k: string, v?: Record<string, string | number>) => content.text(k, v) };
   if (rolle.verhalten === 'kassieren') entity.add(new CashierComponent(employee, { ...services.kassieren, ...common }));
+  else if (rolle.verhalten === 'einkaufen') entity.add(new BuyerComponent(employee, { ...services.einkaufen, ...common }));
   else if (rolle.verhalten === 'abladen') entity.add(new WorkerComponent(employee, { ...services.abladen, ...common }));
   else entity.add(new WorkerComponent(employee, { ...services.auffuellen, ...common }));
   return entity;
@@ -36,5 +40,5 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
 
 /** Status-Text der Person (für das Personal-Fenster), egal welches Verhalten sie hat. */
 export function staffStatus(entity: Entity | undefined): string | undefined {
-  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent))?.statusText();
+  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent))?.statusText();
 }

@@ -152,6 +152,10 @@ export interface BuildDef {
   absenkung?: { tiefe: number; flach: number; schraege: number; breite: number };
   /** Nur befahrbar (LKW), nicht begehbar */
   fahrbahn: boolean;
+  /** Lichtschiene: Schienenleuchten hängen daran */
+  schiene: boolean;
+  /** Schienenleuchte: lässt sich nur unter eine Lichtschiene hängen */
+  anSchiene: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
@@ -279,7 +283,19 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen';
+}
+
+/** Einkäufer: automatisches Nachbestellen (data/personal/standard.json → "einkauf") */
+export interface BuyerSettings {
+  /** Wie oft der Einkäufer die Bestände prüft (Spielminuten) */
+  pruefenAlleMinuten: number;
+  /** So viele volle Kartons je Produkt sollen zusätzlich zum Regalplatz da sein */
+  reserveKartons: number;
+  /** Unter diesen Kontostand bestellt der Einkäufer nichts */
+  mindestGuthaben: number;
+  /** "normal" (nächster Liefertermin) oder "express" */
+  versand: 'normal' | 'express';
 }
 
 /** Einstellungen für Personal (data/personal/standard.json). */
@@ -289,6 +305,7 @@ export interface StaffSettings {
   gehgeschwindigkeit: number;
   sekundenProStueck: number;
   startPunkt: [number, number, number];
+  einkauf: BuyerSettings;
 }
 
 /** Belohnungen für Arbeit (data/arbeit/standard.json). */
@@ -423,6 +440,8 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
       return { tiefe: num(x, 'tiefe', w, 0.1), flach: num(x, 'flach', w, 1), schraege: num(x, 'schraege', w, 1), breite: num(x, 'breite', w, 1) };
     })(),
     fahrbahn: o.fahrbahn === undefined ? false : bool(o, 'fahrbahn', where),
+    schiene: o.schiene === undefined ? false : bool(o, 'schiene', where),
+    anSchiene: o.anSchiene === undefined ? false : bool(o, 'anSchiene', where),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),

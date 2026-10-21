@@ -8,11 +8,22 @@ import type { Describable, InfoRow } from '../ui/describe';
 // Regal mit Fächern. Jedes Fach nimmt genau ein Produkt auf, bis zur Kapazität.
 // Gekühlte Ware passt nur in Regale mit Kühlung.
 // Hat das Regal Ebenen (Höhen der Böden), steht die Ware sichtbar auf den Böden.
-// Mit einem Karton in der Hand bietet das Regal "Einräumen" an.
+// Mit einem Karton in der Hand bietet das Regal "Einräumen" an, sonst "Belegen" (Fenster für feste Plätze).
+// Feste Zuordnung: Ein Fach kann einem Produkt fest gehören – dann kommt nur dieses Produkt hinein,
+// auch wenn das Fach gerade leer ist. Auffüller räumen so ein Produkt nur noch in seine festen Fächer.
 
 export interface Fach {
   produkt: ProductDef | null;
   menge: number;
+  /** Festes Produkt dieses Fachs (oder frei) */
+  fest: ProductDef | null;
+}
+
+/** Gespeicherter Inhalt eines Fachs */
+export interface FachState {
+  produkt: string | null;
+  menge: number;
+  fest?: string | null;
 }
 
 export class ShelfComponent extends InteractableComponent implements Describable {
@@ -26,7 +37,7 @@ export class ShelfComponent extends InteractableComponent implements Describable
     private readonly actions?: GameActions,
   ) {
     super();
-    this.faecher = Array.from({ length: def.faecher }, () => ({ produkt: null, menge: 0 }));
+    this.faecher = Array.from({ length: def.faecher }, () => ({ produkt: null, menge: 0, fest: null }));
     this.visuals = this.faecher.map(() => null);
   }
 
@@ -43,26 +54,55 @@ export class ShelfComponent extends InteractableComponent implements Describable
     return this.faecher.reduce((n, f) => n + f.menge, 0);
   }
 
-  /** Wie viele Stück dieses Produkts passen gerade hinein? (0, wenn die Kühlung fehlt) */
-  space(p: ProductDef): number {
+  /** Darf dieses Produkt in das Fach? (festes Produkt passt, kein anderes Produkt drin) */
+  accepts(f: Fach, p: ProductDef): boolean {
+    return (!f.fest || f.fest.id === p.id) && (!f.produkt || f.produkt.id === p.id);
+  }
+
+  /**
+   * Wie viele Stück dieses Produkts passen gerade hinein? (0, wenn die Kühlung fehlt)
+   * `nurFest`: nur Fächer zählen, die diesem Produkt fest gehören
+   */
+  space(p: ProductDef, nurFest = false): number {
     if (p.kuehlung && !this.def.kuehlung) return 0;
     let free = 0;
     for (const f of this.faecher) {
-      if (f.produkt?.id === p.id) free += this.def.kapazitaet - f.menge;
-      else if (!f.produkt) free += this.def.kapazitaet;
+      if (!this.accepts(f, p) || (nurFest && f.fest?.id !== p.id)) continue;
+      free += this.def.kapazitaet - f.menge;
     }
     return free;
+  }
+
+  /** Platz (Stück), der einem Produkt fest gehört */
+  festPlatz(produktId: string): number {
+    return this.faecher.filter((f) => f.fest?.id === produktId).length * this.def.kapazitaet;
+  }
+
+  /** Stück eines Produkts im Regal */
+  menge(produktId: string): number {
+    return this.faecher.reduce((n, f) => n + (f.produkt?.id === produktId ? f.menge : 0), 0);
+  }
+
+  /** Fach fest einem Produkt geben (oder mit null wieder freigeben). Ware darin bleibt, bis sie verkauft ist. */
+  setFest(i: number, p: ProductDef | null): boolean {
+    const f = this.faecher[i];
+    if (!f || (p && (p.rohstoff || (p.kuehlung && !this.def.kuehlung)))) return false;
+    f.fest = p;
+    this.notifyChanged();
+    return true;
   }
 
   /** Bis zu `menge` Stück einräumen: erst in Fächer mit demselben Produkt, dann in leere. Gibt die Anzahl zurück. */
   add(p: ProductDef, menge: number): number {
     if (p.rohstoff || (p.kuehlung && !this.def.kuehlung)) return 0;
     let rest = menge;
-    const order = [...this.faecher.keys()].sort((a, b) => Number(this.faecher[b].produkt?.id === p.id) - Number(this.faecher[a].produkt?.id === p.id));
+    // Zuerst die festen Fächer des Produkts, dann Fächer mit demselben Produkt, dann freie
+    const rang = (f: Fach) => (f.fest?.id === p.id ? 2 : 0) + (f.produkt?.id === p.id ? 1 : 0);
+    const order = [...this.faecher.keys()].sort((a, b) => rang(this.faecher[b]) - rang(this.faecher[a]));
     for (const i of order) {
       const f = this.faecher[i];
       if (rest === 0) break;
-      if (f.produkt && f.produkt.id !== p.id) continue;
+      if (!this.accepts(f, p)) continue;
       const take = Math.min(rest, this.def.kapazitaet - f.menge);
       if (take <= 0) continue;
       f.produkt = p;
@@ -91,30 +131,33 @@ export class ShelfComponent extends InteractableComponent implements Describable
   }
 
   /** Inhalt für den Spielstand: je Fach Produkt-id und Menge */
-  saveState(): { produkt: string | null; menge: number }[] {
-    return this.faecher.map((f) => ({ produkt: f.produkt?.id ?? null, menge: f.menge }));
+  saveState(): FachState[] {
+    return this.faecher.map((f) => ({ produkt: f.produkt?.id ?? null, menge: f.menge, fest: f.fest?.id ?? null }));
   }
 
   /** Inhalt aus dem Spielstand übernehmen (unbekannte Produkte fallen weg). */
-  loadState(list: { produkt: string | null; menge: number }[], produkt: (id: string) => ProductDef | undefined): void {
+  loadState(list: FachState[], produkt: (id: string) => ProductDef | undefined): void {
     list.slice(0, this.faecher.length).forEach((saved, i) => {
+      const fest = saved.fest ? produkt(saved.fest) : undefined;
+      if (fest && !fest.rohstoff && (!fest.kuehlung || this.def.kuehlung)) this.faecher[i].fest = fest;
       const p = saved.produkt ? produkt(saved.produkt) : undefined;
       if (!p || saved.menge <= 0 || (p.kuehlung && !this.def.kuehlung)) return;
-      this.faecher[i] = { produkt: p, menge: Math.min(saved.menge, this.def.kapazitaet) };
+      this.faecher[i] = { produkt: p, menge: Math.min(saved.menge, this.def.kapazitaet), fest: this.faecher[i].fest };
       this.renderFach(i);
     });
     this.notifyChanged();
   }
 
   options(): InteractionOption[] {
-    if (!this.actions?.carriedCarton()) return [];
+    if (!this.actions) return [];
+    if (!this.actions.carriedCarton()) return [{ aktion: 'auswaehlen', text: 'regal_belegen', prioritaet: 10, run: () => this.actions?.openShelf(this.entity) }];
     return [{ aktion: 'auswaehlen', text: 'einraeumen', prioritaet: 10, run: () => this.actions?.stockInto(this.entity) }];
   }
 
   describe(): InfoRow[] {
     return this.faecher.map((f, i) => ({
       label: `Fach ${i + 1}${this.def.kuehlung ? ' (gekühlt)' : ''}`,
-      value: f.produkt ? `${f.produkt.name} ${f.menge}/${this.def.kapazitaet}` : 'leer',
+      value: (f.produkt ? `${f.produkt.name} ${f.menge}/${this.def.kapazitaet}` : 'leer') + (f.fest ? ` · fest: ${f.fest.name}` : ''),
     }));
   }
 

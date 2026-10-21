@@ -181,6 +181,7 @@ describe('LKW', () => {
       auffuellen: { findTask: () => null, ...services },
       abladen: { findTask: () => findHaulTask(world, storage, () => true), ...services },
       kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1, sekundenProArtikel: 1 },
+      einkaufen: { findTerminal: () => null, gehgeschwindigkeit: 1 },
     }, ctx)).object.position.set(0, 0.04, 6);
     // Fertig, wenn beide Kartons wirklich auf der Palette stehen (der Platz wird schon beim Losgehen reserviert)
     const onPalette = () => [...world.query(CartonComponent)].filter(([, c]) => c.ablage === palette.require(StorageSurfaceComponent) && c.reservedBy === null).length;

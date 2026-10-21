@@ -2,7 +2,7 @@
   "id": "lichtschiene_gerade_100",
   "name": "Lichtschiene Gerade 100",
   "kategorie": "lichtschienen",
-  "ebene": "decke",
+  "ebene": "decke", "schiene": true,
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},

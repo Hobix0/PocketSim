@@ -51,6 +51,8 @@ import { Plots } from '../world/Plots';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
+import { ShelfWindow } from '../ui/ShelfWindow';
+import { BuyerSystem } from '../world/BuyerSystem';
 import { MachineWindow } from '../ui/MachineWindow';
 import { UtilityWindow } from '../ui/UtilityWindow';
 import { Deliveries, type DeliveriesState, type ShipmentLine } from '../economy/Deliveries';
@@ -114,6 +116,8 @@ export class Game {
   readonly factory: FactoryContext;
   readonly storage: CartonStorage;
   readonly purchasing: Purchasing;
+  /** Einkäufer: Nachbestellen, was einmal im Regal stand */
+  readonly buyers: BuyerSystem;
   readonly purchaseWindow: PurchaseWindow;
   readonly staff: Staff;
   readonly personalWindow: PersonalWindow;
@@ -135,6 +139,7 @@ export class Game {
   /** Maschinen, Rezepte, Rohstoffe */
   readonly production: Production;
   readonly machineWindow: MachineWindow;
+  readonly shelfWindow: ShelfWindow;
   readonly utilityWindow: UtilityWindow;
   /** Lieferungen per LKW (null, wenn das Level keine Anlieferung hat – dann kommt Ware sofort) */
   readonly deliveries: Deliveries | null;
@@ -274,6 +279,7 @@ export class Game {
       stockInto: (shelf) => this.stockByHand(shelf),
       placeCarton: (surface) => this.placeByHand(surface),
       openMachine: (m) => this.machineWindow.open(m),
+      openShelf: (e) => this.shelfWindow.open(e),
     };
     this.factory = { content: this.content, models: this.models, actions };
 
@@ -292,6 +298,7 @@ export class Game {
       ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
       : null;
     this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage);
+    this.buyers = new BuyerSystem(this.world, this.content.produkte, this.purchasing, this.player, this.content.personal.einkauf, this.deliveries ?? undefined);
     // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
     this.utilities = new Utilities(this.content.versorgung, this.player);
     this.production = new Production(this.world, this.content, this.storage, this.utilities, () => this.player.level,
@@ -309,7 +316,10 @@ export class Game {
       },
     };
     this.machineWindow = new MachineWindow(this.hud.root, this.content, this.production, () => this.player.level);
+    this.shelfWindow = new ShelfWindow(this.hud.root, this.content, () => this.player.level);
     this.utilityWindow = new UtilityWindow(this.hud.root, this.utilities, this.production, () => this.player.level);
+    this.buyers.events.on('ordered', ({ name, kartons, kosten }) => this.hud.toasts.show(this.content.text('einkaeufer_bestellt', { name, kartons, betrag: formatMoney(kosten) }), 'info'));
+    this.buyers.events.on('blocked', ({ name, grund }) => this.hud.toasts.show(this.content.text(`einkaeufer_${grund}`, { name }), 'warnung'));
     this.utilities.events.on('upgraded', () => this.hud.toasts.show(this.content.text('anschluss_ausgebaut'), 'gut'));
     this.purchaseWindow = new PurchaseWindow(this.hud.root, this.content, this.purchasing, this.player, this.world, this.hud.toasts,
       this.deliveries ? { arrival: (art) => this.deliveries!.arrival(art), now: () => this.clock.totalMinutes } : undefined);
@@ -425,7 +435,7 @@ export class Game {
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
     this.hud.onTool('menue', () => this.openMenu('pause'));
-    this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, () => this.player.level);
+    this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, () => this.player.level, this.buyers.listing);
     this.statsWindow = new StatsWindow(this.hud.root, this.store.stats);
     this.hud.onTool('sortiment', () => this.assortment.toggleOpen());
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
@@ -510,6 +520,7 @@ export class Game {
     this.store.update(minutes, this.clock.totalMinutes % (24 * 60));
     this.utilities.run(minutes, this.production.demand());
     this.deliveries?.update(this.clock.totalMinutes);
+    this.buyers.update(this.clock.totalMinutes);
     this.fleet?.update(minutes);
     this.world.update(simDt);
     this.updateDaylight(realDt);
@@ -540,6 +551,7 @@ export class Game {
     this.hud.setToolActive('bilanz', this.statsWindow.isOpen);
     this.hud.setToolActive('versorgung', this.utilityWindow.isOpen);
     this.machineWindow.update();
+    this.shelfWindow.update();
     this.utilityWindow.update();
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
@@ -597,6 +609,7 @@ export class Game {
       else if (this.assortment.isOpen) this.assortment.close();
       else if (this.statsWindow.isOpen) this.statsWindow.close();
       else if (this.machineWindow.isOpen) this.machineWindow.close();
+      else if (this.shelfWindow.isOpen) this.shelfWindow.close();
       else if (this.utilityWindow.isOpen) this.utilityWindow.close();
       else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
@@ -681,6 +694,7 @@ export class Game {
         versorgung: this.utilities.state(),
         gelaende: this.terrain.state(),
         markierungen: this.paint.state(),
+        einkauf: this.buyers.listing.state(),
         // Was noch auf einem LKW steht, kommt beim Laden gleich wieder per LKW
         ...(this.deliveries && this.fleet ? { logistik: { ...this.deliveries.state(), aufLkw: this.fleet.cargo() } } : {}),
       },
@@ -707,6 +721,7 @@ export class Game {
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
     if (d.systeme?.gelaende) this.terrain.restore(d.systeme.gelaende);
     this.paint.restore(d.systeme?.markierungen);
+    this.buyers.restore(d.systeme?.einkauf);
     const log = d.systeme?.logistik as (Partial<DeliveriesState> & { aufLkw?: ShipmentLine[] }) | undefined;
     if (log && this.deliveries) {
       const known = (id: string) => this.content.waren.has(id);

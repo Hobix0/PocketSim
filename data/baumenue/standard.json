@@ -72,6 +72,13 @@
       ]
     },
     {
+      "id": "schilder",
+      "name": "Schilder",
+      "kategorien": [
+        "schilder"
+      ]
+    },
+    {
       "id": "gelaende",
       "name": "Gelände",
       "spezial": "gelaende"

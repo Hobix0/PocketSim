@@ -21,6 +21,10 @@ export class FootprintComponent extends Component {
     readonly aussen = false,
     /** Fahrbahn (z. B. Rampenabfahrt): nur für LKW, nicht zum Gehen */
     readonly fahrbahn = false,
+    /** Lichtschiene (Schienenleuchten hängen daran) */
+    readonly schiene = false,
+    /** Schienenleuchte (hängt an einer Lichtschiene) */
+    readonly anSchiene = false,
   ) {
     super();
   }

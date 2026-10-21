@@ -19,5 +19,12 @@
     "lohnProTag": 75,
     "farbe": "#c98a2e",
     "verhalten": "abladen"
+  },
+  "einkaeufer": {
+    "name": "Einkäufer",
+    "beschreibung": "Sitzt am Einkaufsterminal und bestellt alles nach, was einmal im Regal stand – bevor es ausgeht.",
+    "lohnProTag": 95,
+    "farbe": "#8a63b5",
+    "verhalten": "einkaufen"
   }
 }

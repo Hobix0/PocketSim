@@ -2,7 +2,7 @@
   "id": "lichtschiene_t",
   "name": "Lichtschiene T",
   "kategorie": "lichtschienen",
-  "ebene": "decke",
+  "ebene": "decke", "schiene": true,
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},

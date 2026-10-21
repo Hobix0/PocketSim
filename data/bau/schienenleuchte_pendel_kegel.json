@@ -2,7 +2,7 @@
   "id": "schienenleuchte_pendel_kegel",
   "name": "Schienenleuchte Pendel Kegel",
   "kategorie": "einrichtung",
-  "ebene": "decke",
+  "ebene": "decke", "anSchiene": true,
   "preis": 250,
   "freischaltLevel": 1,
   "werte": {},

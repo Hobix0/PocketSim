@@ -199,6 +199,24 @@ flowchart LR
   end
 ```
 
+**Etappe 9 – Feste Regalplätze, Einkäufer, Ladeneinrichtung** ✅
+
+- **Feste Regalplätze:** Klick auf ein Regal (ohne Karton in der Hand) öffnet **Belegen**: je Fach ein festes Produkt wählen oder frei lassen, „Aktuelle Ware festlegen“ übernimmt, was gerade drin steht, „auf alle“ belegt die freien Fächer genauso. Ein festes Fach nimmt nur sein Produkt – auch leer. Auffüller räumen ein Produkt mit festen Fächern nur noch dorthin (`src/components/ShelfComponent.ts`, Fenster `src/ui/ShelfWindow.ts`). Die Belegung steht im Spielstand
+- **Neue Rolle Einkäufer** (`data/personal/rollen.json`): geht zum Einkaufsterminal und prüft jede Stunde (Spielzeit) die Bestände. Nachgekauft wird alles, was einmal im Regal stand oder einem Fach fest gehört – so viel, wie in seine Regalplätze passt, plus ein Reserve-Karton. Die knappsten Produkte zuerst, nur über dem Mindestguthaben und solange Lagerplatz frei ist. Im **Sortiment** (`O`) lässt sich je Produkt der Haken **Nachkaufen** abwählen. Werte: `data/personal/standard.json` → `einkauf`; Logik ohne Grafik in `src/economy/Buyer.ts`, im Spiel `src/world/BuyerSystem.ts`
+- **Schienenleuchten nur an Lichtschienen:** Lichtleiste, Pendelleuchten und Schienen-Deckenstrahler lassen sich nur unter eine Lichtschiene hängen. Sie rasten auf deren Mittellinie ein (gerade Schienen im 25-cm-Raster, Kreuz/T/Kurve in der Mitte) und übernehmen die Richtung; mit „Drehen“ quer dazu. Wird die Schiene abgerissen, gehen die Leuchten mit. In den Daten: `"schiene": true` bzw. `"anSchiene": true`
+- **20 neue Voxel-Assets** (`npm run modelle:store`):
+  - Regale: Landhausregal, Mittelregal Holz, Brotregal mit Körben, Obststand mit Kisten, Tiefkühltruhe (gekühlt), Getränkeregal, Kassenregal, schmales Wandregal
+  - Schilder (neuer Reiter **Schilder**): Hängeschilder Obst & Gemüse, Getränke, Backwaren, Kühlung, Drogerie, Angebote, Kasse (hängen von der Decke, Schrift auf beiden Seiten), Aufsteller „Angebot“, Infotafel mit Öffnungszeiten; für die Fassade ein Leuchtschild „OFFEN“ (leuchtet) und ein Nasenschild
+  - Alle stehen in der Musterschau (`#musterschau`, unten rechts)
+- Die Pixel-Schrift der Voxel-Modelle kennt jetzt auch Ä, Ö, Ü, Ziffern und Zeichen wie & und %, und sie schreibt auf jede Seite eines Modells (`scripts/lib/voxel-model.mjs`)
+
+```mermaid
+flowchart LR
+  R[Regal: Fach fest „Cola“] -->|gelistet| E[Einkäufer am Terminal]
+  E -->|jede Stunde: Bestand < Ziel?| B[Bestellung]
+  B --> L[LKW] --> LG[Lager] -->|Auffüller| R
+```
+
 **Licht: Tag und Nacht, leuchtende Lampen** ✅
 
 - Sonne, Umgebungslicht und Himmel folgen der Uhrzeit: Sonnenaufgang, Dämmerung in warmen Farben, dunkle Nacht (`data/licht/standard.json`)

@@ -1,0 +1,13 @@
+{
+  "id": "kassenregal",
+  "name": "Kassenregal",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {"slots": 4},
+  "regal": {"ebenen": [0.25, 0.5, 0.75, 1.0], "mitte": 0.0, "laenge": 0.7, "kapazitaet": 8},
+  "model": "eigen/kassenregal",
+  "platzhalter": {"groesse": [0.4, 1.2, 0.8], "farbe": "#c9a26b"}
+}

@@ -1,0 +1,11 @@
+{
+  "id": "nasenschild_laden",
+  "name": "Nasenschild Laden",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "anbau",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/nasenschild_laden",
+  "platzhalter": {"groesse": [0.8, 0.7, 0.1], "farbe": "#c9a26b"}
+}

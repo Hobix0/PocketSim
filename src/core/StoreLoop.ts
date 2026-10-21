@@ -17,6 +17,7 @@ import type { StorageSurfaceComponent } from '../components/StorageSurfaceCompon
 import { buyChance, type PriceBook } from '../economy/Prices';
 import { createCustomerEntity } from '../factory/createCustomerEntity';
 import { CustomerComponent } from '../components/CustomerComponent';
+import { TerminalComponent } from '../components/TerminalComponent';
 import { CheckoutComponent } from '../components/CheckoutComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
@@ -134,6 +135,11 @@ export class StoreLoop {
         findPath: this.findPath,
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
         sekundenProStueck: personal.sekundenProStueck,
+      },
+      einkaufen: {
+        findTerminal: () => [...this.world.query(TerminalComponent)][0]?.[0] ?? null,
+        findPath: this.findPath,
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
       },
       kassieren: {
         findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier)?.[0] ?? null,

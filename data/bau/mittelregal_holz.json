@@ -1,0 +1,13 @@
+{
+  "id": "mittelregal_holz",
+  "name": "Mittelregal Holz",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 190,
+  "freischaltLevel": 1,
+  "werte": {"slots": 3},
+  "regal": {"ebenen": [0.1, 0.55, 1.0], "mitte": 0.05, "laenge": 1.85, "kapazitaet": 20},
+  "model": "eigen/mittelregal_holz",
+  "platzhalter": {"groesse": [0.6, 1.4, 2.0], "farbe": "#c9a26b"}
+}
