@@ -16,6 +16,7 @@ import { setHighlight } from '../interaction/highlight';
 import { checkPlacement, railAt, type PlacementError } from './placement';
 import { snapPlacement } from './snapping';
 import { inBuildCategory } from '../content/definitions';
+import { damp, dampAngle } from '../fx/Tweens';
 import type { Plots } from '../world/Plots';
 
 // Bauwerkzeuge des Spielers (entspricht dem BuilderComponent aus UE5):
@@ -35,6 +36,12 @@ export interface BuildEvents extends Record<string, unknown> {
   toolChanged: Tool | null;
   /** Etwas wurde gebaut oder verschoben */
   placed: { entity: Entity; moved: boolean };
+  /** Wird gleich entfernt (Abriss) – für Effekte, die Entity ist noch in der Welt */
+  removing: { entity: Entity };
+  /** Zum Verschieben aufgenommen */
+  picked: { entity: Entity };
+  /** Vorschau gedreht */
+  rotated: undefined;
   /** Meldung für den Spieler (Textschlüssel + Werte) */
   message: { key: string; werte?: Record<string, string | number>; art: 'info' | 'gut' | 'warnung' };
 }
@@ -57,6 +64,12 @@ export class BuildController {
   private dragStart: { x: number; z: number } | null = null;
   private dragGhosts: THREE.Object3D[] = [];
   private readonly ghostBad: THREE.MeshStandardMaterial;
+  /** Bewegung der Vorschau: Nachführen von Position/Drehung, Schweben (aus data/effekte) */
+  motion = { folgen: 18, drehen: 14, schweben: 0.06 };
+  private readonly ghostGoal = new THREE.Vector3();
+  private ghostRot = 0;
+  private ghostShown = false;
+  private zeit = 0;
 
   constructor(
     private readonly world: World,
@@ -111,17 +124,37 @@ export class BuildController {
     this.setTool(null);
   }
 
-  /** Einmal pro Frame. */
-  update(camera: THREE.Camera): void {
+  /** Einmal pro Frame (dt: echte Sekunden, für die weiche Vorschau). */
+  update(camera: THREE.Camera, dt = 1 / 60): void {
     if (!this.tool) return;
-    if (this.tool.art === 'bauen') this.updateBuilding(camera, this.tool);
+    this.zeit += dt;
+    if (this.tool.art === 'bauen') { this.updateBuilding(camera, this.tool); this.moveGhost(dt); }
     else this.updatePicking(camera, this.tool.art);
+  }
+
+  /** Vorschau gleitet zum Ziel, dreht sich weich und schwebt ein wenig */
+  private moveGhost(dt: number): void {
+    const g = this.ghost;
+    if (!g || !g.visible || this.dragStart) { this.ghostShown = false; return; }
+    const m = this.motion;
+    const hover = m.schweben + Math.sin(this.zeit * 3) * m.schweben * 0.3;
+    if (!this.ghostShown) {
+      // Erstes Bild: direkt hin, nicht von irgendwo hereinfliegen
+      this.ghostShown = true;
+      g.position.copy(this.ghostGoal).setY(this.ghostGoal.y + hover);
+      g.rotation.y = this.ghostRot;
+      return;
+    }
+    g.position.x = damp(g.position.x, this.ghostGoal.x, m.folgen, dt);
+    g.position.z = damp(g.position.z, this.ghostGoal.z, m.folgen, dt);
+    g.position.y = damp(g.position.y, this.ghostGoal.y + hover, m.folgen, dt);
+    g.rotation.y = dampAngle(g.rotation.y, this.ghostRot, m.drehen, dt);
   }
 
   // ── Bauen / Verschieben (Ghost) ─────────────────────────────────
 
   private updateBuilding(camera: THREE.Camera, tool: Extract<Tool, { art: 'bauen' }>): void {
-    if (this.input.wasPressed('objekt_drehen')) this.quarter = (this.quarter + 1) % 4;
+    if (this.input.wasPressed('objekt_drehen')) { this.quarter = (this.quarter + 1) % 4; this.events.emit('rotated', undefined); }
     if (!this.ghost) return;
     if (!this.pointer.inside || !this.groundPoint(camera)) { this.ghost.visible = false; return; }
 
@@ -135,8 +168,9 @@ export class BuildController {
       gelaendeOk: this.gelaende ? (r) => this.gelaende!(r) <= 0.05 : undefined,
     });
     this.ghost.visible = true;
-    this.ghost.position.set(x, check.y, z);
-    this.ghost.rotation.y = rotY;
+    // Ziel der Vorschau (moveGhost gleitet weich dorthin)
+    this.ghostGoal.set(x, check.y, z);
+    this.ghostRot = rotY;
     this.ghostMaterial.color.set(check.ok ? this.colors.ok : this.colors.fehler);
     this.problem = check.ok ? null : check.grund ?? null;
 
@@ -258,6 +292,7 @@ export class BuildController {
           const p = e.object.position, t = target.object.position;
           if (f.ebene !== 'anbau' || Math.hypot(p.x - t.x, p.z - t.z) > 0.05) continue;
           preis += this.content.bau.find(e.typeId)?.preis ?? 0;
+          this.events.emit('removing', { entity: e });
           this.world.remove(e);
         }
       }
@@ -270,9 +305,11 @@ export class BuildController {
           // Hängt sie noch an einer anderen Schiene, bleibt sie
           if (railAt(this.world, p.x, p.z, target)) continue;
           preis += this.content.bau.find(e.typeId)?.preis ?? 0;
+          this.events.emit('removing', { entity: e });
           this.world.remove(e);
         }
       }
+      this.events.emit('removing', { entity: target });
       this.world.remove(target);
       const betrag = Math.round(preis * this.content.baumenue.rueckerstattung * 100) / 100;
       this.player.earn(betrag, 'abriss');
@@ -280,6 +317,7 @@ export class BuildController {
     } else {
       this.quarter = Math.round(target.object.rotation.y / (Math.PI / 2)) & 3;
       target.object.visible = false;
+      this.events.emit('picked', { entity: target });
       this.setTool({ art: 'bauen', def, moving: target }, true);
     }
   }
@@ -307,6 +345,7 @@ export class BuildController {
     if (this.tool?.art === 'bauen' && this.tool.moving && this.tool !== tool) this.tool.moving.object.visible = true;
     if (this.hovered) { setHighlight(this.hovered, 'none', this.colors.fehler); this.hovered = null; }
     this.removeGhost();
+    this.ghostShown = false;
     this.clearAreaGhosts();
     this.dragStart = null;
     if (!keepRotation) this.quarter = 0;
@@ -367,8 +406,15 @@ export class BuildController {
     }
   }
 
+  /**
+   * Wohin zeigt der Zeiger? Für Bodenteile und Objekte auf den Boden, für Deckenteile (Schienen, Leuchten,
+   * Hängeschilder) auf die Höhe, in der sie hängen – sonst landet man wegen der Schrägsicht meterweit daneben.
+   */
   private groundPoint(camera: THREE.Camera): boolean {
     this.raycaster.setFromCamera(this.pointer.ndc, camera);
+    const tool = this.tool;
+    const decke = tool?.art === 'bauen' && tool.def.ebene === 'decke';
+    this.plane.constant = decke ? -(this.content.baumenue.deckenhoehe - 0.5) : 0;
     return this.raycaster.ray.intersectPlane(this.plane, this.hit) !== null;
   }
 }

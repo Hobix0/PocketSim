@@ -29,7 +29,8 @@ import { CartStationComponent } from '../components/CartStationComponent';
 // hängt sich nur an die Ereignisse; im Koop-Modus könnte das hier auf dem Server laufen.
 
 export interface StoreLoopEvents extends Record<string, unknown> {
-  sale: { betrag: number; artikel: number; byHand: boolean };
+  /** `kasse`, `kunde`: wo es passiert ist (für Effekte) */
+  sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3 };
   visit: { outcome: VisitOutcome };
   opened: undefined;
   closed: undefined;
@@ -88,7 +89,8 @@ export class StoreLoop {
       this.events.emit(open ? 'opened' : 'closed', undefined);
     }
     if (!this.kundenPunkte.length || minutes <= 0) return;
-    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden);
+    const kassen = [...this.world.query(CheckoutComponent)].length;
+    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen));
     for (let i = 0; i < n; i++) this.spawnCustomer();
   }
 
@@ -114,7 +116,7 @@ export class StoreLoop {
     const work = this.content.arbeit;
     this.player.addXp(work.xpProKunde + (byHand ? work.xpProKundeVonHand : 0));
     customer.paid();
-    this.events.emit('sale', { betrag, artikel, byHand });
+    this.events.emit('sale', { betrag, artikel, byHand, kasse: checkout.object.position.clone(), kunde: front.object.position.clone() });
   }
 
   /** Was das Personal braucht (Auffüller und Kassierer). */

@@ -133,6 +133,8 @@ describe('Schienenleuchten', () => {
     w.add(createBuildEntity(schiene, { position: [0, s.deckenhoehe, 0], drehung: 0 }, ctx));
     expect(checkPlacement(w, leuchte, 0.5, 0, 0, s, opts).ok).toBe(true);
     expect(checkPlacement(w, leuchte, 0.5, 0.8, 0, s, opts)).toMatchObject({ ok: false, grund: 'schiene' });
+    // Hängt an der Unterkante der Schiene, nicht oben in den Abhängern
+    expect(checkPlacement(w, leuchte, 0.5, 0, 0, s, opts).y).toBeCloseTo(s.deckenhoehe - schiene.platzhalter.groesse[1]);
   });
 
   it('rasten auf der Mittellinie der Schiene ein, in ihrer Richtung', async () => {

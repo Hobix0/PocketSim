@@ -1,7 +1,8 @@
 import type { CustomerSettings, ProductDef } from '../content/definitions';
 
 // Kundenzustrom und Einkaufswünsche – ohne Grafik, damit es testbar bleibt.
-//  - Während der Öffnungszeiten kommen Kunden; wie viele, hängt von der Uhrzeit und vom Ruf ab.
+//  - Während der Öffnungszeiten kommen Kunden; wie viele, hängt von der Uhrzeit, vom Ruf und von der
+//    Auswahl ab (mehr verschiedene Produkte → mehr Kunden, größere Einkäufe).
 //  - Jeder Kunde hat 1–4 Wünsche: meist etwas aus dem aktuellen Sortiment, manchmal etwas,
 //    das es (noch) nicht gibt. Was fehlt, zeigt der Tagesbericht.
 
@@ -15,6 +16,20 @@ export function parseTime(t: string): number {
 export function rufFaktor(s: CustomerSettings, ruf: number): number {
   const t = Math.min(1, Math.max(0, ruf / 100));
   return s.rufFaktor.min + (s.rufFaktor.max - s.rufFaktor.min) * t;
+}
+
+/** Andrang-Faktor aus der Auswahl (Anzahl verschiedener Produkte im Regal) */
+export function auswahlFaktor(s: CustomerSettings, produkte: number): number {
+  const a = s.auswahl;
+  if (!a) return 1;
+  if (produkte <= a.referenz) return a.min + (1 - a.min) * (produkte / a.referenz);
+  return Math.min(a.max, 1 + (a.max - 1) * ((produkte - a.referenz) / (a.referenz * 3)));
+}
+
+/** Zusätzliche Wünsche je Kunde bei großem Sortiment */
+export function wunschBonus(s: CustomerSettings, produkte: number): number {
+  const a = s.auswahl;
+  return a ? Math.min(a.wunschBonusMax, Math.floor(produkte / a.wunschJeProdukte)) : 0;
 }
 
 export class CustomerSpawner {
@@ -40,16 +55,20 @@ export class CustomerSpawner {
    * @param minutes vergangene Spielminuten seit dem letzten Aufruf
    * @param minuteOfDay aktuelle Uhrzeit in Minuten
    * @param imLaden wie viele Kunden schon da sind
+   * @param auswahl Anzahl verschiedener Produkte im Regal (ohne Angabe: Faktor 1)
+   * @param kassen Anzahl Kassen (mehr Kassen → mehr Kunden gleichzeitig)
    */
-  spawns(minutes: number, minuteOfDay: number, ruf: number, imLaden: number): number {
+  spawns(minutes: number, minuteOfDay: number, ruf: number, imLaden: number, auswahl?: number, kassen = 1): number {
     if (!this.isOpen(minuteOfDay)) { this.acc = 0; return 0; }
     const hour = Math.floor(minuteOfDay / 60) % 24;
-    const proStunde = (this.settings.kundenProStunde[hour] ?? 0) * rufFaktor(this.settings, ruf);
+    const faktor = auswahl === undefined ? 1 : auswahlFaktor(this.settings, auswahl);
+    const proStunde = (this.settings.kundenProStunde[hour] ?? 0) * rufFaktor(this.settings, ruf) * faktor;
+    const max = this.settings.maxImLaden + (this.settings.maxImLadenProKasse ?? 0) * Math.max(0, kassen - 1);
     // Etwas Zufall, damit Kunden nicht im Takt kommen
     this.acc += (proStunde * minutes / 60) * (0.5 + this.random());
     let n = 0;
-    while (this.acc >= 1 && imLaden + n < this.settings.maxImLaden) { this.acc -= 1; n++; }
-    if (imLaden + n >= this.settings.maxImLaden) this.acc = Math.min(this.acc, 1);
+    while (this.acc >= 1 && imLaden + n < max) { this.acc -= 1; n++; }
+    if (imLaden + n >= max) this.acc = Math.min(this.acc, 1);
     return n;
   }
 }
@@ -69,7 +88,7 @@ export interface Wish {
  */
 export function planWishes(s: CustomerSettings, sortiment: ProductDef[], alle: ProductDef[], random: () => number = Math.random): Wish[] {
   const between = (r: { min: number; max: number }) => r.min + Math.floor(random() * (r.max - r.min + 1));
-  const count = between(s.wuensche);
+  const count = between(s.wuensche) + wunschBonus(s, sortiment.length);
   const wishes: Wish[] = [];
   for (let i = 0; i < count * 3 && wishes.length < count; i++) {
     const pool = sortiment.length && random() < s.wunschAusSortiment ? sortiment : alle;

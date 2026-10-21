@@ -1,0 +1,12 @@
+{
+  "_hinweis": "Effekte und Bewegungen: an/aus, Menge der Partikel (1 = normal), schwebende Texte, Farben der Würfel-Partikel. Bauvorschau: wie weich sie dem Zeiger folgt (höher = schneller) und wie hoch sie schwebt.",
+  "an": true,
+  "menge": 1,
+  "texte": true,
+  "staub": ["#d9cbb0", "#cbb894", "#e8dcc4", "#bfae8c"],
+  "muenzen": ["#f2c230", "#e8b020", "#ffd85a"],
+  "funkeln": ["#fff3b0", "#ffd166", "#ffffff", "#9be3b4", "#ffb3c1"],
+  "rauch": ["#9aa0a6", "#b5babf", "#868c92"],
+  "vorschau": { "folgen": 18, "drehen": 14, "schweben": 0.06 },
+  "lkwAuspuff": [1.9, 0.3, -1.15]
+}

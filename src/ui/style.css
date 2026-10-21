@@ -2108,3 +2108,66 @@ html, body {
 .assortment .prices .hint {
   white-space: normal;
 }
+
+/* ── Bewegung in der Oberfläche: Fenster federn auf, Meldungen gleiten herein, Knöpfe geben nach ── */
+@keyframes fenster-auf {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 14px)) scale(0.96); }
+  70% { opacity: 1; transform: translate(-50%, calc(-50% - 2px)) scale(1.005); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes panel-auf {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes meldung-rein {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.window:not([hidden]) {
+  animation: fenster-auf 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.buildmenu:not([hidden]) {
+  animation: panel-auf 0.22s ease-out;
+}
+
+.toast {
+  animation: meldung-rein 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.hud button {
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.hud button:active {
+  transform: scale(0.94);
+}
+
+.hud .card:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .window:not([hidden]), .buildmenu:not([hidden]), .toast { animation: none; }
+  .hud button, .hud .card:hover { transition: none; transform: none; }
+}
+
+/* Einstellungen im Menü: Schieberegler für Lautstärken */
+.game-menu .slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 4px;
+}
+
+.game-menu .slider span {
+  min-width: 64px;
+}
+
+.game-menu .slider input {
+  flex: 1;
+  accent-color: var(--accent);
+}

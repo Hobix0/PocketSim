@@ -7,7 +7,7 @@
   "preis": 1500,
   "freischaltLevel": 2,
   "werte": {"kassen": 1, "strom": 0.3},
-  "kasse": {"kunde": [0.85, -0.3], "personal": [-0.8, -0.3], "richtung": [0, 1], "abstand": 0.75},
+  "kasse": {"kunde": [-0.85, 0.3], "personal": [0.8, 0.3], "richtung": [0, -1], "abstand": 0.75},
   "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_Checkout_01.fbx",
   "icon": "3d/Icons_Baubar/T_Build_SM_Store_Checkout_01.png",
   "platzhalter": {"groesse": [0.92, 2.21, 2], "farbe": "#b9c0c6"}

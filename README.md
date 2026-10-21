@@ -217,6 +217,17 @@ flowchart LR
   B --> L[LKW] --> LG[Lager] -->|Auffüller| R
 ```
 
+**Etappe 10 – Cozy-Kamera, Effekte, Klang, Balancing, Testmarkt** ✅
+
+- **Cozy-Kamera** (`data/kamera/standard.json`): nah heran wird der Blick flacher (34°), weit weg steiler (56°); gezoomt wird zum Mauszeiger hin, Schwenken mit der Maus gleitet mit Schwung aus, ohne Eingabe „atmet“ die Kamera ganz leicht
+- **Cozy-Look** (`src/render/CozyLook.ts`, Werte unter `look`): Lampen, Leuchtschilder und Lichterketten glühen (Bloom, nachts stärker), oben und unten leichte Miniatur-Unschärfe (Tilt-Shift, je weiter weg desto stärker), weiche Vignette, etwas wärmere Farben. Abschaltbar unter Menü → Einstellungen
+- **Bewegungen und Effekte** (`src/fx/`, Werte in `data/effekte/standard.json`): Die Bauvorschau gleitet dem Zeiger nach, dreht sich weich und schwebt; Hingestelltes ploppt mit einem kleinen Hüpfer auf, Abgerissenes dreht sich weg und verpufft, Staubwölkchen aus Voxel-Würfeln. An der Kasse springen Münzen, der Betrag schwebt hoch, Kunden zeigen ein Pixel-Herz; Level-Aufstieg und erreichte Ziele funkeln; fahrende LKW lassen Wölkchen aus dem Auspuff. Fenster federn auf, Meldungen gleiten herein, Knöpfe geben nach
+- **Töne und Musik** (`src/audio/AudioSystem.ts`, `data/audio/standard.json`): alles live mit WebAudio erzeugt, ohne Audiodateien – Holz-„Tock“ beim Bauen, Klick beim Drehen, Puff beim Abriss, Ka-Ching an der Kasse, Einräumen, Fehler, Level-Up, Ziel, LKW-Hupe. Dazu gemütliche Lo-Fi-Musik, die sich selbst schreibt (Akkordfolgen, Bass, Melodie aus der Pentatonik, leises Hi-Hat, leichter Swing), nachts ruhiger. Lautstärken unter Menü → Einstellungen, Taste **M** schaltet stumm. Töne lassen sich in den Daten als Rezepte (Welle, Tonhöhe, Gleiten, Dauer, Filter) ändern
+- **Kassen gedreht:** Kunden stehen jetzt auf der richtigen Seite (Layout `kasse` in `data/bau/kasse_schwarz.json` und `store_checkout_01.json`)
+- **Schienenleuchten repariert:** Sie hängen an der Unterkante der Schiene (vorher 60 cm zu hoch), und Deckenteile werden auf Deckenhöhe angezielt – ein Klick auf die sichtbare Schiene trifft
+- **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
+- **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
+
 **Licht: Tag und Nacht, leuchtende Lampen** ✅
 
 - Sonne, Umgebungslicht und Himmel folgen der Uhrzeit: Sonnenaufgang, Dämmerung in warmen Farben, dunkle Nacht (`data/licht/standard.json`)

@@ -1,0 +1,78 @@
+{
+  "_hinweis": "Klänge werden live erzeugt (WebAudio), keine Dateien. Ein Ton: welle (sine, triangle, square, sawtooth, rauschen), frequenz (Hz) und bis (gleitet dorthin), dauer (s), lautstaerke, anschlag (s), verzoegerung (s), filter (Tiefpass Hz). Musik: tempo (BPM), Akkordfolgen als MIDI-Noten, Melodie-Tonleiter (MIDI), wie oft Melodie-Töne kommen.",
+  "lautstaerke": { "musik": 0.45, "toene": 0.7 },
+  "hall": { "dauer": 2.2, "anteil": 0.22 },
+  "toene": {
+    "bauen": [
+      { "welle": "triangle", "frequenz": 190, "bis": 85, "dauer": 0.16, "lautstaerke": 0.55 },
+      { "welle": "rauschen", "dauer": 0.05, "lautstaerke": 0.25, "filter": 2200 }
+    ],
+    "drehen": [
+      { "welle": "triangle", "frequenz": 880, "bis": 990, "dauer": 0.05, "lautstaerke": 0.18 }
+    ],
+    "abriss": [
+      { "welle": "rauschen", "dauer": 0.35, "lautstaerke": 0.4, "filter": 900 },
+      { "welle": "sine", "frequenz": 220, "bis": 70, "dauer": 0.3, "lautstaerke": 0.3 }
+    ],
+    "kasse": [
+      { "welle": "square", "frequenz": 1318, "dauer": 0.09, "lautstaerke": 0.08, "filter": 4000 },
+      { "welle": "sine", "frequenz": 1760, "dauer": 0.5, "lautstaerke": 0.22, "verzoegerung": 0.07 },
+      { "welle": "sine", "frequenz": 2637, "dauer": 0.4, "lautstaerke": 0.08, "verzoegerung": 0.07 }
+    ],
+    "muenze": [
+      { "welle": "square", "frequenz": 988, "dauer": 0.06, "lautstaerke": 0.06, "filter": 3500 },
+      { "welle": "square", "frequenz": 1319, "dauer": 0.18, "lautstaerke": 0.06, "verzoegerung": 0.06, "filter": 3500 }
+    ],
+    "einraeumen": [
+      { "welle": "sine", "frequenz": 520, "bis": 760, "dauer": 0.09, "lautstaerke": 0.25 },
+      { "welle": "rauschen", "dauer": 0.04, "lautstaerke": 0.12, "filter": 1800 }
+    ],
+    "klick": [
+      { "welle": "sine", "frequenz": 660, "dauer": 0.035, "lautstaerke": 0.12 }
+    ],
+    "fenster": [
+      { "welle": "rauschen", "dauer": 0.18, "lautstaerke": 0.06, "filter": 1400, "anschlag": 0.06 },
+      { "welle": "sine", "frequenz": 392, "bis": 523, "dauer": 0.14, "lautstaerke": 0.08 }
+    ],
+    "fehler": [
+      { "welle": "triangle", "frequenz": 196, "dauer": 0.12, "lautstaerke": 0.22 },
+      { "welle": "triangle", "frequenz": 165, "dauer": 0.16, "lautstaerke": 0.22, "verzoegerung": 0.1 }
+    ],
+    "levelup": [
+      { "welle": "triangle", "frequenz": 523, "dauer": 0.18, "lautstaerke": 0.25 },
+      { "welle": "triangle", "frequenz": 659, "dauer": 0.18, "lautstaerke": 0.25, "verzoegerung": 0.11 },
+      { "welle": "triangle", "frequenz": 784, "dauer": 0.18, "lautstaerke": 0.25, "verzoegerung": 0.22 },
+      { "welle": "sine", "frequenz": 1047, "dauer": 0.7, "lautstaerke": 0.3, "verzoegerung": 0.33 }
+    ],
+    "ziel": [
+      { "welle": "sine", "frequenz": 784, "dauer": 0.25, "lautstaerke": 0.2 },
+      { "welle": "sine", "frequenz": 1175, "dauer": 0.5, "lautstaerke": 0.2, "verzoegerung": 0.12 }
+    ],
+    "lkw": [
+      { "welle": "sawtooth", "frequenz": 311, "dauer": 0.22, "lautstaerke": 0.08, "filter": 1200 },
+      { "welle": "sawtooth", "frequenz": 392, "dauer": 0.22, "lautstaerke": 0.08, "filter": 1200 },
+      { "welle": "sawtooth", "frequenz": 311, "dauer": 0.3, "lautstaerke": 0.08, "filter": 1200, "verzoegerung": 0.3 },
+      { "welle": "sawtooth", "frequenz": 392, "dauer": 0.3, "lautstaerke": 0.08, "filter": 1200, "verzoegerung": 0.3 }
+    ],
+    "tuer": [
+      { "welle": "sine", "frequenz": 1568, "dauer": 0.5, "lautstaerke": 0.08 },
+      { "welle": "sine", "frequenz": 1245, "dauer": 0.7, "lautstaerke": 0.08, "verzoegerung": 0.18 }
+    ]
+  },
+  "musik": {
+    "tempo": 76,
+    "tempoNacht": 64,
+    "akkorde": [
+      [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]],
+      [[48, 52, 55, 59], [45, 48, 52, 55], [53, 57, 60, 64], [55, 59, 62, 65]],
+      [[50, 53, 57, 60], [55, 59, 62, 65], [48, 52, 55, 59], [45, 48, 52, 55]]
+    ],
+    "tonleiter": [72, 74, 76, 79, 81, 84, 86],
+    "melodieDichte": 0.32,
+    "melodieDichteNacht": 0.14,
+    "hihat": 0.035,
+    "pad": 0.06,
+    "bass": 0.11,
+    "melodie": 0.07
+  }
+}

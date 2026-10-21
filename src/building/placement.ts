@@ -66,13 +66,17 @@ export function checkPlacement(
     if (containsPoint(f.rect(), x, z)) floor = Math.max(floor ?? 0, f.top());
   }
   const needsFloor = def.ebene === 'objekt' || def.ebene === 'decke';
-  const y = def.ebene === 'decke' ? settings.deckenhoehe : def.ebene === 'objekt' ? floor ?? 0 : 0;
+  // Schienenleuchten hängen an der Unterkante ihrer Schiene (die Schiene selbst hängt an Abhängern unter der Decke)
+  const rail = def.anSchiene ? railAt(world, x, z, opts.moving) : null;
+  const railFoot = rail?.get(FootprintComponent);
+  const y = rail && railFoot ? rail.object.position.y - railFoot.groesse[1]
+    : def.ebene === 'decke' ? settings.deckenhoehe : def.ebene === 'objekt' ? floor ?? 0 : 0;
 
   if (!opts.moving && def.freischaltLevel > opts.level) return { ok: false, grund: 'gesperrt', y };
   if (opts.plotOk && !opts.plotOk(x, z, def.ebene === 'wand' || def.ebene === 'anbau' ? 0.4 : 0)) return { ok: false, grund: 'grundstueck', y };
   if (opts.gelaendeOk && !def.absenkung && def.ebene !== 'decke' && !opts.gelaendeOk(rect)) return { ok: false, grund: 'gelaende', y };
   if (needsFloor && floor === null) return { ok: false, grund: 'boden', y };
-  if (def.anSchiene && !railAt(world, x, z, opts.moving)) return { ok: false, grund: 'schiene', y };
+  if (def.anSchiene && !rail) return { ok: false, grund: 'schiene', y };
   // Wände brauchen Boden auf mindestens einer Seite
   if (def.ebene === 'wand' && !floorNear(world, rect, opts.moving)) return { ok: false, grund: 'boden', y };
   for (const [e, f] of world.query(FootprintComponent)) {
