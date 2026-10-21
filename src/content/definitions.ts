@@ -87,6 +87,8 @@ export interface LogisticsSettings {
     geschwindigkeit: number;
     /** Zellgröße (m) des Fahrrasters, auf dem LKW ihren Weg zu Ladetoren suchen */
     fahrraster: number;
+    /** Scheinwerfer, Rück-, Begrenzungsleuchten und Blinker */
+    licht?: LightDef;
   };
 }
 
@@ -146,6 +148,10 @@ export interface BuildDef {
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
   funktionen: string[];
+  /** Senkt das Gelände ab (Rampenabfahrt vor einem Ladetor): Tiefe, flacher Teil und Schräge (m) entlang +X, Breite */
+  absenkung?: { tiefe: number; flach: number; schraege: number; breite: number };
+  /** Nur befahrbar (LKW), nicht begehbar */
+  fahrbahn: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
@@ -166,6 +172,56 @@ export interface LightDef {
   farbe: string;
   staerke: number;
   reichweite: number;
+  /** Weitere Leuchtflächen ohne eigenes Licht (z. B. Rückleuchten); `blinkt`: Blinker/Warnblinker */
+  zusatz?: { position: [number, number, number]; groesse: [number, number, number]; farbe: string; blinkt?: boolean }[];
+}
+
+/** Gelände-Werkzeug (data/gelaende/standard.json) */
+export interface TerrainSettings {
+  zelle: number;
+  maxHoehe: number;
+  /** Höhenstufe der Voxel-Darstellung (m) */
+  stufe: number;
+  preisProKubikmeter: number;
+  tempo: number;
+  pinsel: number[];
+  erde: string;
+}
+
+/** Eine Form eines Stempels im 100 × 100-Feld: SVG-Pfad (gefüllt, mit `linie` als Umriss) oder Text */
+export interface StampShape {
+  pfad?: string;
+  linie?: number;
+  text?: string;
+  /** Schriftgröße im 100er-Feld */
+  groesse?: number;
+  /** CSS-Schrift, `{g}` wird durch die Größe ersetzt */
+  schrift?: string;
+}
+
+/** Stempel-Vorlage für Bodenmarkierungen */
+export interface StampDef {
+  id: string;
+  name: string;
+  /** Breite × Tiefe in m (bei Größe 100 %) */
+  groesse: [number, number];
+  preis: number;
+  formen: StampShape[];
+}
+
+/** Bodenmarkierungen (data/markierungen/standard.json) */
+export interface MarkingSettings {
+  /** Pixel je Meter auf der Malschicht */
+  aufloesung: number;
+  /** Abstand der Malschicht über Rasen und Bodenplatten (m) */
+  hoehe: number;
+  deckkraft: number;
+  preisProQuadratmeter: number;
+  /** Strichbreiten (m) */
+  breiten: number[];
+  stempelGroessen: number[];
+  farben: { id: string; name: string; farbe: string }[];
+  stempel: StampDef[];
 }
 
 /** Tag und Nacht (data/licht/standard.json) */
@@ -193,6 +249,8 @@ export interface BuildSettings {
   rueckerstattung: number;
   /** Wie weit Wände von der Fliesenkante nach außen rücken (halbe Wandstärke) */
   wandVersatz?: number;
+  /** Dach über allen Innenräumen: ab diesem Kameraabstand sichtbar, Dicke, Überstand über die Wände, Farben */
+  dach?: { abAbstand: number; dicke: number; ueberstand: number; farbe: string; kante: string };
   kategorien: BuildCategory[];
 }
 
@@ -206,7 +264,7 @@ export interface BuildCategory {
   name: string;
   kategorien?: string[];
   ebenen?: BuildLayer[];
-  spezial?: 'grundstuecke';
+  spezial?: 'grundstuecke' | 'gelaende' | 'markierungen';
 }
 
 export function inBuildCategory(def: BuildDef, c: BuildCategory): boolean {
@@ -360,6 +418,11 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),
     licht: o.licht === undefined ? undefined : light(o.licht, `${where} → licht`),
+    absenkung: o.absenkung === undefined ? undefined : (() => {
+      const w = `${where} → absenkung`, x = asObject(o.absenkung, w);
+      return { tiefe: num(x, 'tiefe', w, 0.1), flach: num(x, 'flach', w, 1), schraege: num(x, 'schraege', w, 1), breite: num(x, 'breite', w, 1) };
+    })(),
+    fahrbahn: o.fahrbahn === undefined ? false : bool(o, 'fahrbahn', where),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
@@ -378,6 +441,10 @@ function light(raw: unknown, where: string): LightDef {
     farbe: str(o, 'farbe', where),
     staerke: num(o, 'staerke', where, 0),
     reichweite: num(o, 'reichweite', where, 0.1),
+    zusatz: o.zusatz === undefined ? undefined : (Array.isArray(o.zusatz) ? o.zusatz : []).map((z, i) => {
+      const w = `${where} → zusatz[${i}]`, x = asObject(z, w);
+      return { position: vec3(x, 'position', w), groesse: vec3(x, 'groesse', w), farbe: str(x, 'farbe', w), blinkt: x.blinkt === undefined ? false : bool(x, 'blinkt', w) };
+    }),
   };
 }
 

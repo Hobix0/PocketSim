@@ -318,6 +318,39 @@ model({
   },
 });
 
+// Rampenabfahrt (5-cm-Würfel): abgesenkte Laderampe vor einem Ladetor. Das Gelände wird darunter abgesenkt,
+// der LKW fährt rückwärts hinunter und steht so tief, dass seine Ladefläche bündig mit dem Hallenboden ist.
+// Lokal −X ist die Torseite (Index 0), dann 8 m flach in 1,1 m Tiefe, dann 6 m Schräge hinauf. Innen 2,6 m breit.
+model({
+  id: 'rampenabfahrt', name: 'Rampenabfahrt', dims: [240, 37, 72], size: 0.05, menue: 'lager', ursprung: [-120, -22, -36],
+  draw: ({ box, rough, nx, nz }) => {
+    const BETON_D = '#8f8a80', BETON_H = '#b7b1a5';
+    const F = 150; // flacher Teil 7,5 m, dann 4,5 m Schräge
+    const boden = (x) => (x < F ? 1 : Math.round(1 + ((x - F) / (nx - 1 - F)) * 21));
+    // Sohle und Schräge (gefüllt bis zur Oberfläche), Rillen auf der Schräge, Ablaufrinne vorne
+    for (let x = 0; x < nx; x++) {
+      const top = boden(x);
+      box(x, x, 0, top, 10, nz - 11, (xx, y) => (y === top ? (x >= F && x % 6 === 0 ? BETON_D : BETON_H) : BETON_D));
+    }
+    box(F - 10, F - 3, 1, 1, 12, nz - 13, (x, y, z) => (z % 2 ? '#3a3d40' : '#55595d'));
+    // Spurlinien gelb auf der Sohle
+    box(6, F - 12, 1, 1, 15, 15, GELB); box(6, F - 12, 1, 1, nz - 16, nz - 16, GELB);
+    // Seitenwände bis Geländehöhe, Kante gelb-schwarz
+    for (const [z0, z1] of [[0, 9], [nz - 10, nz - 1]]) {
+      rough(0, nx - 1, 0, 22, z0, z1, BETON, 0.04);
+      box(0, nx - 1, 23, 23, z0, z1, (x) => (Math.floor(x / 6) % 2 ? GELB : SCHWARZ));
+    }
+    // Torseite: Betonwand mit Gummipuffern
+    rough(0, 4, 0, 22, 10, nz - 11, BETON, 0.04);
+    for (const z of [16, nz - 22]) box(5, 6, 9, 15, z, z + 5, GUMMI);
+    // Geländer oben auf den Wänden (nur am tiefen Teil)
+    for (const z of [2, nz - 3]) {
+      for (let x = 10; x <= F + 10; x += 30) box(x, x, 24, 35, z, z, GELB_D);
+      box(10, F + 10, 35, 36, z, z, GELB); box(10, F + 10, 29, 29, z, z, GELB_D);
+    }
+  },
+});
+
 // Poller (Deko, außen)
 model({
   id: 'poller', name: 'Poller', dims: [8, 38, 8],
@@ -443,42 +476,82 @@ model({
   },
 });
 
-// ── Liefer-LKW (5-cm-Würfel): Fahrerhaus vorne (+X), offene Pritsche ─
-// Ladefläche oben auf 1,15 m (y 0–22), von −3,5 bis +1,4 m um die Mitte – passend zu data/logistik/standard.json
+// ── Liefer-LKW (5-cm-Würfel): Fahrerhaus vorne (+X), offene Pritsche mit Rungen und Planengestell ─
+// Ladefläche oben auf 1,15 m (y 0–22), von −3,5 bis +1,4 m um die Mitte – passend zu data/logistik/standard.json.
+// Die Leuchten (Scheinwerfer, Rück-, Begrenzungsleuchten, Blinker) leuchten im Spiel; siehe lkw.licht.
 model({
   id: 'lkw', name: 'Liefer-LKW', dims: [144, 66, 50], size: 0.05, menue: 'lager',
-  draw: ({ box, cyl, text, textWidth, nx, nz }) => {
+  draw: ({ box, cyl, frame, text, textWidth, nx, nz }) => {
     const mid = nz / 2;
-    // Fahrgestell und Räder
-    box(4, 140, 7, 12, 8, nz - 9, DUNKEL);
-    for (const x of [22, 34, 118]) for (const z of [3, nz - 8]) {
-      cyl('z', x, 8, 8, z, z + 4, GUMMI);
-      cyl('z', x, 8, 4, z, z + 4, GRAU);
-      cyl('z', x, 8, 1, z, z + 4, STAHL_D);
+    const CAB = '#f3f0e8', CAB_D = '#d9d4c8', CHROM = '#c9ced2', GRUEN_D = '#3f8f5a';
+    // Rahmen mit Querträgern
+    for (const z of [12, 13, nz - 14, nz - 13]) box(4, 140, 8, 11, z, z, DUNKEL);
+    for (let x = 8; x < 140; x += 14) box(x, x + 1, 8, 10, 12, nz - 13, DUNKEL);
+    // Räder: Vorderachse einzeln, Hinterachsen mit Zwillingsreifen; Felgen mit Nabe und Radmuttern
+    const rad = (x, z0, z1) => {
+      cyl('z', x, 9, 9, z0, z1, (i, j) => (i * i + j * j > 49 ? GUMMI : i * i + j * j > 16 ? GRAU : CHROM));
+      cyl('z', x, 9, 1, z0, z1, STAHL_D);
+    };
+    for (const x of [22, 41]) { rad(x, 1, 4); rad(x, 5, 8); rad(x, nz - 9, nz - 6); rad(x, nz - 5, nz - 2); }
+    rad(118, 2, 6); rad(118, nz - 7, nz - 3);
+    // Kotflügel über den Rädern
+    for (const [x0, x1] of [[10, 53], [106, 130]]) for (const z of [[0, 9], [nz - 10, nz - 1]]) box(x0, x1, 19, 20, z[0], z[1], SCHWARZ);
+    // Seitlicher Unterfahrschutz zwischen den Achsen, Kraftstofftank, Batteriekasten
+    for (const z of [1, nz - 2]) { box(54, 104, 9, 10, z, z, STAHL); box(54, 104, 14, 15, z, z, STAHL); for (let x = 56; x < 104; x += 16) box(x, x, 9, 15, z, z, STAHL_D); }
+    cyl('x', 10, 5, 4, 84, 102, (i, j) => (j > 2 ? '#e6e8ea' : CHROM)); box(84, 84, 6, 14, 2, 8, STAHL_D);
+    box(86, 100, 4, 13, nz - 8, nz - 3, DUNKEL);
+    // Pritsche: Holzboden mit Fugen, Alu-Bordwände mit Rungen, Stirnwand, Planengestell, eingerollte Plane
+    box(2, 100, 13, 19, 1, nz - 2, '#3a3f44');
+    box(2, 100, 20, 22, 1, nz - 2, (x, y, z) => (y < 22 ? HOLZ_D : z % 5 === 0 ? HOLZ_D : HOLZ));
+    for (const z of [1, nz - 2]) box(2, 100, 23, 28, z, z, (x, y) => (x % 16 === 0 ? STAHL_D : y === 28 ? CHROM : STAHL));
+    box(2, 2, 23, 28, 1, nz - 2, (x, y, z) => (z % 8 === 0 ? STAHL_D : STAHL));
+    box(98, 101, 23, 52, 1, nz - 2, (x, y, z) => (y % 5 === 0 ? STAHL_D : (z === 1 || z === nz - 2) ? STAHL_D : STAHL));
+    for (const x of [16, 40, 64, 88]) {
+      for (const z of [1, nz - 2]) box(x, x + 1, 23, 52, z, z, STAHL_D);
+      box(x, x + 1, 52, 53, 1, nz - 2, STAHL_D);
     }
-    // Pritsche: Boden auf 1,15 m, niedrige Bordwände, Stirnwand zum Fahrerhaus
-    box(2, 100, 13, 22, 1, nz - 2, (x, y) => (y === 22 ? HOLZ : '#3a3f44'));
-    for (const z of [1, nz - 2]) box(2, 100, 23, 27, z, z, (x, y) => (x % 16 === 0 ? STAHL_D : STAHL));
-    box(2, 2, 23, 27, 1, nz - 2, STAHL);
-    box(98, 101, 23, 50, 1, nz - 2, (x, y, z) => (y % 5 === 0 ? STAHL_D : STAHL));
-    // Plane über dem vorderen Teil (eingerollt)
-    box(84, 97, 46, 50, 1, nz - 2, GRUEN_UE);
-    // Rücklichter, Unterfahrschutz
-    box(1, 1, 14, 17, 3, 7, '#c8382f'); box(1, 1, 14, 17, nz - 8, nz - 4, '#c8382f');
-    box(2, 4, 5, 6, 6, nz - 7, SCHWARZ);
-    // Fahrerhaus
-    box(104, nx - 2, 10, 60, 2, nz - 3, WEISS);
-    box(104, nx - 2, 10, 14, 2, nz - 3, '#cfd2d3');
-    box(nx - 1, nx - 1, 36, 56, 5, nz - 6, GLAS); box(nx - 2, nx - 2, 36, 56, 5, nz - 6, GLAS_H);
-    for (const z of [2, nz - 3]) box(120, 138, 38, 54, z, z, GLAS);
-    box(nx - 1, nx - 1, 14, 24, 10, nz - 11, (x, y, z) => (y % 3 === 0 ? '#8f969d' : DUNKEL)); // Kühlergrill
-    box(nx - 1, nx - 1, 16, 20, 4, 8, '#fff3c4'); box(nx - 1, nx - 1, 16, 20, nz - 9, nz - 5, '#fff3c4');
-    box(nx - 1, nx, 10, 13, 2, nz - 3, SCHWARZ); // Stoßstange
-    for (const z of [0, nz - 1]) box(136, 138, 40, 50, z, z, SCHWARZ); // Spiegel
-    // Firmenstreifen und Schriftzug
-    for (const z of [2, nz - 3]) box(104, nx - 2, 28, 31, z, z, GRUEN_UE);
-    box(104, nx - 2, 61, 62, 4, nz - 5, GRUEN_UE); // Dachkante
-    const s = 2, w = textWidth('UE', s);
-    text(nx - 1, 34, Math.floor(mid + w / 2), 'UE', GRUEN_UE, s);
+    box(3, 97, 53, 53, 1, 2, STAHL_D); box(3, 97, 53, 53, nz - 3, nz - 2, STAHL_D);
+    for (const z of [[1, 3], [nz - 4, nz - 2]]) box(3, 97, 48, 51, z[0], z[1], GRUEN_UE); // eingerollte Plane
+    box(84, 97, 49, 53, 3, nz - 4, GRUEN_UE); // Plane vorne zusammengeschoben
+    // Heck: Rückleuchten, Kennzeichen, Unterfahrschutz, Schmutzfänger
+    box(1, 1, 14, 18, 2, 8, '#7a1d18'); box(1, 1, 14, 18, nz - 9, nz - 3, '#7a1d18');
+    box(1, 1, 12, 13, 18, 31, '#f2f0e8'); text(0, 13, 30, 'UE', SCHWARZ);
+    box(1, 3, 5, 6, 6, nz - 7, STAHL_D);
+    for (const z of [[1, 8], [nz - 9, nz - 2]]) box(9, 9, 4, 12, z[0], z[1], SCHWARZ);
+    // Auspuff hinter dem Fahrerhaus
+    box(101, 102, 20, 63, nz - 4, nz - 3, CHROM); box(100, 103, 62, 64, nz - 5, nz - 2, STAHL_D);
+    // Fahrerhaus: unten dunkler, Türen mit Fuge und Griff, Trittstufen
+    box(104, nx - 2, 10, 60, 2, nz - 3, CAB);
+    box(104, nx - 2, 10, 17, 2, nz - 3, CAB_D);
+    for (const z of [2, nz - 3]) {
+      box(116, 116, 18, 56, z, z, CAB_D); box(136, 136, 18, 56, z, z, CAB_D);
+      box(129, 132, 34, 35, z, z, SCHWARZ);
+      box(118, 128, 4, 5, z, z, SCHWARZ); box(118, 128, 8, 9, z, z, SCHWARZ);
+      box(118, 134, 38, 55, z, z, GLAS); box(118, 134, 54, 55, z, z, CAB_D);
+      box(104, nx - 2, 28, 31, z, z, GRUEN_UE); // Firmenstreifen
+    }
+    // Innenraum (durch die Scheiben zu sehen): Sitze, Lenkrad
+    box(120, 128, 30, 40, 6, 14, '#3b3b40'); box(120, 128, 30, 40, nz - 15, nz - 7, '#3b3b40');
+    cyl('x', 44, nz - 11, 3, 136, 136, SCHWARZ);
+    // Frontscheibe mit Rahmen, Scheibenwischer, Sonnenblende
+    box(nx - 2, nx - 1, 36, 56, 4, nz - 5, GLAS_H); box(nx - 1, nx - 1, 37, 55, 5, nz - 6, GLAS);
+    frame(nx - 1, nx - 1, 35, 57, 3, nz - 4, SCHWARZ, 1);
+    box(nx - 1, nx - 1, 37, 38, 8, 20, SCHWARZ); box(nx - 1, nx - 1, 37, 38, 28, 40, SCHWARZ);
+    box(nx - 3, nx - 1, 57, 59, 3, nz - 4, CAB_D);
+    // Kühlergrill mit Chromleisten und Logo, Scheinwerfer, Stoßstange, Nebelleuchten
+    box(nx - 1, nx - 1, 18, 30, 10, nz - 11, (x, y) => (y % 3 === 0 ? CHROM : '#2b3036'));
+    box(nx - 1, nx - 1, 22, 26, mid - 3, mid + 2, GRUEN_D);
+    box(nx - 1, nx - 1, 15, 20, 2, 9, '#2b3036'); box(nx - 1, nx - 1, 15, 20, nz - 10, nz - 3, '#2b3036');
+    box(nx - 2, nx - 1, 8, 13, 1, nz - 2, '#5d6268'); box(nx - 1, nx - 1, 9, 10, 4, 7, '#fff3c4'); box(nx - 1, nx - 1, 9, 10, nz - 8, nz - 5, '#fff3c4');
+    box(nx - 1, nx - 1, 5, 7, 18, 31, '#f2f0e8'); text(nx - 1, 7, 30, 'UE', SCHWARZ);
+    // Spiegel an Auslegern
+    for (const z of [0, nz - 1]) { box(136, 140, 46, 47, z, z, SCHWARZ); box(138, 141, 38, 46, z, z, SCHWARZ); box(139, 140, 40, 44, z, z, GLAS_H); }
+    // Dachspoiler mit Begrenzungsleuchten, Firmenschriftzug vorne oben
+    for (let x = 106; x < nx - 3; x++) {
+      const y = Math.round(61 + Math.max(0, (x - 106) / 34) * 4);
+      box(x, x, 61, y, 4, nz - 5, CAB);
+    }
+    const w = textWidth('UE', 2);
+    text(nx - 2, 66 - 2, Math.floor(mid + w / 2), 'UE', GRUEN_D, 1);
   },
 });

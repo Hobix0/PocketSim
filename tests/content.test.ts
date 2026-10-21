@@ -30,9 +30,9 @@ describe('Spieldaten in data/', () => {
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
     expect(c.produkte.size).toBe(150);
-    // 61 Bauelemente aus Blender; weitere haben Voxel-Modelle (eigen/…) oder noch keins (Einkaufsterminal)
+    // 61 Bauelemente aus Blender, davon eins (Markise) durch ein Voxel-Modell ersetzt; weitere haben Voxel-Modelle (eigen/…)
     const fbx = c.bau.all().filter((d) => d.model && !d.model.startsWith('eigen/'));
-    expect(fbx.length).toBe(61);
+    expect(fbx.length).toBe(60);
     const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
     for (const d of [...c.produkte.all(), ...fbx]) {
       expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);
@@ -80,5 +80,22 @@ describe('Registry', () => {
       .toThrow('produkte/milch_1l.json: "vk" muss eine Zahl sein');
     expect(() => validateBuild({ id: 'x', name: 'X', kategorie: 'k', ebene: 'objekt', preis: 1, freischaltLevel: 1, platzhalter: { groesse: [1, 2], farbe: '#fff' } }, 'bau/x.json'))
       .toThrow(/groesse.*drei Zahlen/);
+  });
+});
+
+describe('Bodenmarkierungen', () => {
+  const m = new Content().markierungen;
+  it('hat Farben, Breiten und gültige Stempel', () => {
+    expect(m.farben.length).toBeGreaterThan(3);
+    for (const f of m.farben) expect(f.farbe).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(m.breiten.every((b) => b > 0 && b <= 1)).toBe(true);
+    const ids = new Set<string>();
+    for (const s of m.stempel) {
+      expect(ids.has(s.id)).toBe(false);
+      ids.add(s.id);
+      expect(s.preis).toBeGreaterThanOrEqual(0);
+      expect(s.groesse.every((g) => g > 0)).toBe(true);
+      for (const f of s.formen) expect(!!f.pfad || !!f.text).toBe(true);
+    }
   });
 });

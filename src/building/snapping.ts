@@ -2,12 +2,14 @@ import type { BuildDef, BuildSettings } from '../content/definitions';
 import type { World } from '../ecs/World';
 import { FootprintComponent, containsPoint } from '../components/FootprintComponent';
 import { snap } from './placement';
+import { RampComponent } from '../components/RampComponent';
 
 // Wo ein Bauteil unter dem Zeiger einrastet – ohne Grafik, damit es testbar ist.
 //  - Böden: im Raster der vorhandenen Fliesen (2 m)
 //  - Wände, Fenster, Türen: an der nächsten Fliesenkante; die Außenseite zeigt vom Boden weg
 //  - Eckpfeiler (kleine Wandteile): an der nächsten Fliesenecke
 //  - Anbauteile (Markise, Schild …): genau auf das Wandmodul darunter
+//  - Rampenabfahrt (senkt das Gelände ab): außen vor das nächste Ladetor, in dessen Richtung
 //  - alles andere: freies Raster (z. B. 25 cm), Drehung mit R
 // Konventionen der Modelle: Wände laufen entlang Z, Außenseite +X; Drehung −90° = Außenseite +Z.
 
@@ -44,6 +46,17 @@ export function floorAt(world: World, x: number, z: number): boolean {
 export function snapPlacement(world: World, def: BuildDef, x: number, z: number, quarter: number, settings: BuildSettings): Snapped {
   const versatz = settings.wandVersatz ?? 0.1;
   const [w, , d] = def.platzhalter.groesse;
+  if (def.absenkung) {
+    let best: { x: number; z: number; drehung: number } | null = null, bestD = 10 ** 2;
+    for (const [e, r] of world.query(RampComponent)) {
+      const o = e.object;
+      const fx = Math.cos(o.rotation.y), fz = -Math.sin(o.rotation.y);
+      const cx = o.position.x + fx * (r.tiefe / 2 + w / 2), cz = o.position.z + fz * (r.tiefe / 2 + w / 2);
+      const dd = (cx - x) ** 2 + (cz - z) ** 2;
+      if (dd < bestD) { bestD = dd; best = { x: cx, z: cz, drehung: Math.round((o.rotation.y * 180) / Math.PI) }; }
+    }
+    if (best) return best;
+  }
   if (def.ebene === 'boden') {
     // Am nächsten Boden derselben Art ausrichten (Gehweg liegt anders als die Fliesen innen)
     const r = floorRef(world, x, z, def.aussen);

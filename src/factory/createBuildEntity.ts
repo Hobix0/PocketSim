@@ -13,6 +13,7 @@ import { StorageDropComponent } from '../components/StorageDropComponent';
 import { RampComponent } from '../components/RampComponent';
 import { LampComponent } from '../components/LampComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
+import { TerrainCutComponent } from '../components/TerrainCutComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
 import { formatMoney } from '../ui/format';
@@ -33,7 +34,8 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   entity.object.rotation.y = THREE.MathUtils.degToRad(placement.drehung);
 
   entity.add(new ModelComponent(def.platzhalter, def.model, ctx.models));
-  entity.add(new FootprintComponent(def.ebene, def.platzhalter.groesse, def.durchgang, def.aussen));
+  entity.add(new FootprintComponent(def.ebene, def.platzhalter.groesse, def.durchgang, def.aussen, def.fahrbahn));
+  if (def.absenkung) entity.add(new TerrainCutComponent(def.absenkung, def.platzhalter.groesse[0]));
   entity.add(new ValuesComponent(def.werte, content.werte));
   if (def.regal) entity.add(new ShelfComponent(def.regal, ctx.models, ctx.actions));
   if (def.kasse) entity.add(new CheckoutComponent(def.kasse, ctx.checkout));

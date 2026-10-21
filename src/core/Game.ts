@@ -60,6 +60,14 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
 import { LampLights } from '../world/LampLights';
 import { daylight } from '../world/DayCycle';
+import { RoofLayer } from '../world/RoofLayer';
+import { Terrain } from '../world/Terrain';
+import { TerrainView } from '../world/TerrainView';
+import { TerrainCutComponent } from '../components/TerrainCutComponent';
+import { TerrainTool } from '../building/TerrainTool';
+import { PaintLayer } from '../world/PaintLayer';
+import { PaintTool } from '../building/PaintTool';
+import { FootprintComponent, type Rect } from '../components/FootprintComponent';
 
 /** Wie das Spiel startet */
 export interface GameOptions {
@@ -132,6 +140,7 @@ export class Game {
   readonly deliveries: Deliveries | null;
   readonly fleet: TruckFleet | null;
   readonly logisticsWindow: LogisticsWindow;
+  private readonly refreshTerrainCuts: () => void;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
   /** Lief die Uhr, bevor das Menü aufging? */
@@ -141,6 +150,19 @@ export class Game {
   private readonly sun: THREE.DirectionalLight;
   private readonly ambient: THREE.HemisphereLight;
   private readonly lampLights: LampLights;
+  /** Dach über den Innenräumen (herausgezoomt sichtbar, Taste „Dach“ blendet aus) */
+  private readonly roof: RoofLayer | null;
+  /** Gelände (Höhenfeld) und seine Darstellung */
+  readonly terrain: Terrain;
+  private readonly terrainView: TerrainView;
+  readonly terrainTool: TerrainTool;
+  /** Bodenmarkierungen: Malschicht und Mal-Werkzeug */
+  readonly paint: PaintLayer;
+  readonly paintTool: PaintTool;
+  private paintFloors: { minX: number; maxX: number; minZ: number; maxZ: number; top: number }[] = [];
+  /** Gebautes (für das Gelände-Werkzeug: darunter wird nichts verändert) */
+  private builtRects: Rect[] = [];
+  private terrainVersion = -1;
   /** Farben für Tag und Nacht (Himmel, Sonne) */
   private readonly sky: { tag: THREE.Color; nacht: THREE.Color; daemmerung: THREE.Color; sonne: THREE.Color; sonneNacht: THREE.Color; sonneDaemmerung: THREE.Color };
 
@@ -179,6 +201,9 @@ export class Game {
     // Kulisse
     this.level = new Level(readData<LevelData>(`level/${levelId}`));
     this.scene.add(this.level.root);
+    // Gelände: verformbares Höhenfeld unter dem ganzen Level
+    this.terrain = new Terrain(this.level.bounds, this.content.gelaende.zelle, this.content.gelaende.maxHoehe, this.content.gelaende.stufe);
+    this.terrainView = new TerrainView(this.level.ground, this.terrain, this.level.data.boden.farbe, this.content.gelaende.erde);
     this.scene.background = new THREE.Color(this.level.data.himmel);
 
     // Welt mit allen Entities, gefüllt aus den Objekten des Levels
@@ -186,6 +211,11 @@ export class Game {
     entities.name = 'Entities';
     this.scene.add(entities);
     this.world = new World(entities);
+    // Absenkungen durch Bauteile (Rampenabfahrt) folgen der Welt
+    const cuts = () => this.terrain.setCuts([...this.world.query(TerrainCutComponent)].map(([, c]) => c.cut()));
+    this.world.events.on('added', (e) => { if (e.get(TerrainCutComponent)) cuts(); });
+    this.world.events.on('removed', (e) => { if (e.get(TerrainCutComponent)) cuts(); });
+    this.refreshTerrainCuts = cuts;
 
     // Licht: Himmel/Boden-Licht plus Sonne mit Schatten über das ganze Gelände
     // Warmes Licht von oben und vom Boden – gemütlicher Grundton
@@ -211,6 +241,8 @@ export class Game {
     };
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
     this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
+    const dach = this.content.baumenue.dach;
+    this.roof = dach ? new RoofLayer(this.scene, this.world, { hoehe: this.content.baumenue.deckenhoehe, ...dach }) : null;
 
     // Kamera
     const start = new THREE.Vector3(...this.level.data.kameraStart);
@@ -254,7 +286,8 @@ export class Game {
     this.storage = new CartonStorage(this.world, this.factory);
     // Lieferungen per LKW, wenn das Level eine Anlieferung hat (sonst kommt die Ware sofort)
     const route = this.level.data.anlieferung;
-    this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player, this.level.bounds) : null;
+    this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player, this.level.bounds,
+      (x, z) => this.terrain.editAt(x, z)) : null;
     this.deliveries = this.fleet
       ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
       : null;
@@ -345,8 +378,31 @@ export class Game {
       this.goals.complete('grundstueck');
     });
     this.build = new BuildController(this.world, this.content, this.player, this.input, this.pointer, this.scene, this.factory,
-      { ok: accent, fehler: danger }, this.plots, () => this.utilities.anschluss('strom') - this.production.baseDemand().strom);
-    this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots);
+      { ok: accent, fehler: danger }, this.plots, () => this.utilities.anschluss('strom') - this.production.baseDemand().strom,
+      (r) => this.terrain.maxEditIn(r.minX, r.maxX, r.minZ, r.maxZ));
+    // Gelände-Werkzeug: nur auf eigenem Grund und nicht unter Gebautem
+    this.terrainTool = new TerrainTool(this.terrain, this.level.ground, this.scene, this.input, this.pointer, this.player, this.content.gelaende,
+      (x, z) => this.plots.allows(x, z, 0) && !this.builtRects.some((r) => x > r.minX - 0.6 && x < r.maxX + 0.6 && z > r.minZ - 0.6 && z < r.maxZ + 0.6));
+    this.terrainTool.events.on('message', ({ key, art }) => this.hud.toasts.show(this.content.text(key), art));
+    // Bodenmarkierungen: nur auf eigenem Grund und auf ebenem Boden
+    this.paint = new PaintLayer(this.scene, this.level.bounds, this.content.markierungen);
+    this.paintTool = new PaintTool(this.paint, this.scene, this.input, this.pointer, this.player, this.content.markierungen,
+      (x, z) => this.plots.allows(x, z, 0) && Math.abs(this.terrain.heightAt(x, z)) < 0.03,
+      (x, z) => this.paintFloors.reduce((h, f) => (x >= f.minX && x <= f.maxX && z >= f.minZ && z <= f.maxZ ? Math.max(h, f.top) : h), 0));
+    // Die Malschicht liegt auf jeder Bodenplatte (ohne abgesenkte Teile wie die Rampenabfahrt)
+    const floors = () => {
+      this.paintFloors = [...this.world.query(FootprintComponent)]
+        .filter(([e, f]) => f.ebene === 'boden' && !e.get(TerrainCutComponent))
+        .map(([, f]) => ({ ...f.rect(), top: f.top() }));
+      this.paint.setFloors(this.paintFloors);
+    };
+    const floorChanged = (e: Entity) => { if (e.get(FootprintComponent)?.ebene === 'boden') floors(); };
+    this.world.events.on('added', floorChanged);
+    this.world.events.on('removed', floorChanged);
+    this.build.events.on('placed', ({ entity }) => floorChanged(entity));
+    floors();
+    this.paintTool.events.on('message', ({ key, art }) => this.hud.toasts.show(this.content.text(key), art));
+    this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots, this.terrainTool, this.paintTool);
     // Was mit einem neuen Level freigeschaltet wird
     this.player.events.on('levelUp', ({ level }) => {
       const neu = [
@@ -360,6 +416,8 @@ export class Game {
     this.build.events.on('placed', ({ entity, moved }) => {
       this.store.nav.invalidate();
       this.fleet?.invalidate();
+      this.roof?.invalidate();
+      if (entity.get(TerrainCutComponent)) this.refreshTerrainCuts();
       if (moved) return;
       if (entity.get(ShelfComponent)) this.goals.complete('regal_bauen');
       if (entity.get(CheckoutComponent)) this.goals.complete('kasse_bauen');
@@ -373,6 +431,7 @@ export class Game {
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
     this.hud.onTool('versorgung', () => this.utilityWindow.toggleOpen());
     this.hud.onTool('lager', () => this.logisticsWindow.toggleOpen());
+    this.hud.onTool('dach', () => this.toggleRoof());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -454,13 +513,23 @@ export class Game {
     this.fleet?.update(minutes);
     this.world.update(simDt);
     this.updateDaylight(realDt);
+    this.roof?.update(realDt, this.view.abstand, this.toolActive);
+    this.terrainView.update();
+    this.paint.update();
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
-    this.interactor.enabled = !this.build.active && !this.menu.isOpen;
+    this.interactor.enabled = !this.toolActive && !this.menu.isOpen;
     this.build.update(this.view.camera);
+    if (this.terrainTool.active) {
+      this.builtRects = [...this.world.query(FootprintComponent)].map(([, f]) => f.rect());
+      this.terrainTool.update(this.view.camera, realDt);
+    }
+    this.paintTool.update(this.view.camera);
+    // Gelände geändert: LKW-Wege neu berechnen
+    if (this.terrain.version !== this.terrainVersion) { this.terrainVersion = this.terrain.version; this.fleet?.invalidate(); }
     this.interactor.update(this.view.camera);
     // Über einem Objekt zeigt der Hinweis am Zeiger, worum es geht – dann keine Feld-Markierung
-    this.cursor.update(this.view.camera, this.level.bounds, this.interactor.hovered !== null || this.build.active);
+    this.cursor.update(this.view.camera, this.level.bounds, this.interactor.hovered !== null || this.toolActive);
     this.debug.showCell(this.cursor.cell);
     this.contextHint.update();
     this.buildMenu.update();
@@ -474,10 +543,18 @@ export class Game {
     this.utilityWindow.update();
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
+    this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.renderStore();
 
     this.renderer.render(this.scene, this.view.camera);
     this.input.endFrame();
+  }
+
+  /** Dach ausblenden bzw. wieder zeigen (herausgezoomt) */
+  private toggleRoof(): void {
+    if (!this.roof) return;
+    this.roof.hidden = !this.roof.hidden;
+    this.hud.toasts.show(this.content.text(this.roof.hidden ? 'dach_aus' : 'dach_an'));
   }
 
   /** Tag und Nacht: Sonne, Umgebungslicht und Himmel folgen der Uhrzeit; Lampen leuchten nachts stärker. */
@@ -509,9 +586,12 @@ export class Game {
     if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
+    if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();
+      else if (this.terrainTool.active) this.terrainTool.cancel();
+      else if (this.paintTool.active) this.paintTool.cancel();
       else if (this.purchaseWindow.isOpen) this.purchaseWindow.close();
       else if (this.personalWindow.isOpen) this.personalWindow.close();
       else if (this.assortment.isOpen) this.assortment.close();
@@ -599,10 +679,17 @@ export class Game {
       systeme: {
         grundstuecke: this.plots.state(),
         versorgung: this.utilities.state(),
+        gelaende: this.terrain.state(),
+        markierungen: this.paint.state(),
         // Was noch auf einem LKW steht, kommt beim Laden gleich wieder per LKW
         ...(this.deliveries && this.fleet ? { logistik: { ...this.deliveries.state(), aufLkw: this.fleet.cargo() } } : {}),
       },
     };
+  }
+
+  /** Ist gerade ein Bau-, Gelände- oder Mal-Werkzeug aktiv? */
+  private get toolActive(): boolean {
+    return this.build.active || this.terrainTool.active || this.paintTool.active;
   }
 
   /** Spielstand übernehmen: Welt aufbauen, dann die Systeme. */
@@ -618,6 +705,8 @@ export class Game {
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
+    if (d.systeme?.gelaende) this.terrain.restore(d.systeme.gelaende);
+    this.paint.restore(d.systeme?.markierungen);
     const log = d.systeme?.logistik as (Partial<DeliveriesState> & { aufLkw?: ShipmentLine[] }) | undefined;
     if (log && this.deliveries) {
       const known = (id: string) => this.content.waren.has(id);

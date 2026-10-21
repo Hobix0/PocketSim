@@ -129,3 +129,34 @@ model({
     });
   },
 });
+
+// Markise rot-weiß (Anbau an ein Wandmodul): Stoff mit Streifen, gewellter Volant, Faltarme – ohne Stangen nach unten.
+// Hängt wie das Original 0,1–1,4 m vor der Wand auf 2,6–3,35 m Höhe (ursprung in Würfeln zu 2,5 cm).
+model({
+  id: 'markise_rot_weiss', name: 'Markise Rot-Weiß', dims: [52, 30, 80], menue: 'fassade', ursprung: [4, 104, -40],
+  draw: ({ box, set, nz }) => {
+    const ROT = '#c8382f', ROT_D = '#a72d26', WEISS = '#f3efe6', WEISS_D = '#ddd7cb', GRAU = '#8d969c';
+    const streifen = (z, dunkel) => (Math.floor(z / 8) % 2 ? (dunkel ? WEISS_D : WEISS) : (dunkel ? ROT_D : ROT));
+    // Wandschiene oben
+    box(0, 2, 26, 29, 0, nz - 1, GRAU);
+    // Stoff: von der Wand (oben) schräg nach vorne unten
+    for (let x = 2; x < 50; x++) {
+      const y = Math.round(28 - (x - 2) * 0.36);
+      box(x, x, y - 1, y, 0, nz - 1, (xx, yy, z) => streifen(z, yy < y));
+    }
+    // Volant vorne mit gewellter Unterkante
+    for (let z = 0; z < nz; z++) {
+      const welle = 4 + Math.round(2 * Math.abs(Math.sin((z % 8) / 8 * Math.PI)));
+      for (let y = 10 - welle; y <= 11; y++) { set(50, y, z, streifen(z, false)); set(51, y, z, streifen(z, true)); }
+    }
+    box(49, 51, 11, 12, 0, nz - 1, GRAU); // Fallstange vorne
+    // Faltarme unter dem Stoff (von der Wand zur Fallstange)
+    for (const z0 of [6, nz - 8]) {
+      for (let x = 2; x < 49; x++) {
+        const y = Math.round(18 - (x - 2) * 0.15);
+        box(x, x, y, y, z0, z0 + 1, GRAU);
+      }
+      box(0, 2, 16, 20, z0 - 1, z0 + 2, GRAU);
+    }
+  },
+});

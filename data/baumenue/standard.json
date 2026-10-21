@@ -72,10 +72,21 @@
       ]
     },
     {
+      "id": "gelaende",
+      "name": "Gelände",
+      "spezial": "gelaende"
+    },
+    {
+      "id": "markierungen",
+      "name": "Markierungen",
+      "spezial": "markierungen"
+    },
+    {
       "id": "grundstuecke",
       "name": "Grundstücke",
       "spezial": "grundstuecke"
     }
   ],
-  "wandVersatz": 0.1
+  "wandVersatz": 0.1,
+  "dach": { "abAbstand": 24, "dicke": 0.2, "ueberstand": 0.3, "farbe": "#6f7f6b", "kante": "#e9e2d2" }
 }

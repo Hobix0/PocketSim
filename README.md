@@ -176,6 +176,17 @@ sequenceDiagram
 - **LKW finden ihren Weg selbst:** Ein eigenes Fahrraster (`NavGrid`, Modus „fahren“) kennt Gelände, Asphalt und Gehwege und weicht Gebäuden aus. Ist vor einem Tor kein Platz zum Rangieren, kommt eine Meldung und der LKW hält auf der Straße
 - Damit Personal ins freistehende Lager kommt: einen Weg aus **Asphalt** vom Gehweg bis zu einem Tor legen
 - **Einkaufswagen:** Wer mindestens 3 Teile kaufen will, holt sich einen leeren Wagen aus der **Wagenbox** (vor dem Laden). Die Ware liegt sichtbar im Wagen, an der Kasse auf dem Band; nach dem Bezahlen **packen** alle Kunden hinter der Kasse ein und bringen den Wagen zurück
+- **Dach:** Herausgezoomt liegt ein Dach auf allen Innenräumen, beim Hereinzoomen, beim Bauen oder mit der Taste **T** („Dach“) verschwindet es (`data/baumenue/standard.json` → `dach`)
+- **Rampenabfahrt (abgesenkt):** rastet außen vor einem Ladetor ein. Der LKW fährt rückwärts die Schräge hinunter (er neigt sich mit) und steht unten 1,1 m tiefer – seine Ladefläche ist bündig mit dem Hallenboden, eine Ladebordwand braucht es nicht. Länge, Tiefe und Breite: `data/bau/rampenabfahrt.json` → `absenkung`
+- **Gelände formen:** Reiter **Gelände** im Baumenü – Boden **anheben**, **absenken** oder **ebnen**, drei Pinselgrößen, linke Maustaste halten. Bewegte Erde kostet Geld (je m³), steile Stellen werden erdig. Nur auf eigenen Grundstücken und nicht unter Gebautem; gebaut wird nur auf ebenem Boden. Werte: `data/gelaende/standard.json`; die Höhen liegen im Spielstand (`src/world/Terrain.ts`, Darstellung `src/world/TerrainView.ts`, Werkzeug `src/building/TerrainTool.ts`)
+- **Gelände im Voxel-Stil:** Hügel und Gruben bestehen aus 0,5-m-Säulen in Stufen zu 25 cm – oben Gras mit schmaler Graskante, an den Seiten Erde in Schichten (`stufe` in `data/gelaende/standard.json`)
+- **Böden flächig aufziehen:** Bei jedem Bodenteil (Fliesen, Beton, Asphalt, Gehweg …) die Maustaste gedrückt halten und ein Rechteck ziehen – grün wird gebaut, rot geht nicht (belegt, fremder Grund, zu wenig Geld). Beim Loslassen entstehen alle Platten auf einmal (höchstens 20 × 20)
+- **Bodenmarkierungen selbst malen:** Reiter **Markierungen** im Baumenü
+  - **Pinsel** (frei malen), **Linie** (ziehen, Enden rasten auf 25 cm ein), **Radierer**
+  - 10 Farben plus eigene Farbe aus dem Farbwähler, Breiten 8–60 cm, Farbe kostet je m²
+  - **18 Stempel:** Pfeile, Parkplatz, Zebrastreifen, Gefahrenstreifen, Haltelinie, Stellfläche, Sperrfläche, Kreis, Punkt, Fußspuren, Herz, Stern, Schriften („Eingang“, „Ausgang“, „Kasse“, „Lager“, „Willkommen“) – in 4 Größen, mit der Dreh-Taste in 45°-Schritten drehbar
+  - Eigene Stempel: in `data/markierungen/standard.json` unter `stempel` eintragen – Formen als SVG-Pfad im 100 × 100-Feld (`pfad`, optional `linie` für Umrisse) oder als `text`
+  - Die Farbe liegt auf einer Malschicht über Rasen und jeder Bodenplatte (`src/world/PaintLayer.ts`, Werkzeug `src/building/PaintTool.ts`) und wird als Bild im Spielstand gespeichert
 - **Cosy-Look:** wärmeres Licht von oben und vom Boden, warme Sonnenfarbe, weiche Schatten, leichter Dunst in der Ferne (`data/licht/standard.json` → `stimmung`). Neue gemütliche Deko (`npm run modelle:deko`): Wagenbox, Holzbank, Straßenlaterne (leuchtet), Lavendelkübel, Fahrradständer, Kreidetafel, Lichterkette für die Fassade (leuchtet), Holzdielen. Der Start-Laden hat schon Bank, Laternen, Lavendel und eine Wagenbox
 
 ```mermaid

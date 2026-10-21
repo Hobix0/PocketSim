@@ -1,16 +1,296 @@
 {
   "_hinweis": "Lieferungen per LKW. liefertermine = Uhrzeiten, zu denen der LKW kommt (normale Lieferung). express kommt nach 'minuten' Spielminuten. Der LKW wartet 'wartezeitMinuten' aufs Abladen; danach lädt der Fahrer den Rest selbst ab und berechnet 'fahrerAbladenProKarton'. Von Hand abladen bringt XP.",
-  "liefertermine": ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"],
-  "lieferkosten": { "grund": 12, "proKarton": 0.4 },
-  "express": { "aufschlag": 30, "minuten": 20 },
+  "liefertermine": [
+    "06:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "20:00"
+  ],
+  "lieferkosten": {
+    "grund": 12,
+    "proKarton": 0.4
+  },
+  "express": {
+    "aufschlag": 30,
+    "minuten": 20
+  },
   "wartezeitMinuten": 60,
   "fahrerAbladenProKarton": 1.5,
   "xpProKartonAbladen": 2,
   "lkw": {
     "model": "eigen/lkw",
-    "groesse": [7.2, 3.3, 2.5],
-    "ladeflaeche": { "von": -3.5, "bis": 1.4, "breite": 2.2, "hoehe": 1.15, "ebenen": 2 },
+    "groesse": [
+      7.2,
+      3.3,
+      2.5
+    ],
+    "ladeflaeche": {
+      "von": -3.5,
+      "bis": 1.4,
+      "breite": 2.2,
+      "hoehe": 1.15,
+      "ebenen": 2
+    },
     "geschwindigkeit": 7,
-    "fahrraster": 0.5
+    "fahrraster": 0.5,
+    "licht": {
+      "position": [
+        4.2,
+        0.9,
+        0
+      ],
+      "groesse": [
+        0.01,
+        0.01,
+        0.01
+      ],
+      "farbe": "#fff1d0",
+      "staerke": 5,
+      "reichweite": 11,
+      "zusatz": [
+        {
+          "position": [
+            3.61,
+            0.9,
+            -0.92
+          ],
+          "groesse": [
+            0.04,
+            0.16,
+            0.32
+          ],
+          "farbe": "#fff6dc"
+        },
+        {
+          "position": [
+            3.61,
+            0.92,
+            -1.17
+          ],
+          "groesse": [
+            0.04,
+            0.12,
+            0.1
+          ],
+          "farbe": "#ffa531",
+          "blinkt": true
+        },
+        {
+          "position": [
+            -3.61,
+            0.8,
+            -0.98
+          ],
+          "groesse": [
+            0.04,
+            0.18,
+            0.24
+          ],
+          "farbe": "#ff3b2f"
+        },
+        {
+          "position": [
+            -3.61,
+            0.8,
+            -0.74
+          ],
+          "groesse": [
+            0.04,
+            0.12,
+            0.1
+          ],
+          "farbe": "#ffa531",
+          "blinkt": true
+        },
+        {
+          "position": [
+            -3.0,
+            1.0,
+            -1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            -1.6,
+            1.0,
+            -1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            -0.2,
+            1.0,
+            -1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            3.25,
+            3.26,
+            -0.25
+          ],
+          "groesse": [
+            0.08,
+            0.05,
+            0.08
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            3.25,
+            3.26,
+            -0.65
+          ],
+          "groesse": [
+            0.08,
+            0.05,
+            0.08
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            3.61,
+            0.9,
+            0.92
+          ],
+          "groesse": [
+            0.04,
+            0.16,
+            0.32
+          ],
+          "farbe": "#fff6dc"
+        },
+        {
+          "position": [
+            3.61,
+            0.92,
+            1.17
+          ],
+          "groesse": [
+            0.04,
+            0.12,
+            0.1
+          ],
+          "farbe": "#ffa531",
+          "blinkt": true
+        },
+        {
+          "position": [
+            -3.61,
+            0.8,
+            0.98
+          ],
+          "groesse": [
+            0.04,
+            0.18,
+            0.24
+          ],
+          "farbe": "#ff3b2f"
+        },
+        {
+          "position": [
+            -3.61,
+            0.8,
+            0.74
+          ],
+          "groesse": [
+            0.04,
+            0.12,
+            0.1
+          ],
+          "farbe": "#ffa531",
+          "blinkt": true
+        },
+        {
+          "position": [
+            -3.0,
+            1.0,
+            1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            -1.6,
+            1.0,
+            1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            -0.2,
+            1.0,
+            1.255
+          ],
+          "groesse": [
+            0.12,
+            0.06,
+            0.03
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            3.25,
+            3.26,
+            0.25
+          ],
+          "groesse": [
+            0.08,
+            0.05,
+            0.08
+          ],
+          "farbe": "#ffa531"
+        },
+        {
+          "position": [
+            3.25,
+            3.26,
+            0.65
+          ],
+          "groesse": [
+            0.08,
+            0.05,
+            0.08
+          ],
+          "farbe": "#ffa531"
+        }
+      ]
+    }
   }
 }

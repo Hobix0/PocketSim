@@ -28,6 +28,11 @@ export class ManagementCamera {
   private readonly goalTarget = new THREE.Vector3();
   private readonly target = new THREE.Vector3();
 
+  /** Aktueller Abstand der Kamera zum Blickpunkt (m) */
+  get abstand(): number {
+    return this.distance;
+  }
+
   /** Punkt, auf den die Kamera gerade schaut (am Boden) */
   get focus(): THREE.Vector3 {
     return this.target;

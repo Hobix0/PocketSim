@@ -3,6 +3,7 @@ import { Component } from '../ecs/Component';
 import type { Entity } from '../ecs/Entity';
 import type { Describable, InfoRow } from '../ui/describe';
 import { StorageSurfaceComponent } from './StorageSurfaceComponent';
+import { LampComponent } from './LampComponent';
 
 // Ein Liefer-LKW: fährt eine Strecke ab, steht zum Abladen und fährt wieder weg.
 // Die Kartons stehen nach der Ankunft auf seiner Ladefläche (StorageSurfaceComponent, temporaer).
@@ -31,6 +32,8 @@ export interface TruckServices {
 
 export class TruckComponent extends Component implements Describable {
   state: TruckState = 'anfahrt';
+  /** Steht an einer abgesenkten Rampe (Ladefläche bündig mit dem Boden – keine Ladebordwand nötig) */
+  abgesenkt = false;
   /** Spielminuten, die der LKW noch aufs Abladen wartet */
   wartet = 0;
   private route: RoutePoint[];
@@ -72,6 +75,9 @@ export class TruckComponent extends Component implements Describable {
   }
 
   override update(dt: number): void {
+    // Warnblinker beim Stehen und beim Rückwärtsfahren
+    const lamp = this.entity.get(LampComponent);
+    if (lamp) lamp.blinken = this.state === 'steht' || !!this.route[this.leg]?.rueckwaerts;
     if (dt <= 0 || this.state === 'steht') return;
     const o = this.entity.object;
     let rest = this.speed * dt;
@@ -86,6 +92,10 @@ export class TruckComponent extends Component implements Describable {
         const diff = Math.atan2(Math.sin(goal - o.rotation.y), Math.cos(goal - o.rotation.y));
         const turn = TURN_RATE * dt;
         o.rotation.y += Math.abs(diff) <= turn ? diff : Math.sign(diff) * turn;
+        // Neigung an Schrägen: Front hoch, wenn es (in Blickrichtung) bergauf geht
+        const flach = Math.hypot(d.x, d.z);
+        const pitch = flach > 1e-4 ? Math.atan2(d.y, flach) * (target.rueckwaerts ? -1 : 1) : 0;
+        o.rotation.z += (pitch - o.rotation.z) * Math.min(1, dt * 8);
       }
       if (len <= rest) {
         o.position.copy(target.p);
@@ -105,7 +115,8 @@ export class TruckComponent extends Component implements Describable {
           o.rotation.y = Math.atan2(-d.z, d.x);
         }
         this.state = 'steht';
-        this.setLift(true);
+        o.rotation.z = 0;
+        if (!this.abgesenkt) this.setLift(true);
         this.services.arrived(this);
         this.notifyChanged();
       } else this.services.left(this);

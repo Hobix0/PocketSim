@@ -79,8 +79,11 @@ const seen = { bau: new Set(), produkte: new Set() };
 function save(folder, id, fresh, keep) {
   const file = path.join(DATA, folder, `${id}.json`);
   const old = readJson(file);
-  // Bestehende Werte haben Vorrang, nur die Felder aus `keep` kommen immer aus dem Export
+  // Bestehende Werte haben Vorrang, nur die Felder aus `keep` kommen immer aus dem Export.
+  // Ausnahme: Verweist ein Bauteil auf ein eigenes Voxel-Modell ("eigen/…", z. B. die neue Markise), bleiben Modell und Icon.
+  if (typeof old?.model === 'string' && old.model.startsWith('eigen/')) keep = keep.filter((k) => k !== 'model' && k !== 'icon');
   const merged = old ? { ...fresh, ...old, ...Object.fromEntries(keep.map((k) => [k, fresh[k]])) } : fresh;
+  if (old && !old.icon && keep.indexOf('icon') < 0) delete merged.icon;
   const text = JSON.stringify(merged);
   if (old && JSON.stringify(old) === text) { stats.unveraendert++; return; }
   stats[old ? 'aktualisiert' : 'neu']++;
