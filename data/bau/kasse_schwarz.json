@@ -7,7 +7,7 @@
   "preis": 1200,
   "freischaltLevel": 1,
   "werte": {"kassen": 1, "strom": 0.2},
-  "kasse": {"kunde": [-0.85, -0.7], "personal": [0.8, -0.7], "richtung": [0, 1], "abstand": 0.75},
+  "kasse": {"kunde": [0.85, 0.7], "personal": [-0.8, 0.7], "richtung": [0, -1], "abstand": 0.75},
   "model": "3d/Baubar/Einrichtung/SM_Build_Kasse_Schwarz.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Kasse_Schwarz.png",
   "platzhalter": {"groesse": [0.907, 1.342, 3], "farbe": "#b9c0c6"}
