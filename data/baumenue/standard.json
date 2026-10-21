@@ -77,6 +77,11 @@
       "spezial": "gelaende"
     },
     {
+      "id": "markierungen",
+      "name": "Markierungen",
+      "spezial": "markierungen"
+    },
+    {
       "id": "grundstuecke",
       "name": "Grundstücke",
       "spezial": "grundstuecke"

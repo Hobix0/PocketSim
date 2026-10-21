@@ -188,6 +188,42 @@ export interface TerrainSettings {
   erde: string;
 }
 
+/** Eine Form eines Stempels im 100 × 100-Feld: SVG-Pfad (gefüllt, mit `linie` als Umriss) oder Text */
+export interface StampShape {
+  pfad?: string;
+  linie?: number;
+  text?: string;
+  /** Schriftgröße im 100er-Feld */
+  groesse?: number;
+  /** CSS-Schrift, `{g}` wird durch die Größe ersetzt */
+  schrift?: string;
+}
+
+/** Stempel-Vorlage für Bodenmarkierungen */
+export interface StampDef {
+  id: string;
+  name: string;
+  /** Breite × Tiefe in m (bei Größe 100 %) */
+  groesse: [number, number];
+  preis: number;
+  formen: StampShape[];
+}
+
+/** Bodenmarkierungen (data/markierungen/standard.json) */
+export interface MarkingSettings {
+  /** Pixel je Meter auf der Malschicht */
+  aufloesung: number;
+  /** Abstand der Malschicht über Rasen und Bodenplatten (m) */
+  hoehe: number;
+  deckkraft: number;
+  preisProQuadratmeter: number;
+  /** Strichbreiten (m) */
+  breiten: number[];
+  stempelGroessen: number[];
+  farben: { id: string; name: string; farbe: string }[];
+  stempel: StampDef[];
+}
+
 /** Tag und Nacht (data/licht/standard.json) */
 export interface DaylightSettings {
   sonnenaufgang: string;
@@ -228,7 +264,7 @@ export interface BuildCategory {
   name: string;
   kategorien?: string[];
   ebenen?: BuildLayer[];
-  spezial?: 'grundstuecke' | 'gelaende';
+  spezial?: 'grundstuecke' | 'gelaende' | 'markierungen';
 }
 
 export function inBuildCategory(def: BuildDef, c: BuildCategory): boolean {

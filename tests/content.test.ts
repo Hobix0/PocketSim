@@ -82,3 +82,20 @@ describe('Registry', () => {
       .toThrow(/groesse.*drei Zahlen/);
   });
 });
+
+describe('Bodenmarkierungen', () => {
+  const m = new Content().markierungen;
+  it('hat Farben, Breiten und gültige Stempel', () => {
+    expect(m.farben.length).toBeGreaterThan(3);
+    for (const f of m.farben) expect(f.farbe).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(m.breiten.every((b) => b > 0 && b <= 1)).toBe(true);
+    const ids = new Set<string>();
+    for (const s of m.stempel) {
+      expect(ids.has(s.id)).toBe(false);
+      ids.add(s.id);
+      expect(s.preis).toBeGreaterThanOrEqual(0);
+      expect(s.groesse.every((g) => g > 0)).toBe(true);
+      for (const f of s.formen) expect(!!f.pfad || !!f.text).toBe(true);
+    }
+  });
+});

@@ -1,7 +1,7 @@
 {
   "typ": "markierungen",
   "aufloesung": 40,
-  "hoehe": 0.058,
+  "hoehe": 0.006,
   "deckkraft": 0.92,
   "preisProQuadratmeter": 4,
   "breiten": [0.08, 0.15, 0.3, 0.6],
