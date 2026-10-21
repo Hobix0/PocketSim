@@ -78,7 +78,9 @@ export class Terrain {
       if (d > radius || !erlaubt(vx, vz)) return;
       const w = (1 - d / radius) ** 2 * (3 - 2 * (1 - d / radius)) ; // weich auslaufend
       const before = this.edits[i];
-      const after = Math.max(-this.maxHoehe, Math.min(this.maxHoehe, before + delta * w));
+      // Zum Kartenrand hin höchstens 45° Böschung
+      const b = this.bounds, lim = Math.min(this.maxHoehe, vx - b.minX, b.maxX - vx, vz - b.minZ, b.maxZ - vz);
+      const after = Math.max(-lim, Math.min(lim, before + delta * w));
       this.edits[i] = after;
       volumen += Math.abs(after - before) * this.zelle * this.zelle;
     });
@@ -113,16 +115,22 @@ export class Terrain {
       for (const e of list) {
         if (!Array.isArray(e) || e.length !== 2) continue;
         const [i, h] = e as [number, number];
-        if (Number.isInteger(i) && i >= 0 && i < this.edits.length && Number.isFinite(h)) this.edits[i] = Math.max(-this.maxHoehe, Math.min(this.maxHoehe, h));
+        if (Number.isInteger(i) && i >= 0 && i < this.edits.length && Number.isFinite(h) && !this.isEdge(i)) this.edits[i] = Math.max(-this.maxHoehe, Math.min(this.maxHoehe, h));
       }
     }
     this.version++;
   }
 
+  private isEdge(i: number): boolean {
+    const ix = Math.floor(i / this.nz), iz = i % this.nz;
+    return ix === 0 || iz === 0 || ix === this.nx - 1 || iz === this.nz - 1;
+  }
+
   private forVertices(minX: number, maxX: number, minZ: number, maxZ: number, fn: (i: number, x: number, z: number) => void): void {
     const b = this.bounds, s = this.zelle;
-    const x0 = Math.max(0, Math.ceil((minX - b.minX) / s)), x1 = Math.min(this.nx - 1, Math.floor((maxX - b.minX) / s));
-    const z0 = Math.max(0, Math.ceil((minZ - b.minZ) / s)), z1 = Math.min(this.nz - 1, Math.floor((maxZ - b.minZ) / s));
+    // Randpunkte bleiben immer flach, sonst stünde am Kartenrand eine offene Klippe
+    const x0 = Math.max(1, Math.ceil((minX - b.minX) / s)), x1 = Math.min(this.nx - 2, Math.floor((maxX - b.minX) / s));
+    const z0 = Math.max(1, Math.ceil((minZ - b.minZ) / s)), z1 = Math.min(this.nz - 2, Math.floor((maxZ - b.minZ) / s));
     for (let ix = x0; ix <= x1; ix++) for (let iz = z0; iz <= z1; iz++) fn(ix * this.nz + iz, b.minX + ix * s, b.minZ + iz * s);
   }
 }
@@ -133,7 +141,8 @@ export function cutDepth(c: TerrainCut, x: number, z: number, rand: number): num
   const a = px * c.dx + pz * c.dz;
   const b = Math.abs(px * -c.dz + pz * c.dx);
   const laenge = c.flach + c.schraege;
-  if (b > c.breite / 2 - rand || a < rand * 0.5 || a > laenge - rand * 0.2) return 0;
+  // Seitlich bis unter die Wände absenken, sonst ragt die Erde zwischen den Rasterpunkten über die Sohle
+  if (b > c.breite / 2 || a < -rand || a > laenge - rand * 0.2) return 0;
   // Gras etwas unter den Betonboden legen, damit nichts durchscheint
   const extra = rand > 0 ? 0.15 : 0;
   if (a <= c.flach) return -(c.tiefe + extra);
