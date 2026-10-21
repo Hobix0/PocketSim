@@ -54,6 +54,8 @@ import { MachineComponent } from '../components/MachineComponent';
 import { ShelfWindow } from '../ui/ShelfWindow';
 import { BuyerSystem } from '../world/BuyerSystem';
 import { Effects } from '../fx/Effects';
+import { CozyLook, type CozyLookSettings } from '../render/CozyLook';
+import { AudioSystem, type AudioSettings } from '../audio/AudioSystem';
 import { TruckComponent } from '../components/TruckComponent';
 import { MachineWindow } from '../ui/MachineWindow';
 import { UtilityWindow } from '../ui/UtilityWindow';
@@ -122,6 +124,10 @@ export class Game {
   readonly buyers: BuyerSystem;
   /** Partikel, schwebende Texte und Bewegungen (data/effekte) */
   readonly effects: Effects;
+  /** Nachbearbeitung: Bloom, Miniatur-Unschärfe, Vignette (data/kamera → look) */
+  readonly look: CozyLook;
+  /** Töne und Musik (data/audio) */
+  readonly audio: AudioSystem;
   private smokeTimer = 0;
   readonly purchaseWindow: PurchaseWindow;
   readonly staff: Staff;
@@ -256,7 +262,16 @@ export class Game {
 
     // Kamera
     const start = new THREE.Vector3(...this.level.data.kameraStart);
-    this.view = new ManagementCamera(readData<CameraSettings>('kamera/standard'), this.input, this.level.bounds, start);
+    const kamera = readData<CameraSettings & { look: CozyLookSettings }>('kamera/standard');
+    this.view = new ManagementCamera(kamera, this.input, this.level.bounds, start);
+    this.look = new CozyLook(this.renderer, this.scene, this.view.camera, { ...kamera.look });
+    this.audio = new AudioSystem(readData<AudioSettings>('audio/standard'));
+    try {
+      const get = (k: string) => localStorage.getItem(`urbanevolution.${k}`);
+      if (get('look') !== null) this.look.an = get('look') === '1';
+      if (get('musik') !== null) this.audio.setMusik(Number(get('musik')));
+      if (get('toene') !== null) this.audio.setToene(Number(get('toene')));
+    } catch { /* ohne Speicher: Standard */ }
     if (this.level.data.kameraAbstand) this.view.setDistance(this.level.data.kameraAbstand);
     this.view.attach(surface);
 
@@ -332,7 +347,7 @@ export class Game {
     if (this.deliveries && this.fleet) {
       const fleet = this.fleet;
       this.deliveries.events.on('arrived', (s) => fleet.receive(s));
-      fleet.events.on('arrived', ({ kartons }) => this.hud.toasts.show(this.content.text('lkw_da', { kartons }), 'gut'));
+      fleet.events.on('arrived', ({ kartons }) => { this.hud.toasts.show(this.content.text('lkw_da', { kartons }), 'gut'); this.audio.play('lkw'); });
       fleet.events.on('driverUnloaded', ({ kartons, kosten }) => this.hud.toasts.show(this.content.text('lkw_fahrer_abgeladen', { kartons, kosten: formatMoney(kosten) })));
       fleet.events.on('unreachable', () => this.hud.toasts.show(this.content.text('lkw_tor_zugebaut'), 'warnung'));
       fleet.events.on('returned', ({ kartons, betrag }) => this.hud.toasts.show(this.content.text('lkw_zurueck', { kartons, betrag: formatMoney(betrag) }), 'warnung'));
@@ -356,6 +371,7 @@ export class Game {
     this.goals.events.on('completed', (g) => {
       this.hud.toasts.show(this.content.text('ziel_erreicht', { text: g.text }), 'gut');
       this.effects.sparkle(this.view.focus.clone().setY(1), 24);
+      this.audio.play('ziel');
     });
     this.report = new ReportWindow(this.hud.root, this.content);
 
@@ -379,6 +395,7 @@ export class Game {
       this.effects.coins(kasse.clone().setY(kasse.y + 1.1), 4 + Math.min(8, artikel));
       this.effects.floatText(kasse.clone().setY(kasse.y + 1.6), `+${formatMoney(betrag)}`, '#ffe08a');
       this.effects.heart(kunde.clone().setY(kunde.y + 2.1));
+      this.audio.play('kasse');
       if (byHand) {
         this.hud.toasts.show(this.content.text('verkauft', { artikel, betrag: formatMoney(betrag) }), 'gut');
         this.goals.complete('kassieren');
@@ -408,6 +425,15 @@ export class Game {
     // Effekte: Plopp beim Bauen, Verpuffen beim Abriss, Staub
     this.effects = new Effects(this.scene, this.content.effekte);
     this.build.motion = this.content.effekte.vorschau;
+    try { const e = localStorage.getItem('urbanevolution.effekte'); if (e !== null) this.effects.settings.an = e === '1'; } catch { /* Standard */ }
+    // Töne zu dem, was passiert
+    this.build.events.on('placed', () => this.audio.play('bauen'));
+    this.build.events.on('removing', () => this.audio.play('abriss'));
+    this.build.events.on('rotated', () => this.audio.play('drehen'));
+    this.build.events.on('picked', () => this.audio.play('klick'));
+    this.build.events.on('message', ({ art }) => { if (art === 'warnung') this.audio.play('fehler'); });
+    // Klick auf Knöpfe der Oberfläche
+    this.hud.root.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('button')) this.audio.play('klick'); });
     const footprintSize = (e: Entity) => { const g = e.get(FootprintComponent)?.groesse; return g ? Math.max(g[0], g[2]) : 1; };
     this.build.events.on('placed', ({ entity }) => {
       this.effects.pop(entity.object);
@@ -444,6 +470,7 @@ export class Game {
       const f = this.view.focus.clone();
       this.effects.sparkle(f.clone().setY(1.2), 70);
       this.effects.floatText(f.clone().setY(2.4), `Level ${level}!`, '#ffd166', 1.5);
+      this.audio.play('levelup');
       const neu = [
         ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.build.isBuildable(d)).map((d) => d.name),
         ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
@@ -504,6 +531,14 @@ export class Game {
       editor: () => restartWith(null, 'editor'),
       hauptmenue: () => restartWith(null),
       stil: () => (this.models.voxelStyle ? 'voxel' : 'lowpoly'),
+      optionen: () => ({ look: this.look.an, effekte: this.effects.settings.an, musik: this.audio?.musik ?? 0, toene: this.audio?.toene ?? 0 }),
+      setOption: (k, v) => {
+        if (k === 'look') this.look.an = v as boolean;
+        else if (k === 'effekte') this.effects.settings.an = v as boolean;
+        else if (k === 'musik') this.audio?.setMusik(v as number);
+        else if (k === 'toene') this.audio?.setToene(v as number);
+        try { localStorage.setItem(`urbanevolution.${k}`, typeof v === 'boolean' ? (v ? '1' : '0') : String(v)); } catch { /* nur für diesmal */ }
+      },
       setStil: (s) => {
         try { localStorage.setItem(STIL_KEY, s); } catch { /* dann nur für diesmal */ }
         // Neu laden mit dem aktuellen Stand, damit nichts verloren geht
@@ -589,7 +624,9 @@ export class Game {
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.renderStore();
 
-    this.renderer.render(this.scene, this.view.camera);
+    const { min, max } = this.view.settings.abstand;
+    this.look.zoom = THREE.MathUtils.clamp((this.view.abstand - min) / (max - min), 0, 1);
+    this.look.render(this.scene, this.view.camera);
     this.input.endFrame();
   }
 
@@ -610,6 +647,8 @@ export class Game {
     (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5);
     (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
+    this.look.nacht = 1 - d.tag;
+    this.audio.nacht = 1 - d.tag;
   }
 
   /** Tasten, die überall gelten. Esc schließt immer nur das Oberste. */
@@ -630,6 +669,7 @@ export class Game {
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
+    if (i.wasPressed('ton_stumm')) this.hud.toasts.show(this.audio.toggleStumm() ? 'Ton aus (M)' : 'Ton an (M)');
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
       else if (this.build.active) this.build.cancel();
@@ -664,6 +704,7 @@ export class Game {
     this.hud.toasts.show(this.content.text('eingeraeumt', { menge: result.menge, produkt: produkt.name }), 'gut');
     this.effects.floatText(shelf.object.position.clone().setY(shelf.object.position.y + 2), `+${result.menge} ${produkt.name}`, '#bff0cf', 0.8);
     this.effects.dust(shelf.object.position, 0.5);
+    this.audio.play('einraeumen');
     this.player.addXp(Math.max(1, Math.round(this.content.arbeit.xpProKartonVonHand * result.menge / produkt.gebinde)));
     if (result.leer) this.hand.clear();
   }
@@ -806,6 +847,7 @@ export class Game {
   private resize(): void {
     const w = window.innerWidth, h = window.innerHeight;
     this.renderer.setSize(w, h, false);
+    this.look?.setSize(w, h);
     this.view.setAspect(w / h);
   }
 }

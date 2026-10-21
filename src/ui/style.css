@@ -2154,3 +2154,20 @@ html, body {
   .window:not([hidden]), .buildmenu:not([hidden]), .toast { animation: none; }
   .hud button, .hud .card:hover { transition: none; transform: none; }
 }
+
+/* Einstellungen im Menü: Schieberegler für Lautstärken */
+.game-menu .slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 4px;
+}
+
+.game-menu .slider span {
+  min-width: 64px;
+}
+
+.game-menu .slider input {
+  flex: 1;
+  accent-color: var(--accent);
+}
