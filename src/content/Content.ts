@@ -5,7 +5,7 @@ import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
   type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
-  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings, type DaylightSettings, type TerrainSettings, type MarkingSettings,
+  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings, type DaylightSettings, type TerrainSettings, type MarkingSettings, type EffectSettings,
 } from './definitions';
 
 /** Funktionen, die ein Bauteil haben kann (je eine Komponente, siehe createBuildEntity) */
@@ -31,6 +31,8 @@ export class Content {
   readonly gelaende: TerrainSettings;
   /** Bodenmarkierungen: Farben, Breiten, Stempel (data/markierungen/standard.json) */
   readonly markierungen: MarkingSettings;
+  /** Effekte und Bewegungen (data/effekte/standard.json) */
+  readonly effekte: EffectSettings;
   readonly bau: Registry<BuildDef>;
   readonly werte: Record<string, ValueInfo>;
   readonly kontexte: Record<string, ContextInfo>;
@@ -68,6 +70,7 @@ export class Content {
     this.licht = readData<DaylightSettings>('licht/standard');
     this.gelaende = readData<TerrainSettings>('gelaende/standard');
     this.markierungen = readData<MarkingSettings>('markierungen/standard');
+    this.effekte = readData<EffectSettings>('effekte/standard');
     for (const st of this.markierungen.stempel) {
       if (!st.formen?.length || st.groesse?.length !== 2) throw new Error(`markierungen: Stempel „${st.id}“ braucht formen und groesse [b, t]`);
     }

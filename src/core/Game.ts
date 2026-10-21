@@ -53,6 +53,8 @@ import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
 import { ShelfWindow } from '../ui/ShelfWindow';
 import { BuyerSystem } from '../world/BuyerSystem';
+import { Effects } from '../fx/Effects';
+import { TruckComponent } from '../components/TruckComponent';
 import { MachineWindow } from '../ui/MachineWindow';
 import { UtilityWindow } from '../ui/UtilityWindow';
 import { Deliveries, type DeliveriesState, type ShipmentLine } from '../economy/Deliveries';
@@ -118,6 +120,9 @@ export class Game {
   readonly purchasing: Purchasing;
   /** Einkäufer: Nachbestellen, was einmal im Regal stand */
   readonly buyers: BuyerSystem;
+  /** Partikel, schwebende Texte und Bewegungen (data/effekte) */
+  readonly effects: Effects;
+  private smokeTimer = 0;
   readonly purchaseWindow: PurchaseWindow;
   readonly staff: Staff;
   readonly personalWindow: PersonalWindow;
@@ -348,7 +353,10 @@ export class Game {
     // Ziele für den Einstieg (nur, wenn das Level welche hat)
     this.goals = new Goals(this.level.data.ziele ? readData<GoalDef[]>(`ziele/${this.level.data.ziele}`) : [], this.player);
     new GoalPanel(this.hud.root, this.content, this.goals);
-    this.goals.events.on('completed', (g) => this.hud.toasts.show(this.content.text('ziel_erreicht', { text: g.text }), 'gut'));
+    this.goals.events.on('completed', (g) => {
+      this.hud.toasts.show(this.content.text('ziel_erreicht', { text: g.text }), 'gut');
+      this.effects.sparkle(this.view.focus.clone().setY(1), 24);
+    });
     this.report = new ReportWindow(this.hud.root, this.content);
 
     // Tageswechsel: erst den Tag abschließen (Bericht), dann Löhne für den neuen Tag
@@ -366,7 +374,11 @@ export class Game {
     });
     this.store.events.on('opened', () => this.hud.toasts.show(this.content.text('laden_oeffnet'), 'gut'));
     this.store.events.on('closed', () => this.hud.toasts.show(this.content.text('laden_schliesst')));
-    this.store.events.on('sale', ({ betrag, artikel, byHand }) => {
+    this.store.events.on('sale', ({ betrag, artikel, byHand, kasse, kunde }) => {
+      // Münzen springen aus der Kasse, der Betrag schwebt auf, der Kunde freut sich
+      this.effects.coins(kasse.clone().setY(kasse.y + 1.1), 4 + Math.min(8, artikel));
+      this.effects.floatText(kasse.clone().setY(kasse.y + 1.6), `+${formatMoney(betrag)}`, '#ffe08a');
+      this.effects.heart(kunde.clone().setY(kunde.y + 2.1));
       if (byHand) {
         this.hud.toasts.show(this.content.text('verkauft', { artikel, betrag: formatMoney(betrag) }), 'gut');
         this.goals.complete('kassieren');
@@ -393,6 +405,19 @@ export class Game {
     // Gelände-Werkzeug: nur auf eigenem Grund und nicht unter Gebautem
     this.terrainTool = new TerrainTool(this.terrain, this.level.ground, this.scene, this.input, this.pointer, this.player, this.content.gelaende,
       (x, z) => this.plots.allows(x, z, 0) && !this.builtRects.some((r) => x > r.minX - 0.6 && x < r.maxX + 0.6 && z > r.minZ - 0.6 && z < r.maxZ + 0.6));
+    // Effekte: Plopp beim Bauen, Verpuffen beim Abriss, Staub
+    this.effects = new Effects(this.scene, this.content.effekte);
+    this.build.motion = this.content.effekte.vorschau;
+    const footprintSize = (e: Entity) => { const g = e.get(FootprintComponent)?.groesse; return g ? Math.max(g[0], g[2]) : 1; };
+    this.build.events.on('placed', ({ entity }) => {
+      this.effects.pop(entity.object);
+      this.effects.dust(entity.object.position, Math.min(2, footprintSize(entity)));
+    });
+    this.build.events.on('removing', ({ entity }) => {
+      this.effects.vanish(entity.object);
+      this.effects.dust(entity.object.position, Math.min(2, footprintSize(entity)));
+    });
+    this.build.events.on('picked', ({ entity }) => this.effects.dust(entity.object.position, 0.6));
     this.terrainTool.events.on('message', ({ key, art }) => this.hud.toasts.show(this.content.text(key), art));
     // Bodenmarkierungen: nur auf eigenem Grund und auf ebenem Boden
     this.paint = new PaintLayer(this.scene, this.level.bounds, this.content.markierungen);
@@ -415,6 +440,10 @@ export class Game {
     this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots, this.terrainTool, this.paintTool);
     // Was mit einem neuen Level freigeschaltet wird
     this.player.events.on('levelUp', ({ level }) => {
+      // Großes Funkeln mitten im Bild
+      const f = this.view.focus.clone();
+      this.effects.sparkle(f.clone().setY(1.2), 70);
+      this.effects.floatText(f.clone().setY(2.4), `Level ${level}!`, '#ffd166', 1.5);
       const neu = [
         ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.build.isBuildable(d)).map((d) => d.name),
         ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
@@ -524,13 +553,15 @@ export class Game {
     this.fleet?.update(minutes);
     this.world.update(simDt);
     this.updateDaylight(realDt);
+    this.effects.update(realDt);
+    this.truckSmoke(simDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
     this.terrainView.update();
     this.paint.update();
 
     // Solange ein Bauwerkzeug aktiv oder das Menü offen ist, wird nichts angeklickt oder hervorgehoben
     this.interactor.enabled = !this.toolActive && !this.menu.isOpen;
-    this.build.update(this.view.camera);
+    this.build.update(this.view.camera, realDt);
     if (this.terrainTool.active) {
       this.builtRects = [...this.world.query(FootprintComponent)].map(([, f]) => f.rect());
       this.terrainTool.update(this.view.camera, realDt);
@@ -631,6 +662,8 @@ export class Game {
       return;
     }
     this.hud.toasts.show(this.content.text('eingeraeumt', { menge: result.menge, produkt: produkt.name }), 'gut');
+    this.effects.floatText(shelf.object.position.clone().setY(shelf.object.position.y + 2), `+${result.menge} ${produkt.name}`, '#bff0cf', 0.8);
+    this.effects.dust(shelf.object.position, 0.5);
     this.player.addXp(Math.max(1, Math.round(this.content.arbeit.xpProKartonVonHand * result.menge / produkt.gebinde)));
     if (result.leer) this.hand.clear();
   }
@@ -699,6 +732,19 @@ export class Game {
         ...(this.deliveries && this.fleet ? { logistik: { ...this.deliveries.state(), aufLkw: this.fleet.cargo() } } : {}),
       },
     };
+  }
+
+  /** Fahrende LKW lassen kleine Wölkchen aus dem Auspuff */
+  private truckSmoke(dt: number): void {
+    if (dt <= 0) return;
+    this.smokeTimer -= dt;
+    if (this.smokeTimer > 0) return;
+    this.smokeTimer = 0.14;
+    const [ax, ay, az] = this.content.effekte.lkwAuspuff;
+    for (const [e, t] of this.world.query(TruckComponent)) {
+      if (t.state === 'steht') continue;
+      this.effects.smoke(e.object.localToWorld(new THREE.Vector3(ax, ay, az)));
+    }
   }
 
   /** Ist gerade ein Bau-, Gelände- oder Mal-Werkzeug aktiv? */

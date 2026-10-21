@@ -228,6 +228,23 @@ export interface MarkingSettings {
   stempel: StampDef[];
 }
 
+/** Effekte und Bewegungen (data/effekte/standard.json) */
+export interface EffectSettings {
+  an: boolean;
+  /** Menge der Partikel, 1 = normal */
+  menge: number;
+  /** Schwebende Texte („+12,40 €“) zeigen */
+  texte: boolean;
+  staub: string[];
+  muenzen: string[];
+  funkeln: string[];
+  rauch: string[];
+  /** Bauvorschau: Nachführen (Position, Drehung) und Schweben (m) */
+  vorschau: { folgen: number; drehen: number; schweben: number };
+  /** Auspuff des LKW (lokal, vorne ist +X) */
+  lkwAuspuff: [number, number, number];
+}
+
 /** Tag und Nacht (data/licht/standard.json) */
 export interface DaylightSettings {
   sonnenaufgang: string;
