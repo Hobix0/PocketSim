@@ -1,0 +1,13 @@
+{
+  "id": "wagenbox",
+  "name": "Wagenbox",
+  "kategorie": "store_props",
+  "ebene": "objekt",
+  "kontext": "wagenbox",
+  "preis": 350,
+  "freischaltLevel": 1,
+  "werte": {},
+  "wagenbox": {"anzahl": 6},
+  "model": "eigen/wagenbox",
+  "platzhalter": {"groesse": [1.2, 1.9, 2.6], "farbe": "#3f6b55"}
+}

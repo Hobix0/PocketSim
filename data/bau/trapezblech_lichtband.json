@@ -1,7 +1,7 @@
 {
   "id": "trapezblech_lichtband",
   "name": "Wand Lichtband",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "wand",
   "preis": 220,
   "freischaltLevel": 1,

@@ -1,10 +1,35 @@
 {
-  "_hinweis": "Tag und Nacht. Zwischen Sonnenaufgang und -untergang ist Tag; die Dämmerung blendet über 'daemmerungMinuten'. lampen.anzahl = so viele echte Lichtquellen gibt es höchstens (die Lampen nahe der Kamera); alle anderen Lampen glühen nur.",
+  "_hinweis": "Tag und Nacht. Zwischen Sonnenaufgang und -untergang ist Tag; die Dämmerung blendet über 'daemmerungMinuten'. lampen.anzahl = so viele echte Lichtquellen gibt es höchstens (die Lampen nahe der Kamera); alle anderen Lampen glühen nur. stimmung: warme Grundfarben für den gemütlichen Look (Licht von oben und vom Boden, Sonnenfarbe, Dunst in der Ferne, Belichtung, weiche Schatten).",
   "sonnenaufgang": "06:30",
   "sonnenuntergang": "20:30",
   "daemmerungMinuten": 75,
-  "tag": { "sonne": 2.4, "umgebung": 1.4 },
-  "nacht": { "sonne": 0.08, "umgebung": 0.3, "himmel": "#1b2433", "sonnenfarbe": "#9db4ff" },
-  "daemmerung": { "sonnenfarbe": "#ffb27a", "himmel": "#e7a77e" },
-  "lampen": { "anzahl": 10, "nachtVerstaerkung": 1.6 }
+  "tag": {
+    "sonne": 2.4,
+    "umgebung": 1.4
+  },
+  "nacht": {
+    "sonne": 0.08,
+    "umgebung": 0.3,
+    "himmel": "#1b2433",
+    "sonnenfarbe": "#9db4ff"
+  },
+  "daemmerung": {
+    "sonnenfarbe": "#ffb27a",
+    "himmel": "#e7a77e"
+  },
+  "lampen": {
+    "anzahl": 10,
+    "nachtVerstaerkung": 1.6
+  },
+  "stimmung": {
+    "himmelLicht": "#fff2e2",
+    "bodenLicht": "#7d6a55",
+    "sonne": "#ffe7c8",
+    "nebel": {
+      "nah": 32,
+      "fern": 90
+    },
+    "belichtung": 1.05,
+    "schattenWeich": 3
+  }
 }

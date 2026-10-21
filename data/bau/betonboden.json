@@ -1,7 +1,7 @@
 {
   "id": "betonboden",
   "name": "Boden Beton",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "boden",
   "preis": 120,
   "freischaltLevel": 1,

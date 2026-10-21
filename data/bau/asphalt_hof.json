@@ -1,7 +1,7 @@
 {
   "id": "asphalt_hof",
   "name": "Asphalt Hof",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "boden",
   "aussen": true,
   "preis": 90,

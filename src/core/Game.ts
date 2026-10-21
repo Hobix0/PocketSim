@@ -167,6 +167,7 @@ export class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = this.content.licht.stimmung.belichtung;
     container.append(this.renderer.domElement);
     const surface = this.renderer.domElement;
 
@@ -187,9 +188,11 @@ export class Game {
     this.world = new World(entities);
 
     // Licht: Himmel/Boden-Licht plus Sonne mit Schatten über das ganze Gelände
-    this.ambient = new THREE.HemisphereLight('#e9f1f5', '#6b6355', 1.4);
+    // Warmes Licht von oben und vom Boden – gemütlicher Grundton
+    const stimmung = this.content.licht.stimmung;
+    this.ambient = new THREE.HemisphereLight(stimmung.himmelLicht, stimmung.bodenLicht, 1.4);
     this.scene.add(this.ambient);
-    this.sun = new THREE.DirectionalLight('#fff1dc', 2.4);
+    this.sun = new THREE.DirectionalLight(stimmung.sonne, 2.4);
     this.sun.position.set(18, 30, 14);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -197,11 +200,14 @@ export class Game {
     const half = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) / 2;
     Object.assign(this.sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, near: 1, far: 100 });
     this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.radius = stimmung.schattenWeich;
+    // Leichter Dunst in der Ferne (Farbe folgt dem Himmel)
+    this.scene.fog = new THREE.Fog(this.level.data.himmel, stimmung.nebel.nah, stimmung.nebel.fern);
     this.scene.add(this.sun);
     const licht = this.content.licht;
     this.sky = {
       tag: new THREE.Color(this.level.data.himmel), nacht: new THREE.Color(licht.nacht.himmel), daemmerung: new THREE.Color(licht.daemmerung.himmel),
-      sonne: new THREE.Color('#fff1dc'), sonneNacht: new THREE.Color(licht.nacht.sonnenfarbe), sonneDaemmerung: new THREE.Color(licht.daemmerung.sonnenfarbe),
+      sonne: new THREE.Color(licht.stimmung.sonne), sonneNacht: new THREE.Color(licht.nacht.sonnenfarbe), sonneDaemmerung: new THREE.Color(licht.daemmerung.sonnenfarbe),
     };
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
     this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
@@ -248,7 +254,7 @@ export class Game {
     this.storage = new CartonStorage(this.world, this.factory);
     // Lieferungen per LKW, wenn das Level eine Anlieferung hat (sonst kommt die Ware sofort)
     const route = this.level.data.anlieferung;
-    this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player) : null;
+    this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player, this.level.bounds) : null;
     this.deliveries = this.fleet
       ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
       : null;
@@ -280,6 +286,7 @@ export class Game {
       this.deliveries.events.on('arrived', (s) => fleet.receive(s));
       fleet.events.on('arrived', ({ kartons }) => this.hud.toasts.show(this.content.text('lkw_da', { kartons }), 'gut'));
       fleet.events.on('driverUnloaded', ({ kartons, kosten }) => this.hud.toasts.show(this.content.text('lkw_fahrer_abgeladen', { kartons, kosten: formatMoney(kosten) })));
+      fleet.events.on('unreachable', () => this.hud.toasts.show(this.content.text('lkw_tor_zugebaut'), 'warnung'));
       fleet.events.on('returned', ({ kartons, betrag }) => this.hud.toasts.show(this.content.text('lkw_zurueck', { kartons, betrag: formatMoney(betrag) }), 'warnung'));
     }
 
@@ -352,6 +359,7 @@ export class Game {
     this.build.events.on('message', ({ key, werte, art }) => this.hud.toasts.show(this.content.text(key, werte), art));
     this.build.events.on('placed', ({ entity, moved }) => {
       this.store.nav.invalidate();
+      this.fleet?.invalidate();
       if (moved) return;
       if (entity.get(ShelfComponent)) this.goals.complete('regal_bauen');
       if (entity.get(CheckoutComponent)) this.goals.complete('kasse_bauen');
@@ -480,6 +488,7 @@ export class Game {
     this.ambient.intensity = d.umgebung;
     this.sun.color.copy(this.sky.sonneNacht).lerp(this.sky.sonne, d.tag).lerp(this.sky.sonneDaemmerung, d.daemmerung * 0.6);
     (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5);
+    (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
   }
 

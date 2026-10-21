@@ -11,13 +11,18 @@ import { CheckoutComponent } from './CheckoutComponent';
 import { frontOf } from './WorkerComponent';
 import { PathFollower, turnTowards, type PathFinder } from '../navigation/PathFollower';
 import { formatMoney } from '../ui/format';
+import type { ModelProvider } from '../assets/ModelLibrary';
+import { CartStationComponent } from './CartStationComponent';
 
 // Ein Kunde als Zustandsmaschine:
-//   sucht (geht zum Regal) → greift → … nächster Wunsch … → zur_kasse → wartet → an_kasse → geht
+//   [holt_wagen] → sucht (geht zum Regal) → greift → … nächster Wunsch … → zur_kasse → wartet → an_kasse
+//   → packt (ein) → [bringt_wagen] → geht
+// Wer viel kaufen will, holt sich einen leeren Einkaufswagen aus einer Wagenbox; die Ware liegt sichtbar darin,
+// an der Kasse auf dem Band, danach wird eingepackt und der Wagen zurückgebracht.
 // Fehlt ein Produkt, wird es gemerkt (Tagesbericht, Ruf). Ohne Kasse oder nach zu langem Warten
 // legt der Kunde die Ware zurück und geht. Bezahlt wird über das Spiel (paid()).
 
-export type CustomerState = 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'geht';
+export type CustomerState = 'holt_wagen' | 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'packt' | 'bringt_wagen' | 'geht';
 
 export interface CustomerServices {
   findPath?: PathFinder;
@@ -37,6 +42,12 @@ export interface CustomerServices {
   willBuy(produkt: ProductDef): boolean;
   /** Ist das ein Schnäppchen? */
   isBargain(produkt: ProductDef): boolean;
+  /** Nächste Wagenbox mit freiem Wagen (oder null) */
+  findCartStation?(from: THREE.Vector3): Entity | null;
+  /** Einkaufswagen und Einpacken (aus data/kunden); ohne: Korb in der Hand, kein Einpacken */
+  einkaufswagen?: { model: string; abArtikel: number; packSekundenProArtikel: number };
+  /** Modelle für Wagen und Ware darin (fehlt in Tests) */
+  models?: ModelProvider;
   /** Der Besuch ist entschieden (für Ruf und Tagesbericht) */
   left(outcome: VisitOutcome, fehlend: ProductDef[], zuTeuer: ProductDef[], schnaeppchen: number): void;
 }
@@ -65,6 +76,13 @@ export class CustomerComponent extends Component implements Describable {
   private waited = 0;
   private readonly path = new PathFollower();
   private basketMesh: THREE.Mesh | null = null;
+  /** Wagenbox, aus der der Wagen kommt; Wagen und Ware darin */
+  private station: Entity | null = null;
+  private cart: THREE.Group | null = null;
+  private items: THREE.Group | null = null;
+  /** Was eingepackt wird (nach dem Bezahlen) */
+  private packing: BasketLine[] = [];
+  private packTotal = 0;
 
   constructor(readonly wishes: Wish[], private readonly services: CustomerServices) {
     super();
@@ -80,6 +98,16 @@ export class CustomerComponent extends Component implements Describable {
   }
 
   override onAttach(): void {
+    // Großer Einkauf: erst einen Wagen holen (wenn eine Wagenbox einen frei hat)
+    const w = this.services.einkaufswagen;
+    const geplant = this.wishes.reduce((n, x) => n + x.menge, 0);
+    const station = w && geplant >= w.abArtikel ? this.services.findCartStation?.(this.entity.object.position) ?? null : null;
+    if (station) {
+      this.station = station;
+      this.path.goTo(this.entity.object, station.require(CartStationComponent).pickupSpot(), this.services.findPath);
+      this.setState('holt_wagen');
+      return;
+    }
     this.nextWish();
   }
 
@@ -87,12 +115,44 @@ export class CustomerComponent extends Component implements Describable {
     this.checkout?.get(CheckoutComponent)?.leave(this.entity);
     this.checkout = null;
     if (this.basketMesh) this.entity.object.remove(this.basketMesh);
+    // Wagen, die ein Kunde beim Verschwinden noch hat, kommen zurück in die Box
+    if (this.cart) this.station?.get(CartStationComponent)?.give();
+  }
+
+  /** Schiebt einen Einkaufswagen */
+  get hasCart(): boolean {
+    return this.cart !== null;
   }
 
   override update(dt: number): void {
     if (dt <= 0) return;
     const s = this.services.settings;
     switch (this.state) {
+      case 'holt_wagen': {
+        const st = this.station?.get(CartStationComponent);
+        if (!this.station?.world || !st) { this.station = null; this.nextWish(); return; }
+        if (this.walk(dt)) {
+          if (st.take()) this.attachCart(); else this.station = null;
+          this.nextWish();
+        }
+        break;
+      }
+      case 'packt':
+        // erst zum Packplatz hinter der Kasse, dann einpacken
+        if (!this.walk(dt)) break;
+        this.timer -= dt;
+        // Stück für Stück wandert die Ware wieder in den Wagen bzw. die Tasche
+        this.renderItems(this.packing, Math.round((1 - Math.max(0, this.timer) / this.packTotal) * countOf(this.packing)));
+        if (this.timer <= 0) { this.packing = []; this.renderItems([]); this.leave('zufrieden'); }
+        break;
+      case 'bringt_wagen':
+        if (this.walk(dt)) {
+          this.station?.get(CartStationComponent)?.give();
+          this.detachCart();
+          this.path.goTo(this.entity.object, this.services.exitPoint(), this.services.findPath);
+          this.setState('geht');
+        }
+        break;
       case 'sucht':
         if (!this.shelf?.world) { this.retryWish(); return; }
         if (this.walk(dt)) {
@@ -123,7 +183,11 @@ export class CustomerComponent extends Component implements Describable {
         if (this.walk(dt)) {
           this.face(c.cashierSpot(), dt);
           const next: CustomerState = i === 0 ? 'an_kasse' : 'wartet';
-          if (next !== this.state) this.setState(next);
+          if (next !== this.state) {
+            this.setState(next);
+            // Vorne an der Kasse liegt die Ware auf dem Band, nicht mehr im Wagen
+            this.renderItems(next === 'an_kasse' ? [] : this.basket);
+          }
         }
         break;
       }
@@ -133,12 +197,23 @@ export class CustomerComponent extends Component implements Describable {
     }
   }
 
-  /** Das Spiel hat abgerechnet. */
+  /** Das Spiel hat abgerechnet: hinter der Kasse einpacken (wenn eingestellt), dann gehen. */
   paid(): void {
-    this.checkout?.get(CheckoutComponent)?.leave(this.entity);
+    const c = this.checkout?.get(CheckoutComponent);
+    const packSpot = c?.spot(-1.6);
+    c?.leave(this.entity);
     this.checkout = null;
-    this.basket.length = 0;
+    const w = this.services.einkaufswagen;
+    this.packing = this.basket.splice(0);
     this.renderBasket();
+    if (w && packSpot && this.packing.length) {
+      this.packTotal = Math.max(1, w.packSekundenProArtikel * countOf(this.packing));
+      this.timer = this.packTotal;
+      this.path.goTo(this.entity.object, packSpot, this.services.findPath);
+      this.setState('packt');
+      return;
+    }
+    this.packing = [];
     this.leave('zufrieden');
   }
 
@@ -238,6 +313,12 @@ export class CustomerComponent extends Component implements Describable {
       this.wishes.filter((w) => w.status === 'zu_teuer').map((w) => w.produkt),
       bought.filter((w) => this.services.isBargain(w.produkt)).length,
     );
+    // Mit Wagen: erst zurück zur Wagenbox
+    if (this.cart && this.station?.world) {
+      this.path.goTo(this.entity.object, this.station.require(CartStationComponent).pickupSpot(), this.services.findPath);
+      this.setState('bringt_wagen');
+      return;
+    }
     this.path.goTo(this.entity.object, this.services.exitPoint(), this.services.findPath);
     this.setState('geht');
   }
@@ -255,7 +336,48 @@ export class CustomerComponent extends Component implements Describable {
   }
 
   private walk(dt: number): boolean {
-    return this.path.step(this.entity.object, this.services.speed, dt);
+    // Beim Packen bleibt der Kunde nach dem Ankommen stehen; mit Wagen geht es etwas langsamer
+    return this.path.step(this.entity.object, this.services.speed * (this.cart ? 0.85 : 1), dt);
+  }
+
+  /** Wagen vor die Figur stellen (lokal +Z ist vorne) */
+  private attachCart(): void {
+    const w = this.services.einkaufswagen;
+    this.cart = new THREE.Group();
+    this.cart.position.set(0, 0, 0.72);
+    this.entity.object.add(this.cart);
+    if (w && this.services.models) {
+      this.services.models.instance(w.model).then((obj) => {
+        obj.rotation.y = -Math.PI / 2;
+        this.cart?.add(obj);
+      }, () => {});
+    }
+    this.renderBasket();
+  }
+
+  private detachCart(): void {
+    if (this.cart) this.entity.object.remove(this.cart);
+    this.cart = null;
+    this.items = null;
+    this.renderBasket();
+  }
+
+  /** Ware im Wagen zeigen (höchstens `n` Teile, ohne Angabe alle; Platz für 12) */
+  private renderItems(lines: BasketLine[], n = Infinity): void {
+    if (!this.cart || !this.services.models) return;
+    if (this.items) this.cart.remove(this.items);
+    this.items = new THREE.Group();
+    this.cart.add(this.items);
+    let i = 0;
+    for (const l of lines) for (let k = 0; k < l.menge && i < Math.min(n, 12); k++, i++) {
+      if (!l.produkt.model) continue;
+      const slot = new THREE.Group();
+      // 3 × 2 Plätze, zwei Lagen, im Korb des Wagens
+      const col = i % 3, row = Math.floor(i / 3) % 2, lage = Math.floor(i / 6);
+      slot.position.set((col - 1) * 0.13, 0.5 + lage * 0.14, 0.12 - row * 0.2);
+      this.items.add(slot);
+      this.services.models.instance(l.produkt.model).then((obj) => slot.add(obj), () => {});
+    }
   }
 
   private face(p: THREE.Vector3, dt: number): void {
@@ -264,7 +386,12 @@ export class CustomerComponent extends Component implements Describable {
   }
 
   private renderBasket(): void {
-    const show = this.basket.length > 0;
+    if (this.cart) {
+      if (this.basketMesh) this.basketMesh.visible = false;
+      if (this.state !== 'an_kasse' && this.state !== 'packt') this.renderItems(this.basket);
+      return;
+    }
+    const show = this.basket.length > 0 || this.state === 'packt';
     if (show && !this.basketMesh) {
       basketGeo ??= new THREE.BoxGeometry(0.28, 0.16, 0.2);
       basketMat ??= new THREE.MeshStandardMaterial({ color: '#c8382f', roughness: 0.7 });
@@ -275,4 +402,8 @@ export class CustomerComponent extends Component implements Describable {
     }
     if (this.basketMesh) this.basketMesh.visible = show;
   }
+}
+
+function countOf(lines: BasketLine[]): number {
+  return lines.reduce((n, l) => n + l.menge, 0);
 }

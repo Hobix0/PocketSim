@@ -1,0 +1,11 @@
+{
+  "id": "holzdielen",
+  "name": "Boden Holzdielen",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
+  "preis": 140,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/holzdielen",
+  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#c9a26b"}
+}

@@ -1,17 +1,18 @@
 {
   "name": "Mein Laden",
-  "himmel": "#c3d5dc",
+  "himmel": "#cfe0e0",
   "raster": 1,
-  "boden": {"groesse": [40, 30], "farbe": "#8f9f72"},
+  "boden": {"groesse": [40, 30], "farbe": "#98a877"},
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
   "ziele": "start",
-  "anlieferung": {"strasseZ": 9.0, "hoehe": 0.04, "von": -27, "bis": 27, "halt": -0.8, "zufahrtX": 13},
+  "anlieferung": {"strasseZ": 9.0, "hoehe": 0.04, "von": -27, "bis": 27, "halt": -0.8},
   "grundstuecke": [
     {"id": "laden", "name": "Ladenfläche", "rect": {"minX": -4, "maxX": 4, "minZ": -3, "maxZ": 3}, "preis": 0, "freischaltLevel": 1, "besessen": true},
     {"id": "gehweg", "name": "Gehweg", "rect": {"minX": -10, "maxX": 10, "minZ": 3, "maxZ": 7.2}, "preis": 0, "freischaltLevel": 1, "besessen": true},
     {"id": "ost", "name": "Anbau Ost", "rect": {"minX": 4, "maxX": 10, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 2},
     {"id": "west", "name": "Anbau West", "rect": {"minX": -10, "maxX": -4, "minZ": -3, "maxZ": 3}, "preis": 3500, "freischaltLevel": 3},
+    {"id": "gewerbehof", "name": "Gewerbehof (freies Lager)", "rect": {"minX": 10, "maxX": 20, "minZ": -13, "maxZ": 7.2}, "preis": 4000, "freischaltLevel": 2},
     {"id": "hof", "name": "Hof hinten", "rect": {"minX": -10, "maxX": 10, "minZ": -9, "maxZ": -3}, "preis": 6000, "freischaltLevel": 4}
   ],
   "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6]],
@@ -45,6 +46,13 @@
     {"typ": "europalette", "position": [2.9, 0.05, -2.55], "drehung": 0},
     {"typ": "europalette", "position": [2.9, 0.05, -1.45], "drehung": 0},
     {"typ": "pendelleuchte", "position": [-1, 4, 0], "drehung": 0, "wiederholen": {"anzahl": [2, 1], "abstand": [2, 0]}},
-    {"typ": "pflanzkuebel_boden", "position": [-5.4, 0.14, 4.0], "drehung": 0}
+    {"typ": "pflanzkuebel_boden", "position": [-5.4, 0.14, 4.0], "drehung": 0},
+    {"typ": "wagenbox", "position": [6.5, 0.14, 4.25], "drehung": -90},
+    {"typ": "holzbank", "position": [-2.6, 0.14, 3.95], "drehung": -90},
+    {"typ": "kreidetafel", "position": [3.5, 0.14, 4.0], "drehung": -90},
+    {"typ": "lavendelkuebel", "position": [-0.5, 0.14, 3.7], "drehung": 0},
+    {"typ": "lavendelkuebel", "position": [2.3, 0.14, 3.7], "drehung": 0},
+    {"typ": "strassenlaterne", "position": [-6.8, 0.14, 6.85], "drehung": 0},
+    {"typ": "strassenlaterne", "position": [4.2, 0.14, 6.85], "drehung": 0}
   ]
 }

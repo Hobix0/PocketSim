@@ -85,6 +85,8 @@ export interface LogisticsSettings {
     ladeflaeche: { von: number; bis: number; breite: number; hoehe: number; ebenen: number };
     /** m pro Sekunde (Simulationszeit) */
     geschwindigkeit: number;
+    /** Zellgröße (m) des Fahrrasters, auf dem LKW ihren Weg zu Ladetoren suchen */
+    fahrraster: number;
   };
 }
 
@@ -144,6 +146,8 @@ export interface BuildDef {
   kontext?: string;
   /** Besondere Fähigkeiten, z. B. ["einkauf"]. Jede Funktion wird zu einer Komponente (siehe factory). */
   funktionen: string[];
+  /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
+  wagenbox?: { anzahl: number };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -173,6 +177,8 @@ export interface DaylightSettings {
   nacht: { sonne: number; umgebung: number; himmel: string; sonnenfarbe: string };
   daemmerung: { sonnenfarbe: string; himmel: string };
   lampen: { anzahl: number; nachtVerstaerkung: number };
+  /** Warmer Grund-Look: Farben des Umgebungslichts, Sonnenfarbe, Dunst (m), Belichtung, Schattenweichheit */
+  stimmung: { himmelLicht: string; bodenLicht: string; sonne: string; nebel: { nah: number; fern: number }; belichtung: number; schattenWeich: number };
 }
 
 /** Ein Interaktions-Kontext, z. B. "Regal" (data/interaktion/kontexte.json). */
@@ -265,6 +271,11 @@ export interface CustomerSettings {
    * Ab vk × schnaeppchenAb oder billiger freut sich der Kunde (kleiner Ruf-Bonus).
    */
   preis: { toleranz: number; elastizitaet: number; schnaeppchenAb: number; rufJeZuTeuer: number; rufJeSchnaeppchen: number; min: number; max: number };
+  /**
+   * Einkaufswagen: Wer mindestens `abArtikel` Teile kaufen will, holt sich einen leeren Wagen aus einer Wagenbox
+   * (wenn eine da ist), packt nach dem Bezahlen ein (`packSekundenProArtikel`) und bringt ihn zurück.
+   */
+  einkaufswagen?: { model: string; abArtikel: number; packSekundenProArtikel: number };
 }
 
 /** Raster für die Wegfindung (data/navigation/standard.json). */
@@ -349,6 +360,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     funktionen: strList(o, 'funktionen', where),
     ablage: o.ablage === undefined ? undefined : storage(o.ablage, `${where} → ablage`),
     licht: o.licht === undefined ? undefined : light(o.licht, `${where} → licht`),
+    wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),

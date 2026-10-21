@@ -11,6 +11,8 @@ import { SelectableComponent } from '../components/SelectableComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { RampComponent } from '../components/RampComponent';
+import { FootprintComponent } from '../components/FootprintComponent';
+import { NavGrid, type Bounds } from '../navigation/NavGrid';
 import { TruckComponent, type RoutePoint } from '../components/TruckComponent';
 import { createCartonEntity } from '../factory/createProductEntity';
 import { place, type CartonStorage } from './CartonStorage';
@@ -31,8 +33,6 @@ export interface DeliveryRoute {
   bis: number;
   /** Halteplatz auf der Straße (Mitte des LKW), Fahrtrichtung +X */
   halt: number;
-  /** Seitenweg (x) von der Straße zu Rampen hinter dem Haus */
-  zufahrtX: number;
 }
 
 export interface FleetEvents extends Record<string, unknown> {
@@ -42,6 +42,8 @@ export interface FleetEvents extends Record<string, unknown> {
   driverUnloaded: { kartons: number; kosten: number };
   /** Kein Platz: Ware zurückgenommen, EK erstattet */
   returned: { kartons: number; betrag: number };
+  /** An dieses Ladetor kommt kein LKW heran (zugebaut) – er hält auf der Straße */
+  unreachable: { dock: Entity };
 }
 
 export class TruckFleet {
@@ -56,7 +58,20 @@ export class TruckFleet {
     private readonly route: DeliveryRoute,
     private readonly storage: CartonStorage,
     private readonly player: PlayerState,
-  ) {}
+    /** Gelände, auf dem LKW fahren (für das Fahrraster) */
+    private readonly bounds: Bounds,
+  ) {
+    const l = settings.lkw;
+    this.drive = new NavGrid(bounds, { zelle: l.fahrraster, radius: l.groesse[2] / 2 + 0.2 }, world, 'fahren');
+    // Nach dem Bauen neu berechnen
+    world.events.on('added', (e) => { if (e.get(FootprintComponent)) this.drive.invalidate(); });
+    world.events.on('removed', (e) => { if (e.get(FootprintComponent)) this.drive.invalidate(); });
+  }
+
+  /** Fahrraster für LKW (befahrbar: Gelände und Außenflächen) */
+  private readonly drive: NavGrid;
+  /** Tore, für die schon gemeldet wurde, dass kein LKW hinkommt */
+  private readonly unreachable = new WeakSet<Entity>();
 
   /** Fällige Lieferung übernehmen */
   receive(s: Shipment): void {
@@ -119,8 +134,17 @@ export class TruckFleet {
   }
 
   /** Freie Rampe, sonst die Straße (null), sonst nichts frei (undefined) */
+  /** Bauteil wurde verschoben: Wege neu berechnen */
+  invalidate(): void {
+    this.drive.invalidate();
+  }
+
   private freeDock(): Entity | null | undefined {
-    for (const [e, r] of this.world.query(RampComponent)) if (!r.belegt) return e;
+    for (const [e, r] of this.world.query(RampComponent)) {
+      if (r.belegt) continue;
+      if (this.paths(e)) return e;
+      if (!this.unreachable.has(e)) { this.unreachable.add(e); this.events.emit('unreachable', { dock: e }); }
+    }
     const streetBusy = [...this.trucks].some((e) => e.require(TruckComponent).dock === null);
     return streetBusy ? undefined : null;
   }
@@ -137,7 +161,9 @@ export class TruckFleet {
   }
 
   private spawn(ladung: ShipmentLine[], dock: Entity | null): void {
-    const { anfahrt, abfahrt } = this.paths(dock);
+    const way = this.paths(dock);
+    if (!way) { this.queue.unshift(...ladung); return; }
+    const { anfahrt, abfahrt } = way;
     const lkw = this.settings.lkw;
     const [laenge, hoehe, breite] = lkw.groesse;
     const e = new Entity('lkw');
@@ -149,7 +175,7 @@ export class TruckFleet {
       arrived: (t) => this.unloadOntoBed(t),
       left: (t) => this.remove(t),
       text: (k, v) => this.ctx.content.text(k, v),
-    });
+    }, laenge);
     e.add(truck);
     if (dock) dock.require(RampComponent).belegt = true;
     // Startrichtung: zum ersten Wegpunkt
@@ -205,29 +231,56 @@ export class TruckFleet {
   }
 
   /** Strecken hin und zurück: auf der Straße oder über die Zufahrt rückwärts an eine Rampe */
-  private paths(dock: Entity | null): { anfahrt: RoutePoint[]; abfahrt: RoutePoint[] } {
+  /**
+   * Strecken hin und zurück. Straße: vorbeifahren bis zum Halteplatz. Ladetor/Rampe: über das Fahrraster
+   * bis vor das Tor, dann rückwärts heran (Heck am Tor, Front nach außen). null, wenn kein Weg frei ist.
+   */
+  private paths(dock: Entity | null): { anfahrt: RoutePoint[]; abfahrt: RoutePoint[] } | null {
     const r = this.route;
     const v = (x: number, z: number, y = r.hoehe) => new THREE.Vector3(x, y, z);
+    const start = v(r.von, r.strasseZ), ende = v(r.bis, r.strasseZ);
     if (!dock) {
-      return {
-        anfahrt: [{ p: v(r.von, r.strasseZ) }, { p: v(r.halt, r.strasseZ) }],
-        abfahrt: [{ p: v(r.bis, r.strasseZ) }],
-      };
+      return { anfahrt: [{ p: start }, { p: v(r.halt, r.strasseZ) }], abfahrt: [{ p: ende }] };
     }
-    // Rampe: vorne (+X) ist die Andockseite. Der LKW steht mit dem Heck an der Rampe, Front nach außen.
+    // Vorne (+X) ist die Andockseite: bei Wänden die Außenseite
     const o = dock.object;
     const fwd = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), o.rotation.y);
     const tiefe = dock.require(RampComponent).tiefe;
     const laenge = this.settings.lkw.groesse[0];
-    const y = 0;
-    const stop = o.position.clone().setY(y).addScaledVector(fwd, tiefe / 2 + laenge / 2 + 0.05);
-    const vor = stop.clone().addScaledVector(fwd, 4);
+    const stop = o.position.clone().setY(0).addScaledVector(fwd, tiefe / 2 + laenge / 2 + 0.05);
+    const vor = stop.clone().addScaledVector(fwd, laenge * 0.4 + 1);
+    // Wegsuche nur im Gelände: vom Rand der Straße aus
+    const rand = (x: number) => v(Math.min(this.bounds.maxX - 1, Math.max(this.bounds.minX + 1, x)), r.strasseZ);
+    if (!this.corridorFree(dock, stop, vor, fwd)) return null;
+    const hin = this.drive.findPath(rand(r.von), vor);
+    const weg = this.drive.findPath(vor, rand(r.bis));
+    if (!hin || !weg) return null;
+    const pts = (list: { x: number; z: number }[]) => list.map((q) => ({ p: v(q.x, q.z, this.heightAt(q.z)) }));
     return {
-      anfahrt: [
-        { p: v(r.von, r.strasseZ) }, { p: v(r.zufahrtX, r.strasseZ) },
-        { p: v(r.zufahrtX, vor.z, y) }, { p: vor }, { p: stop, rueckwaerts: true },
-      ],
-      abfahrt: [{ p: vor }, { p: v(r.zufahrtX, vor.z, y) }, { p: v(r.zufahrtX, r.strasseZ) }, { p: v(r.bis, r.strasseZ) }],
+      anfahrt: [{ p: start }, ...pts(hin), { p: vor }, { p: stop, rueckwaerts: true }],
+      abfahrt: [{ p: vor }, ...pts(weg), { p: ende }],
     };
+  }
+
+  /** Ist die Fläche frei, auf der der LKW vor dem Tor steht und rangiert? (Stichproben alle 0,5 m) */
+  private corridorFree(dock: Entity, stop: THREE.Vector3, vor: THREE.Vector3, fwd: THREE.Vector3): boolean {
+    const [laenge, , breite] = this.settings.lkw.groesse;
+    const side = new THREE.Vector3(-fwd.z, 0, fwd.x);
+    const back = stop.clone().addScaledVector(fwd, -laenge / 2 + 0.3);
+    const lang = back.distanceTo(vor) + laenge / 2;
+    const blockers = [...this.world.query(FootprintComponent)]
+      .filter(([e, f]) => e !== dock && (f.ebene === 'objekt' || f.ebene === 'wand' || (f.ebene === 'boden' && !f.aussen)))
+      .map(([, f]) => f.rect());
+    const p = new THREE.Vector3();
+    for (let a = 0; a <= lang; a += 0.5) for (let b = -(breite / 2 - 0.2); b <= breite / 2 - 0.2; b += 0.5) {
+      p.copy(back).addScaledVector(fwd, a).addScaledVector(side, b);
+      if (blockers.some((r) => p.x >= r.minX && p.x <= r.maxX && p.z >= r.minZ && p.z <= r.maxZ)) return false;
+    }
+    return true;
+  }
+
+  /** Auf der Straße etwas höher (Straßenbelag), sonst auf dem Gelände */
+  private heightAt(z: number): number {
+    return Math.abs(z - this.route.strasseZ) < 2.6 ? this.route.hoehe : 0;
   }
 }

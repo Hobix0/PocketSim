@@ -1,7 +1,7 @@
 {
   "id": "trapezblech_wand",
   "name": "Wand Trapezblech",
-  "kategorie": "gebaeude_erweiterung",
+  "kategorie": "lager",
   "ebene": "wand",
   "preis": 150,
   "freischaltLevel": 1,

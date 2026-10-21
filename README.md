@@ -143,11 +143,11 @@ flowchart LR
 **Etappe 7 – Lager und Logistik** ✅
 
 - **Lieferung per LKW:** Bestellte Ware kommt nicht mehr sofort, sondern zu festen Lieferzeiten (alle zwei Stunden) oder per **Express** (nach 20 Minuten, teurer). Lieferkosten: Grundbetrag + je Karton. Der Lagerplatz wird beim Bestellen eingeplant
-- Der LKW hält **auf der Straße** vor dem Laden – oder fährt über die Zufahrt **rückwärts an eine Laderampe** im Hof
+- Der LKW hält **auf der Straße** vor dem Laden – oder fährt **rückwärts an ein Ladetor** (siehe Etappe 8)
 - **Abladen:** von Hand (Karton auf der Ladefläche anklicken, dann einen Lagerplatz – bringt XP), durch **Lageristen** (neue Rolle im Personal) oder nach der Wartezeit durch den Fahrer gegen Gebühr. Ist kein Platz frei, nimmt er die Ware zurück und erstattet den Einkaufspreis
 - **Umlagern von Hand:** jeden Karton auf jede freie Ablage stellen (Palette, Palettenregal, Gitterbox, Rollcontainer)
 - **Lager-Fenster** (`G`): Belegung der Lagerplätze, LKW am Laden, Lieferungen unterwegs, Bestand nach Ware
-- **25 neue Voxel-Assets** (`npm run modelle:lager`): Palettenregal, Gitterbox, Rollcontainer, Laderampe, Gabelstapler, Hubwagen, Sackkarre, Stehleiter, Feuerlöscher, Spind, Packtisch, Paletten, Folienpalette, Kartonstapel, Lagerschild, Poller, Mülltonne, Papiercontainer, Hallenstrahler, Trapezblech-Wände, Sektionaltor, Beton- und Asphaltböden, Liefer-LKW. Alle außer dem LKW stehen in der Musterschau (`#musterschau`, rechts)
+- **25 neue Voxel-Assets** (`npm run modelle:lager`): Palettenregal, Gitterbox, Rollcontainer, Gabelstapler, Hubwagen, Sackkarre, Stehleiter, Feuerlöscher, Spind, Packtisch, Paletten, Folienpalette, Kartonstapel, Lagerschild, Poller, Mülltonne, Papiercontainer, Hallenstrahler, Trapezblech-Wände, Sektionaltor, Beton- und Asphaltböden, Liefer-LKW. Alle außer dem LKW stehen in der Musterschau (`#musterschau`, rechts)
 - Modelle ohne eigenes Icon bekommen ihr **Vorschaubild automatisch** aus den Würfeln
 - Werte: `data/logistik/standard.json`, Strecke im Level unter `"anlieferung"`
 
@@ -160,13 +160,32 @@ sequenceDiagram
   S->>D: bestellen (normal / express)
   D-->>S: Ware + Lieferkosten abbuchen, Platz einplanen
   D->>F: zum Termin fällig ("arrived")
-  F->>F: LKW fährt vor (Straße oder Rampe)
+  F->>F: LKW fährt vor (Straße oder Ladetor)
   alt von Hand oder Lagerist
     F->>L: Karton für Karton einlagern (+XP von Hand)
   else Wartezeit vorbei
     F->>L: Fahrer lädt den Rest ab (Gebühr je Karton)
   end
   F->>F: LKW fährt weg
+```
+
+**Etappe 8 – Schönes Lager, Einkaufswagen, Cosy-Look** ✅
+
+- **Lager selbst bauen – angebaut oder freistehend:** Im Reiter **Lager** liegt jetzt der ganze Baukasten: Beton- und Asphaltböden, Trapezblech-Wände (salbeigrün), Lichtband, Sektionaltor, **Ladetor**, Palettenregal, Holzregal, Gitterbox, Rollcontainer und Deko (Holzkisten, Fass, Paletten …). Für ein freistehendes Lager gibt es das neue Grundstück **Gewerbehof** (rechts neben dem Laden, ab Level 2)
+- **Ladetor statt Rampenblock:** ein Wandmodul, ebenerdig in die Lagerwand eingebaut – mit Torabdichtung, Puffern, Ampel und warmer Torleuchte. Der LKW setzt außen rückwärts an und klappt seine **Ladebordwand** auf den Boden
+- **LKW finden ihren Weg selbst:** Ein eigenes Fahrraster (`NavGrid`, Modus „fahren“) kennt Gelände, Asphalt und Gehwege und weicht Gebäuden aus. Ist vor einem Tor kein Platz zum Rangieren, kommt eine Meldung und der LKW hält auf der Straße
+- Damit Personal ins freistehende Lager kommt: einen Weg aus **Asphalt** vom Gehweg bis zu einem Tor legen
+- **Einkaufswagen:** Wer mindestens 3 Teile kaufen will, holt sich einen leeren Wagen aus der **Wagenbox** (vor dem Laden). Die Ware liegt sichtbar im Wagen, an der Kasse auf dem Band; nach dem Bezahlen **packen** alle Kunden hinter der Kasse ein und bringen den Wagen zurück
+- **Cosy-Look:** wärmeres Licht von oben und vom Boden, warme Sonnenfarbe, weiche Schatten, leichter Dunst in der Ferne (`data/licht/standard.json` → `stimmung`). Neue gemütliche Deko (`npm run modelle:deko`): Wagenbox, Holzbank, Straßenlaterne (leuchtet), Lavendelkübel, Fahrradständer, Kreidetafel, Lichterkette für die Fassade (leuchtet), Holzdielen. Der Start-Laden hat schon Bank, Laternen, Lavendel und eine Wagenbox
+
+```mermaid
+flowchart LR
+  subgraph Kunde
+    W[Wagen aus der Wagenbox] --> R[Regale] --> K[Kasse] --> P[Einpacken] --> Z[Wagen zurück] --> G[Geht]
+  end
+  subgraph Lieferung
+    S[Straße] -->|Fahrraster| V[vor dem Ladetor] -->|rückwärts| T[Ladetor] --> L[Lagerist / von Hand] --> RG[Lagerregale]
+  end
 ```
 
 **Licht: Tag und Nacht, leuchtende Lampen** ✅
@@ -193,6 +212,7 @@ Weitere Befehle:
 | `npm run build` | Typprüfung und fertiger Build in `dist/` |
 | `npm run preview` | den Build lokal ansehen |
 | `npm run modelle:maschinen` | Voxel-Modelle der Maschinen neu erzeugen (`data/modelle/`) |
+| `npm run modelle:deko` | gemütliche Deko und Wagenbox neu erzeugen |
 | `npm run modelle:lager` | Voxel-Modelle für Lager und Logistik neu erzeugen (Baukasten: `scripts/lib/voxel-model.mjs`) |
 | `npm run build:artifact` | Build für claude.ai-Artifacts in `dist-artifact/` (Modelle als JS eingebettet, weil Artifacts keine .fbx-Dateien ausliefern) |
 
@@ -507,7 +527,7 @@ Lampe – zusätzliches Feld in `data/bau/<id>.json` (Position relativ zum Baute
 "licht": { "position": [0, -1.45, 0], "groesse": [0.14, 0.05, 0.14], "farbe": "#ffd9a0", "staerke": 5, "reichweite": 6 }
 ```
 
-Logistik (`data/logistik/standard.json`): `liefertermine`, `lieferkosten`, `express`, `wartezeitMinuten`, `fahrerAbladenProKarton`, `xpProKartonAbladen`, `lkw` (Modell, Größe, Ladefläche, Tempo). Laderampen sind Bauteile mit `"funktionen": ["rampe"]`.
+Logistik (`data/logistik/standard.json`): `liefertermine`, `lieferkosten`, `express`, `wartezeitMinuten`, `fahrerAbladenProKarton`, `xpProKartonAbladen`, `lkw` (Modell, Größe, Ladefläche, Tempo). Ladetore sind Wandmodule mit `"funktionen": ["rampe"]` (Außenseite +X = Andockseite). Wagenboxen haben `"wagenbox": { "anzahl": 6 }`; das Verhalten der Kunden mit Wagen steht in `data/kunden/standard.json` → `einkaufswagen`.
 
 Regeln, die überall gelten:
 
@@ -528,6 +548,6 @@ Regeln, die überall gelten:
 9. ~~Kunden-KI: Spawner, Zustände, Wege, Kassen-Warteschlange~~
 10. ~~Preise und Bilanz, Ausbau mit Grundstücken, Versorgung, Rohstoffe und Maschinen~~
 11. ~~Voxel-Editor als Entwicklerwerkzeug~~
-12. ~~Lager und Logistik: LKW, Laderampe, Lagerist, Umlagern~~
+12. ~~Lager und Logistik: LKW, Ladetor, Lagerist, Umlagern~~
 13. ~~Licht: Tag und Nacht, leuchtende Lampen~~
 14. Danach: Animationen im Editor, mehrstufige Produktion, Standorte und Lieferketten

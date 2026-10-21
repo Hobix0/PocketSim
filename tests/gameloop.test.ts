@@ -171,8 +171,11 @@ describe('Ein ganzer Einkauf', () => {
     store.serve(checkout, true);
     expect(p.geld).toBeCloseTo(geld + cola.vk * c.wishes[0].genommen);
     expect(store.stats.heute.umsatz).toBeCloseTo(cola.vk * c.wishes[0].genommen);
-    expect(c.state).toBe('geht');
-    for (let i = 0; i < 2000 && entity.world; i++) w.update(0.05);
+    // Nach dem Bezahlen wird hinter der Kasse eingepackt, dann geht der Kunde
+    expect(c.state).toBe('packt');
+    const after = new Set<string>();
+    for (let i = 0; i < 2000 && entity.world; i++) { w.update(0.05); after.add(c.state); }
+    expect([...after]).toEqual(expect.arrayContaining(['packt', 'geht']));
     expect(entity.world).toBeNull();
     expect(store.stats.heute).toMatchObject({ kunden: 1, zufrieden: 1 });
   });
@@ -191,4 +194,42 @@ describe('Ein ganzer Einkauf', () => {
     expect(shelf.require(ShelfComponent).bestand).toBe(24);
     expect(store.stats.ruf).toBeLessThan(content.kunden.ruf.start);
   });
+});
+
+describe('Einkaufswagen', () => {
+  it('ein großer Einkauf: Wagen aus der Wagenbox holen, Ware hinein, nach dem Bezahlen einpacken und Wagen zurückbringen', async () => {
+    const { CartStationComponent } = await import('../src/components/CartStationComponent');
+    const w = new World(new THREE.Group());
+    floor(w, 3);
+    const cola = content.produkte.get('cola_0_5l');
+    const shelf = w.add(createBuildEntity(content.bau.get('wandregal_weiss'), { position: [-3, 0.05, -3], drehung: 0 }, ctx));
+    shelf.require(ShelfComponent).add(cola, 24);
+    const box = w.add(createBuildEntity(content.bau.get('wagenbox'), { position: [3, 0.05, 3], drehung: 0 }, ctx));
+    const station = box.require(CartStationComponent);
+    const checkout = w.add(createBuildEntity(content.bau.get('kasse_schwarz'), { position: [2, 0.05, -1], drehung: 0 }, ctx));
+    const wishes = [{ produkt: cola, menge: 4, status: 'offen' as const, genommen: 0 }];
+    const left: string[] = [];
+    const customer = new CustomerComponent(wishes, {
+      findShelf: () => shelf, findCheckout: () => checkout, exitPoint: () => new THREE.Vector3(4, 0.05, 4),
+      findCartStation: () => (station.frei > 0 ? box : null), einkaufswagen: content.kunden.einkaufswagen,
+      settings: content.kunden, speed: 1.4, text: (k) => k, priceOf: (p) => p.vk, willBuy: () => true, isBargain: () => false,
+      left: (o) => left.push(o),
+    });
+    const e = w.add(new (await import('../src/ecs/Entity')).Entity('kunde'));
+    e.object.position.set(4, 0.05, 4);
+    e.add(customer);
+    expect(customer.state).toBe('holt_wagen');
+    const states = new Set<string>();
+    for (let i = 0; i < 3000 && !customer.isReady; i++) { w.update(0.05); states.add(customer.state); }
+    expect(customer.hasCart).toBe(true);
+    expect(station.frei).toBe(station.anzahl - 1);
+    expect(customer.artikel).toBe(4);
+    customer.paid();
+    expect(customer.state).toBe('packt');
+    for (let i = 0; i < 4000 && e.world; i++) { w.update(0.05); states.add(customer.state); }
+    expect([...states]).toEqual(expect.arrayContaining(['holt_wagen', 'sucht', 'greift', 'packt', 'bringt_wagen', 'geht']));
+    expect(station.frei).toBe(station.anzahl);
+    expect(left).toEqual(['zufrieden']);
+  });
+
 });

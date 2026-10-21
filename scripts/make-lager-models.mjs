@@ -8,7 +8,7 @@
 import { model, shade, hash } from './lib/voxel-model.mjs';
 
 // Farben
-const BLAU = '#2f5d9e', BLAU_D = '#244a80', ORANGE = '#e07b24', ORANGE_D = '#b8611a';
+const BLAU = '#3f6b55', BLAU_D = '#335a47', ORANGE = '#e07b24', ORANGE_D = '#b8611a';
 const VERZINKT = '#a9b2b8', VERZINKT_D = '#848e95', STAHL = '#b8bec4', STAHL_D = '#8f969d';
 const SCHWARZ = '#1f1f22', GUMMI = '#2a2a2d', DUNKEL = '#2f3a45', WEISS = '#e8e6e0', GRAU = '#9aa1a6';
 const HOLZ = '#c9a26b', HOLZ_D = '#a5824f', KARTON = '#c39b6a', KARTON_D = '#a57f52', KLEBEBAND = '#d9c08f';
@@ -112,6 +112,50 @@ model({
       if (!outer) return undefined;
       return y % 7 < 2 ? '#e9eef0' : (hash(x, y, z) < 0.55 ? '#d5dde0' : undefined);
     });
+  },
+});
+
+// Holzregal (Lager): 0,6 m tief, 2 m hoch, 2 m breit, drei Böden aus Holz (0,1 / 0,75 / 1,4 m)
+model({
+  id: 'holzregal', name: 'Holzregal', dims: [24, 80, 80],
+  draw: ({ box, rough, nx, ny, nz }) => {
+    for (const z0 of [0, 38, nz - 3]) for (const x0 of [0, nx - 3]) rough(x0, x0 + 2, 0, ny - 1, z0, z0 + 2, HOLZ_D, 0.06);
+    for (const y of [3, 29, 55]) rough(0, nx - 1, y - 3, y, 0, nz - 1, HOLZ, 0.08);
+    rough(0, nx - 1, ny - 3, ny - 1, 0, nz - 1, HOLZ, 0.08);
+    // Rückwand aus Latten
+    for (let y = 6; y < ny - 3; y += 6) box(0, 0, y, y + 2, 0, nz - 1, shade(HOLZ_D, 0.95));
+  },
+});
+
+// Obstkisten aus Holz, gestapelt (Deko)
+model({
+  id: 'holzkisten', name: 'Holzkisten', dims: [24, 40, 40],
+  draw: ({ box, rough, nx, nz }) => {
+    const kiste = (y0, z0, inhalt) => {
+      rough(0, nx - 1, y0, y0 + 1, z0, z0 + 19, HOLZ_D, 0.06);
+      for (const y of [y0 + 2, y0 + 6, y0 + 10]) {
+        rough(0, nx - 1, y, y + 2, z0, z0, HOLZ, 0.1); rough(0, nx - 1, y, y + 2, z0 + 19, z0 + 19, HOLZ, 0.1);
+        rough(0, 0, y, y + 2, z0, z0 + 19, HOLZ, 0.1); rough(nx - 1, nx - 1, y, y + 2, z0, z0 + 19, HOLZ, 0.1);
+      }
+      if (inhalt) for (let x = 2; x < nx - 2; x += 3) for (let z = z0 + 2; z < z0 + 18; z += 3) box(x, x + 1, y0 + 9, y0 + 11, z, z + 1, inhalt(x, z));
+    };
+    kiste(0, 0, (x, z) => ((x + z) % 2 ? '#c8382f' : '#d9482f'));
+    kiste(0, 20, (x, z) => ((x + z) % 3 ? '#e8862a' : '#f09a3a'));
+    kiste(13, 0, (x, z) => ((x + z) % 2 ? '#7fae3c' : '#6c9a32'));
+    kiste(26, 10, null);
+    void nz;
+  },
+});
+
+// Holzfass (Deko)
+model({
+  id: 'fass', name: 'Holzfass', dims: [24, 36, 24],
+  draw: ({ cyl }) => {
+    for (let y = 0; y < 36; y++) {
+      const r = Math.round(9 + 2 * Math.sin((y / 35) * Math.PI));
+      const ring = y === 3 || y === 4 || y === 31 || y === 32 || y === 17;
+      cyl('y', 12, 12, r, y, y, (i, j) => (ring ? '#4a4d52' : (Math.atan2(j, i) * 6 / Math.PI + 12) % 2 < 1 ? HOLZ_D : HOLZ));
+    }
   },
 });
 
@@ -249,25 +293,28 @@ model({
 
 // ── Außen und Hof ───────────────────────────────────────────────
 
-// Laderampe: Betonblock, vorne (+X) docken die LKW an – Gummipuffer, gelb-schwarze Kante, Überladeblech
+// Ladetor (Wandmodul 2 m × 4 m, 5-cm-Würfel): ebenerdig in die Lagerwand eingebaut. Außen (+X) setzt der LKW
+// rückwärts an: Torabdichtung aus Gummi, Puffer, Warnstreifen am Boden, Ampel und eine warme Torleuchte.
+// 8 Würfel tief: Wand in der Mitte (0,2 m), außen 0,1 m für Abdichtung und Puffer.
 model({
-  id: 'laderampe', name: 'Laderampe', dims: [80, 48, 120],
-  draw: ({ box, rough, nx, nz }) => {
-    rough(0, nx - 1, 0, 44, 0, nz - 1, BETON, 0.05);
-    // Warnkante vorne
-    box(nx - 2, nx - 1, 40, 44, 0, nz - 1, (x, y, z) => ((z + y) % 8 < 4 ? GELB : SCHWARZ));
-    // Puffer
-    for (const z of [16, nz - 22]) box(nx - 1, nx + 0, 26, 38, z, z + 5, GUMMI);
-    for (const z of [16, nz - 22]) box(nx - 3, nx - 1, 26, 38, z, z + 5, GUMMI);
-    // Überladeblech
-    box(nx - 14, nx - 3, 45, 45, 36, nz - 37, STAHL_D);
-    for (let z = 38; z < nz - 38; z += 3) box(nx - 13, nx - 4, 45, 45, z, z, STAHL);
-    // Treppe an der Seite und Geländer
-    for (let i = 0; i < 4; i++) rough(4 + i * 6, 9 + i * 6, 0, 10 + i * 11, 0, 5, BETON, 0.05);
-    for (let x = 2; x < nx - 4; x += 12) box(x, x, 45, 46 + 0, nz - 2, nz - 1, GELB_D);
-    box(2, nx - 6, 47, 47, nz - 2, nz - 1, GELB);
-    // Ampel neben dem Tor
-    box(nx - 6, nx - 4, 8, 20, nz - 6, nz - 4, DUNKEL); box(nx - 3, nx - 3, 16, 18, nz - 6, nz - 4, '#e0453a'); box(nx - 3, nx - 3, 11, 13, nz - 6, nz - 4, '#3fbf6a');
+  id: 'ladetor', name: 'Ladetor', dims: [8, 80, 40], size: 0.05, menue: 'lager',
+  draw: ({ box, ny, nz }) => {
+    const SALBEI = '#8fa58a', SALBEI_D = '#76907a';
+    // Wand um die Toröffnung (Öffnung z 6–33, y 0–57)
+    box(2, 5, 0, ny - 1, 0, 5, (x, y, z) => (z % 4 === 0 ? SALBEI_D : SALBEI));
+    box(2, 5, 0, ny - 1, nz - 6, nz - 1, (x, y, z) => (z % 4 === 0 ? SALBEI_D : SALBEI));
+    box(2, 5, 58, ny - 1, 6, nz - 7, (x, y, z) => (z % 4 === 0 ? SALBEI_D : SALBEI));
+    box(2, 5, ny - 2, ny - 1, 0, nz - 1, '#6d7f6c');
+    // eingefahrenes Tor oben, Holzoptik
+    box(2, 4, 50, 57, 6, nz - 7, (x, y) => (y % 3 === 0 ? '#a77e52' : '#c4996a'));
+    // Torabdichtung außen (schwarzer Gummirahmen) und Puffer unten
+    box(6, 7, 0, 59, 4, 6, GUMMI); box(6, 7, 0, 59, nz - 7, nz - 5, GUMMI); box(6, 7, 57, 59, 4, nz - 5, GUMMI);
+    for (const z of [8, nz - 11]) box(6, 7, 2, 7, z, z + 2, '#2a2a2d');
+    // Warnstreifen am Boden vor dem Tor (bündig, nichts steht über)
+    box(6, 7, 0, 0, 7, nz - 8, (x, y, z) => (z % 4 < 2 ? GELB : SCHWARZ));
+    // Ampel rechts, Torleuchte oben
+    box(6, 7, 30, 37, 1, 2, DUNKEL); box(7, 7, 35, 36, 1, 2, '#e0453a'); box(7, 7, 31, 32, 1, 2, '#3fbf6a');
+    box(6, 7, 62, 64, 17, 22, DUNKEL); box(6, 7, 61, 61, 18, 21, '#ffe1a6');
   },
 });
 
@@ -319,7 +366,7 @@ model({
   draw: ({ box, text, textWidth, nz }) => {
     for (const z of [6, nz - 8]) box(1, 2, 0, 87, z, z + 1, STAHL_D);
     box(0, 3, 62, 87, 2, nz - 3, BLAU);
-    box(3, 3, 63, 86, 3, nz - 4, '#3b6fb4');
+    box(3, 3, 63, 86, 3, nz - 4, '#4f8068');
     const s = 4, w = textWidth('LAGER', s);
     text(3, 82, Math.floor(nz / 2 + w / 2), 'LAGER', WEISS, s);
   },
@@ -331,11 +378,11 @@ model({
 model({
   id: 'trapezblech_wand', name: 'Wand Trapezblech', dims: [4, 80, 40], size: 0.05, menue: 'waende',
   draw: ({ box, ny, nz }) => {
-    box(1, 2, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 === 0 ? '#7d8d99' : '#8fa0ac'));
-    box(0, 0, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#8fa0ac' : undefined));
-    box(3, 3, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#9fb0bc' : undefined));
-    box(0, 3, 0, 1, 0, nz - 1, '#5d6b75'); // Sockel
-    box(0, 3, ny - 2, ny - 1, 0, nz - 1, '#6d7b85'); // Abschluss
+    box(1, 2, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 === 0 ? '#76907a' : '#8fa58a'));
+    box(0, 0, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#8fa58a' : undefined));
+    box(3, 3, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#9db39a' : undefined));
+    box(0, 3, 0, 1, 0, nz - 1, '#5f6f5d'); // Sockel
+    box(0, 3, ny - 2, ny - 1, 0, nz - 1, '#6d7f6c'); // Abschluss
   },
 });
 
@@ -343,12 +390,12 @@ model({
 model({
   id: 'trapezblech_lichtband', name: 'Wand Lichtband', dims: [4, 80, 40], size: 0.05, menue: 'waende',
   draw: ({ box, ny, nz }) => {
-    box(1, 2, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 === 0 ? '#7d8d99' : '#8fa0ac'));
-    box(0, 0, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#8fa0ac' : undefined));
-    box(3, 3, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#9fb0bc' : undefined));
-    box(0, 3, 50, 64, 0, nz - 1, (x, y, z) => (z % 10 === 0 || y === 50 || y === 64 ? '#4a565e' : (x === 0 || x === 3 ? GLAS_H : GLAS)));
-    box(0, 3, 0, 1, 0, nz - 1, '#5d6b75');
-    box(0, 3, ny - 2, ny - 1, 0, nz - 1, '#6d7b85');
+    box(1, 2, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 === 0 ? '#76907a' : '#8fa58a'));
+    box(0, 0, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#8fa58a' : undefined));
+    box(3, 3, 0, ny - 1, 0, nz - 1, (x, y, z) => (z % 4 < 2 ? '#9db39a' : undefined));
+    box(0, 3, 50, 64, 0, nz - 1, (x, y, z) => (z % 10 === 0 || y === 50 || y === 64 ? '#f1ead9' : (x === 0 || x === 3 ? GLAS_H : GLAS)));
+    box(0, 3, 0, 1, 0, nz - 1, '#5f6f5d');
+    box(0, 3, ny - 2, ny - 1, 0, nz - 1, '#6d7f6c');
   },
 });
 
@@ -356,11 +403,11 @@ model({
 model({
   id: 'sektionaltor', name: 'Sektionaltor', dims: [4, 80, 40], size: 0.05, menue: 'waende',
   draw: ({ box, ny, nz }) => {
-    box(0, 3, 0, ny - 1, 0, 2, '#5d6b75'); box(0, 3, 0, ny - 1, nz - 3, nz - 1, '#5d6b75');
-    box(0, 3, 64, ny - 1, 0, nz - 1, '#6d7b85');
-    // eingefahrenes Tor oben (Segmente sichtbar)
-    box(1, 2, 56, 63, 3, nz - 4, (x, y, z) => (y % 4 === 0 ? '#c8ccce' : '#e0e3e4'));
-    box(0, 0, 58, 61, 6, nz - 7, (x, y, z) => (z % 6 < 3 ? GLAS_H : '#e0e3e4'));
+    box(0, 3, 0, ny - 1, 0, 2, '#6d7f6c'); box(0, 3, 0, ny - 1, nz - 3, nz - 1, '#6d7f6c');
+    box(0, 3, 64, ny - 1, 0, nz - 1, '#8fa58a');
+    // eingefahrenes Tor oben (Holzsegmente mit Fensterreihe)
+    box(1, 2, 56, 63, 3, nz - 4, (x, y, z) => (y % 4 === 0 ? '#a77e52' : '#c4996a'));
+    box(0, 0, 58, 61, 6, nz - 7, (x, y, z) => (z % 6 < 3 ? GLAS_H : '#c4996a'));
     // Führungsschienen, gelbe Kante unten
     box(1, 2, 0, 56, 3, 3, STAHL_D); box(1, 2, 0, 56, nz - 4, nz - 4, STAHL_D);
     box(0, 3, 0, 0, 0, 2, GELB); box(0, 3, 0, 0, nz - 3, nz - 1, GELB);
@@ -372,7 +419,7 @@ model({
 model({
   id: 'betonboden', name: 'Boden Beton', dims: [80, 2, 80], menue: 'boden',
   draw: ({ rough, box, nx, nz }) => {
-    rough(0, nx - 1, 0, 1, 0, nz - 1, '#b2b1ab', 0.035);
+    rough(0, nx - 1, 0, 1, 0, nz - 1, '#bab3a6', 0.035);
     box(0, nx - 1, 1, 1, 0, 0, '#8f8e88'); box(0, 0, 1, 1, 0, nz - 1, '#8f8e88');
   },
 });
@@ -381,9 +428,9 @@ model({
 model({
   id: 'betonboden_markierung', name: 'Boden Beton Markierung', dims: [80, 2, 80], menue: 'boden',
   draw: ({ rough, box, nx, nz }) => {
-    rough(0, nx - 1, 0, 1, 0, nz - 1, '#b2b1ab', 0.035);
+    rough(0, nx - 1, 0, 1, 0, nz - 1, '#bab3a6', 0.035);
     box(0, nx - 1, 1, 1, 0, 0, '#8f8e88'); box(0, 0, 1, 1, 0, nz - 1, '#8f8e88');
-    box(0, nx - 1, 1, 1, 6, 9, (x) => (x % 10 < 7 ? GELB : '#b2b1ab'));
+    box(0, nx - 1, 1, 1, 6, 9, (x) => (x % 10 < 7 ? GELB : '#bab3a6'));
   },
 });
 
