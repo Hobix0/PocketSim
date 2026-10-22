@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 10b – Mehr Leben, besseres Licht** ✅
+
+- **Licht ohne Ausbrennen:** Lampen, die nah beieinander hängen, teilen sich eine Lichtquelle in ihrer Mitte (`src/world/LampLights.ts`). Die Helligkeit wächst nur gedämpft, das Licht sitzt etwas unter den Leuchten – zehn Leuchten an einer Schiene machen keinen weißen Fleck mehr. Werte: `data/licht/standard.json` → `lampen.buendeln`
+- **Figuren leben:** Beim Gehen wippen und schwanken alle Figuren im Schritttakt, im Stehen atmen sie und schauen sich um (`src/components/FigureComponent.ts`)
+- **Leben in der Straße** (`src/world/Ambience.ts`, Werte in `data/leben/standard.json`, Wege im Level unter `leben`): Passanten schlendern über den Gehweg (manche mit Hund, manche bleiben am Schaufenster stehen), Autos auf beiden Spuren (nachts mit Scheinwerfern und Rücklichtern), Tauben picken und fliegen auf, wenn jemand kommt, Vogelschwärme ziehen vorbei, Schmetterlinge tanzen um die Lavendelkübel, Wolkenschatten ziehen über die Szene. Neue Modelle: drei Autos, Hund, Taube, Straßenbaum (baubar unter Deko) – `npm run modelle:leben`
+- **Gedankenblasen der Kunden:** „Kein Mozzarella?“, „Puh, 3,50 € …“, „Schnäppchen!“, „Schöner Laden!“ – man sieht sofort, was fehlt und was zu teuer ist
+- **Umgebungsgeräusche:** Vogelzwitschern am Tag, Grillen in der Nacht, vorbeifahrende Autos, auffliegende Tauben
+- **Ideen für die nächsten Etappen:** [docs/ideen.md](docs/ideen.md)
+
 **Licht: Tag und Nacht, leuchtende Lampen** ✅
 
 - Sonne, Umgebungslicht und Himmel folgen der Uhrzeit: Sonnenaufgang, Dämmerung in warmen Farben, dunkle Nacht (`data/licht/standard.json`)
