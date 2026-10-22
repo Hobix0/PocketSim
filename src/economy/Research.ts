@@ -12,6 +12,8 @@ export interface ResearchNode {
   name: string;
   icon: string;
   beschreibung: string;
+  /** In welchem Baum (Reiter im Fenster), z. B. "laden" oder "cafe" */
+  baum: string;
   /** Lage im Baum: Spalte (Stufe) und Zeile (Zweig) */
   spalte: number;
   zeile: number;
@@ -31,6 +33,8 @@ export interface ResearchSettings {
   /** Ideen je verdienter XP */
   ideenProXp: number;
   startIdeen: number;
+  /** Reiter im Forschungsfenster: ein Baum je Zweig (Supermarkt, Café …) */
+  baeume: { id: string; name: string; icon: string }[];
 }
 
 /** Was freigeschaltet werden kann: Bauteil, Rezept oder Produkt */
@@ -57,7 +61,7 @@ export class Research {
   private ideenWert: number;
   private lastXp: number;
 
-  constructor(readonly nodes: ResearchNode[], private readonly player: PlayerState, private readonly settings: ResearchSettings) {
+  constructor(readonly nodes: ResearchNode[], private readonly player: PlayerState, readonly settings: ResearchSettings) {
     this.ideenWert = settings.startIdeen;
     for (const n of nodes) if (n.start) this.done.add(n.id);
     this.lastXp = player.xp;

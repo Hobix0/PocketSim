@@ -1,4 +1,16 @@
 {
   "ideenProXp": 0.3,
-  "startIdeen": 0
+  "startIdeen": 0,
+  "baeume": [
+    {
+      "id": "laden",
+      "name": "Supermarkt",
+      "icon": "🏪"
+    },
+    {
+      "id": "cafe",
+      "name": "Café",
+      "icon": "☕"
+    }
+  ]
 }

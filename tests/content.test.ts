@@ -8,7 +8,7 @@ import { expandObjects, type LevelData } from '../src/world/Level';
 describe('Spieldaten in data/', () => {
   it('lassen sich vollständig laden und prüfen', () => {
     const c = new Content();
-    expect(c.kategorien.size).toBe(12); // 10 Warengruppen aus dem Großhandel, Café + Rohstoffe
+    expect(c.kategorien.size).toBe(13); // 10 Warengruppen aus dem Großhandel, Café, Kuchen + Rohstoffe
     expect(c.rohstoffe.all().every((r) => r.rohstoff && r.kategorie === 'rohstoffe')).toBe(true);
     expect(c.produkte.size).toBeGreaterThan(0);
     expect(c.bau.size).toBeGreaterThan(0);
@@ -29,7 +29,7 @@ describe('Spieldaten in data/', () => {
 
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
-    expect(c.produkte.size).toBe(152); // 150 aus dem Blender-Export + 2 Café
+    expect(c.produkte.size).toBe(155); // 150 aus dem Blender-Export + 2 Café + 3 Kuchen
     // 61 Bauelemente aus Blender, davon eins (Markise) durch ein Voxel-Modell ersetzt; weitere haben Voxel-Modelle (eigen/…)
     const fbx = c.bau.all().filter((d) => d.model && !d.model.startsWith('eigen/'));
     expect(fbx.length).toBe(60);
@@ -42,7 +42,7 @@ describe('Spieldaten in data/', () => {
 
   it('jede Warengruppe aus dem Großhandel hat 15 Produkte', () => {
     const c = new Content();
-    for (const k of c.kategorien.all().filter((k) => k.id !== 'rohstoffe' && k.id !== 'cafe')) {
+    for (const k of c.kategorien.all().filter((k) => !['rohstoffe', 'cafe', 'kuchen'].includes(k.id))) {
       expect(c.produkte.all().filter((p) => p.kategorie === k.id).length, k.id).toBe(15);
     }
   });

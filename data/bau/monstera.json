@@ -1,0 +1,18 @@
+{
+  "id": "monstera",
+  "name": "Monstera",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 70,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/monstera",
+  "platzhalter": {
+    "groesse": [
+      1.0,
+      1.4,
+      1.0
+    ],
+    "farbe": "#3f7a4a"
+  }
+}

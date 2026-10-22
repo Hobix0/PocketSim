@@ -13,7 +13,7 @@ const content = new Content();
 const levels = { xpFuerLevel: [0, 100, 250, 500, 900] };
 const setup = (xp = 0) => {
   const player = new PlayerState('t', { geld: 10000, xp }, levels);
-  return { player, research: new Research(content.forschung, player, { ideenProXp: 0.3, startIdeen: 0 }) };
+  return { player, research: new Research(content.forschung, player, { ...content.forschungWerte, ideenProXp: 0.3, startIdeen: 0 }) };
 };
 
 describe('Forschung', () => {
@@ -93,5 +93,28 @@ describe('Café-Ecke', () => {
     expect(Math.abs(s.approach(1).z)).toBeGreaterThan(0.75);
     s.release(a);
     expect(s.frei).toBe(1);
+  });
+});
+
+describe('Café-Baum', () => {
+  it('hat einen eigenen Baum; die Café-Ecke hängt an der Backstube im Supermarkt-Baum', () => {
+    const cafe = content.forschung.filter((n) => n.baum === 'cafe').map((n) => n.id);
+    expect(cafe).toEqual(expect.arrayContaining(['cafe', 'wohnzimmer', 'kuchen', 'cafedeko', 'bar', 'terrasse']));
+    expect(content.forschung.find((n) => n.id === 'backstube')!.baum).toBe('laden');
+    expect(content.bau.get('sofa_cafe').forschung).toBe('wohnzimmer');
+    expect(content.produkte.get('kaesekuchen').forschung).toBe('kuchen');
+  });
+
+  it('Sofa: Plätze schauen nach vorne, man setzt sich von vorne hin', async () => {
+    const { SeatComponent } = await import('../src/components/SeatComponent');
+    const w = new World(new THREE.Group());
+    const sofa = w.add(createBuildEntity(content.bau.get('sofa_cafe'), { position: [0, 0, 0], drehung: 0 }, { content }));
+    const s = sofa.require(SeatComponent);
+    expect(s.approach(0).x).toBeGreaterThan(0.6);
+    expect(s.lookAt(0).x).toBeGreaterThan(s.seat(0).x);
+    const bar = w.add(createBuildEntity(content.bau.get('bartresen'), { position: [5, 0, 0], drehung: 0 }, { content }));
+    const b = bar.require(SeatComponent);
+    expect(b.frei).toBe(3);
+    expect(b.lookAt(1).x).toBeLessThan(b.seat(1).x); // zum Tresen
   });
 });

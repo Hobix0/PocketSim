@@ -1,0 +1,35 @@
+{
+  "id": "bartresen",
+  "name": "Bartresen mit Hockern",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 560,
+  "freischaltLevel": 3,
+  "werte": {},
+  "sitze": [
+    [
+      0.29,
+      -0.66,
+      180
+    ],
+    [
+      0.29,
+      0,
+      180
+    ],
+    [
+      0.29,
+      0.68,
+      180
+    ]
+  ],
+  "model": "eigen/bartresen",
+  "platzhalter": {
+    "groesse": [
+      0.9,
+      1.15,
+      2.0
+    ],
+    "farbe": "#9a6a43"
+  }
+}

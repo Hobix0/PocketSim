@@ -1,0 +1,18 @@
+{
+  "id": "blumenkasten",
+  "name": "Blumenkasten",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 60,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/blumenkasten",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      0.75,
+      1.4
+    ],
+    "farbe": "#9a6a43"
+  }
+}

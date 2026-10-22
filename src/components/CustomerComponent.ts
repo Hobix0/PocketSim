@@ -222,7 +222,7 @@ export class CustomerComponent extends Component implements Describable {
           o.position.y = ziel.y - tiefe * this.sitIn;
           if (this.sitIn >= 1 && Math.random() < 0.5) this.services.denkt?.('gemuetlich');
         }
-        this.face(st.center(), dt);
+        this.face(st.lookAt(this.seat.index), dt);
         this.timer -= dt;
         if (this.timer <= 0) this.standUp();
         break;

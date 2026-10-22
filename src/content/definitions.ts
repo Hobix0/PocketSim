@@ -164,8 +164,8 @@ export interface BuildDef {
   anSchiene: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
-  /** Sitzplätze (x, z in m relativ zum Bauteil), z. B. Stühle am Bistrotisch */
-  sitze?: [number, number][];
+  /** Sitzplätze (x, z in m relativ zum Bauteil, optional Blickrichtung in Grad: 0 = nach vorne +X), z. B. Stühle am Bistrotisch */
+  sitze?: [number, number, number?][];
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -486,7 +486,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     sitze: o.sitze === undefined ? undefined : (() => {
       if (!Array.isArray(o.sitze) || o.sitze.some((p) => !Array.isArray(p) || p.length < 2 || p.some((v) => typeof v !== 'number'))) throw new Error(`${where}: sitze muss eine Liste aus [x, z] sein`);
-      return (o.sitze as number[][]).map((p) => [p[0], p[1]] as [number, number]);
+      return (o.sitze as number[][]).map((p) => [p[0], p[1], p[2]] as [number, number, number?]);
     })(),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),

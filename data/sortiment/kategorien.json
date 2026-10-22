@@ -10,5 +10,6 @@
   {"id": "haushalt_reinigung", "name": "Haushalt & Reinigung"},
   {"id": "drogerie_koerperpflege", "name": "Drogerie & Körperpflege"},
   {"id": "cafe", "name": "Café"},
+  {"id": "kuchen", "name": "Kuchen & Torten"},
   {"id": "rohstoffe", "name": "Rohstoffe"}
 ]

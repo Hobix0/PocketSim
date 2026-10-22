@@ -47,7 +47,7 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   }
   if (def.licht) entity.add(new LampComponent(def.licht));
   if (def.wagenbox) entity.add(new CartStationComponent(def.wagenbox.anzahl, content.kunden.einkaufswagen?.model, ctx.models));
-  if (def.sitze?.length) entity.add(new SeatComponent(def.sitze, Math.abs(def.sitze[0][1]) > Math.abs(def.sitze[0][0]) ? def.platzhalter.groesse[2] : def.platzhalter.groesse[0]));
+  if (def.sitze?.length) entity.add(new SeatComponent(def.sitze, def.platzhalter.groesse));
   if (def.ablage) {
     entity.add(new StorageSurfaceComponent(def.platzhalter.groesse, def.ablage, content.lager.karton.groesse));
     entity.add(new StorageDropComponent(ctx.actions));

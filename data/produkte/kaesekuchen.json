@@ -1,0 +1,17 @@
+{
+  "id": "kaesekuchen",
+  "name": "Käsekuchen (Stück)",
+  "kategorie": "kuchen",
+  "ek": 1.3,
+  "vk": 3.2,
+  "gebinde": 12,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/stueck_kaesekuchen",
+  "groesse": [
+    0.1,
+    0.07,
+    0.07
+  ]
+}

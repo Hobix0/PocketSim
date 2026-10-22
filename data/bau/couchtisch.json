@@ -1,0 +1,18 @@
+{
+  "id": "couchtisch",
+  "name": "Couchtisch",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/couchtisch",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      0.45,
+      0.7
+    ],
+    "farbe": "#9a6a43"
+  }
+}

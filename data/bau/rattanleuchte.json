@@ -1,0 +1,35 @@
+{
+  "id": "rattanleuchte",
+  "name": "Rattan-Pendelleuchte",
+  "kategorie": "einrichtung",
+  "ebene": "decke",
+  "preis": 95,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.05
+  },
+  "licht": {
+    "position": [
+      0,
+      -1.0,
+      0
+    ],
+    "groesse": [
+      0.1,
+      0.06,
+      0.1
+    ],
+    "farbe": "#ffd59a",
+    "staerke": 4.5,
+    "reichweite": 5.5
+  },
+  "model": "eigen/rattanleuchte",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.2,
+      0.5
+    ],
+    "farbe": "#c99a5b"
+  }
+}
