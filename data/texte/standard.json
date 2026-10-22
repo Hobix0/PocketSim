@@ -188,7 +188,7 @@
   "palette_status_raeumt": "räumt {produkt} von der Palette ein",
   "palette_status_parkt": "parkt das Fahrzeug",
   "palette_status_laedt": "lädt einen Karton auf den Rollwagen",
-  "palette_kommissionieren": "fährt mit dem Rollwagen {produkt} in den Laden",
+  "palette_kommissionieren": "packt den Rollwagen und fährt in den Laden",
   "fahrzeug_rollwagen": "Rollwagen",
   "fahrzeug_gabelstapler": "Gabelstapler",
   "fahrzeug_hubwagen": "Hubwagen",

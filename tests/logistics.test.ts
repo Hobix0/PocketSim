@@ -203,6 +203,26 @@ describe('LKW', () => {
     expect(fleet.list[0].state).toBe('abfahrt');
   });
 
+  it('ohne Hubwagen/Stapler räumt der Lagerist die Mischpalette Karton für Karton von Hand ab', () => {
+    const { world, fleet, storage, ctx } = setup();
+    fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }, { produkt: 'wasser_sprudel_0_5l', menge: 12 }] });
+    runUntil(world, () => fleet.list[0]?.state === 'steht');
+    expect(cartonsOnTruck(world)).toBe(2);
+    const employee = { id: 1, name: 'Test', rolle: 'lagerist', lohn: 75, tempo: 1 };
+    const services = { gehgeschwindigkeit: 3, sekundenProStueck: 0.1 };
+    world.add(createWorkerEntity(employee, {
+      auffuellen: { findTask: () => null, ...services },
+      abladen: { findTask: () => findHaulTask(world, storage, () => true), ...services },
+      abladenFahrzeuge: { findJob: () => findPalletJob(world, { arten: ['einlagern'], fahrzeuge: ['hubwagen', 'gabelstapler'] }), lager: content.lager, ...services },
+      kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1, sekundenProArtikel: 1 },
+      einkaufen: { findTerminal: () => null, gehgeschwindigkeit: 1 },
+    }, ctx)).object.position.set(0, 0.04, 6);
+    expect(runUntil(world, () => fleet.list[0].kartons === 0, 6000)).toBe(true);
+    expect(cartonsOnTruck(world)).toBe(0);
+    fleet.update(1);
+    expect(fleet.list[0].state).toBe('abfahrt');
+  });
+
   it('mit einem Ladetor in der Lagerwand fährt der LKW über das Gelände heran und setzt rückwärts an', () => {
     const { world, fleet, ctx } = setup();
     // Kleine Halle: Betonboden, Ladetor in der Ostwand (Außenseite +X)
