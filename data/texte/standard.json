@@ -114,6 +114,8 @@
   "bilanz": "Bilanz",
   "bauen_fehler_grundstueck": "Nicht dein Grundstück – im Baumenü unter „Grundstücke“ kaufen",
   "grundstueck_gekauft": "Grundstück gekauft: {name}",
+  "renovierung_start": "Die Handwerker legen los: {name} (etwa {stunden} Stunden)",
+  "renovierung_fertig": "Frisch renoviert: {name} – richte es ein, wie du magst!",
   "freigeschaltet": "Neu freigeschaltet: {liste}",
   "maschine_bedienen": "Bedienen",
   "regal_belegen": "Belegen",

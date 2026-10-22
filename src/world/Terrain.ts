@@ -22,6 +22,8 @@ export interface TerrainCut {
   schraege: number;
 }
 
+export interface TerrainRaster { minX: number; minZ: number; nz: number }
+
 export class Terrain {
   readonly nx: number;
   readonly nz: number;
@@ -126,12 +128,24 @@ export class Terrain {
     return out;
   }
 
-  restore(list: unknown): void {
+  /** Lage des Rasters (steht mit im Spielstand, damit Änderungen auch nach einer größeren Karte an ihrem Ort bleiben) */
+  raster(): TerrainRaster {
+    return { minX: this.bounds.minX, minZ: this.bounds.minZ, nz: this.nz };
+  }
+
+  /** `von`: Raster, mit dem der Spielstand gespeichert wurde (fehlt: dieses) */
+  restore(list: unknown, von?: TerrainRaster): void {
     this.edits.fill(0);
     if (Array.isArray(list)) {
       for (const e of list) {
         if (!Array.isArray(e) || e.length !== 2) continue;
-        const [i, h] = e as [number, number];
+        let [i, h] = e as [number, number];
+        if (von && Number.isInteger(i) && (von.minX !== this.bounds.minX || von.minZ !== this.bounds.minZ || von.nz !== this.nz)) {
+          const ix = Math.round((von.minX + Math.floor(i / von.nz) * this.zelle - this.bounds.minX) / this.zelle);
+          const iz = Math.round((von.minZ + (i % von.nz) * this.zelle - this.bounds.minZ) / this.zelle);
+          if (ix < 0 || iz < 0 || ix >= this.nx || iz >= this.nz) continue;
+          i = ix * this.nz + iz;
+        }
         if (Number.isInteger(i) && i >= 0 && i < this.edits.length && Number.isFinite(h) && !this.isEdge(i)) this.edits[i] = Math.max(-this.maxHoehe, Math.min(this.maxHoehe, h));
       }
     }

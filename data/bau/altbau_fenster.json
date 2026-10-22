@@ -1,0 +1,24 @@
+{
+  "id": "altbau_fenster",
+  "name": "Vernageltes Fenster",
+  "kategorie": "gebaeude_basis",
+  "ebene": "wand",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "renovierung": {
+    "zu": "schaufenster_gross",
+    "kosten": 320
+  },
+  "model": "eigen/altbau_fenster",
+  "platzhalter": {
+    "groesse": [
+      0.28,
+      4,
+      2
+    ],
+    "farbe": "#8a6a48"
+  },
+  "gruppe": "gebaeude/waende",
+  "ausgeblendet": true
+}

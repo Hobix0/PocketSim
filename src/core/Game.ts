@@ -48,6 +48,7 @@ import { GameMenu } from '../ui/GameMenu';
 import { AssortmentWindow } from '../ui/AssortmentWindow';
 import { StatsWindow } from '../ui/StatsWindow';
 import { Plots } from '../world/Plots';
+import { Renovations, type RenovationSettings } from '../world/Renovations';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
@@ -73,7 +74,7 @@ import { Research } from '../economy/Research';
 import { LampLights } from '../world/LampLights';
 import { daylight } from '../world/DayCycle';
 import { RoofLayer } from '../world/RoofLayer';
-import { Terrain } from '../world/Terrain';
+import { Terrain, type TerrainRaster } from '../world/Terrain';
 import { TerrainView } from '../world/TerrainView';
 import { TerrainCutComponent } from '../components/TerrainCutComponent';
 import { TerrainTool } from '../building/TerrainTool';
@@ -154,6 +155,7 @@ export class Game {
   readonly statsWindow: StatsWindow;
   /** Grundstücke: wo gebaut werden darf */
   readonly plots: Plots;
+  readonly renovations: Renovations;
   /** Strom und Wasser */
   readonly utilities: Utilities;
   /** Maschinen, Rezepte, Rohstoffe */
@@ -457,6 +459,18 @@ export class Game {
     // Effekte: Plopp beim Bauen, Verpuffen beim Abriss, Staub
     this.effects = new Effects(this.scene, this.content.effekte);
     this.build.motion = this.content.effekte.vorschau;
+    // Altbauten renovieren (Stadt)
+    this.renovations = new Renovations(this.world, this.content, this.plots, this.player, this.factory,
+      readData<{ renovierung: RenovationSettings }>('stadt/standard').renovierung, this.scene, this.models, { dust: (p) => this.effects.dust(p, 1.2) });
+    this.renovations.events.on('started', ({ plot, minuten }) => {
+      this.hud.toasts.show(this.content.text('renovierung_start', { name: plot.name, stunden: Math.round(minuten / 6) / 10 }), 'gut');
+      this.audio.play('bauen');
+    });
+    this.renovations.events.on('done', ({ plot, mitte }) => {
+      this.hud.toasts.show(this.content.text('renovierung_fertig', { name: plot.name }), 'gut');
+      this.effects.sparkle(mitte.clone().setY(2), 60);
+      this.audio.play('levelup');
+    });
     this.ambience = new Ambience(this.scene, this.world, this.models, this.content.figuren, this.level.data.leben, readData<AmbienceSettings>('leben/standard'), {
       sound: (name) => this.audio.play(name),
     });
@@ -499,6 +513,7 @@ export class Game {
     floors();
     this.paintTool.events.on('message', ({ key, art }) => this.hud.toasts.show(this.content.text(key), art));
     this.buildMenu = new BuildMenu(this.hud.root, this.content, this.build, this.player, this.input, this.plots, this.terrainTool, this.paintTool);
+    this.buildMenu.renovations = this.renovations;
     // Was mit einem neuen Level freigeschaltet wird
     this.player.events.on('levelUp', ({ level }) => {
       // Großes Funkeln mitten im Bild
@@ -640,6 +655,7 @@ export class Game {
     this.deliveries?.update(this.clock.totalMinutes);
     this.buyers.update(this.clock.totalMinutes);
     this.fleet?.update(minutes);
+    this.renovations.update(minutes);
     this.world.update(simDt);
     this.updateDaylight(realDt);
     this.effects.update(realDt);
@@ -834,8 +850,10 @@ export class Game {
       preise: this.prices.state(),
       systeme: {
         grundstuecke: this.plots.state(),
+        renovierungen: this.renovations.state(),
         versorgung: this.utilities.state(),
         gelaende: this.terrain.state(),
+        gelaendeRaster: this.terrain.raster(),
         markierungen: this.paint.state(),
         einkauf: this.buyers.listing.state(),
         forschung: this.research.state(),
@@ -874,9 +892,15 @@ export class Game {
     this.staff.restore(d.personal);
     const grund = d.systeme?.grundstuecke;
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
+    this.renovations.restore(d.systeme?.renovierungen);
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
-    if (d.systeme?.gelaende) this.terrain.restore(d.systeme.gelaende);
+    if (d.systeme?.gelaende) {
+      // Ältere Spielstände ohne Raster: mit der früheren Kartengröße gespeichert (data/level → "bodenFrueher")
+      const alt = this.level.data.bodenFrueher;
+      const von = (d.systeme.gelaendeRaster as TerrainRaster | undefined) ?? (alt ? { minX: -alt[0] / 2, minZ: -alt[1] / 2, nz: Math.round(alt[1] / this.terrain.zelle) + 1 } : undefined);
+      this.terrain.restore(d.systeme.gelaende, von);
+    }
     this.paint.restore(d.systeme?.markierungen);
     this.buyers.restore(d.systeme?.einkauf);
     this.research.restore(d.systeme?.forschung as Parameters<Research['restore']>[0]);

@@ -1,0 +1,24 @@
+{
+  "id": "geruempel",
+  "name": "Gerümpel",
+  "kategorie": "gebaeude_basis",
+  "ebene": "objekt",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "renovierung": {
+    "zu": null,
+    "kosten": 40
+  },
+  "model": "eigen/geruempel",
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      0.85,
+      1.0
+    ],
+    "farbe": "#9c7a50"
+  },
+  "gruppe": "laden/deko",
+  "ausgeblendet": true
+}

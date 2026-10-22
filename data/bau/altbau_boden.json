@@ -1,0 +1,24 @@
+{
+  "id": "altbau_boden",
+  "name": "Alter Dielenboden",
+  "kategorie": "gebaeude_basis",
+  "ebene": "boden",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "renovierung": {
+    "zu": "boden_fliese_innen",
+    "kosten": 140
+  },
+  "model": "eigen/altbau_boden",
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.05,
+      2
+    ],
+    "farbe": "#a07c55"
+  },
+  "gruppe": "gebaeude/boden",
+  "ausgeblendet": true
+}
