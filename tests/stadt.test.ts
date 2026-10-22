@@ -23,7 +23,7 @@ function setup() {
   const r = plots.list.find((p) => p.id === 'altes_ladenlokal')!.rect;
   for (const o of expandObjects(level.objekte)) {
     const [x, , z] = o.position;
-    const def = content.bau.find(o.typ);
+    const def = o.typ ? content.bau.find(o.typ) : undefined;
     if (def && x >= r.minX - 0.3 && x <= r.maxX + 0.3 && z >= r.minZ - 0.3 && z <= r.maxZ + 0.3) world.add(createBuildEntity(def, o, { content }));
   }
   const ren = new Renovations(world, content, plots, player, { content }, stadt.renovierung);
