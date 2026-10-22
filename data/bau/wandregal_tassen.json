@@ -1,0 +1,18 @@
+{
+  "id": "wandregal_tassen",
+  "name": "Wandregal mit Tassen",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/wandregal_tassen",
+  "platzhalter": {
+    "groesse": [
+      0.25,
+      1.85,
+      1.2
+    ],
+    "farbe": "#9a6a43"
+  }
+}

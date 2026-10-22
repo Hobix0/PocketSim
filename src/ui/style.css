@@ -2192,6 +2192,7 @@ html, body {
 .research .node .icon { grid-row: 1 / 3; font-size: 26px; align-self: center; text-align: center; }
 .research .node .name { font-weight: 700; line-height: 1.15; }
 .research .node small { color: var(--text-dim); }
+.research .node .fremd { position: absolute; top: -9px; left: 10px; font-size: 11px; padding: 0 6px; border-radius: 6px; background: var(--bg); color: var(--text-dim); border: 1px solid var(--panel-line); }
 .research .node.erforscht { border-color: var(--accent); background: #22382c; }
 .research .node.erforscht small { color: var(--accent); }
 .research .node.bereit { border-color: #ffd166; box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.18); animation: forschung-puls 2.2s ease-in-out infinite; }
@@ -2208,3 +2209,4 @@ html, body {
 .research .detail .action { align-self: center; text-align: right; }
 .research .badge.good { background: var(--accent); color: var(--accent-ink); }
 .tools button.has-new::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 4px; border-radius: 50%; background: #ffd166; vertical-align: middle; }
+.research .tabs .badge { background: #ffd166; color: #2a2210; margin-left: 4px; }

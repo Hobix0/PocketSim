@@ -100,7 +100,7 @@ export class Content {
     const nodes: ResearchNode[] = raw.map((r, i) => {
       if (!r.id || !r.name) throw new Error(`forschung/baum.json: Eintrag ${i} braucht id und name`);
       return {
-        id: r.id, name: r.name, icon: r.icon ?? '💡', beschreibung: r.beschreibung ?? '',
+        id: r.id, name: r.name, icon: r.icon ?? '💡', beschreibung: r.beschreibung ?? '', baum: r.baum ?? 'laden',
         spalte: r.spalte ?? 0, zeile: r.zeile ?? 0, level: r.level ?? 1, kosten: r.kosten ?? 0,
         voraussetzungen: r.voraussetzungen ?? [],
         schaltetFrei: { bau: r.schaltetFrei?.bau ?? [], rezepte: r.schaltetFrei?.rezepte ?? [], kategorien: r.schaltetFrei?.kategorien ?? [] },
@@ -108,8 +108,10 @@ export class Content {
       };
     });
     const ids = new Set(nodes.map((n) => n.id));
+    const baeume = new Set((this.forschungWerte.baeume ?? []).map((b) => b.id));
     for (const n of nodes) {
       const where = `forschung/baum.json (${n.id})`;
+      if (!baeume.has(n.baum)) throw new Error(`${where}: unbekannter Baum "${n.baum}" (siehe forschung/standard.json → baeume)`);
       for (const v of n.voraussetzungen) if (!ids.has(v)) throw new Error(`${where}: unbekannte Voraussetzung "${v}"`);
       const mark = (d: { forschung?: string }, art: string, id: string) => {
         if (d.forschung) throw new Error(`${where}: ${art} "${id}" wird schon von "${d.forschung}" freigeschaltet`);

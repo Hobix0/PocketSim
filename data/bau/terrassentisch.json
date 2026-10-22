@@ -1,0 +1,28 @@
+{
+  "id": "terrassentisch",
+  "name": "Terrassentisch mit Schirm",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 320,
+  "freischaltLevel": 3,
+  "werte": {},
+  "sitze": [
+    [
+      0,
+      -0.64
+    ],
+    [
+      0,
+      0.61
+    ]
+  ],
+  "model": "eigen/terrassentisch",
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      2.5,
+      1.6
+    ],
+    "farbe": "#7c9a7e"
+  }
+}

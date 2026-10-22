@@ -2,7 +2,8 @@ import type { Content } from '../content/Content';
 import type { Research, ResearchNode, NodeStatus } from '../economy/Research';
 import { esc } from './html';
 
-// Forschungsbaum: Karten in Spalten (Stufen) und Zeilen (Zweige), Linien zu den Voraussetzungen.
+// Forschungsbaum: ein Reiter je Baum (Supermarkt, Café …), darin Karten in Spalten (Stufen) und Zeilen (Zweige),
+// Linien zu den Voraussetzungen. Voraussetzungen aus einem anderen Baum stehen als Hinweis auf der Karte.
 // Ein Klick auf eine Karte zeigt unten, was sie freischaltet, und den Knopf zum Erforschen.
 // Lage und Inhalt der Knoten: data/forschung/baum.json
 
@@ -15,9 +16,11 @@ export class ResearchWindow {
   private readonly el: HTMLElement;
   private lastKey = '';
   private selected: string | null = null;
+  private tab: string;
 
   constructor(parent: HTMLElement, private readonly content: Content, private readonly research: Research) {
     this.el = document.createElement('div');
+    this.tab = research.settings.baeume[0]?.id ?? 'laden';
     this.el.className = 'window research panel';
     this.el.hidden = true;
     parent.append(this.el);
@@ -26,6 +29,7 @@ export class ResearchWindow {
       if (!b) return;
       if (b.classList.contains('close')) { b.blur(); this.close(); return; }
       if (b.dataset.node) { this.selected = b.dataset.node; this.redraw(); return; }
+      if (b.dataset.baum) { this.tab = b.dataset.baum; this.selected = null; this.redraw(); return; }
       if (b.dataset.erforschen) { this.research.research(b.dataset.erforschen); this.redraw(); }
     });
     research.events.on('changed', () => this.update());
@@ -38,7 +42,10 @@ export class ResearchWindow {
   open(): void {
     this.el.hidden = false;
     // Zuerst etwas zeigen, das man gerade erforschen kann
-    if (!this.selected) this.selected = this.research.nodes.find((n) => this.research.status(n) === 'bereit')?.id ?? null;
+    if (!this.selected) {
+      const n = this.research.nodes.find((x) => x.baum === this.tab && this.research.status(x) === 'bereit') ?? this.research.nodes.find((x) => this.research.status(x) === 'bereit');
+      if (n) { this.selected = n.id; this.tab = n.baum; }
+    }
     this.redraw();
   }
 
@@ -60,32 +67,39 @@ export class ResearchWindow {
   private redraw(): void {
     const r = this.research;
     this.lastKey = r.ideen + '|' + r.nodes.map((n) => r.status(n)).join();
-    const cols = Math.max(...r.nodes.map((n) => n.spalte)) + 1;
-    const rows = Math.max(...r.nodes.map((n) => n.zeile)) + 1;
+    const nodes = r.nodes.filter((n) => n.baum === this.tab);
+    const cols = Math.max(...nodes.map((n) => n.spalte)) + 1;
+    const rows = Math.max(...nodes.map((n) => n.zeile)) + 1;
     const w = cols * BREITE + (cols - 1) * ABSTAND_X, h = rows * HOEHE + (rows - 1) * ABSTAND_Y;
     const pos = (n: ResearchNode) => ({ x: n.spalte * (BREITE + ABSTAND_X), y: n.zeile * (HOEHE + ABSTAND_Y) });
 
     // Linien: vom rechten Rand der Voraussetzung zum linken Rand des Knotens, weich geschwungen
-    const lines = r.nodes.flatMap((n) => n.voraussetzungen.map((v) => {
+    const lines = nodes.flatMap((n) => n.voraussetzungen.filter((v) => r.node(v)?.baum === this.tab).map((v) => {
       const a = pos(r.node(v)!), b = pos(n);
       const x1 = a.x + BREITE, y1 = a.y + HOEHE / 2, x2 = b.x, y2 = b.y + HOEHE / 2, mx = (x1 + x2) / 2;
       const cls = r.isDone(n.id) ? 'done' : r.isDone(v) && !n.bald ? 'open' : 'later';
       return `<path class="${cls}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
     })).join('');
 
-    const cards = r.nodes.map((n) => {
+    const cards = nodes.map((n) => {
       const p = pos(n), st = r.status(n);
+      const fremd = n.voraussetzungen.map((v) => r.node(v)!).filter((v) => v.baum !== this.tab);
       return `<button type="button" class="node ${st} ${this.selected === n.id ? 'sel' : ''}" data-node="${esc(n.id)}"
         style="left:${p.x}px;top:${p.y}px;width:${BREITE}px;height:${HOEHE}px">
         <span class="icon">${n.icon}</span>
         <span class="name">${esc(n.name)}</span>
         <small>${esc(this.label(n, st))}</small>
+        ${fremd.length ? `<span class="fremd" title="Voraussetzung aus einem anderen Baum">↖ ${esc(fremd.map((v) => v.name).join(', '))}</span>` : ''}
       </button>`;
     }).join('');
 
     this.el.innerHTML = `
       <header><h2>Forschung</h2><span class="ideen" title="Ideen sammeln sich mit jeder XP an">💡 ${r.ideen} Ideen</span>
         <button type="button" class="close" aria-label="${esc(this.content.text('schliessen'))}">✕</button></header>
+      <div class="tabs" role="tablist">${r.settings.baeume.map((b) => {
+        const bereit = r.nodes.filter((n) => n.baum === b.id && r.status(n) === 'bereit').length;
+        return `<button type="button" role="tab" data-baum="${esc(b.id)}" aria-selected="${b.id === this.tab}">${b.icon} ${esc(b.name)}${bereit ? ` <span class="badge">${bereit}</span>` : ''}</button>`;
+      }).join('')}</div>
       <p class="lead">Mit jeder Erfahrung kommen dir neue Ideen. Damit schaltest du Produktlinien, Maschinen und Bauteile frei – ganz in deinem Tempo.</p>
       <div class="tree-scroll"><div class="tree" style="width:${w}px;height:${h}px">
         <svg width="${w}" height="${h}" aria-hidden="true">${lines}</svg>${cards}

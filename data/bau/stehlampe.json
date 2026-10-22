@@ -1,0 +1,35 @@
+{
+  "id": "stehlampe",
+  "name": "Stehlampe",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 110,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.04
+  },
+  "licht": {
+    "position": [
+      0,
+      1.38,
+      0
+    ],
+    "groesse": [
+      0.12,
+      0.06,
+      0.12
+    ],
+    "farbe": "#ffd59a",
+    "staerke": 3,
+    "reichweite": 4.5
+  },
+  "model": "eigen/stehlampe",
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      1.65,
+      0.4
+    ],
+    "farbe": "#c9a24a"
+  }
+}

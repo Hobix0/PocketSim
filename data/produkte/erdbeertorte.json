@@ -1,0 +1,17 @@
+{
+  "id": "erdbeertorte",
+  "name": "Erdbeertorte (Stück)",
+  "kategorie": "kuchen",
+  "ek": 1.6,
+  "vk": 3.8,
+  "gebinde": 12,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/stueck_erdbeertorte",
+  "groesse": [
+    0.1,
+    0.07,
+    0.07
+  ]
+}

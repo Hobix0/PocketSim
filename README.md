@@ -228,6 +228,13 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11c – Cozy Café: eigener Forschungsbaum, neue Möbel** ✅
+
+- **Forschung mit Reitern** (`data/forschung/standard.json` → `baeume`, Knoten mit `"baum"`): *Supermarkt* und *Café*. Voraussetzungen aus einem anderen Baum stehen als Hinweis auf der Karte (Café-Ecke ↖ Backstube); am Reiter zeigt eine Zahl, wie viel gerade erforschbar ist
+- **Café-Baum:** Café-Ecke → Wohnzimmer-Ecke → Barista-Bar · Café-Ecke → Kuchentheke → (Kaffeerösterei → Eigene Kaffeemarke, bald) · Café-Ecke → Pflanzen & Licht → Terrasse
+- **Neue Assets** (`npm run modelle:cafe`): Samtsofa (2 Plätze), Ohrensessel, Couchtisch, Stehlampe (leuchtet), Bücherregal, Kuchenvitrine (Bedientheke wie der Tresen) mit Käsekuchen, Schokokuchen und Erdbeertorte, Monstera, Wandregal mit Tassen, Rattan-Pendelleuchte (leuchtet), Bartresen mit drei Hockern, Terrassentisch mit Sonnenschirm, Blumenkasten
+- **Sitzen überall:** Sofa, Sessel, Barhocker und Terrasse haben Sitzplätze; Plätze können eine Blickrichtung haben (`"sitze": [[x, z, grad]]`), hingesetzt wird von der nächsten Kante aus. Auch Kuchen-Käufer setzen sich
+
 **Etappe 11b – Café-Ecke** ✅
 
 - **Forschung „Café-Ecke“** (nach der Backstube, ab Level 3, 40 Ideen): Kaffeemaschine, Café-Tresen, Bistrotisch mit Stühlen, Hängeschild „KAFFEE“, Sortiment Café, Rezepte und die neue Rolle **Barista**

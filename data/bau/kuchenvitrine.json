@@ -1,0 +1,46 @@
+{
+  "id": "kuchenvitrine",
+  "name": "Kuchenvitrine",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 780,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.4
+  },
+  "kontext": "kasse",
+  "regal": {
+    "ebenen": [
+      0.47,
+      0.87
+    ],
+    "mitte": 0,
+    "laenge": 1.1,
+    "kapazitaet": 12
+  },
+  "kasse": {
+    "kunde": [
+      0.75,
+      0
+    ],
+    "personal": [
+      -0.7,
+      0
+    ],
+    "richtung": [
+      1,
+      0
+    ],
+    "abstand": 0.75,
+    "bedienung": true
+  },
+  "model": "eigen/kuchenvitrine",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.3,
+      1.2
+    ],
+    "farbe": "#f1ead9"
+  }
+}
