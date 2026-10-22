@@ -10,7 +10,7 @@ import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect }
 //  - Schienenleuchten hängen nur unter einer Lichtschiene (und stören die Schiene dabei nicht).
 //  - Kostet Geld (außer beim Verschieben) und muss freigeschaltet sein.
 
-export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende' | 'schiene' | 'forschung';
+export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende' | 'schiene' | 'forschung' | 'rahmen' | 'regal_voll';
 
 export interface PlacementResult {
   ok: boolean;
@@ -71,14 +71,24 @@ export function checkPlacement(
   // Schienenleuchten hängen an der Unterkante ihrer Schiene (die Schiene selbst hängt an Abhängern unter der Decke)
   const rail = def.anSchiene ? railAt(world, x, z, opts.moving) : null;
   const railFoot = rail?.get(FootprintComponent);
-  const y = rail && railFoot ? rail.object.position.y - railFoot.groesse[1]
+  let y = rail && railFoot ? rail.object.position.y - railFoot.groesse[1]
     : def.ebene === 'decke' ? settings.deckenhoehe : def.ebene === 'objekt' ? floor ?? 0 : 0;
+  // Traversen-Ebene: zwischen zwei Stützrahmen, auf der untersten freien Höhe des Lochrasters
+  let traverseOk: boolean | null = null;
+  if (def.palettenregal?.teil === 'traverse') {
+    const bay = bayAt(world, x, z, def.palettenregal.breite ?? def.platzhalter.groesse[2], opts.moving);
+    if (!bay) return { ok: false, grund: 'rahmen', y };
+    const level = freeLevel(world, bay, settings.regalEbenen ?? [0.15, 1.15, 2.15, 3.15], opts.moving);
+    if (level === null) return { ok: false, grund: 'regal_voll', y };
+    y = bay.y + level;
+    traverseOk = true;
+  }
 
   if (!opts.moving && def.freischaltLevel > opts.level) return { ok: false, grund: 'gesperrt', y };
   if (!opts.moving && def.forschung && opts.erforscht && !opts.erforscht(def.forschung)) return { ok: false, grund: 'forschung', y };
   if (opts.plotOk && !opts.plotOk(x, z, def.ebene === 'wand' || def.ebene === 'anbau' ? 0.4 : 0)) return { ok: false, grund: 'grundstueck', y };
   if (opts.gelaendeOk && !def.absenkung && def.ebene !== 'decke' && !opts.gelaendeOk(rect)) return { ok: false, grund: 'gelaende', y };
-  if (needsFloor && floor === null) return { ok: false, grund: 'boden', y };
+  if (needsFloor && floor === null && !traverseOk) return { ok: false, grund: 'boden', y };
   if (def.anSchiene && !rail) return { ok: false, grund: 'schiene', y };
   // Wände brauchen Boden auf mindestens einer Seite
   if (def.ebene === 'wand' && !floorNear(world, rect, opts.moving)) return { ok: false, grund: 'boden', y };
@@ -94,6 +104,8 @@ export function checkPlacement(
     if ((def.anSchiene && f.schiene) || (def.schiene && f.anSchiene)) continue;
     const other = f.rect();
     if (!overlaps(rect, other)) continue;
+    // Regalteile stehen einander nicht im Weg (nur zwei Rahmen an derselben Stelle gehen nicht)
+    if (def.palettenregal && f.regalteil && !(def.palettenregal.teil === 'rahmen' && f.regalteil === 'rahmen')) continue;
     // Wandteile dürfen sich an Enden und Ecken überlappen (Eckpfeiler) – erst ab 35 cm entlang der Wand ist es „belegt“
     if (def.ebene === 'wand' && f.ebene === 'wand' && wallOverlap(rect, other) < 0.35) continue;
     return { ok: false, grund: 'belegt', y };
@@ -101,6 +113,43 @@ export function checkPlacement(
   if (!opts.moving && opts.stromFrei !== undefined && (def.werte.strom ?? 0) > opts.stromFrei + 1e-9) return { ok: false, grund: 'strom', y };
   if (!opts.moving && def.preis > opts.geld) return { ok: false, grund: 'geld', y };
   return { ok: true, y };
+}
+
+/** Ein Regalfeld: Mitte zwischen zwei Stützrahmen gleicher Richtung, Drehung, Bodenhöhe und nutzbare Höhe */
+export interface RackBay { x: number; z: number; drehung: number; y: number; hoehe: number }
+
+/** Alle Felder einer Breite, die zwei Stützrahmen bilden (Rahmenabstand = Feldbreite + Rahmenstärke) */
+export function rackBays(world: World, breite: number, moving?: Entity): RackBay[] {
+  const rahmen = [...world.query(FootprintComponent)].filter(([e, f]) => e !== moving && f.regalteil === 'rahmen');
+  const out: RackBay[] = [];
+  for (const [a, fa] of rahmen) {
+    const ra = a.object.rotation.y, ax = Math.sin(ra), az = Math.cos(ra);
+    const abstand = breite + fa.groesse[2];
+    for (const [b, fb] of rahmen) {
+      if (a === b) continue;
+      const dx = b.object.position.x - a.object.position.x, dz = b.object.position.z - a.object.position.z;
+      // B liegt in Feldrichtung von A (lokal +Z), im richtigen Abstand, gleich ausgerichtet
+      if (Math.abs(dx * ax + dz * az - abstand) > 0.06 || Math.abs(dx * az - dz * ax) > 0.06) continue;
+      if (Math.abs(Math.sin(b.object.rotation.y - ra)) > 0.05) continue;
+      out.push({ x: a.object.position.x + dx / 2, z: a.object.position.z + dz / 2, drehung: Math.round((ra * 180) / Math.PI),
+        y: Math.min(a.object.position.y, b.object.position.y), hoehe: Math.min(fa.groesse[1], fb.groesse[1]) });
+    }
+  }
+  return out;
+}
+
+function bayAt(world: World, x: number, z: number, breite: number, moving?: Entity): RackBay | null {
+  return rackBays(world, breite, moving).find((b) => Math.hypot(b.x - x, b.z - z) < 0.1) ?? null;
+}
+
+/** Unterste freie Höhe im Feld (Traversen anderer Breite zählen nicht); null, wenn das Feld voll ist */
+function freeLevel(world: World, bay: RackBay, ebenen: number[], moving?: Entity): number | null {
+  const belegt: number[] = [];
+  for (const [e, f] of world.query(FootprintComponent)) {
+    if (e === moving || f.regalteil !== 'traverse') continue;
+    if (Math.hypot(e.object.position.x - bay.x, e.object.position.z - bay.z) < 0.1) belegt.push(e.object.position.y - bay.y);
+  }
+  return ebenen.find((l) => l + 0.35 <= bay.hoehe + 1e-6 && !belegt.some((b) => Math.abs(b - l) < 0.05)) ?? null;
 }
 
 /** Hängt an dieser Stelle eine Lichtschiene? */

@@ -1,0 +1,29 @@
+{
+  "id": "pal_traverse_gruen_270_offen",
+  "name": "Traversen-Ebene Grün-Gelb 2,7 m (für Paletten)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {
+    "lagerplaetze": 14
+  },
+  "palettenregal": {
+    "teil": "traverse",
+    "breite": 2.7
+  },
+  "ablage": {
+    "boeden": [
+      0.125
+    ]
+  },
+  "model": "eigen/pal_traverse_gruen_270_offen",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      0.125,
+      2.7
+    ],
+    "farbe": "#3f6b55"
+  }
+}

@@ -1,7 +1,7 @@
 import type { BuildDef, BuildSettings } from '../content/definitions';
 import type { World } from '../ecs/World';
 import { FootprintComponent, containsPoint } from '../components/FootprintComponent';
-import { snap } from './placement';
+import { snap, rackBays } from './placement';
 import { RampComponent } from '../components/RampComponent';
 
 // Wo ein Bauteil unter dem Zeiger einrastet – ohne Grafik, damit es testbar ist.
@@ -73,6 +73,33 @@ export function snapPlacement(world: World, def: BuildDef, x: number, z: number,
       const dd = (cx - x) ** 2 + (cz - z) ** 2;
       // Quer zur Schiene drehen geht mit „Drehen“ (für runde Leuchten egal)
       if (dd < bestD) { bestD = dd; best = { x: cx, z: cz, drehung: Math.round((rot * 180) / Math.PI) + (quarter % 2) * 90 }; }
+    }
+    if (best) return best;
+  }
+  if (def.palettenregal?.teil === 'traverse') {
+    // Traversen-Ebene: in das nächste Feld zwischen zwei Stützrahmen
+    let best: Snapped | null = null, bestD = 1.6 ** 2;
+    for (const b of rackBays(world, def.palettenregal.breite ?? d)) {
+      const dd = (b.x - x) ** 2 + (b.z - z) ** 2;
+      if (dd < bestD) { bestD = dd; best = { x: b.x, z: b.z, drehung: b.drehung }; }
+    }
+    if (best) return best;
+  }
+  if (def.palettenregal?.teil === 'rahmen') {
+    // Stützrahmen: im Feldabstand neben einen vorhandenen Rahmen (1,8 m oder 2,7 m) oder Rücken an Rücken (Doppelregal)
+    const felder = settings.regalFelder ?? [1.8, 2.7];
+    let best: Snapped | null = null, bestD = 0.8 ** 2;
+    for (const [e, f] of world.query(FootprintComponent)) {
+      if (f.regalteil !== 'rahmen') continue;
+      const o = e.object, r = o.rotation.y;
+      const zx = Math.sin(r), zz = Math.cos(r), xx = Math.cos(r), xz = -Math.sin(r);
+      const kandidaten: [number, number][] = [];
+      for (const w of felder) for (const s of [-1, 1]) kandidaten.push([zx * s * (w + d), zz * s * (w + d)]);
+      for (const s of [-1, 1]) kandidaten.push([xx * s * (f.groesse[0] + (settings.regalDistanz ?? 0.2)), xz * s * (f.groesse[0] + (settings.regalDistanz ?? 0.2))]);
+      for (const [ox, oz] of kandidaten) {
+        const cx = o.position.x + ox, cz = o.position.z + oz, dd = (cx - x) ** 2 + (cz - z) ** 2;
+        if (dd < bestD) { bestD = dd; best = { x: cx, z: cz, drehung: Math.round((r * 180) / Math.PI) + (quarter % 2) * 180 }; }
+      }
     }
     if (best) return best;
   }

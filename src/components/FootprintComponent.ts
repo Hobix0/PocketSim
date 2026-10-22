@@ -25,6 +25,8 @@ export class FootprintComponent extends Component {
     readonly schiene = false,
     /** Schienenleuchte (hängt an einer Lichtschiene) */
     readonly anSchiene = false,
+    /** Teil eines Palettenregals (Rahmen, Traverse, Zubehör): Regalteile stehen einander nicht im Weg */
+    readonly regalteil: 'rahmen' | 'traverse' | 'zubehoer' | null = null,
   ) {
     super();
   }

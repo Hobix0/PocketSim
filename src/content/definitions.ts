@@ -164,6 +164,8 @@ export interface BuildDef {
   anSchiene: boolean;
   /** Nicht im Baumenü (ersetzt durch neuere Bauteile); bleibt für alte Spielstände ladbar */
   ausgeblendet: boolean;
+  /** Palettenregal-System: Stützrahmen (Höhe aus dem Platzhalter), Traversen-Ebene zwischen zwei Rahmen (Feldbreite in m) oder Zubehör */
+  palettenregal?: { teil: 'rahmen' | 'traverse' | 'zubehoer'; breite?: number };
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
   /** Sitzplätze (x, z in m relativ zum Bauteil, optional Blickrichtung in Grad: 0 = nach vorne +X), z. B. Stühle am Bistrotisch */
@@ -279,6 +281,11 @@ export interface ContextInfo {
 export interface BuildSettings {
   raster: number;
   deckenhoehe: number;
+  /** Palettenregal: mögliche Höhen der Traversen-Ebenen über dem Boden (m), von unten nach oben */
+  regalEbenen?: number[];
+  /** Palettenregal: Feldbreiten (m) zum Einrasten der Stützrahmen und Abstand Rücken an Rücken (m) */
+  regalFelder?: number[];
+  regalDistanz?: number;
   rueckerstattung: number;
   /** Wie weit Wände von der Fliesenkante nach außen rücken (halbe Wandstärke) */
   wandVersatz?: number;
@@ -486,6 +493,12 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     schiene: o.schiene === undefined ? false : bool(o, 'schiene', where),
     anSchiene: o.anSchiene === undefined ? false : bool(o, 'anSchiene', where),
     ausgeblendet: o.ausgeblendet === undefined ? false : bool(o, 'ausgeblendet', where),
+    palettenregal: o.palettenregal === undefined ? undefined : (() => {
+      const p = asObject(o.palettenregal, `${where} → palettenregal`);
+      const teil = str(p, 'teil', `${where} → palettenregal`);
+      if (teil !== 'rahmen' && teil !== 'traverse' && teil !== 'zubehoer') throw new Error(`${where}: palettenregal.teil muss rahmen, traverse oder zubehoer sein`);
+      return { teil, breite: p.breite === undefined ? undefined : num(p, 'breite', `${where} → palettenregal`) };
+    })(),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     sitze: o.sitze === undefined ? undefined : (() => {
       if (!Array.isArray(o.sitze) || o.sitze.some((p) => !Array.isArray(p) || p.length < 2 || p.some((v) => typeof v !== 'number'))) throw new Error(`${where}: sitze muss eine Liste aus [x, z] sein`);

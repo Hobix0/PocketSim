@@ -1,0 +1,29 @@
+{
+  "id": "pal_traverse_klassik_180_offen",
+  "name": "Traversen-Ebene Blau-Orange 1,8 m (für Paletten)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 60,
+  "freischaltLevel": 1,
+  "werte": {
+    "lagerplaetze": 10
+  },
+  "palettenregal": {
+    "teil": "traverse",
+    "breite": 1.8
+  },
+  "ablage": {
+    "boeden": [
+      0.125
+    ]
+  },
+  "model": "eigen/pal_traverse_klassik_180_offen",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      0.125,
+      1.8
+    ],
+    "farbe": "#2f5d9e"
+  }
+}

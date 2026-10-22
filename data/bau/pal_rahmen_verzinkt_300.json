@@ -1,0 +1,21 @@
+{
+  "id": "pal_rahmen_verzinkt_300",
+  "name": "Stützrahmen Verzinkt (3,0 m)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "rahmen"
+  },
+  "model": "eigen/pal_rahmen_verzinkt_300",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      3.0,
+      0.1
+    ],
+    "farbe": "#a9b0b5"
+  }
+}

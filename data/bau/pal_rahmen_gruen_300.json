@@ -1,0 +1,21 @@
+{
+  "id": "pal_rahmen_gruen_300",
+  "name": "Stützrahmen Grün-Gelb (3,0 m)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "rahmen"
+  },
+  "model": "eigen/pal_rahmen_gruen_300",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      3.0,
+      0.1
+    ],
+    "farbe": "#3f6b55"
+  }
+}
