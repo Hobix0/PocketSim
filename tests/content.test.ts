@@ -99,3 +99,14 @@ describe('Bodenmarkierungen', () => {
     }
   });
 });
+
+describe('Voxel-Modelle', () => {
+  it('haben höchstens 256 Würfel je Achse (sonst lädt das Spiel sie nicht)', async () => {
+    const fs = await import('node:fs');
+    for (const f of fs.readdirSync('data/modelle').filter((n) => n.endsWith('.json'))) {
+      const m = JSON.parse(fs.readFileSync(`data/modelle/${f}`, 'utf8'));
+      if (!m.groesse) continue;
+      for (const v of m.groesse) expect(Number.isInteger(v) && v >= 1 && v <= 256, f).toBe(true);
+    }
+  });
+});

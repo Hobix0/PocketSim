@@ -65,13 +65,13 @@ for (const [name, c] of Object.entries(FARBEN)) {
       box(8, 10, 60, 70, 10, 16, '#3b5e7a'); // Briefkasten
       box(9, 9, 106, 118, 34, 45, WEISS); box(9, 9, 108, 116, 36, 43, '#4a4a4a'); // Hausnummer
     } });
-  // Giebel (Dreieck) für 6, 8 und 10 m tiefe Häuser: Neigung wie das Satteldach
+  // Giebel (Dreieck) für 6, 8 und 10 m tiefe Häuser: Neigung wie das Satteldach. 5-cm-Würfel (höchstens 256 je Achse)
   for (const d of [6, 8, 10]) {
-    const nz = d * 40, ny = Math.round(nz / 2 * 0.75);
-    model({ id: `giebel_${d}_${name}`, name: 'Giebel', dims: [8, ny, nz], menue: 'gebaeude',
+    const nz = d * 20, ny = Math.round(nz / 2 * 0.75);
+    model({ id: `giebel_${d}_${name}`, name: 'Giebel', dims: [4, ny, nz], size: 0.05, menue: 'gebaeude',
       draw: ({ box }) => {
-        for (let y = 0; y < ny; y++) { const w = Math.round((ny - y) / 0.75); box(0, 7, y, y, Math.max(0, nz / 2 - w), Math.min(nz - 1, nz / 2 + w - 1), c); }
-        const y0 = Math.round(ny * 0.3); fenster(box, 8, y0, y0 + 28, nz / 2 - 10, nz / 2 + 9, false); // Dachfenster
+        for (let y = 0; y < ny; y++) { const w = Math.round((ny - y) / 0.75); box(0, 3, y, y, Math.max(0, nz / 2 - w), Math.min(nz - 1, nz / 2 + w - 1), c); }
+        const y0 = Math.round(ny * 0.3); fenster(box, 4, y0, y0 + 14, nz / 2 - 5, nz / 2 + 4, false); // Dachfenster
       } });
   }
 }
