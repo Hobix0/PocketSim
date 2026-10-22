@@ -32,7 +32,7 @@ describe('Forschung', () => {
     player.addXp(100);
     expect(research.ideen).toBe(30);
     expect(research.status(research.node('saftbar')!)).toBe('voraussetzung');
-    expect(research.status(research.node('cafe')!)).toBe('bald');
+    expect(research.status(research.node('roesterei')!)).toBe('bald');
     expect(research.ok(content.bau.get('backstation'))).toBe(false);
     expect(research.research('backstube')).toBe(true);
     expect(research.ideen).toBe(10);
@@ -64,6 +64,34 @@ describe('Forschung', () => {
     alt.research.restore(undefined);
     expect(alt.research.isDone('feinkost')).toBe(true);
     expect(alt.research.isDone('tiefkuehl')).toBe(false);
-    expect(alt.research.isDone('cafe')).toBe(false);
+    expect(alt.research.isDone('roesterei')).toBe(false);
+  });
+});
+
+describe('Café-Ecke', () => {
+  it('ist erforschbar und schaltet Maschine, Rezepte und Kaffee frei', () => {
+    const { player, research } = setup(300);
+    research.addIdeen(100);
+    expect(research.research('cafe')).toBe(false); // erst die Backstube
+    research.research('backstube');
+    expect(research.research('cafe')).toBe(true);
+    expect(research.ok(content.bau.get('kaffeemaschine'))).toBe(true);
+    expect(research.ok(content.rezepte.get('cappuccino_zubereiten'))).toBe(true);
+    expect(research.ok(content.produkte.get('kaffee_to_go'))).toBe(true);
+    expect(player.level).toBe(3);
+  });
+
+  it('Bistrotisch: zwei Plätze, jeder nur für einen Kunden', async () => {
+    const { SeatComponent } = await import('../src/components/SeatComponent');
+    const { Entity } = await import('../src/ecs/Entity');
+    const w = new World(new THREE.Group());
+    const tisch = w.add(createBuildEntity(content.bau.get('bistrotisch'), { position: [2, 0, 0], drehung: 0 }, { content }));
+    const s = tisch.require(SeatComponent);
+    const a = new Entity('kunde'), b = new Entity('kunde'), c = new Entity('kunde');
+    expect([s.reserve(a), s.reserve(b), s.reserve(c)]).toEqual([0, 1, -1]);
+    expect(s.seat(0).z).toBeCloseTo(-0.62);
+    expect(Math.abs(s.approach(1).z)).toBeGreaterThan(0.75);
+    s.release(a);
+    expect(s.frei).toBe(1);
   });
 });

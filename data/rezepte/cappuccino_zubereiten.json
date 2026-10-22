@@ -1,0 +1,9 @@
+{
+  "id": "cappuccino_zubereiten",
+  "name": "Cappuccino zubereiten",
+  "maschine": "kaffeemaschine",
+  "eingang": [{"ware": "kaffeebohnen", "menge": 1}, {"ware": "barista_milch", "menge": 4}],
+  "ausgang": {"ware": "cappuccino", "menge": 20},
+  "dauer": 30,
+  "freischaltLevel": 3
+}

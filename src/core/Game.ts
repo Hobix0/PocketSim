@@ -366,6 +366,9 @@ export class Game {
 
     // Personal: Verwaltung ohne Grafik, Spielfiguren entstehen über die Ereignisse
     this.staff = new Staff(this.content.rollen, this.content.personal, this.content.namen, this.player);
+    // Rollen mit Forschung (Barista → Café-Ecke) bewerben sich erst danach
+    this.staff.rolleErlaubt = (r) => { const f = this.content.rollen[r]?.forschung; return !f || this.research.isDone(f); };
+    this.staff.refreshCandidates();
     this.personalWindow = new PersonalWindow(this.hud.root, this.content, this.staff,
       (e) => { const w = this.workers.get(e.id); return w ? { statusText: () => staffStatus(w) ?? '' } : undefined; });
     this.staff.events.on('hired', (e) => this.spawnWorker(e));
@@ -536,6 +539,8 @@ export class Game {
       const neu = [...node.schaltetFrei.bau.map((id) => c.bau.get(id).name), ...node.schaltetFrei.kategorien.map((id) => c.kategorien.get(id).name),
         ...(node.schaltetFrei.rezepte.length ? [`${node.schaltetFrei.rezepte.length} Rezepte`] : [])];
       this.hud.toasts.show(c.text('forschung_fertig', { name: node.name, liste: neu.join(', ') }), 'gut');
+      // Neue Rolle (z. B. Barista): gleich neue Bewerbungen
+      if (Object.values(c.rollen).some((r) => r.forschung === node.id)) this.staff.refreshCandidates();
     });
     this.hud.onTool('dach', () => this.toggleRoof());
 

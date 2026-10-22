@@ -133,6 +133,8 @@ export interface CheckoutDef {
   personal: [number, number];
   richtung: [number, number];
   abstand: number;
+  /** Bedientheke (Café-Tresen): Kunden bestellen hier, bedient wird aus dem eigenen Regalfach, bezahlt gleich hier */
+  bedienung: boolean;
 }
 
 /** Ein Bauelement (data/bau/*.json). `werte` werden auf Raum-/Gebäudeebene summiert. */
@@ -162,6 +164,8 @@ export interface BuildDef {
   anSchiene: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
+  /** Sitzplätze (x, z in m relativ zum Bauteil), z. B. Stühle am Bistrotisch */
+  sitze?: [number, number][];
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -306,7 +310,9 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen';
+  /** Bewirbt sich erst, wenn diese Forschung erledigt ist (z. B. Barista → Café-Ecke) */
+  forschung?: string;
 }
 
 /** Einkäufer: automatisches Nachbestellen (data/personal/standard.json → "einkauf") */
@@ -374,6 +380,8 @@ export interface CustomerSettings {
    * (wenn eine da ist), packt nach dem Bezahlen ein (`packSekundenProArtikel`) und bringt ihn zurück.
    */
   einkaufswagen?: { model: string; abArtikel: number; packSekundenProArtikel: number };
+  /** Café: Wer etwas aus diesen Kategorien gekauft hat, setzt sich (wenn ein Platz frei ist) so lange hin (Sekunden) */
+  cafe?: { kategorien: string[]; chance: number; sitzSekunden: { min: number; max: number }; sitzTiefe: number; zubereitenSekundenProArtikel: number };
   /**
    * Auswahl (Balancing): Je mehr verschiedene Produkte im Regal stehen, desto mehr Kunden kommen
    * (Faktor `min` bei keinem, 1 bei `referenz` Produkten, bis `max`) und desto größer ist der Einkauf
@@ -476,6 +484,10 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     schiene: o.schiene === undefined ? false : bool(o, 'schiene', where),
     anSchiene: o.anSchiene === undefined ? false : bool(o, 'anSchiene', where),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
+    sitze: o.sitze === undefined ? undefined : (() => {
+      if (!Array.isArray(o.sitze) || o.sitze.some((p) => !Array.isArray(p) || p.length < 2 || p.some((v) => typeof v !== 'number'))) throw new Error(`${where}: sitze muss eine Liste aus [x, z] sein`);
+      return (o.sitze as number[][]).map((p) => [p[0], p[1]] as [number, number]);
+    })(),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),
@@ -531,7 +543,7 @@ function checkout(raw: unknown, where: string): CheckoutDef {
     if (v.length !== 2) throw new Error(`${where}: "${key}" muss zwei Zahlen haben [x, z]`);
     return [v[0], v[1]];
   };
-  return { kunde: pair('kunde'), personal: pair('personal'), richtung: pair('richtung'), abstand: num(o, 'abstand', where, 0.1) };
+  return { kunde: pair('kunde'), personal: pair('personal'), richtung: pair('richtung'), abstand: num(o, 'abstand', where, 0.1), bedienung: o.bedienung === undefined ? false : bool(o, 'bedienung', where) };
 }
 
 function storage(raw: unknown, where: string): { ebenen?: number; boeden?: number[] } {

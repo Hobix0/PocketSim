@@ -1,0 +1,13 @@
+{
+  "id": "kaffeebohnen",
+  "name": "Kaffeebohnen (1 kg)",
+  "kategorie": "rohstoffe",
+  "ek": 9.5,
+  "vk": 0,
+  "gebinde": 6,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/sack_kaffeebohnen",
+  "groesse": [0.1, 0.14, 0.08]
+}

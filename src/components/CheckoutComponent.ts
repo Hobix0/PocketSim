@@ -72,13 +72,13 @@ export class CheckoutComponent extends InteractableComponent implements Describa
   options(): InteractionOption[] {
     const front = this.front;
     if (!front || this.cashier || !this.services?.isReady(front)) return [];
-    return [{ aktion: 'auswaehlen', text: 'kassieren', prioritaet: 10, run: () => this.services?.serve(this.entity, true) }];
+    return [{ aktion: 'auswaehlen', text: this.def.bedienung ? 'bedienen' : 'kassieren', prioritaet: 10, run: () => this.services?.serve(this.entity, true) }];
   }
 
   describe(): InfoRow[] {
     return [
       { label: 'Warteschlange', value: this.queue.length ? `${this.queue.length} Kunde${this.queue.length === 1 ? '' : 'n'}` : 'leer' },
-      { label: 'Personal', value: this.cashier ? this.services?.nameOf(this.cashier) ?? 'besetzt' : 'niemand (du kassierst)' },
+      { label: 'Personal', value: this.cashier ? this.services?.nameOf(this.cashier) ?? 'besetzt' : (this.def.bedienung ? 'niemand (du bedienst)' : 'niemand (du kassierst)') },
     ];
   }
 

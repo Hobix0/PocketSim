@@ -55,7 +55,7 @@ export class CashierComponent extends Component implements Describable {
         const customer = front?.get(CustomerComponent);
         if (front && customer?.isReady) {
           this.serving = front;
-          this.timer = Math.max(1, customer.artikel) * this.services.sekundenProArtikel / this.employee.tempo;
+          this.timer = Math.max(1, customer.artikel + customer.bestellt) * this.services.sekundenProArtikel / this.employee.tempo;
           this.setState('kassiert');
         }
         break;

@@ -26,5 +26,13 @@
     "lohnProTag": 95,
     "farbe": "#8a63b5",
     "verhalten": "einkaufen"
+  },
+  "barista": {
+    "name": "Barista",
+    "beschreibung": "Steht am Café-Tresen, nimmt Bestellungen auf, bereitet Kaffee zu und kassiert.",
+    "lohnProTag": 85,
+    "farbe": "#9a6a43",
+    "verhalten": "bedienen",
+    "forschung": "cafe"
   }
 }

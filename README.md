@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11b – Café-Ecke** ✅
+
+- **Forschung „Café-Ecke“** (nach der Backstube, ab Level 3, 40 Ideen): Kaffeemaschine, Café-Tresen, Bistrotisch mit Stühlen, Hängeschild „KAFFEE“, Sortiment Café, Rezepte und die neue Rolle **Barista**
+- **Kaffeemaschine** (Maschine): *Kaffee brühen* (1 kg Bohnen → 24 Kaffee to go) und *Cappuccino zubereiten* (Bohnen + Barista-Milch → 20 Cappuccino); neue Rohstoffe Kaffeebohnen und Barista-Milch
+- **Café-Tresen** = Bedientheke (`"kasse": { "bedienung": true }` + Regalfach): Kaffee gibt es nicht zum Selbstnehmen. Gäste stellen sich am Tresen an und bestellen; **du bedienst per Klick** oder ein **Barista** übernimmt (bereitet zu – 2,5 s je Becher – und kassiert). Bezahlt wird gleich am Tresen, auch was sonst im Korb liegt. Der Auffüller füllt das Fach des Tresens mit den Bechern aus der Kaffeemaschine
+- **Gemütlich sitzen:** Wer Kaffee gekauft hat, setzt sich danach an einen freien Bistrotisch (18–40 s, Gedankenblase „Herrlich, ein Kaffee!“) und geht dann (`data/kunden/standard.json` → `cafe`, Plätze in `data/bau/bistrotisch.json` → `sitze`)
+- Der Barista bewirbt sich erst, wenn die Café-Ecke erforscht ist (`data/personal/rollen.json` → `forschung`)
+- Modelle: `npm run modelle:cafe` (`scripts/make-cafe-models.mjs`)
+
 **Etappe 11a – Forschungsbaum** ✅
 
 - **Forschung (Taste F):** Mit jeder XP sammelst du nebenbei Ideen 💡 (`data/forschung/standard.json`: 0,3 Ideen je XP). Damit schaltest du im Baum neue Produktlinien, Maschinen und Bauteile frei – ohne Zeitdruck, sofort mit Funkeln. Ein Knoten braucht ein Mindestlevel, seine Voraussetzungen und genug Ideen

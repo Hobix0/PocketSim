@@ -24,6 +24,7 @@ import { ShelfComponent } from '../components/ShelfComponent';
 import { FootprintComponent } from '../components/FootprintComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
+import { SeatComponent } from '../components/SeatComponent';
 
 // Ladenbetrieb: Kunden kommen, kaufen ein, bezahlen an der Kasse, gehen wieder.
 // Verbindet Wegfindung, Kundenzustrom, Kassen und Kennzahlen. Die Darstellung (HUD, Fenster)
@@ -34,7 +35,7 @@ export interface StoreLoopEvents extends Record<string, unknown> {
   sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3 };
   visit: { outcome: VisitOutcome };
   /** Ein Kunde denkt etwas (Gedankenblase): `kunde` ist seine Figur */
-  thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
+  thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
   opened: undefined;
   closed: undefined;
 }
@@ -115,6 +116,11 @@ export class StoreLoop {
     const front = c?.front;
     const customer = front?.get(CustomerComponent);
     if (!c || !front || !customer?.isReady) return;
+    // Café-Tresen: erst die Bestellung aus dem Fach des Tresens holen
+    if (c.def.bedienung) {
+      customer.takeOrder(checkout);
+      if (!customer.basket.length) { customer.leaveEmpty(); return; }
+    }
     const artikel = customer.artikel;
     const betrag = basketTotal(customer.basket);
     if (betrag > 0) this.player.earn(betrag, 'verkauf');
@@ -150,11 +156,18 @@ export class StoreLoop {
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
       },
       kassieren: {
-        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier)?.[0] ?? null,
+        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && !k.def.bedienung)?.[0] ?? null,
         findPath: this.findPath,
         serve: (checkout) => this.serve(checkout, false),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
         sekundenProArtikel: this.settings.kassierenSekundenProArtikel,
+      },
+      bedienen: {
+        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && k.def.bedienung)?.[0] ?? null,
+        findPath: this.findPath,
+        serve: (checkout) => this.serve(checkout, false),
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        sekundenProArtikel: this.settings.cafe?.zubereitenSekundenProArtikel ?? 2.5,
       },
     };
   }
@@ -176,6 +189,7 @@ export class StoreLoop {
       findPath: this.findPath,
       findShelf: (p, from, exclude) => this.findShelf(p, from, exclude),
       findCheckout: () => this.findCheckout(),
+      findCounter: (p, from) => this.findShelf(p, from, undefined, true),
       exitPoint: () => new THREE.Vector3(...this.kundenPunkte[Math.floor(this.random() * this.kundenPunkte.length)]),
       settings: s,
       speed,
@@ -183,6 +197,14 @@ export class StoreLoop {
       findCartStation: (from) => {
         let best: Entity | null = null, bestD = Infinity;
         for (const [e, st] of this.world.query(CartStationComponent)) {
+          const d = e.object.position.distanceToSquared(from);
+          if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
+        }
+        return best;
+      },
+      findSeat: (from) => {
+        let best: Entity | null = null, bestD = Infinity;
+        for (const [e, st] of this.world.query(SeatComponent)) {
           const d = e.object.position.distanceToSquared(from);
           if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
         }
@@ -210,10 +232,12 @@ export class StoreLoop {
     return [...map.values()];
   }
 
-  private findShelf(p: ProductDef, from: THREE.Vector3, exclude?: Entity): Entity | null {
+  /** Nächstes Regal mit dem Produkt; `tresen`: nur Bedientheken (Café-Tresen), sonst nur Regale zum Selbstnehmen */
+  private findShelf(p: ProductDef, from: THREE.Vector3, exclude?: Entity, tresen = false): Entity | null {
     let best: Entity | null = null, bestD = Infinity;
     for (const [e, s] of this.world.query(ShelfComponent)) {
       if (e === exclude || !s.faecher.some((f) => f.produkt?.id === p.id && f.menge > 0)) continue;
+      if (!!e.get(CheckoutComponent)?.def.bedienung !== tresen) continue;
       const d = e.object.position.distanceToSquared(from);
       if (d < bestD) { best = e; bestD = d; }
     }
@@ -224,6 +248,7 @@ export class StoreLoop {
   private findCheckout(): Entity | null {
     let best: Entity | null = null, bestScore = Infinity;
     for (const [e, c] of this.world.query(CheckoutComponent)) {
+      if (c.def.bedienung) continue;
       const score = c.queue.length + (c.cashier ? 0 : 0.5);
       if (score < bestScore) { best = e; bestScore = score; }
     }
