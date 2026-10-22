@@ -27,5 +27,11 @@
       1.5
     ],
     "farbe": "#eef0ee"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "truhe_insel",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

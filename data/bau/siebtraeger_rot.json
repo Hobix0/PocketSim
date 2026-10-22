@@ -20,5 +20,11 @@
       1.0
     ],
     "farbe": "#c8382f"
+  },
+  "gruppe": "cafe/maschinen",
+  "variante": {
+    "familie": "siebtraeger",
+    "name": "Rot",
+    "farbe": "#c8382f"
   }
 }

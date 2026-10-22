@@ -25,5 +25,11 @@
       1.8
     ],
     "farbe": "#2f5d9e"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_traverse_180_offen",
+    "name": "Blau-Orange",
+    "farbe": "#2f5d9e"
   }
 }

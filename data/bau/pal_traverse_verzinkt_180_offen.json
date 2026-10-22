@@ -25,5 +25,11 @@
       1.8
     ],
     "farbe": "#a9b0b5"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_traverse_180_offen",
+    "name": "Verzinkt",
+    "farbe": "#a9b0b5"
   }
 }

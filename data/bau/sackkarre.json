@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/sackkarre",
-  "platzhalter": {"groesse": [0.5, 1.2, 0.55], "farbe": "#c8382f"}
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.2,
+      0.55
+    ],
+    "farbe": "#c8382f"
+  },
+  "gruppe": "lager/technik"
 }

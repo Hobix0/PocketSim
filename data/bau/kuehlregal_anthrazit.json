@@ -30,5 +30,11 @@
       1.0
     ],
     "farbe": "#3a3f44"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "kuehlregal",
+    "name": "Anthrazit",
+    "farbe": "#3a3f44"
   }
 }

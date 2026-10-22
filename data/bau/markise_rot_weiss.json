@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/markise_rot_weiss",
-  "platzhalter": {"groesse": [1.26, 0.681, 2], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      1.26,
+      0.681,
+      2
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "gebaeude/fassade"
 }

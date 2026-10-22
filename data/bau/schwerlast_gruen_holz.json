@@ -23,5 +23,11 @@
       1.8
     ],
     "farbe": "#3f6b55"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "schwerlast_holz",
+    "name": "Grün-Gelb",
+    "farbe": "#3f6b55"
   }
 }

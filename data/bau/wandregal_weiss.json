@@ -30,5 +30,6 @@
     ],
     "farbe": "#b9c0c6"
   },
-  "ausgeblendet": true
+  "ausgeblendet": true,
+  "gruppe": "laden/deko"
 }

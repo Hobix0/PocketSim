@@ -6,8 +6,26 @@
   "kontext": "regal",
   "preis": 240,
   "freischaltLevel": 1,
-  "werte": {"slots": 2},
-  "regal": {"ebenen": [0.33, 0.83], "mitte": 0.0, "laenge": 1.45, "kapazitaet": 18},
+  "werte": {
+    "slots": 2
+  },
+  "regal": {
+    "ebenen": [
+      0.33,
+      0.83
+    ],
+    "mitte": 0.0,
+    "laenge": 1.45,
+    "kapazitaet": 18
+  },
   "model": "eigen/obststand_kisten",
-  "platzhalter": {"groesse": [0.8, 1.6, 1.6], "farbe": "#c9a26b"}
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      1.6,
+      1.6
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "laden/regale"
 }

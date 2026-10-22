@@ -28,5 +28,11 @@
       0.5
     ],
     "farbe": "#2b2b2e"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_aussenecke",
+    "name": "Schwarz",
+    "farbe": "#2b2b2e"
   }
 }

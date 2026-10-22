@@ -28,5 +28,11 @@
       0.5
     ],
     "farbe": "#5e7a61"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_wand_kurz",
+    "name": "Salbei",
+    "farbe": "#7c9a7e"
   }
 }

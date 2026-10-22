@@ -41,5 +41,11 @@
       1.0
     ],
     "farbe": "#7c9a7e"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "bestelltresen",
+    "name": "Salbei",
+    "farbe": "#7c9a7e"
   }
 }

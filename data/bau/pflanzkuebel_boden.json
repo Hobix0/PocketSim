@@ -8,5 +8,13 @@
   "werte": {},
   "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Pflanzkuebel_Boden.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Pflanzkuebel_Boden.png",
-  "platzhalter": {"groesse": [0.6, 0.984, 0.6], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.6,
+      0.984,
+      0.6
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "laden/deko"
 }

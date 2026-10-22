@@ -30,5 +30,11 @@
       1.4
     ],
     "farbe": "#3a3f44"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "kuehlschrank_2",
+    "name": "Anthrazit",
+    "farbe": "#3a3f44"
   }
 }

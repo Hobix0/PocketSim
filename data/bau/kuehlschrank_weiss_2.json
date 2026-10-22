@@ -30,5 +30,11 @@
       1.4
     ],
     "farbe": "#eef0ee"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "kuehlschrank_2",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

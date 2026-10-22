@@ -17,5 +17,11 @@
       0.1
     ],
     "farbe": "#2f5d9e"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_rahmen_300",
+    "name": "Blau-Orange",
+    "farbe": "#2f5d9e"
   }
 }

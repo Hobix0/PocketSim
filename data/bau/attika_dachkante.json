@@ -8,5 +8,13 @@
   "werte": {},
   "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Attika_Dachkante.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Attika_Dachkante.png",
-  "platzhalter": {"groesse": [0.3, 0.42, 2], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.3,
+      0.42,
+      2
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "gebaeude/fassade"
 }

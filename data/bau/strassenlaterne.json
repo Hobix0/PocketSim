@@ -6,7 +6,29 @@
   "preis": 220,
   "freischaltLevel": 1,
   "werte": {},
-  "licht": {"position": [0, 2.81, 0], "groesse": [0.16, 0.26, 0.16], "farbe": "#ffcf8a", "staerke": 6, "reichweite": 8},
+  "licht": {
+    "position": [
+      0,
+      2.81,
+      0
+    ],
+    "groesse": [
+      0.16,
+      0.26,
+      0.16
+    ],
+    "farbe": "#ffcf8a",
+    "staerke": 6,
+    "reichweite": 8
+  },
   "model": "eigen/strassenlaterne",
-  "platzhalter": {"groesse": [0.4, 3.2, 0.4], "farbe": "#2f3a45"}
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      3.2,
+      0.4
+    ],
+    "farbe": "#2f3a45"
+  },
+  "gruppe": "aussen/strasse"
 }

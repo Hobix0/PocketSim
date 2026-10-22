@@ -6,8 +6,23 @@
   "kontext": "ablage",
   "preis": 60,
   "freischaltLevel": 1,
-  "werte": {"lagerplaetze": 12},
-  "ablage": {"boeden": [0.15, 0.45]},
+  "werte": {
+    "lagerplaetze": 12
+  },
+  "ablage": {
+    "boeden": [
+      0.15,
+      0.45
+    ]
+  },
   "model": "eigen/gitterbox",
-  "platzhalter": {"groesse": [1.2, 1.0, 0.8], "farbe": "#a9b2b8"}
+  "platzhalter": {
+    "groesse": [
+      1.2,
+      1.0,
+      0.8
+    ],
+    "farbe": "#a9b2b8"
+  },
+  "gruppe": "lager/regalsysteme"
 }

@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/aufsteller_angebot",
-  "platzhalter": {"groesse": [0.6, 1.1, 0.7], "farbe": "#c8483c"}
+  "platzhalter": {
+    "groesse": [
+      0.6,
+      1.1,
+      0.7
+    ],
+    "farbe": "#c8483c"
+  },
+  "gruppe": "laden/schilder"
 }

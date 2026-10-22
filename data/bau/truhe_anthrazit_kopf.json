@@ -27,5 +27,11 @@
       0.9
     ],
     "farbe": "#3a3f44"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "truhe_kopf",
+    "name": "Anthrazit",
+    "farbe": "#3a3f44"
   }
 }

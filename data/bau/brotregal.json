@@ -6,8 +6,27 @@
   "kontext": "regal",
   "preis": 260,
   "freischaltLevel": 2,
-  "werte": {"slots": 3},
-  "regal": {"ebenen": [0.35, 0.8, 1.25], "mitte": 0.03, "laenge": 1.4, "kapazitaet": 14},
+  "werte": {
+    "slots": 3
+  },
+  "regal": {
+    "ebenen": [
+      0.35,
+      0.8,
+      1.25
+    ],
+    "mitte": 0.03,
+    "laenge": 1.4,
+    "kapazitaet": 14
+  },
   "model": "eigen/brotregal",
-  "platzhalter": {"groesse": [0.5, 1.9, 1.6], "farbe": "#c9a26b"}
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.9,
+      1.6
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "laden/regale"
 }

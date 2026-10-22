@@ -14,5 +14,11 @@
       0.7
     ],
     "farbe": "#9a6a43"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "tresen_ecke",
+    "name": "Holz",
+    "farbe": "#9a6a43"
   }
 }

@@ -14,5 +14,11 @@
       0.7
     ],
     "farbe": "#7c9a7e"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "tresen_ecke",
+    "name": "Salbei",
+    "farbe": "#7c9a7e"
   }
 }

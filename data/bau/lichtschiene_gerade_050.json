@@ -2,11 +2,20 @@
   "id": "lichtschiene_gerade_050",
   "name": "Lichtschiene Gerade 050",
   "kategorie": "lichtschienen",
-  "ebene": "decke", "schiene": true,
+  "ebene": "decke",
+  "schiene": true,
   "preis": 30,
   "freischaltLevel": 1,
   "werte": {},
   "model": "3d/Baubar/Lichtschienen/SM_Build_Lichtschiene_Gerade_050.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Lichtschiene_Gerade_050.png",
-  "platzhalter": {"groesse": [0.5, 0.6, 0.1], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      0.6,
+      0.1
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "licht/schienen"
 }

@@ -121,3 +121,16 @@ describe('Baumenü', () => {
     expect(inBuildCategory(content.bau.get('boden_gehweg'), cats.find((c) => c.id === 'boden')!)).toBe(true);
   });
 });
+
+describe('Baumenü', () => {
+  it('jedes sichtbare Bauteil hat einen Platz, Varianten bilden Familien', async () => {
+    const { Content } = await import('../src/content/Content');
+    const { buildGroupOf } = await import('../src/content/definitions');
+    const c = new Content();
+    const ohne = c.bau.all().filter((d) => !d.ausgeblendet && !buildGroupOf(d, c.baumenue)).map((d) => d.id);
+    expect(ohne).toEqual([]);
+    const wand = c.bau.all().filter((d) => d.variante?.familie === 'vr_wand');
+    expect(wand.map((d) => d.variante!.name).sort()).toEqual(['Holz', 'Salbei', 'Schwarz', 'Weiß']);
+    expect(c.baumenue.familien.vr_wand).toBe('Wandregal');
+  });
+});

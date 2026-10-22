@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/palettenstapel",
-  "platzhalter": {"groesse": [1.2, 0.9, 0.8], "farbe": "#c9a26b"}
+  "platzhalter": {
+    "groesse": [
+      1.2,
+      0.9,
+      0.8
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "lager/ablagen"
 }

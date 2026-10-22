@@ -7,5 +7,13 @@
   "freischaltLevel": 2,
   "werte": {},
   "model": "eigen/packtisch",
-  "platzhalter": {"groesse": [0.8, 1.6, 1.8], "farbe": "#c9a26b"}
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      1.6,
+      1.8
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "lager/ablagen"
 }

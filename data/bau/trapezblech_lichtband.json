@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/trapezblech_lichtband",
-  "platzhalter": {"groesse": [0.4, 4, 2], "farbe": "#8fa0ac"}
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      4,
+      2
+    ],
+    "farbe": "#8fa0ac"
+  },
+  "gruppe": "lager/tore"
 }

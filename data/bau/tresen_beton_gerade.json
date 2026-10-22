@@ -14,5 +14,11 @@
       1.0
     ],
     "farbe": "#9aa0a3"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "tresen_gerade",
+    "name": "Beton",
+    "farbe": "#9aa0a3"
   }
 }

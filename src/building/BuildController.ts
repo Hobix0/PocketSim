@@ -15,7 +15,7 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
 import { checkPlacement, railAt, type PlacementError } from './placement';
 import { snapPlacement } from './snapping';
-import { inBuildCategory } from '../content/definitions';
+import { buildGroupOf } from '../content/definitions';
 import { damp, dampAngle } from '../fx/Tweens';
 import type { Plots } from '../world/Plots';
 
@@ -115,7 +115,7 @@ export class BuildController {
 
   /** Darf dieses Element im Baumenü gebaut, abgerissen und verschoben werden? */
   isBuildable(def: BuildDef | undefined): def is BuildDef {
-    return !!def && this.content.baumenue.kategorien.some((k) => inBuildCategory(def, k));
+    return !!def && buildGroupOf(def, this.content.baumenue) !== null;
   }
 
   startBuilding(def: BuildDef): void {

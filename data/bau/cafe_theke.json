@@ -42,5 +42,6 @@
     ],
     "abstand": 0.75,
     "bedienung": true
-  }
+  },
+  "gruppe": "cafe/tresen"
 }

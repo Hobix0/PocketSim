@@ -28,5 +28,11 @@
       0.5
     ],
     "farbe": "#eeeae2"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_wand_kurz",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

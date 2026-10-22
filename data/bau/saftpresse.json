@@ -7,7 +7,19 @@
   "preis": 3000,
   "freischaltLevel": 3,
   "werte": {},
-  "maschine": {"typ": "saftpresse", "strom": 1.5, "wasser": 40},
+  "maschine": {
+    "typ": "saftpresse",
+    "strom": 1.5,
+    "wasser": 40
+  },
   "model": "eigen/saftpresse",
-  "platzhalter": {"groesse": [0.8, 1.4, 1.2], "farbe": "#9aa3ab"}
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      1.4,
+      1.2
+    ],
+    "farbe": "#9aa3ab"
+  },
+  "gruppe": "produktion/maschinen"
 }

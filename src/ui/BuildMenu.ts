@@ -1,5 +1,5 @@
 import type { Content } from '../content/Content';
-import { inBuildCategory, type BuildDef } from '../content/definitions';
+import { buildGroupOf, type BuildDef } from '../content/definitions';
 import type { Plots } from '../world/Plots';
 import type { InputMap } from '../input/InputMap';
 import type { PlayerState } from '../state/PlayerState';
@@ -12,16 +12,29 @@ import { cachedThumbnail, hasThumbnail, requestThumbnail } from '../assets/thumb
 import { esc } from './html';
 import { formatMoney } from './format';
 
-// Baumenü: Werkzeuge (Abreißen, Verschieben), Kategorien als Tabs, Katalog mit Icon und Preis.
-// Der Katalog kommt automatisch aus data/bau – angezeigt werden die Kategorien aus data/baumenue.
+// Baumenü für viele Bauteile:
+//   - Bereiche als Leiste links (Gebäude, Laden, Café, Lager …), darin Gruppen als Chips
+//   - Varianten einer Familie (z. B. Wandregal in Weiß/Holz/Schwarz/Salbei) sind eine Karte mit Farbtupfern
+//   - Suche über alles, „Zuletzt benutzt“, Gesperrtes gedimmt am Ende
+// Der Katalog kommt aus data/bau ("gruppe", "variante"), Bereiche und Gruppen aus data/baumenue ("bereiche").
+
+const ZULETZT_KEY = 'urbanevolution.zuletztGebaut';
+const ZULETZT_MAX = 12;
 
 export class BuildMenu {
   private readonly el: HTMLElement;
   private readonly tabsEl: HTMLElement;
   private readonly gridEl: HTMLElement;
   private readonly hintEl: HTMLElement;
-  private kategorie: string;
+  private readonly railEl: HTMLElement;
+  private readonly searchEl: HTMLInputElement;
+  private bereich: string;
+  private gruppe: string;
+  private suche = '';
   private plotMessage = '';
+  /** Zuletzt gewählte Variante je Familie */
+  private readonly wahl = new Map<string, string>();
+  private zuletzt: string[] = [];
 
   constructor(
     parent: HTMLElement,
@@ -41,25 +54,55 @@ export class BuildMenu {
     this.el.hidden = true;
     this.el.innerHTML = `
       <header><h3>${t('bauen_titel')}</h3>
+        <input type="search" class="build-search" placeholder="Suchen …" aria-label="Bauteile suchen">
         <span class="tools">
           <button type="button" data-tool="abreissen">${t('bauen_abreissen')}</button>
           <button type="button" data-tool="verschieben">${t('bauen_verschieben')}</button>
         </span>
       </header>
-      <nav class="tabs"></nav>
-      <div class="catalog"></div>
+      <div class="build-body">
+        <nav class="build-rail"></nav>
+        <div class="build-main">
+          <nav class="tabs chips"></nav>
+          <div class="catalog"></div>
+        </div>
+      </div>
       <div class="build-hint"></div>`;
     parent.append(this.el);
+    this.railEl = this.el.querySelector('.build-rail')!;
     this.tabsEl = this.el.querySelector('.tabs')!;
     this.gridEl = this.el.querySelector('.catalog')!;
     this.hintEl = this.el.querySelector('.build-hint')!;
-    this.kategorie = content.baumenue.kategorien[0].id;
+    this.searchEl = this.el.querySelector('.build-search')!;
+    const b0 = content.baumenue.bereiche[0];
+    this.bereich = b0.id;
+    this.gruppe = b0.gruppen[0].id;
+    try { this.zuletzt = JSON.parse(localStorage.getItem(ZULETZT_KEY) ?? '[]').filter((id: unknown) => typeof id === 'string' && content.bau.has(id)); } catch { this.zuletzt = []; }
+    // Suche: Tasten gehören dem Eingabefeld, nicht dem Spiel
+    this.searchEl.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Escape') { this.searchEl.value = ''; this.suche = ''; this.searchEl.blur(); this.renderCatalog(); } });
+    this.searchEl.addEventListener('keyup', (e) => e.stopPropagation());
+    this.searchEl.addEventListener('input', () => { this.suche = this.searchEl.value.trim().toLowerCase(); this.render(); });
+    build.events.on('toolChanged', () => {
+      const tl = build.tool;
+      if (tl?.art === 'bauen' && !tl.moving) this.remember(tl.def.id);
+    });
 
     this.el.addEventListener('click', (e) => {
       const b = (e.target as HTMLElement).closest('button');
       if (!b) return;
       b.blur();
-      if (b.dataset.kategorie) { this.kategorie = b.dataset.kategorie; this.render(); }
+      if (b.dataset.bereich) {
+        this.bereich = b.dataset.bereich;
+        this.gruppe = this.content.baumenue.bereiche.find((x) => x.id === this.bereich)?.gruppen[0]?.id ?? '';
+        this.clearSearch(); this.render();
+      }
+      else if (b.dataset.gruppe) { this.gruppe = b.dataset.gruppe; this.clearSearch(); this.render(); }
+      else if (b.dataset.variante) {
+        const def = content.bau.get(b.dataset.variante);
+        if (def.variante) this.wahl.set(def.variante.familie, def.id);
+        this.terrain?.cancel(); this.paint?.cancel();
+        if (this.isUnlocked(def)) build.startBuilding(def); else this.render();
+      }
       else if (b.dataset.plot && this.plots) {
         const r = this.plots.buy(b.dataset.plot);
         this.plotMessage = r.ok ? '' : r.grund === 'geld' ? 'Dafür reicht das Geld nicht.' : r.grund === 'gesperrt' ? 'Noch nicht freigeschaltet.' : '';
@@ -141,15 +184,58 @@ export class BuildMenu {
     this.el.querySelectorAll<HTMLElement>('.tools button').forEach((b) => {
       b.classList.toggle('active', tool?.art === b.dataset.tool || (tool?.art === 'bauen' && !!tool.moving && b.dataset.tool === 'verschieben'));
     });
-    this.tabsEl.innerHTML = this.content.baumenue.kategorien.map((k) =>
-      `<button type="button" data-kategorie="${k.id}" class="${k.id === this.kategorie ? 'active' : ''}" aria-selected="${k.id === this.kategorie}">${esc(k.name)}</button>`,
+    const s = this.content.baumenue;
+    const bereiche = [...(this.zuletzt.length ? [{ id: 'zuletzt', name: 'Zuletzt', icon: '🕘', gruppen: [] }] : []), ...s.bereiche];
+    this.railEl.innerHTML = bereiche.map((b) => `<button type="button" data-bereich="${b.id}" class="${!this.suche && b.id === this.bereich ? 'active' : ''}" title="${esc(b.name)}">
+        <span class="icon">${b.icon}</span><span class="label">${esc(b.name)}</span></button>`).join('');
+    const area = s.bereiche.find((b) => b.id === this.bereich);
+    this.tabsEl.hidden = !!this.suche || this.bereich === 'zuletzt' || !area || area.gruppen.length < 2;
+    this.tabsEl.innerHTML = (area?.gruppen ?? []).map((g) =>
+      `<button type="button" data-gruppe="${g.id}" class="${g.id === this.gruppe ? 'active' : ''}" aria-selected="${g.id === this.gruppe}">${esc(g.name)} <small>${this.count(`${area!.id}/${g.id}`)}</small></button>`,
     ).join('');
-    const cat = this.content.baumenue.kategorien.find((k) => k.id === this.kategorie)!;
-    if (cat.spezial === 'grundstuecke') { this.gridEl.innerHTML = this.plotCards(); this.hintEl.innerHTML = this.hint(); return; }
-    if (cat.spezial === 'gelaende') { this.gridEl.innerHTML = this.terrainCards(); this.hintEl.innerHTML = this.hint(); return; }
-    if (cat.spezial === 'markierungen') { this.gridEl.innerHTML = this.paintCards(); this.hintEl.innerHTML = this.hint(); return; }
-    const defs = this.content.bau.all().filter((d) => !d.ausgeblendet && inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
-    this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('') || '<p class="empty-cat">Hier gibt es noch nichts.</p>';
+    this.renderCatalog();
+  }
+
+  /** Nur den Katalog neu zeichnen (z. B. beim Tippen in der Suche) */
+  private renderCatalog(): void {
+    const tool = this.build.tool;
+    const area = this.content.baumenue.bereiche.find((b) => b.id === this.bereich);
+    const group = area?.gruppen.find((g) => g.id === this.gruppe);
+    if (!this.suche && this.bereich !== 'zuletzt' && group?.spezial) {
+      this.gridEl.innerHTML = group.spezial === 'grundstuecke' ? this.plotCards() : group.spezial === 'gelaende' ? this.terrainCards() : this.paintCards();
+      this.hintEl.innerHTML = this.hint();
+      return;
+    }
+    let defs: BuildDef[];
+    if (this.suche) {
+      const q = this.suche;
+      defs = this.catalog().filter((d) => d.name.toLowerCase().includes(q) || (d.variante && (this.content.baumenue.familien[d.variante.familie] ?? '').toLowerCase().includes(q)));
+    } else if (this.bereich === 'zuletzt') {
+      defs = this.zuletzt.map((id) => this.content.bau.get(id)).filter((d) => !d.ausgeblendet);
+    } else {
+      const key = `${this.bereich}/${this.gruppe}`;
+      defs = this.catalog().filter((d) => buildGroupOf(d, this.content.baumenue) === key);
+    }
+    // Varianten derselben Familie zu einer Karte zusammenfassen
+    const cards: BuildDef[][] = [];
+    const byFamily = new Map<string, BuildDef[]>();
+    for (const d of defs) {
+      const f = d.variante?.familie;
+      if (!f) { cards.push([d]); continue; }
+      let list = byFamily.get(f);
+      if (!list) { list = []; byFamily.set(f, list); cards.push(list); }
+      list.push(d);
+    }
+    // Erst was frei ist, dann nach Level und Preis; beim „Zuletzt“ die Reihenfolge behalten
+    const firstOk = (l: BuildDef[]) => l.find((d) => this.isUnlocked(d)) ?? l[0];
+    if (this.bereich !== 'zuletzt' || this.suche) {
+      cards.sort((a, b) => {
+        const da = firstOk(a), db = firstOk(b);
+        return Number(!this.isUnlocked(da)) - Number(!this.isUnlocked(db)) || da.freischaltLevel - db.freischaltLevel || da.preis - db.preis;
+      });
+    }
+    this.gridEl.innerHTML = cards.map((l) => this.card(l, tool)).join('')
+      || `<p class="empty-cat">${this.suche ? 'Nichts gefunden.' : 'Hier gibt es noch nichts.'}</p>`;
     this.hintEl.innerHTML = this.hint();
     for (const img of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]:not([src])')) {
       const path = img.dataset.thumb!;
@@ -157,6 +243,36 @@ export class BuildMenu {
         for (const el of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]')) if (el.dataset.thumb === path) el.src = url;
       });
     }
+  }
+
+  /** Alles, was im Baumenü stehen darf */
+  private catalog(): BuildDef[] {
+    return this.content.bau.all().filter((d) => !d.ausgeblendet && buildGroupOf(d, this.content.baumenue) !== null);
+  }
+
+  private count(key: string): number {
+    const fam = new Set<string>();
+    let n = 0;
+    for (const d of this.catalog()) {
+      if (buildGroupOf(d, this.content.baumenue) !== key) continue;
+      if (d.variante) { if (fam.has(d.variante.familie)) continue; fam.add(d.variante.familie); }
+      n++;
+    }
+    return n;
+  }
+
+  private isUnlocked(d: BuildDef): boolean {
+    return d.freischaltLevel <= this.player.level && (!d.forschung || this.build.erforscht(d.forschung));
+  }
+
+  private clearSearch(): void {
+    this.suche = '';
+    this.searchEl.value = '';
+  }
+
+  private remember(id: string): void {
+    this.zuletzt = [id, ...this.zuletzt.filter((x) => x !== id)].slice(0, ZULETZT_MAX);
+    try { localStorage.setItem(ZULETZT_KEY, JSON.stringify(this.zuletzt)); } catch { /* ohne Speicher geht es auch */ }
   }
 
   private terrainCards(): string {
@@ -214,22 +330,32 @@ export class BuildMenu {
       + '<p class="empty-cat">Gebaut werden kann nur auf eigenen Grundstücken (grüne Linien, beim Bauen sichtbar).</p>';
   }
 
-  private card(d: BuildDef, tool: Tool | null): string {
+  /** Karte für ein Bauteil oder eine Familie (mehrere Varianten mit Farbtupfern) */
+  private card(list: BuildDef[], tool: Tool | null): string {
+    const fam = list[0].variante?.familie;
+    const gewaehlt = fam ? list.find((d) => d.id === this.wahl.get(fam)) : undefined;
+    const d = gewaehlt ?? list.find((x) => this.isUnlocked(x)) ?? list[0];
     const ohneForschung = !!d.forschung && !this.build.erforscht(d.forschung);
-    const locked = d.freischaltLevel > this.player.level || ohneForschung;
-    const active = tool?.art === 'bauen' && tool.def === d && !tool.moving;
+    const locked = !this.isUnlocked(d);
+    const active = tool?.art === 'bauen' && list.includes(tool.def) && !tool.moving;
     const icon = iconUrl(d.icon);
     // Ohne Icon: Vorschaubild aus dem Würfelmodell (wird nachgeladen)
     const thumb = !icon && hasThumbnail(d.model) ? d.model : null;
     const img = icon ? `<img src="${icon}" alt="" loading="lazy">`
       : thumb ? `<img data-thumb="${esc(thumb)}" alt="" ${cachedThumbnail(thumb) ? `src="${cachedThumbnail(thumb)}"` : ''}>`
         : '<span class="noicon"></span>';
+    const name = fam && list.length > 1 ? this.content.baumenue.familien[fam] ?? d.name : d.name;
+    const swatches = fam && list.length > 1 ? `<span class="swatches">${list.map((v) => `<button type="button" class="swatch ${v === d ? 'active' : ''} ${this.isUnlocked(v) ? '' : 'locked'}"
+        data-variante="${v.id}" title="${esc(v.variante!.name)}${this.isUnlocked(v) ? '' : ' (gesperrt)'}" style="background:${v.variante!.farbe}"></button>`).join('')}</span>` : '';
     return `
-      <button type="button" class="card ${active ? 'active' : ''} ${locked ? 'locked' : ''}" data-bau="${d.id}" ${locked ? 'disabled' : ''} title="${esc(d.name)}">
-        ${img}
-        <span class="name">${esc(d.name)}</span>
-        <span class="cost">${locked ? esc(this.content.text(ohneForschung ? 'bauen_fehler_forschung' : 'bauen_fehler_gesperrt', this.build.sperrWerte(d))) : formatMoney(d.preis)}</span>
-      </button>`;
+      <div class="card ${active ? 'active' : ''} ${locked ? 'locked' : ''}" title="${esc(d.name)}">
+        <button type="button" class="card-main" data-bau="${d.id}" ${locked ? 'disabled' : ''}>
+          ${img}
+          <span class="name">${esc(name)}</span>
+          <span class="cost">${locked ? esc(this.content.text(ohneForschung ? 'bauen_fehler_forschung' : 'bauen_fehler_gesperrt', this.build.sperrWerte(d))) : formatMoney(d.preis)}</span>
+        </button>
+        ${swatches}
+      </div>`;
   }
 
   private hint(): string {

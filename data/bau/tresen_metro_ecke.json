@@ -14,5 +14,11 @@
       0.7
     ],
     "farbe": "#f4f1ea"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "tresen_ecke",
+    "name": "Metro-Fliese",
+    "farbe": "#f4f1ea"
   }
 }

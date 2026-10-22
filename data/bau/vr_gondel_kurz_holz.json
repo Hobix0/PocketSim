@@ -27,5 +27,11 @@
       0.5
     ],
     "farbe": "#8a5e3b"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_gondel_kurz",
+    "name": "Holz",
+    "farbe": "#9a6a43"
   }
 }

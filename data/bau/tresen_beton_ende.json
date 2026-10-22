@@ -14,5 +14,11 @@
       0.35
     ],
     "farbe": "#9aa0a3"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "tresen_ende",
+    "name": "Beton",
+    "farbe": "#9aa0a3"
   }
 }

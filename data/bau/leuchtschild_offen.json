@@ -5,8 +5,32 @@
   "ebene": "anbau",
   "preis": 120,
   "freischaltLevel": 1,
-  "werte": {"strom": 0.05},
-  "licht": {"position": [0.16, 2.7, 0], "groesse": [0.02, 0.3, 1.0], "farbe": "#ffb35a", "staerke": 2, "reichweite": 4},
+  "werte": {
+    "strom": 0.05
+  },
+  "licht": {
+    "position": [
+      0.16,
+      2.7,
+      0
+    ],
+    "groesse": [
+      0.02,
+      0.3,
+      1.0
+    ],
+    "farbe": "#ffb35a",
+    "staerke": 2,
+    "reichweite": 4
+  },
   "model": "eigen/leuchtschild_offen",
-  "platzhalter": {"groesse": [0.2, 0.4, 1.1], "farbe": "#2f3a45"}
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      0.4,
+      1.1
+    ],
+    "farbe": "#2f3a45"
+  },
+  "gruppe": "gebaeude/fassade"
 }

@@ -27,5 +27,11 @@
       1.0
     ],
     "farbe": "#5e7a61"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_gondel",
+    "name": "Salbei",
+    "farbe": "#7c9a7e"
   }
 }
