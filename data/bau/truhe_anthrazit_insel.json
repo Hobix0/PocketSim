@@ -1,0 +1,31 @@
+{
+  "id": "truhe_anthrazit_insel",
+  "name": "Truhen-Insel Anthrazit",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 880,
+  "freischaltLevel": 4,
+  "werte": {
+    "slots": 1,
+    "strom": 0.8
+  },
+  "regal": {
+    "ebenen": [
+      0.62
+    ],
+    "mitte": 0.0,
+    "laenge": 1.35,
+    "kapazitaet": 30,
+    "kuehlung": true
+  },
+  "model": "eigen/truhe_anthrazit_insel",
+  "platzhalter": {
+    "groesse": [
+      0.9,
+      0.9,
+      1.5
+    ],
+    "farbe": "#3a3f44"
+  }
+}

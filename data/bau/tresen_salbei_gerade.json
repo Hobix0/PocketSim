@@ -1,0 +1,18 @@
+{
+  "id": "tresen_salbei_gerade",
+  "name": "Tresen Salbei (gerade)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 260,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_salbei_gerade",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      1.0
+    ],
+    "farbe": "#7c9a7e"
+  }
+}

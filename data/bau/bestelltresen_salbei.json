@@ -1,0 +1,45 @@
+{
+  "id": "bestelltresen_salbei",
+  "name": "Bestelltresen Salbei",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 820,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.2
+  },
+  "kontext": "kasse",
+  "regal": {
+    "ebenen": [
+      1.05
+    ],
+    "mitte": 0.1,
+    "laenge": 0.45,
+    "kapazitaet": 12
+  },
+  "kasse": {
+    "kunde": [
+      0.75,
+      0
+    ],
+    "personal": [
+      -0.7,
+      0
+    ],
+    "richtung": [
+      1,
+      0
+    ],
+    "abstand": 0.75,
+    "bedienung": true
+  },
+  "model": "eigen/bestelltresen_salbei",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.4,
+      1.0
+    ],
+    "farbe": "#7c9a7e"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "menuetafel",
+  "name": "Menütafel",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 130,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/menuetafel",
+  "platzhalter": {
+    "groesse": [
+      0.1,
+      2.0,
+      1.5
+    ],
+    "farbe": "#2b2f2c"
+  }
+}

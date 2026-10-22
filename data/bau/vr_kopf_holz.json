@@ -1,0 +1,31 @@
+{
+  "id": "vr_kopf_holz",
+  "name": "Kopfregal Holz",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 130,
+  "freischaltLevel": 1,
+  "werte": {
+    "slots": 3
+  },
+  "regal": {
+    "ebenen": [
+      0.12,
+      0.5,
+      0.88
+    ],
+    "mitte": 0.03,
+    "laenge": 0.9,
+    "kapazitaet": 12
+  },
+  "model": "eigen/vr_kopf_holz",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.8,
+      1.0
+    ],
+    "farbe": "#8a5e3b"
+  }
+}

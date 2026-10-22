@@ -1,0 +1,24 @@
+{
+  "id": "siebtraeger_rot",
+  "name": "Siebträger Rot (3 Gruppen)",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "preis": 2600,
+  "freischaltLevel": 4,
+  "werte": {},
+  "kontext": "maschine",
+  "maschine": {
+    "typ": "kaffeemaschine",
+    "strom": 3,
+    "wasser": 25
+  },
+  "model": "eigen/siebtraeger_rot",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.6,
+      1.0
+    ],
+    "farbe": "#c8382f"
+  }
+}

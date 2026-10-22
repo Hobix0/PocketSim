@@ -228,6 +228,20 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11e – Regal-Baukästen, aufgeräumtes Baumenü** ✅
+
+- **Verkaufsregale** (`npm run modelle:regale`, `scripts/make-regal-models.mjs`) in *Weiß, Holz, Schwarz, Salbei*: Wandregal (4 Böden), Gondel (3 Böden, Rücken an Rücken stellen), Kopfregal mit Aktionsschild, Aktionstisch (zwei Stufen). Alle 1 m breit, mit farbiger Preisleiste. Weiß und Holz gibt es von Anfang an, der Rest kommt mit der Forschung **Laden-Design** (Level 2, 15 Ideen)
+- **Kühlung** in *Weiß* und *Anthrazit*: offenes Kühlregal, Glastür-Kühlschrank mit 1 oder 2 Türen (Forschung Kühlregale), Truhen-Insel, Truhen-Kopf und Eistruhe (Forschung Tiefkühltruhen)
+- **Schwerlastregale** in *Blau-Orange, Verzinkt, Grün-Gelb*: Feld 1,8 m mit Stahlböden, Holzböden oder Gitterrost, dazu ein hohes Feld mit 4 Ebenen. Blau-Orange mit Stahl- oder Holzböden gibt es von Anfang an, der Rest mit der Lagerlogistik
+- **Glas in eigenen Voxel-Modellen:** Würfel in der Glasfarbe (`#cfe6ec`, Kühlschranktür `#bcd8df`) werden durchsichtig gezeichnet – Vitrinen, Kühlschranktüren und Truhendeckel zeigen die Ware
+- **Aufgeräumt:** Doppelte bzw. stilfremde Blender-Modelle (altes Wandregal, Kühlregal, Kühlschrank, Store-Props, alte Schwerlastteile, Kühltruhe, Mittelregal) stehen mit `"ausgeblendet": true` nicht mehr im Baumenü; in alten Spielständen bleiben sie erhalten
+
+**Etappe 11d – Barista-Baukasten** ✅
+
+- **Tresen-Baukasten** (Forschung im Café-Baum, 30 Ideen): Module zum Zusammenstecken in vier Oberflächen – *Holz, Metro-Fliese, Beton, Salbei* – je als gerades Stück (1 m), Ecke, Endstück und **Bestelltresen** (Bedientheke mit Kasse, Becher stehen oben drauf). Vorne ist die Gästeseite, hinten hat jedes Modul Fächer mit Tassen und Gläsern
+- **Barista-Ausstattung** (40 Ideen): Tresen mit Spüle, mit Milchkühlschrank, mit Kuchenhauben, Mühlen-Station, Filterkaffee-Bar, Rückbuffet mit Bohnen, Menütafel, Neon-Schrift „COFFEE“ (leuchtet), Glühbirnen-Pendel (leuchtet)
+- **Siebträger-Sammlung** (50 Ideen): Siebträger Rot (3 Gruppen), Creme mit Kupfer, Schwarz mit Messing – Maschinen mit denselben Rezepten wie die Kaffeemaschine
+
 **Etappe 11c – Cozy Café: eigener Forschungsbaum, neue Möbel** ✅
 
 - **Forschung mit Reitern** (`data/forschung/standard.json` → `baeume`, Knoten mit `"baum"`): *Supermarkt* und *Café*. Voraussetzungen aus einem anderen Baum stehen als Hinweis auf der Karte (Café-Ecke ↖ Backstube); am Reiter zeigt eine Zahl, wie viel gerade erforschbar ist

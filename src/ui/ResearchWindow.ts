@@ -123,7 +123,7 @@ export class ResearchWindow {
     const st = this.research.status(n);
     const c = this.content;
     const frei = [
-      ...n.schaltetFrei.bau.map((id) => c.bau.get(id).name),
+      ...n.schaltetFrei.bau.filter((id) => !c.bau.get(id).ausgeblendet).map((id) => c.bau.get(id).name),
       ...n.schaltetFrei.rezepte.map((id) => `Rezept: ${c.rezepte.get(id).name}`),
       ...n.schaltetFrei.kategorien.map((id) => `Sortiment: ${c.kategorien.get(id).name}`),
     ];

@@ -1,0 +1,18 @@
+{
+  "id": "tresen_salbei_ende",
+  "name": "Tresen Salbei (Endstück)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 140,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_salbei_ende",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.35
+    ],
+    "farbe": "#7c9a7e"
+  }
+}

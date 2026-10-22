@@ -6,9 +6,24 @@
   "kontext": "regal",
   "preis": 1100,
   "freischaltLevel": 2,
-  "werte": {"slots": 3, "strom": 1.1},
-  "regal": {"faecher": 3, "kapazitaet": 18, "kuehlung": true},
+  "werte": {
+    "slots": 3,
+    "strom": 1.1
+  },
+  "regal": {
+    "faecher": 3,
+    "kapazitaet": 18,
+    "kuehlung": true
+  },
   "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_Fridge_Upright_01.fbx",
   "icon": "3d/Icons_Baubar/T_Build_SM_Store_Fridge_Upright_01.png",
-  "platzhalter": {"groesse": [0.793, 2.05, 1.3], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.793,
+      2.05,
+      1.3
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "ausgeblendet": true
 }

@@ -1,0 +1,31 @@
+{
+  "id": "vr_kopf_salbei",
+  "name": "Kopfregal Salbei",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 130,
+  "freischaltLevel": 1,
+  "werte": {
+    "slots": 3
+  },
+  "regal": {
+    "ebenen": [
+      0.12,
+      0.5,
+      0.88
+    ],
+    "mitte": 0.03,
+    "laenge": 0.9,
+    "kapazitaet": 12
+  },
+  "model": "eigen/vr_kopf_salbei",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.8,
+      1.0
+    ],
+    "farbe": "#5e7a61"
+  }
+}

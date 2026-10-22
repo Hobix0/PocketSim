@@ -17,7 +17,8 @@
     "modelle:deko": "node scripts/make-deko-models.mjs",
     "modelle:store": "node scripts/make-store-models.mjs",
     "modelle:leben": "node scripts/make-leben-models.mjs",
-    "modelle:cafe": "node scripts/make-cafe-models.mjs"
+    "modelle:cafe": "node scripts/make-cafe-models.mjs",
+    "modelle:regale": "node scripts/make-regal-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

@@ -1,0 +1,18 @@
+{
+  "id": "tresen_beton_ende",
+  "name": "Tresen Beton (Endstück)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 140,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_beton_ende",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.35
+    ],
+    "farbe": "#9aa0a3"
+  }
+}

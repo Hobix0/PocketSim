@@ -1,0 +1,18 @@
+{
+  "id": "tresen_holz_ende",
+  "name": "Tresen Holz (Endstück)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 140,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_holz_ende",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.35
+    ],
+    "farbe": "#9a6a43"
+  }
+}

@@ -338,3 +338,178 @@ function stueck(id, name, teig, deko) {
 stueck('stueck_kaesekuchen', 'Käsekuchen', '#f3e2b3', '#e6c77a');
 stueck('stueck_schokokuchen', 'Schokokuchen', '#5a3b22', '#3b2417');
 stueck('stueck_erdbeertorte', 'Erdbeertorte', '#f1ead9', '#d0465a');
+
+// ── Tresen-Baukasten: Module in vier Oberflächen ───────────────────────────────
+// Alle Module sind 70 cm tief und 1,05 m hoch, vorne (+X) ist die Gästeseite, hinten (−X) arbeitet der Barista.
+// Gerade (1 m), Ecke (70 × 70 cm, zwei Schauseiten +X und +Z), Ende (35 cm, Schauseite +Z), Bestelltresen (mit Kasse).
+const FINISH = {
+  holz: { name: 'Holz', top: (x, z) => ((x * 3 + z) % 9 ? '#5a3b22' : '#6e4a2e'), sockel: HOLZ_D,
+    front: (u, y) => (u % 4 < 2 ? HOLZ : shade(HOLZ, 0.88)) },
+  metro: { name: 'Metro-Fliese', top: (x, z) => ((x * 3 + z) % 7 ? MARMOR : MARMOR_D), sockel: '#2f3a45',
+    front: (u, y) => { const row = Math.floor(y / 3), off = row % 2 ? 3 : 0; return y % 3 === 0 || (u + off) % 6 === 0 ? '#cfc9bd' : '#f4f1ea'; } },
+  beton: { name: 'Beton', top: () => '#2b2b2e', sockel: '#5b6064',
+    front: (u, y) => shade('#9aa0a3', 1 + (((u * 7 + y * 13) % 5) - 2) * 0.03) },
+  salbei: { name: 'Salbei', top: (x, z) => ((x + z) % 8 ? HOLZ_H : HOLZ), sockel: SALBEI_D,
+    front: (u, y) => (u % 10 === 0 || y === 6 || y === 38 ? SALBEI_D : SALBEI) },
+};
+const TH = 42, TOP = 40; // Höhe in Würfeln (1,05 m), Platte bei 1,00 m
+
+/** Tresen-Körper: Sockel, Schauseiten in der Oberfläche, Rückseite mit Fächern, Platte mit Überstand */
+function tresenKoerper({ box, set }, nx, nz, F, seiten, platte = true) {
+  box(0, nx - 3, 0, 2, 0, nz - 1, F.sockel);
+  box(0, nx - 3, 3, TOP - 1, 0, nz - 1, '#3b2a20');
+  for (let y = 3; y < TOP; y++) for (let z = 0; z < nz; z++) for (let x = 0; x < nx - 2; x++) {
+    const vorne = seiten.includes('+x') && x === nx - 3, seite = seiten.includes('+z') && z === nz - 1, links = seiten.includes('-z') && z === 0;
+    if (vorne) set(x, y, z, F.front(z, y));
+    else if (seite || links) set(x, y, z, F.front(x, y));
+  }
+  // Rückseite (Barista): zwei Fachböden mit Tassen und Gläsern
+  for (const y of [14, 27]) {
+    box(0, 0, y, y, 1, nz - 2, HOLZ);
+    for (let z = 2; z < nz - 2; z += 4) box(0, 1, y + 1, y + 3, z, z + 1, (z / 4) % 3 ? CREME : GLAS);
+  }
+  if (platte) box(0, nx - 1, TOP, TOP + 1, 0, nz - 1, (x, y, z) => F.top(x, z));
+}
+
+for (const [fid, F] of Object.entries(FINISH)) {
+  model({ id: `tresen_${fid}_gerade`, name: `Tresen ${F.name} (gerade)`, dims: [28, TH, 40], menue: 'einrichtung',
+    draw: (api) => tresenKoerper(api, 28, 40, F, ['+x']) });
+  model({ id: `tresen_${fid}_ecke`, name: `Tresen ${F.name} (Ecke)`, dims: [28, TH, 28], menue: 'einrichtung',
+    draw: (api) => tresenKoerper(api, 28, 28, F, ['+x', '+z']) });
+  model({ id: `tresen_${fid}_ende`, name: `Tresen ${F.name} (Endstück)`, dims: [28, TH, 14], menue: 'einrichtung',
+    draw: (api) => {
+      tresenKoerper(api, 28, 14, F, ['+x', '+z']);
+      api.box(0, 27, TOP, TOP + 1, 13, 13, 0); api.box(27, 27, TOP, TOP + 1, 12, 13, 0); // abgerundete Kante
+    } });
+  // Bestelltresen: Kassen-Tablet, Becherstapel, Trinkgeldglas, Kreideschild vorne
+  model({ id: `bestelltresen_${fid}`, name: `Bestelltresen ${F.name}`, dims: [28, 56, 40], menue: 'einrichtung',
+    draw: (api) => {
+      const { box, cyl } = api;
+      tresenKoerper(api, 28, 40, F, ['+x']);
+      box(4, 5, TOP + 2, TOP + 10, 26, 26, SCHWARZ); box(4, 9, TOP + 6, TOP + 12, 22, 30, SCHWARZ); box(5, 8, TOP + 7, TOP + 11, 23, 29, '#4a86b0');
+      for (let i = 0; i < 3; i++) cyl('y', 6, 8 + i * 4, 1, TOP + 2, TOP + 9 - i, CREME);
+      cyl('y', 20, 33, 2, TOP + 2, TOP + 6, GLAS); box(20, 20, TOP + 3, TOP + 4, 33, 33, MESSING);
+      box(25, 25, TOP + 2, TOP + 8, 10, 16, SCHWARZ); box(25, 25, TOP + 5, TOP + 5, 11, 15, CREME);
+    } });
+}
+
+// Sondermodule (Metro-Fliese mit Edelstahl): Spüle, Kühlung mit Glastür, Kuchenhauben
+const M = FINISH.metro;
+model({ id: 'tresen_spuele', name: 'Tresen mit Spüle', dims: [28, 52, 40], menue: 'einrichtung',
+  draw: (api) => {
+    const { box, cyl } = api;
+    tresenKoerper(api, 28, 40, M, ['+x'], false);
+    box(0, 27, TOP, TOP + 1, 0, 39, STAHL); box(3, 14, TOP + 1, TOP + 1, 8, 31, 0); box(3, 14, TOP - 3, TOP, 8, 31, STAHL_D); box(3, 14, TOP - 3, TOP - 3, 8, 31, '#8fb6c4');
+    box(1, 1, TOP + 2, TOP + 10, 20, 20, STAHL); box(1, 6, TOP + 10, TOP + 10, 20, 20, STAHL); box(6, 6, TOP + 8, TOP + 9, 20, 20, STAHL);
+    cyl('y', 8, 35, 2, TOP + 2, TOP + 6, '#7ab07c'); // Spülmittel
+  } });
+model({ id: 'tresen_kuehlung', name: 'Tresen mit Milchkühlschrank', dims: [28, TH, 40], menue: 'einrichtung',
+  draw: (api) => {
+    const { box } = api;
+    tresenKoerper(api, 28, 40, M, ['+x']);
+    box(0, 0, 4, TOP - 2, 2, 37, STAHL); box(0, 0, 6, TOP - 4, 4, 35, '#bcd8df'); // Glastür zur Barista-Seite
+    for (const y of [12, 22, 31]) for (let z = 6; z < 34; z += 5) box(1, 2, y, y + 5, z, z + 2, (z / 5) % 2 ? '#f4f1ea' : '#e6d3a0');
+    box(0, 0, TOP - 3, TOP - 3, 2, 37, '#5fd08a');
+  } });
+model({ id: 'tresen_kuchenhauben', name: 'Tresen mit Kuchenhauben', dims: [28, 58, 40], menue: 'einrichtung',
+  draw: (api) => {
+    const { box, cyl } = api;
+    tresenKoerper(api, 28, 40, FINISH.holz, ['+x']);
+    [[10, '#f3e2b3', '#e6c77a'], [29, '#5a3b22', '#d0465a']].forEach(([z, teig, deko]) => {
+      cyl('y', 14, z, 7, TOP + 2, TOP + 2, STAHL);
+      cyl('y', 14, z, 5, TOP + 3, TOP + 7, teig); cyl('y', 14, z, 5, TOP + 8, TOP + 8, deko);
+      for (let y = TOP + 3; y <= TOP + 15; y++) { const r = y > TOP + 11 ? 7 - (y - TOP - 11) * 2 : 7; cyl('y', 14, z, Math.max(1, r), y, y, (i, j) => (i * i + j * j >= (r - 1) * (r - 1) || y === TOP + 15 ? GLAS : 0)); }
+      box(14, 14, TOP + 16, TOP + 16, z, z, MESSING);
+    });
+  } });
+
+// Siebträger-Maschinen in anderen Farben (gleiche Rezepte wie die Kaffeemaschine), auf Metro-Tresen
+function siebtraeger(id, name, gehaeuse, haube, F) {
+  model({ id, name, dims: [28, 64, 40], menue: 'maschinen',
+    draw: (api) => {
+      const { box, cyl, nz } = api;
+      tresenKoerper(api, 28, 40, F, ['+x']);
+      const y0 = TOP + 2;
+      box(3, 16, y0, y0 + 13, 4, nz - 5, gehaeuse);
+      box(3, 16, y0 + 14, y0 + 15, 4, nz - 5, haube);
+      box(4, 15, y0 + 16, y0 + 16, 5, nz - 6, STAHL_D);
+      box(17, 17, y0 + 1, y0 + 2, 5, nz - 6, SCHWARZ);
+      for (const z of [11, 20, 29]) { box(17, 19, y0 + 8, y0 + 9, z - 1, z + 1, STAHL); box(18, 22, y0 + 6, y0 + 6, z, z, HOLZ_D); box(18, 19, y0 + 3, y0 + 4, z - 1, z, CREME); }
+      for (const z of [8, 32]) { box(17, 17, y0 + 11, y0 + 12, z - 1, z + 1, STAHL); box(18, 18, y0 + 12, y0 + 12, z, z, SCHWARZ); } // Manometer
+      for (let z = 7; z < nz - 7; z += 4) box(7, 9, y0 + 17, y0 + 18, z, z + 1, CREME);
+    } });
+}
+siebtraeger('siebtraeger_rot', 'Siebträger Rot (3 Gruppen)', '#c8382f', STAHL, M);
+siebtraeger('siebtraeger_creme', 'Siebträger Creme', '#efe6d2', KUPFER, FINISH.salbei);
+siebtraeger('siebtraeger_schwarz', 'Siebträger Schwarz', SCHWARZ, MESSING, FINISH.beton);
+
+// Mühlen-Station: zwei Mühlen, Klopfkasten, Bohnenglas auf Holztresen
+model({ id: 'muehlenstation', name: 'Mühlen-Station', dims: [28, 66, 40], menue: 'einrichtung',
+  draw: (api) => {
+    const { box, cyl } = api;
+    tresenKoerper(api, 28, 40, FINISH.holz, ['+x']);
+    for (const [z, c] of [[11, SCHWARZ], [27, '#efe6d2']]) {
+      box(8, 18, TOP + 2, TOP + 12, z - 4, z + 4, c);
+      cyl('y', 13, z, 3, TOP + 13, TOP + 18, '#6b4a33'); cyl('y', 13, z, 4, TOP + 19, TOP + 24, GLAS); cyl('y', 13, z, 3, TOP + 19, TOP + 22, '#5a3b22');
+      box(18, 20, TOP + 6, TOP + 7, z, z, STAHL_D);
+    }
+    box(19, 24, TOP + 2, TOP + 6, 17, 21, SCHWARZ);
+  } });
+
+// Filterkaffee-Bar: drei Handfilter auf Ständer, Waage, Schwanenhals-Kessel
+model({ id: 'filterbar', name: 'Filterkaffee-Bar', dims: [28, 60, 40], menue: 'einrichtung',
+  draw: (api) => {
+    const { box, cyl } = api;
+    tresenKoerper(api, 28, 40, FINISH.salbei, ['+x']);
+    box(10, 20, TOP + 2, TOP + 2, 4, 35, HOLZ_D); box(10, 20, TOP + 12, TOP + 12, 4, 35, HOLZ_D);
+    for (const z of [4, 35]) box(10, 20, TOP + 3, TOP + 11, z, z, HOLZ_D);
+    for (const z of [10, 20, 30]) {
+      for (let y = TOP + 13; y <= TOP + 17; y++) cyl('y', 15, z, 1 + (y - TOP - 13) / 2, y, y, (i, j) => (i * i + j * j >= (y - TOP - 13) / 2 * ((y - TOP - 13) / 2) - 0.5 ? CREME : 0));
+      cyl('y', 15, z, 2, TOP + 3, TOP + 7, GLAS); cyl('y', 15, z, 2, TOP + 3, TOP + 5, '#5a3b22');
+    }
+    box(22, 25, TOP + 2, TOP + 2, 26, 34, SCHWARZ);
+    cyl('y', 23, 8, 3, TOP + 2, TOP + 8, STAHL); box(24, 27, TOP + 7, TOP + 7, 8, 8, STAHL);
+  } });
+
+// Rückbuffet: hohes Regal hinter dem Tresen mit Bohnengläsern, Säcken und Pflanzen
+model({ id: 'rueckbuffet', name: 'Rückbuffet mit Bohnen', dims: [16, 84, 56], menue: 'einrichtung',
+  draw: ({ box, cyl, rough, nx, ny, nz }) => {
+    rough(0, 1, 0, ny - 1, 0, nz - 1, HOLZ_D, 0.05);
+    for (const z of [0, nz - 1]) box(0, nx - 1, 0, ny - 1, z, z, HOLZ);
+    box(0, nx - 1, 0, 30, 1, nz - 2, HOLZ); for (let z = 1; z < nz - 1; z += 13) box(nx - 1, nx - 1, 4, 26, z + 1, z + 11, HOLZ_H);
+    for (const y of [31, 48, 65, ny - 1]) box(0, nx - 1, y, y, 0, nz - 1, HOLZ);
+    for (let i = 0; i < 6; i++) { const z = 4 + i * 8; cyl('y', 8, z + 2, 3, 49, 58, GLAS); cyl('y', 8, z + 2, 2, 49, 55, i % 2 ? '#5a3b22' : '#7a5233'); cyl('y', 8, z + 2, 3, 59, 59, i % 3 ? KUPFER : SCHWARZ); }
+    for (let i = 0; i < 4; i++) { const z = 3 + i * 13; box(3, 12, 32, 43, z, z + 9, (x, y) => ((x + y) % 3 ? '#b8946a' : '#a7845c')); box(12, 12, 36, 40, z + 3, z + 6, '#5a3b22'); }
+    for (let z = 4; z < nz - 4; z += 5) box(4, 10, 66, 69, z, z + 2, z % 2 ? BLATT : BLATT_H);
+    box(4, 10, 70, 75, 22, 32, TERRA); box(3, 11, 76, 82, 20, 34, BLATT);
+  } });
+
+// Menütafel: große Kreidetafel mit Preisen (steht an der Wand)
+model({ id: 'menuetafel', name: 'Menütafel', dims: [4, 80, 60], menue: 'deko',
+  draw: ({ box, text, textWidth, nz }) => {
+    box(0, 3, 40, 79, 0, nz - 1, HOLZ_D); box(3, 3, 42, 77, 2, nz - 3, '#2b2f2c');
+    for (const z of [6, nz - 7]) box(1, 2, 0, 39, z, z, HOLZ_D);
+    const zeilen = [['KAFFEE', '2.40'], ['LATTE', '3.20'], ['KUCHEN', '3.40']];
+    text(3, 75, Math.floor(nz / 2 + textWidth('MENÜ', 1) / 2), 'MENÜ', '#f3dca6', 1, '+x');
+    zeilen.forEach(([a, b], i) => { const y = 66 - i * 8; text(3, y, nz - 5, a, CREME, 1, '+x'); text(3, y, 5 + textWidth(b, 1), b, '#f3dca6', 1, '+x'); });
+  } });
+
+// Leuchtschrift „COFFEE“ in Neon (an der Wand, leuchtet)
+model({ id: 'neon_coffee', name: 'Neon „COFFEE“', dims: [3, 48, 64], menue: 'licht',
+  draw: ({ box, text, textWidth, nz }) => {
+    box(0, 0, 30, 46, 2, nz - 3, '#2b2f2c');
+    const w = textWidth('COFFEE', 2);
+    text(1, 44, Math.floor(nz / 2 + w / 2), 'COFFEE', '#ff9f6b', 2, '+x');
+    for (const z of [6, nz - 7]) box(0, 0, 0, 29, z, z, STAHL_D);
+  } });
+
+// Glühbirnen-Pendel: drei nackte Birnen an Textilkabeln (Decke, leuchtet warm)
+model({ id: 'gluehbirnen', name: 'Glühbirnen-Pendel (3er)', dims: [12, 48, 48], ebene: 'decke', menue: 'licht', ursprung: [-6, -48, -24],
+  draw: ({ box, cyl }) => {
+    box(4, 7, 46, 47, 4, 43, SCHWARZ);
+    for (const [z, l] of [[8, 22], [24, 30], [40, 18]]) {
+      box(6, 6, 46 - l, 45, z, z, '#3b2a20');
+      box(5, 7, 43 - l, 45 - l, z - 1, z + 1, MESSING);
+      cyl('y', 6, z, 2, 37 - l, 42 - l, '#ffe7a8'); box(6, 6, 36 - l, 36 - l, z, z, '#ffe7a8');
+    }
+  } });

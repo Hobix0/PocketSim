@@ -1,0 +1,20 @@
+{
+  "id": "muehlenstation",
+  "name": "Mühlen-Station",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 480,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.3
+  },
+  "model": "eigen/muehlenstation",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.65,
+      1.0
+    ],
+    "farbe": "#9a6a43"
+  }
+}
