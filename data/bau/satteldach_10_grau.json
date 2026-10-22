@@ -1,0 +1,21 @@
+{
+  "id": "satteldach_10_grau",
+  "name": "Satteldach",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/satteldach_10_grau",
+  "platzhalter": {
+    "groesse": [
+      2,
+      4.05,
+      10.6
+    ],
+    "farbe": "#55595f"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

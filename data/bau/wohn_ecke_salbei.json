@@ -1,0 +1,21 @@
+{
+  "id": "wohn_ecke_salbei",
+  "name": "Wohnhaus Ecke",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/wohn_ecke_salbei",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      3,
+      0.2
+    ],
+    "farbe": "#c5d3b8"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

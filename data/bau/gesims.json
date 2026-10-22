@@ -1,0 +1,20 @@
+{
+  "id": "gesims",
+  "name": "Gesims",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/gesims",
+  "platzhalter": {
+    "groesse": [
+      0.25,
+      0.25,
+      2
+    ],
+    "farbe": "#f6f3ec"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

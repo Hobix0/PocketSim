@@ -1,0 +1,19 @@
+{
+  "id": "wohn_eg_wand_salbei",
+  "name": "Wohnhaus Erdgeschoss",
+  "typ": "modell",
+  "menue": "gebaeude",
+  "preis": 0,
+  "ebene": "objekt",
+  "kantenlaenge": 0.025,
+  "groesse": [
+    8,
+    160,
+    80
+  ],
+  "palette": [
+    "#a2ad97",
+    "#c5d3b8"
+  ],
+  "voxel": "880*1,11920*2,880*1,11920*2,880*1,11920*2,880*1,11920*2,880*1,11920*2,880*1,11920*2,880*1,11920*2,880*1,11920*2"
+}

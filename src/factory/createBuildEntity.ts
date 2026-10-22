@@ -36,6 +36,8 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   const entity = new Entity(def.id);
   entity.object.position.set(...placement.position);
   entity.object.rotation.y = THREE.MathUtils.degToRad(placement.drehung);
+  // Wohnetagen und Dächer blendet WallView mit dem Dach aus (src/world/WallView.ts)
+  if (def.obergeschoss) entity.object.userData.obergeschoss = true;
 
   entity.add(new ModelComponent(def.platzhalter, def.model, ctx.models));
   entity.add(new FootprintComponent(def.ebene, def.platzhalter.groesse, def.durchgang, def.aussen, def.fahrbahn, def.schiene, def.anSchiene, def.palettenregal?.teil ?? null));

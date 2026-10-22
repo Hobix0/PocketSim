@@ -1,0 +1,21 @@
+{
+  "id": "satteldach_10_rot_kamin",
+  "name": "Satteldach",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/satteldach_10_rot_kamin",
+  "platzhalter": {
+    "groesse": [
+      2,
+      4.05,
+      10.6
+    ],
+    "farbe": "#b0533f"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

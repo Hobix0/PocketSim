@@ -182,6 +182,8 @@ export interface BuildDef {
   umkleide?: { vorhang: string; eingang: [number, number] };
   /** Verfallenes Altbau-Teil: wird beim Renovieren durch `zu` ersetzt (null: kommt weg); `kosten` je Teil */
   renovierung?: { zu: string | null; kosten: number };
+  /** Wohnetage oder Dach über dem Erdgeschoss: nur zu sehen, wenn auch das Dach zu sehen ist (herausgezoomt) */
+  obergeschoss: boolean;
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -572,6 +574,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
       const r = asObject(o.renovierung, `${where} → renovierung`);
       return { zu: r.zu === null ? null : str(r, 'zu', `${where} → renovierung`), kosten: num(r, 'kosten', `${where} → renovierung`, 0) };
     })(),
+    obergeschoss: o.obergeschoss === undefined ? false : bool(o, 'obergeschoss', where),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),
     werte: numberMap(o, 'werte', where),

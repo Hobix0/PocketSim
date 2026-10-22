@@ -1,0 +1,18 @@
+{
+  "id": "wohn_ecke_salbei",
+  "name": "Wohnhaus Ecke",
+  "typ": "modell",
+  "menue": "gebaeude",
+  "preis": 0,
+  "ebene": "objekt",
+  "kantenlaenge": 0.025,
+  "groesse": [
+    8,
+    120,
+    8
+  ],
+  "palette": [
+    "#b9c6ad"
+  ],
+  "voxel": "7680*1"
+}

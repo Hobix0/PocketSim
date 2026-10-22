@@ -146,7 +146,7 @@ export function toBuildDef(m: VoxelModelData, kategorien: BuildCategory[], grid 
     aussen: false,
     fahrbahn: false,
     schiene: false,
-    anSchiene: false, ausgeblendet: false,
+    anSchiene: false, ausgeblendet: false, obergeschoss: false,
     funktionen: [],
     preis: m.preis,
     freischaltLevel: 1,
