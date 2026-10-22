@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Tag und Nacht. Zwischen Sonnenaufgang und -untergang ist Tag; die Dämmerung blendet über 'daemmerungMinuten'. lampen.anzahl = so viele echte Lichtquellen gibt es höchstens (die Lampen nahe der Kamera); alle anderen Lampen glühen nur. stimmung: warme Grundfarben für den gemütlichen Look (Licht von oben und vom Boden, Sonnenfarbe, Dunst in der Ferne, Belichtung, weiche Schatten).",
+  "_hinweis": "Tag und Nacht. Zwischen Sonnenaufgang und -untergang ist Tag; die Dämmerung blendet über 'daemmerungMinuten'. lampen.anzahl = so viele echte Lichtquellen gibt es höchstens (die Lampen nahe der Kamera); alle anderen Lampen glühen nur. stimmung: warme Grundfarben für den gemütlichen Look (Licht von oben und vom Boden, Sonnenfarbe, Dunst in der Ferne, Belichtung, weiche Schatten). lampen.buendeln: Lampen in diesem Abstand teilen sich ein Licht; jede weitere Lampe macht es nur um \"zusatz\" ihrer Stärke heller, höchstens maxFaktor × die stärkste (damit viele Lampen an einem Fleck nicht ausbrennen).",
   "sonnenaufgang": "06:30",
   "sonnenuntergang": "20:30",
   "daemmerungMinuten": 75,
@@ -19,7 +19,8 @@
   },
   "lampen": {
     "anzahl": 10,
-    "nachtVerstaerkung": 1.6
+    "nachtVerstaerkung": 1.3,
+    "buendeln": { "abstand": 4, "zusatz": 0.12, "maxFaktor": 1.4, "tiefer": 0.7, "abfall": 2 }
   },
   "stimmung": {
     "himmelLicht": "#fff2e2",

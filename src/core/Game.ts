@@ -256,7 +256,7 @@ export class Game {
       sonne: new THREE.Color(licht.stimmung.sonne), sonneNacht: new THREE.Color(licht.nacht.sonnenfarbe), sonneDaemmerung: new THREE.Color(licht.daemmerung.sonnenfarbe),
     };
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
-    this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
+    this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl, licht.lampen.buendeln);
     const dach = this.content.baumenue.dach;
     this.roof = dach ? new RoofLayer(this.scene, this.world, { hoehe: this.content.baumenue.deckenhoehe, ...dach }) : null;
 
