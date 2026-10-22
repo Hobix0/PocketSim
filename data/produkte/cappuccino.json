@@ -1,0 +1,13 @@
+{
+  "id": "cappuccino",
+  "name": "Cappuccino",
+  "kategorie": "cafe",
+  "ek": 1.2,
+  "vk": 3.1,
+  "gebinde": 10,
+  "frisch": true,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/becher_cappuccino",
+  "groesse": [0.07, 0.11, 0.07]
+}

@@ -8,7 +8,7 @@ import { expandObjects, type LevelData } from '../src/world/Level';
 describe('Spieldaten in data/', () => {
   it('lassen sich vollständig laden und prüfen', () => {
     const c = new Content();
-    expect(c.kategorien.size).toBe(11); // 10 Warengruppen + Rohstoffe
+    expect(c.kategorien.size).toBe(12); // 10 Warengruppen aus dem Großhandel, Café + Rohstoffe
     expect(c.rohstoffe.all().every((r) => r.rohstoff && r.kategorie === 'rohstoffe')).toBe(true);
     expect(c.produkte.size).toBeGreaterThan(0);
     expect(c.bau.size).toBeGreaterThan(0);
@@ -29,20 +29,20 @@ describe('Spieldaten in data/', () => {
 
   it('enthält alle Modelle aus dem Blender-Export, jeweils mit vorhandener Datei', () => {
     const c = new Content();
-    expect(c.produkte.size).toBe(150);
+    expect(c.produkte.size).toBe(152); // 150 aus dem Blender-Export + 2 Café
     // 61 Bauelemente aus Blender, davon eins (Markise) durch ein Voxel-Modell ersetzt; weitere haben Voxel-Modelle (eigen/…)
     const fbx = c.bau.all().filter((d) => d.model && !d.model.startsWith('eigen/'));
     expect(fbx.length).toBe(60);
     const files = new Set(Object.keys(import.meta.glob('/data/3d/**/*.{fbx,png}')));
-    for (const d of [...c.produkte.all(), ...fbx]) {
+    for (const d of [...c.produkte.all().filter((p) => !p.model?.startsWith('eigen/')), ...fbx]) {
       expect(files.has(`/data/${d.model}`), `${d.id}: Modell ${d.model}`).toBe(true);
       expect(files.has(`/data/${d.icon}`), `${d.id}: Icon ${d.icon}`).toBe(true);
     }
   });
 
-  it('jede Warenkategorie hat 15 Produkte', () => {
+  it('jede Warengruppe aus dem Großhandel hat 15 Produkte', () => {
     const c = new Content();
-    for (const k of c.kategorien.all().filter((k) => k.id !== 'rohstoffe')) {
+    for (const k of c.kategorien.all().filter((k) => k.id !== 'rohstoffe' && k.id !== 'cafe')) {
       expect(c.produkte.all().filter((p) => p.kategorie === k.id).length, k.id).toBe(15);
     }
   });

@@ -1,0 +1,9 @@
+{
+  "id": "kaffee_bruehen",
+  "name": "Kaffee brühen",
+  "maschine": "kaffeemaschine",
+  "eingang": [{"ware": "kaffeebohnen", "menge": 1}],
+  "ausgang": {"ware": "kaffee_to_go", "menge": 24},
+  "dauer": 20,
+  "freischaltLevel": 3
+}

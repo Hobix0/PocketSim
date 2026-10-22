@@ -52,6 +52,7 @@ const GEDANKEN: Record<string, { zeichen: string; farbe: string }> = {
   zu_teuer: { zeichen: '€', farbe: '#c8483c' },
   schnaeppchen: { zeichen: '%', farbe: '#4f9a5c' },
   gluecklich: { zeichen: '♥', farbe: '#e46b7b' },
+  gemuetlich: { zeichen: '☕', farbe: '#9a6a43' },
 };
 
 const MAX = 700;

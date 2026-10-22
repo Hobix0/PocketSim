@@ -13,6 +13,7 @@ import { PathFollower, turnTowards, type PathFinder } from '../navigation/PathFo
 import { formatMoney } from '../ui/format';
 import type { ModelProvider } from '../assets/ModelLibrary';
 import { CartStationComponent } from './CartStationComponent';
+import { SeatComponent } from './SeatComponent';
 
 // Ein Kunde als Zustandsmaschine:
 //   [holt_wagen] → sucht (geht zum Regal) → greift → … nächster Wunsch … → zur_kasse → wartet → an_kasse
@@ -22,7 +23,7 @@ import { CartStationComponent } from './CartStationComponent';
 // Fehlt ein Produkt, wird es gemerkt (Tagesbericht, Ruf). Ohne Kasse oder nach zu langem Warten
 // legt der Kunde die Ware zurück und geht. Bezahlt wird über das Spiel (paid()).
 
-export type CustomerState = 'holt_wagen' | 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'packt' | 'bringt_wagen' | 'geht';
+export type CustomerState = 'holt_wagen' | 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'packt' | 'bringt_wagen' | 'zum_platz' | 'sitzt' | 'geht';
 
 export interface CustomerServices {
   findPath?: PathFinder;
@@ -51,7 +52,11 @@ export interface CustomerServices {
   /** Der Besuch ist entschieden (für Ruf und Tagesbericht) */
   left(outcome: VisitOutcome, fehlend: ProductDef[], zuTeuer: ProductDef[], schnaeppchen: number): void;
   /** Der Kunde denkt etwas (für Gedankenblasen): fehlt, zu teuer, Schnäppchen, glücklich (alles gefunden) */
-  denkt?(art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich', produkt?: ProductDef): void;
+  denkt?(art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich', produkt?: ProductDef): void;
+  /** Nächster Tisch mit freiem Sitzplatz (Café); ohne: niemand setzt sich */
+  findSeat?(from: THREE.Vector3): Entity | null;
+  /** Nächste Bedientheke (Café-Tresen), an der es das Produkt gibt; ohne: keine Bedienung */
+  findCounter?(produkt: ProductDef, from: THREE.Vector3): Entity | null;
 }
 
 export interface BasketLine {
@@ -85,6 +90,9 @@ export class CustomerComponent extends Component implements Describable {
   /** Was eingepackt wird (nach dem Bezahlen) */
   private packing: BasketLine[] = [];
   private packTotal = 0;
+  /** Sitzplatz im Café (Tisch und Platz) und wie weit das Hinsetzen ist */
+  private seat: { table: Entity; index: number } | null = null;
+  private sitIn = 0;
 
   constructor(readonly wishes: Wish[], private readonly services: CustomerServices) {
     super();
@@ -114,6 +122,7 @@ export class CustomerComponent extends Component implements Describable {
   }
 
   override onDetach(): void {
+    this.seat?.table.get(SeatComponent)?.release(this.entity);
     this.checkout?.get(CheckoutComponent)?.leave(this.entity);
     this.checkout = null;
     if (this.basketMesh) this.entity.object.remove(this.basketMesh);
@@ -172,11 +181,11 @@ export class CustomerComponent extends Component implements Describable {
       case 'wartet':
       case 'an_kasse': {
         const c = this.checkout?.get(CheckoutComponent);
-        if (!this.checkout?.world || !c) { this.goToCheckout(); return; }
+        if (!this.checkout?.world || !c) { this.checkout = null; this.nextWishOrCheckout(); return; }
         this.waited += dt;
         if (this.waited > s.geduld) { this.giveUp('zu_lange'); return; }
         const i = c.indexOf(this.entity);
-        if (i < 0) { this.goToCheckout(); return; }
+        if (i < 0) { this.goToCheckout(this.checkout ?? undefined); return; }
         if (i !== this.slot) {
           this.slot = i;
           this.path.goTo(this.entity.object, c.spot(i), this.services.findPath);
@@ -191,6 +200,31 @@ export class CustomerComponent extends Component implements Describable {
             this.renderItems(next === 'an_kasse' ? [] : this.basket);
           }
         }
+        break;
+      }
+      case 'zum_platz': {
+        const st = this.seat?.table.get(SeatComponent);
+        if (!this.seat?.table.world || !st) { this.standUp(); return; }
+        if (this.walk(dt)) { this.sitIn = 0; this.timer = this.sitSeconds(); this.setState('sitzt'); }
+        break;
+      }
+      case 'sitzt': {
+        const st = this.seat?.table.get(SeatComponent);
+        if (!this.seat?.table.world || !st) { this.standUp(); return; }
+        // Die ersten Augenblicke: auf den Stuhl rutschen und etwas tiefer sinken, dann zum Tisch schauen
+        const o = this.entity.object;
+        const tiefe = this.services.settings.cafe?.sitzTiefe ?? 0.2;
+        if (this.sitIn < 1) {
+          this.sitIn = Math.min(1, this.sitIn + dt * 2);
+          const ziel = st.seat(this.seat.index);
+          o.position.x += (ziel.x - o.position.x) * Math.min(1, dt * 6);
+          o.position.z += (ziel.z - o.position.z) * Math.min(1, dt * 6);
+          o.position.y = ziel.y - tiefe * this.sitIn;
+          if (this.sitIn >= 1 && Math.random() < 0.5) this.services.denkt?.('gemuetlich');
+        }
+        this.face(st.center(), dt);
+        this.timer -= dt;
+        if (this.timer <= 0) this.standUp();
         break;
       }
       case 'geht':
@@ -239,16 +273,58 @@ export class CustomerComponent extends Component implements Describable {
   // ── Ablauf ──────────────────────────────────────────────────────
 
   private nextWish(): void {
+    let counter: Entity | null = null;
     for (const w of this.wishes) {
-      if (w.status !== 'offen') continue;
+      if (w.status !== 'offen' || w.tresen) continue;
       const shelf = this.services.findShelf(w.produkt, this.entity.object.position);
       if (shelf) { this.goToShelf(w, shelf); return; }
+      // Gibt es nur am Café-Tresen: dort bestellen (nach dem Rest des Einkaufs)
+      const c = this.services.findCounter?.(w.produkt, this.entity.object.position) ?? null;
+      if (c) { w.tresen = true; counter ??= c; continue; }
       w.status = 'fehlt';
       this.services.denkt?.('fehlt', w.produkt);
     }
     this.current = null;
-    if (this.basket.length) this.goToCheckout();
+    if (this.bestellt) this.goToCheckout(counter ?? this.wishes.map((w) => (w.tresen && w.status === 'offen' ? this.services.findCounter?.(w.produkt, this.entity.object.position) : null)).find((e) => e) ?? undefined);
+    else if (this.basket.length) this.goToCheckout();
     else this.leave('ohne_einkauf');
+  }
+
+  /** Kasse oder Tresen ist weg: neuen Tresen suchen (wenn bestellt wird) oder eine Kasse */
+  private nextWishOrCheckout(): void {
+    for (const w of this.wishes) if (w.tresen && w.status === 'offen') w.tresen = false;
+    this.nextWish();
+  }
+
+  /** Stück, die noch am Tresen bestellt werden */
+  get bestellt(): number {
+    return this.wishes.reduce((n, w) => n + (w.tresen && w.status === 'offen' ? w.menge : 0), 0);
+  }
+
+  /** Am Tresen: die Bestellung wird zubereitet und kommt aus dem Fach des Tresens in die Hand */
+  takeOrder(counter: Entity): void {
+    const shelf = counter.get(ShelfComponent);
+    for (const w of this.wishes) {
+      if (!w.tresen || w.status !== 'offen') continue;
+      if (!this.services.willBuy(w.produkt)) { w.status = 'zu_teuer'; this.services.denkt?.('zu_teuer', w.produkt); continue; }
+      const n = shelf?.take(w.produkt.id, w.menge) ?? 0;
+      if (n > 0) {
+        w.genommen = n;
+        w.status = 'gefunden';
+        this.basket.push({ produkt: w.produkt, menge: n, regal: counter, preis: this.services.priceOf(w.produkt) });
+      } else {
+        w.status = 'fehlt';
+        this.services.denkt?.('fehlt', w.produkt);
+      }
+    }
+    this.renderBasket();
+  }
+
+  /** Am Tresen gab es nichts: ohne Einkauf gehen */
+  leaveEmpty(): void {
+    this.checkout?.get(CheckoutComponent)?.leave(this.entity);
+    this.checkout = null;
+    this.leave('ohne_einkauf');
   }
 
   /** Das Regal ist weg oder leer: anderes Regal mit dem Produkt suchen, sonst fehlt es. */
@@ -294,8 +370,8 @@ export class CustomerComponent extends Component implements Describable {
     }
   }
 
-  private goToCheckout(): void {
-    const checkout = this.services.findCheckout();
+  private goToCheckout(counter?: Entity): void {
+    const checkout = counter ?? this.services.findCheckout();
     if (!checkout) { this.putBack(); this.leave('keine_kasse'); return; }
     this.checkout = checkout;
     const c = checkout.require(CheckoutComponent);
@@ -319,12 +395,44 @@ export class CustomerComponent extends Component implements Describable {
       this.wishes.filter((w) => w.status === 'zu_teuer').map((w) => w.produkt),
       bought.filter((w) => this.services.isBargain(w.produkt)).length,
     );
+    // Café: Wer Kaffee gekauft hat, setzt sich noch eine Weile hin (ohne Wagen, wenn ein Platz frei ist)
+    const cafe = this.services.settings.cafe;
+    if (cafe && !this.cart && bought.some((w) => cafe.kategorien.includes(w.produkt.kategorie)) && Math.random() < cafe.chance) {
+      const table = this.services.findSeat?.(this.entity.object.position) ?? null;
+      const index = table?.get(SeatComponent)?.reserve(this.entity) ?? -1;
+      if (table && index >= 0) {
+        this.seat = { table, index };
+        this.path.goTo(this.entity.object, table.require(SeatComponent).approach(index), this.services.findPath);
+        this.setState('zum_platz');
+        return;
+      }
+    }
     // Mit Wagen: erst zurück zur Wagenbox
     if (this.cart && this.station?.world) {
       this.path.goTo(this.entity.object, this.station.require(CartStationComponent).pickupSpot(), this.services.findPath);
       this.setState('bringt_wagen');
       return;
     }
+    this.path.goTo(this.entity.object, this.services.exitPoint(), this.services.findPath);
+    this.setState('geht');
+  }
+
+  private sitSeconds(): number {
+    const s = this.services.settings.cafe?.sitzSekunden ?? { min: 20, max: 30 };
+    return s.min + Math.random() * (s.max - s.min);
+  }
+
+  /** Aufstehen (oder der Tisch ist weg): Platz freigeben, wieder auf den Boden, zum Ausgang */
+  private standUp(): void {
+    const st = this.seat?.table.get(SeatComponent);
+    if (this.seat && st) {
+      const p = st.approach(this.seat.index);
+      this.entity.object.position.set(p.x, p.y, p.z);
+      st.release(this.entity);
+    } else {
+      this.entity.object.position.y = Math.max(0, this.entity.object.position.y);
+    }
+    this.seat = null;
     this.path.goTo(this.entity.object, this.services.exitPoint(), this.services.findPath);
     this.setState('geht');
   }

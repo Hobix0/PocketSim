@@ -1,0 +1,13 @@
+{
+  "id": "kaffeemaschine",
+  "name": "Kaffeemaschine",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 1800,
+  "freischaltLevel": 3,
+  "werte": {},
+  "maschine": {"typ": "kaffeemaschine", "strom": 2.5, "wasser": 20},
+  "model": "eigen/kaffeemaschine",
+  "platzhalter": {"groesse": [0.65, 1.45, 1.0], "farbe": "#9a6a43"}
+}

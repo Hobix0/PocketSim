@@ -1,0 +1,12 @@
+{
+  "id": "bistrotisch",
+  "name": "Bistrotisch mit Stühlen",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 180,
+  "freischaltLevel": 3,
+  "werte": {},
+  "sitze": [[0, -0.62], [0, 0.62]],
+  "model": "eigen/bistrotisch",
+  "platzhalter": {"groesse": [0.65, 0.9, 1.5], "farbe": "#3f6b55"}
+}

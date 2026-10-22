@@ -27,6 +27,8 @@ export class Staff {
   readonly team: Employee[] = [];
   candidates: Employee[] = [];
   private nextId = 1;
+  /** Darf sich jemand für diese Rolle bewerben? (Game: Rollen mit Forschung erst nach der Forschung) */
+  rolleErlaubt: (rolle: string) => boolean = () => true;
 
   constructor(
     private readonly rollen: Record<string, RoleDef>,
@@ -42,7 +44,7 @@ export class Staff {
   refreshCandidates(): void {
     const used = new Set(this.team.map((e) => e.name));
     const free = this.namen.filter((n) => !used.has(n));
-    const rollen = Object.keys(this.rollen);
+    const rollen = Object.keys(this.rollen).filter((r) => this.rolleErlaubt(r));
     this.candidates = [];
     for (let i = 0; i < this.settings.bewerberAnzahl && free.length; i++) {
       const name = free.splice(Math.floor(this.random() * free.length), 1)[0];

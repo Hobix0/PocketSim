@@ -1,0 +1,11 @@
+{
+  "id": "barista_milch",
+  "name": "Barista-Milch (1 l)",
+  "kategorie": "rohstoffe",
+  "ek": 1.1,
+  "vk": 0,
+  "gebinde": 12,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3
+}

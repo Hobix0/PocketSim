@@ -79,6 +79,8 @@ export interface Wish {
   /** offen → gefunden (genommen > 0), fehlt (nicht da) oder zu_teuer (da, aber nicht gekauft) */
   status: 'offen' | 'gefunden' | 'fehlt' | 'zu_teuer';
   genommen: number;
+  /** Gibt es nur an einer Bedientheke (Café-Tresen): dort bestellen */
+  tresen?: boolean;
 }
 
 /**
