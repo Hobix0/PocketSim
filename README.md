@@ -228,6 +228,13 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 16 – Viertel und Lage** ✅
+
+- **Jeder weitere eigene Laden bringt Kundschaft** – sobald er dir gehört (gekauft oder gemietet) und ein Regal mit Ware darin steht. Wie viel, hängt ab von der **Größe** (klein 35 %, mittel 55 %, groß 80 %), der **Lage** (Einkaufsstraße Ost ×1,3 belebt · Hauptstraße West ×1,0 · Wohnstraße Süd ×0,9 ruhig mit Stammkundschaft · Stadtrand West ×0,8) und einem **Parkplatz** (×1,25). Mit mehr Läden passen auch mehr Kunden gleichzeitig in die Stadt
+- Im **Immobilien-Fenster**: Laufkundschaft als ★★★★☆, die Lage in Worten, bei eigenen Läden „läuft: +72 % Kundschaft“ und oben die Summe
+- Wand an Wand: Eine Wand am Rand gehört dem Haus, von dessen Mitte ihre Außenseite wegzeigt (der neue Laden neben der alten Markthalle braucht keine Renovierung)
+- Werte: `data/stadt/standard.json` → `lage`; Code: `src/world/Locations.ts`
+
 **Etappe 15b – Wohnhäuser: unten Läden, darüber Wohnungen** ✅
 
 - **Südseite der Straße** (die Karte ist jetzt 120 × 50 m): 15 Häuser Wand an Wand in Creme, Rosa, Salbei und Hellblau, 1–3 Wohnetagen mit Fenstern, Blumenkästen und Balkonen, rote oder graue Satteldächer mit Giebel und Schornstein, Haustüren mit Klingel und Briefkasten

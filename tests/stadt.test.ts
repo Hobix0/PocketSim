@@ -169,3 +169,45 @@ describe('Wohnhäuser', () => {
     expect(tueren.length).toBeGreaterThanOrEqual(8);
   });
 });
+
+describe('Lage', () => {
+  it('ein weiterer Laden mit Ware bringt Kundschaft – je nach Größe, Lage und Parkplatz', async () => {
+    const { Locations } = await import('../src/world/Locations');
+    const { ShelfComponent } = await import('../src/components/ShelfComponent');
+    const world = new World(new THREE.Group());
+    const player = new PlayerState('t', { geld: 100000, xp: 900 }, { xpFuerLevel: [0, 100, 250, 500, 900] });
+    const plots = new Plots(level.grundstuecke ?? [], player);
+    const loc = new Locations(world, plots, stadt.lage);
+    const p = (id: string) => plots.list.find((x) => x.id === id)!;
+    expect(loc.potential(p('laden_mittel_ost'))).toBeGreaterThan(loc.potential(p('laden_sued_ost'))); // Einkaufsstraße schlägt Wohnstraße
+    expect(loc.potential(p('fachmarkt_west'))).toBeCloseTo(0.8 * 0.8 * 1.25); // groß · Stadtrand · Parkplatz
+    expect(loc.factor()).toBe(1);
+    plots.rent('laden_mittel_ost');
+    const regal = world.add(createBuildEntity(content.bau.get('vr_wand_holz'), { position: [33, 0.05, -1], drehung: 0 }, { content }));
+    expect(loc.factor()).toBe(1); // leeres Regal zählt nicht
+    regal.require(ShelfComponent).add(content.produkte.all().find((x) => !x.kuehlung && !x.rohstoff)!, 5);
+    expect(loc.factor()).toBeCloseTo(1 + 0.55 * 1.3);
+  });
+
+  it('mehr Kundschaft heißt mehr Kunden je Stunde', async () => {
+    const { CustomerSpawner } = await import('../src/economy/Customers');
+    const zaehle = (lage: number) => { const s = new CustomerSpawner(content.kunden, () => 0.5); let n = 0; for (let i = 0; i < 600; i++) n += s.spawns(1, 12 * 60, 50, 0, undefined, 4, lage); return n; };
+    expect(zaehle(1.7)).toBeGreaterThan(zaehle(1) * 1.5);
+  });
+});
+
+describe('Wand an Wand', () => {
+  it('die Wand der alten Markthalle gehört nicht zum neuen Nachbarladen', () => {
+    const world = new World(new THREE.Group());
+    const player = new PlayerState('t', { geld: 100000, xp: 900 }, { xpFuerLevel: [0, 100, 250, 500, 900] });
+    const plots = new Plots(level.grundstuecke ?? [], player);
+    for (const o of expandObjects(level.objekte)) {
+      const def = o.typ ? content.bau.find(o.typ) : undefined;
+      if (def && o.position[0] > 20 && o.position[2] < 8) world.add(createBuildEntity(def, o, { content }));
+    }
+    const ren = new Renovations(world, content, plots, player, { content }, stadt.renovierung);
+    expect(ren.needs('laden_mittel_ost')).toBe(false);
+    expect(ren.needs('laden_gross_ost')).toBe(true);
+    expect(ren.parts('laden_gross_ost').filter((e) => e.typeId === 'altbau_wand').length).toBe(8 + 2 * 5); // hinten 8, Seiten je 5
+  });
+});
