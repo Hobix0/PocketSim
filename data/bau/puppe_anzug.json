@@ -1,0 +1,19 @@
+{
+  "id": "puppe_anzug",
+  "name": "Schaufensterpuppe Anzug",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 150,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/puppe_anzug",
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      1.8,
+      0.5
+    ],
+    "farbe": "#3f4b5e"
+  },
+  "gruppe": "mode/deko"
+}

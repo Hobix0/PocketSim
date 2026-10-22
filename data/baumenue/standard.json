@@ -92,6 +92,29 @@
       ]
     },
     {
+      "id": "mode",
+      "name": "Mode",
+      "icon": "👗",
+      "gruppen": [
+        {
+          "id": "staender",
+          "name": "Ständer & Regale"
+        },
+        {
+          "id": "umkleide",
+          "name": "Umkleide"
+        },
+        {
+          "id": "kasse",
+          "name": "Kasse"
+        },
+        {
+          "id": "deko",
+          "name": "Deko"
+        }
+      ]
+    },
+    {
       "id": "lager",
       "name": "Lager",
       "icon": "📦",

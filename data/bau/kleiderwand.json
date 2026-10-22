@@ -1,0 +1,29 @@
+{
+  "id": "kleiderwand",
+  "name": "Kleiderwand",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 340,
+  "freischaltLevel": 3,
+  "werte": {},
+  "kontext": "regal",
+  "regal": {
+    "ebenen": [
+      0.67,
+      1.76
+    ],
+    "mitte": -0.12,
+    "laenge": 1.1,
+    "kapazitaet": 12
+  },
+  "model": "eigen/kleiderwand",
+  "platzhalter": {
+    "groesse": [
+      0.45,
+      2.0,
+      1.2
+    ],
+    "farbe": "#d2a77a"
+  },
+  "gruppe": "mode/staender"
+}

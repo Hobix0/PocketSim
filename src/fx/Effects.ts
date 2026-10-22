@@ -53,6 +53,8 @@ const GEDANKEN: Record<string, { zeichen: string; farbe: string }> = {
   schnaeppchen: { zeichen: '%', farbe: '#4f9a5c' },
   gluecklich: { zeichen: '♥', farbe: '#e46b7b' },
   gemuetlich: { zeichen: '☕', farbe: '#9a6a43' },
+  anprobiert: { zeichen: '★', farbe: '#c98f8c' },
+  passt_nicht: { zeichen: '~', farbe: '#8f969d' },
 };
 
 const MAX = 700;

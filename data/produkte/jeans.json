@@ -1,0 +1,17 @@
+{
+  "id": "jeans",
+  "name": "Jeans",
+  "kategorie": "mode",
+  "ek": 15,
+  "vk": 44.9,
+  "gebinde": 8,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/jeans_gefaltet",
+  "groesse": [
+    0.26,
+    0.08,
+    0.3
+  ]
+}

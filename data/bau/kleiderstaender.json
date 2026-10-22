@@ -1,0 +1,28 @@
+{
+  "id": "kleiderstaender",
+  "name": "Kleiderständer",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 160,
+  "freischaltLevel": 3,
+  "werte": {},
+  "kontext": "regal",
+  "regal": {
+    "ebenen": [
+      0.67
+    ],
+    "mitte": -0.12,
+    "laenge": 1.1,
+    "kapazitaet": 12
+  },
+  "model": "eigen/kleiderstaender",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.55,
+      1.2
+    ],
+    "farbe": "#c9ced3"
+  },
+  "gruppe": "mode/staender"
+}

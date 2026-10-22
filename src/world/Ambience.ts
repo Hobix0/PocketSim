@@ -25,7 +25,7 @@ export interface AmbienceSettings {
   wolken: { an: boolean; dichte: number; tempo: number; hoehe: number; groesse: number };
   geraeusche: { vogelAlleSekunden: number; grilleAlleSekunden: number };
   /** Gedankenblasen der Kunden: Wahrscheinlichkeit je Anlass und Textvorlagen ({produkt}, {preis}) */
-  gedanken: { fehlt: number; zu_teuer: number; schnaeppchen: number; gluecklich: number; gemuetlich?: number; texte: Record<string, string[]> };
+  gedanken: { fehlt: number; zu_teuer: number; schnaeppchen: number; gluecklich: number; gemuetlich?: number; anprobiert?: number; passt_nicht?: number; texte: Record<string, string[]> };
 }
 
 export interface AmbienceEvents {

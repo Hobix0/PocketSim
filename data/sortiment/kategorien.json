@@ -11,5 +11,8 @@
   {"id": "drogerie_koerperpflege", "name": "Drogerie & Körperpflege"},
   {"id": "cafe", "name": "Café"},
   {"id": "kuchen", "name": "Kuchen & Torten"},
+  {"id": "mode", "name": "Mode"},
+  {"id": "accessoires", "name": "Accessoires"},
+  {"id": "schuhe", "name": "Schuhe"},
   {"id": "rohstoffe", "name": "Rohstoffe"}
 ]

@@ -1,0 +1,17 @@
+{
+  "id": "strickmuetze",
+  "name": "Strickmütze",
+  "kategorie": "accessoires",
+  "ek": 4,
+  "vk": 12.9,
+  "gebinde": 10,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/muetze_strick",
+  "groesse": [
+    0.2,
+    0.2,
+    0.2
+  ]
+}

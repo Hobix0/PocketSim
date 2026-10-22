@@ -1,0 +1,17 @@
+{
+  "id": "schal",
+  "name": "Schal",
+  "kategorie": "accessoires",
+  "ek": 5,
+  "vk": 15.9,
+  "gebinde": 10,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/schal_rosa",
+  "groesse": [
+    0.16,
+    0.1,
+    0.22
+  ]
+}

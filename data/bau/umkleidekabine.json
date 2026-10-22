@@ -1,0 +1,26 @@
+{
+  "id": "umkleidekabine",
+  "name": "Umkleidekabine",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 480,
+  "freischaltLevel": 3,
+  "werte": {},
+  "umkleide": {
+    "vorhang": "eigen/umkleide_vorhang",
+    "eingang": [
+      0.85,
+      0
+    ]
+  },
+  "model": "eigen/umkleidekabine",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      2.2,
+      1.0
+    ],
+    "farbe": "#d2a77a"
+  },
+  "gruppe": "mode/umkleide"
+}

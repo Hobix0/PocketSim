@@ -74,6 +74,8 @@
   "kunde_status_zur_kasse": "geht zur Kasse",
   "kunde_status_zum_platz": "sucht sich einen Platz",
   "kunde_status_sitzt": "trinkt gemütlich Kaffee",
+  "kunde_status_zur_kabine": "geht zur Umkleide",
+  "kunde_status_probiert": "probiert in der Umkleide an",
   "kunde_status_wartet": "wartet an der Kasse",
   "kunde_status_an_kasse": "ist dran",
   "kunde_status_geht": "verlässt den Laden",

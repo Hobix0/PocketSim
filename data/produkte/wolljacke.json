@@ -1,0 +1,17 @@
+{
+  "id": "wolljacke",
+  "name": "Wolljacke",
+  "kategorie": "mode",
+  "ek": 24,
+  "vk": 69,
+  "gebinde": 4,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/jacke_senf",
+  "groesse": [
+    0.4,
+    0.8,
+    0.06
+  ]
+}

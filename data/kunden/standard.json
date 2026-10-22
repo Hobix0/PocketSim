@@ -19,5 +19,6 @@
   "nachtVorlauf": 6,
   "preis": { "toleranz": 0.1, "elastizitaet": 1.5, "schnaeppchenAb": 0.9, "rufJeZuTeuer": -0.3, "rufJeSchnaeppchen": 0.1, "min": 0.5, "max": 2.5 },
   "cafe": { "kategorien": ["cafe", "kuchen"], "chance": 0.85, "sitzSekunden": { "min": 18, "max": 40 }, "sitzTiefe": 0.2, "zubereitenSekundenProArtikel": 2.5 },
+  "anprobieren": { "kategorien": ["mode"], "chance": 0.7, "sekunden": { "min": 8, "max": 16 }, "passtNicht": 0.15 },
   "einkaufswagen": { "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_Cart_01.fbx", "abArtikel": 3, "packSekundenProArtikel": 0.6 }
 }

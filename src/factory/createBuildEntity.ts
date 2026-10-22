@@ -14,6 +14,7 @@ import { RampComponent } from '../components/RampComponent';
 import { LampComponent } from '../components/LampComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
 import { SeatComponent } from '../components/SeatComponent';
+import { FittingRoomComponent } from '../components/FittingRoomComponent';
 import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
 import { VehicleComponent } from '../components/VehicleComponent';
 import { TerrainCutComponent } from '../components/TerrainCutComponent';
@@ -50,6 +51,7 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   if (def.licht) entity.add(new LampComponent(def.licht));
   if (def.wagenbox) entity.add(new CartStationComponent(def.wagenbox.anzahl, content.kunden.einkaufswagen?.model, ctx.models));
   if (def.sitze?.length) entity.add(new SeatComponent(def.sitze, def.platzhalter.groesse));
+  if (def.umkleide) entity.add(new FittingRoomComponent(def.umkleide, ctx.models));
   if (def.palettenplaetze) {
     const { anzahl, hoehe } = def.palettenplaetze;
     entity.add(new PalletPlacesComponent(PalletPlacesComponent.row(anzahl, def.platzhalter.groesse[2], hoehe)));

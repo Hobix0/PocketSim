@@ -1,0 +1,19 @@
+{
+  "id": "puppe_kleid",
+  "name": "Schaufensterpuppe Kleid",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 150,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/puppe_kleid",
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      1.8,
+      0.5
+    ],
+    "farbe": "#c8574f"
+  },
+  "gruppe": "mode/deko"
+}

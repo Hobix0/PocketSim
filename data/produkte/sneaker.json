@@ -1,0 +1,17 @@
+{
+  "id": "sneaker",
+  "name": "Sneaker",
+  "kategorie": "schuhe",
+  "ek": 22,
+  "vk": 59.9,
+  "gebinde": 6,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/sneaker_weiss",
+  "groesse": [
+    0.28,
+    0.12,
+    0.11
+  ]
+}
