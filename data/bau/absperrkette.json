@@ -1,0 +1,18 @@
+{
+  "id": "absperrkette",
+  "name": "Absperrpfosten mit Kette",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 35,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/absperrkette",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      1.0,
+      1.5
+    ],
+    "farbe": "#e9c23a"
+  }
+}

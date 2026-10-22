@@ -1,0 +1,21 @@
+{
+  "id": "leitplanke_1m",
+  "name": "Rammschutz-Planke 1 m",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 60,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "zubehoer"
+  },
+  "model": "eigen/leitplanke_1m",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      0.55,
+      1.0
+    ],
+    "farbe": "#e9c23a"
+  }
+}

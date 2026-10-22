@@ -1,0 +1,18 @@
+{
+  "id": "radstopper",
+  "name": "Radstopper",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 20,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/radstopper",
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      0.2,
+      0.6
+    ],
+    "farbe": "#e9c23a"
+  }
+}

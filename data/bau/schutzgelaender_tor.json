@@ -1,0 +1,22 @@
+{
+  "id": "schutzgelaender_tor",
+  "name": "Schutzgeländer mit Tor",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 140,
+  "freischaltLevel": 1,
+  "werte": {},
+  "durchgang": true,
+  "palettenregal": {
+    "teil": "zubehoer"
+  },
+  "model": "eigen/schutzgelaender_tor",
+  "platzhalter": {
+    "groesse": [
+      0.1,
+      1.1,
+      2.0
+    ],
+    "farbe": "#e9c23a"
+  }
+}

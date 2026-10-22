@@ -1,0 +1,18 @@
+{
+  "id": "verkehrsspiegel",
+  "name": "Verkehrsspiegel",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 80,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/verkehrsspiegel",
+  "platzhalter": {
+    "groesse": [
+      0.25,
+      2.5,
+      0.7
+    ],
+    "farbe": "#e9c23a"
+  }
+}

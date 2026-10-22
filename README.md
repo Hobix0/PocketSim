@@ -234,6 +234,8 @@ flowchart LR
 - Farben: Blau-Orange (von Anfang an, 3-m-Rahmen und offene Ebenen), Verzinkt und Grün-Gelb, 4,5-m-Rahmen und Gitterroste mit der Lagerlogistik. Raster und Feldbreiten: `data/baumenue/standard.json` → `regalEbenen`, `regalFelder`, `regalDistanz`; Logik in `src/building/placement.ts` (`rackBays`) und `snapping.ts`
 - **Verkaufsregale:** zusätzlich *kurz* (50 cm, Wandregal und Gondel), *Innenecke* (für Raumecken) und *Außenecke* (Viertelkreis, z. B. zwei davon als runder Abschluss einer Gondelreihe) in allen vier Oberflächen
 - Das alte Palettenregal am Stück ist ausgeblendet
+- **Stützrahmen mit Traversen** lassen sich nicht abreißen oder verschieben – erst die Ebenen abbauen (wie im echten Lager, keine Ware fällt herunter)
+- **Warnelemente fürs Lager:** Rammschutzpfosten, Rammschutzbügel, Säulenschutz, Rammschutz-Planke (1 m, 2 m, Ecke), Schutzgeländer (2 m und mit Tor als Durchgang), Leitkegel, Leitbake, Absperrpfosten mit Kette, Verkehrsspiegel, Warnschild „Staplerverkehr“, Radstopper. Pfosten, Planken und Bügel dürfen direkt an Regale gestellt werden
 
 **Etappe 11e – Regal-Baukästen, aufgeräumtes Baumenü** ✅
 
