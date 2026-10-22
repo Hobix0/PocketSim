@@ -1,0 +1,19 @@
+{
+  "id": "leitbake",
+  "name": "Leitbake",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 15,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/leitbake",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      1.1,
+      0.3
+    ],
+    "farbe": "#e9c23a"
+  },
+  "gruppe": "lager/sicherheit"
+}

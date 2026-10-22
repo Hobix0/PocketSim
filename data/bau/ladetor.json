@@ -5,11 +5,35 @@
   "ebene": "wand",
   "kontext": "rampe",
   "durchgang": true,
-  "funktionen": ["rampe"],
+  "funktionen": [
+    "rampe"
+  ],
   "preis": 1800,
   "freischaltLevel": 2,
   "werte": {},
-  "licht": {"position": [0.15, 3.07, 0], "groesse": [0.06, 0.05, 0.2], "farbe": "#ffd9a0", "staerke": 3, "reichweite": 5},
+  "licht": {
+    "position": [
+      0.15,
+      3.07,
+      0
+    ],
+    "groesse": [
+      0.06,
+      0.05,
+      0.2
+    ],
+    "farbe": "#ffd9a0",
+    "staerke": 3,
+    "reichweite": 5
+  },
   "model": "eigen/ladetor",
-  "platzhalter": {"groesse": [0.4, 4, 2], "farbe": "#8fa58a"}
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      4,
+      2
+    ],
+    "farbe": "#8fa58a"
+  },
+  "gruppe": "lager/tore"
 }

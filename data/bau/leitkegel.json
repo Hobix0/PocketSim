@@ -1,0 +1,19 @@
+{
+  "id": "leitkegel",
+  "name": "Leitkegel",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 8,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/leitkegel",
+  "platzhalter": {
+    "groesse": [
+      0.3,
+      0.75,
+      0.3
+    ],
+    "farbe": "#e9c23a"
+  },
+  "gruppe": "lager/sicherheit"
+}

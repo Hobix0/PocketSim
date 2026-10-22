@@ -4,9 +4,21 @@
   "kategorie": "einrichtung",
   "ebene": "objekt",
   "kontext": "terminal",
-  "funktionen": ["einkauf"],
+  "funktionen": [
+    "einkauf"
+  ],
   "preis": 300,
   "freischaltLevel": 1,
-  "werte": {"strom": 0.1},
-  "platzhalter": {"groesse": [0.6, 1.25, 0.5], "farbe": "#38434c"}
+  "werte": {
+    "strom": 0.1
+  },
+  "platzhalter": {
+    "groesse": [
+      0.6,
+      1.25,
+      0.5
+    ],
+    "farbe": "#38434c"
+  },
+  "gruppe": "laden/kasse"
 }

@@ -27,5 +27,11 @@
       0.9
     ],
     "farbe": "#eef0ee"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "truhe_kopf",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

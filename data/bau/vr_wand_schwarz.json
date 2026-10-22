@@ -28,5 +28,11 @@
       1.0
     ],
     "farbe": "#2b2b2e"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_wand",
+    "name": "Schwarz",
+    "farbe": "#2b2b2e"
   }
 }

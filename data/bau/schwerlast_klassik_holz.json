@@ -23,5 +23,11 @@
       1.8
     ],
     "farbe": "#2f5d9e"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "schwerlast_holz",
+    "name": "Blau-Orange",
+    "farbe": "#2f5d9e"
   }
 }

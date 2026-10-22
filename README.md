@@ -228,12 +228,21 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11g – Neues Baumenü** ✅
+
+- **Bereiche** als Leiste links: 🏠 Gebäude · 🛒 Laden · ☕ Café · 📦 Lager · ⚙️ Produktion · 💡 Licht · 🌳 Außen · 🗺️ Gelände, darin **Gruppen** als Chips mit Anzahl (z. B. Lager → Regalsysteme, Ablagen, Technik, Sicherheit, Hallenwände & Tore)
+- **Varianten als eine Karte:** Familien wie „Wandregal“, „Tresen (gerade)“ oder „Stützrahmen (4,5 m)“ zeigen Farbtupfer für ihre Oberflächen/Farben; ein Klick auf den Tupfer wählt die Variante und baut sie. Gesperrte Varianten sind durchgestrichen
+- **Suche** über alle Bauteile (auch Familiennamen), **🕘 Zuletzt** mit den 12 zuletzt gebauten Teilen (bleibt gespeichert), Gesperrtes gedimmt am Ende jeder Gruppe
+- Daten: jedes Bauteil hat `"gruppe": "bereich/gruppe"` und optional `"variante": { "familie", "name", "farbe" }`; Bereiche, Gruppen und Familiennamen stehen in `data/baumenue/standard.json` (`bereiche`, `familien`). Neue Teile ordnet `python3 scripts/assign-baumenue.py` zu; beim Start wird geprüft, dass jede Gruppe und Familie existiert
+
 **Etappe 11f – Palettenregal-System, Regal-Ecken** ✅
 
 - **Palettenregal wie im Zentrallager** (Baumenü → Lager): erst **Stützrahmen** aufstellen (3 m oder 4,5 m, 1,10 m tief, mit Lochraster und Diagonalverbänden). Der nächste Rahmen rastet im Feldabstand ein (1,8 m oder 2,7 m) oder Rücken an Rücken (20 cm Abstand) für Doppelreihen. Dann **Traversen-Ebenen** einhängen – „für Paletten“ (offen) oder „mit Gitterrost“: jede neue Ebene kommt in diesem Feld automatisch auf die unterste freie Höhe des Lochrasters (0,15 / 1,15 / 2,15 / 3,15 / 4,15 m), so hoch der Rahmen reicht. Jede Ebene ist eine Lagerfläche für Kartons. Dazu **Anfahrschutz** und **Gangendschutz**
 - Farben: Blau-Orange (von Anfang an, 3-m-Rahmen und offene Ebenen), Verzinkt und Grün-Gelb, 4,5-m-Rahmen und Gitterroste mit der Lagerlogistik. Raster und Feldbreiten: `data/baumenue/standard.json` → `regalEbenen`, `regalFelder`, `regalDistanz`; Logik in `src/building/placement.ts` (`rackBays`) und `snapping.ts`
 - **Verkaufsregale:** zusätzlich *kurz* (50 cm, Wandregal und Gondel), *Innenecke* (für Raumecken) und *Außenecke* (Viertelkreis, z. B. zwei davon als runder Abschluss einer Gondelreihe) in allen vier Oberflächen
 - Das alte Palettenregal am Stück ist ausgeblendet
+- **Stützrahmen mit Traversen** lassen sich nicht abreißen oder verschieben – erst die Ebenen abbauen (wie im echten Lager, keine Ware fällt herunter)
+- **Warnelemente fürs Lager:** Rammschutzpfosten, Rammschutzbügel, Säulenschutz, Rammschutz-Planke (1 m, 2 m, Ecke), Schutzgeländer (2 m und mit Tor als Durchgang), Leitkegel, Leitbake, Absperrpfosten mit Kette, Verkehrsspiegel, Warnschild „Staplerverkehr“, Radstopper. Pfosten, Planken und Bügel dürfen direkt an Regale gestellt werden
 
 **Etappe 11e – Regal-Baukästen, aufgeräumtes Baumenü** ✅
 

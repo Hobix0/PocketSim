@@ -27,5 +27,11 @@
       0.9
     ],
     "farbe": "#eef0ee"
+  },
+  "gruppe": "laden/kuehlung",
+  "variante": {
+    "familie": "eistruhe",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

@@ -7,7 +7,19 @@
   "preis": 1800,
   "freischaltLevel": 3,
   "werte": {},
-  "maschine": {"typ": "aufschnittmaschine", "strom": 0.6, "wasser": 0},
+  "maschine": {
+    "typ": "aufschnittmaschine",
+    "strom": 0.6,
+    "wasser": 0
+  },
   "model": "eigen/aufschnittmaschine",
-  "platzhalter": {"groesse": [0.7, 1.25, 1.0], "farbe": "#9aa3ab"}
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.25,
+      1.0
+    ],
+    "farbe": "#9aa3ab"
+  },
+  "gruppe": "produktion/maschinen"
 }

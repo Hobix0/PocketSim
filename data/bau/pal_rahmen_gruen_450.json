@@ -17,5 +17,11 @@
       0.1
     ],
     "farbe": "#3f6b55"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_rahmen_450",
+    "name": "Grün-Gelb",
+    "farbe": "#3f6b55"
   }
 }

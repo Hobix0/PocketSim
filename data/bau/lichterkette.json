@@ -6,7 +6,29 @@
   "preis": 60,
   "freischaltLevel": 1,
   "werte": {},
-  "licht": {"position": [0.15, 3.25, 0], "groesse": [0.04, 0.04, 1.9], "farbe": "#ffcf8a", "staerke": 3, "reichweite": 5},
+  "licht": {
+    "position": [
+      0.15,
+      3.25,
+      0
+    ],
+    "groesse": [
+      0.04,
+      0.04,
+      1.9
+    ],
+    "farbe": "#ffcf8a",
+    "staerke": 3,
+    "reichweite": 5
+  },
   "model": "eigen/lichterkette",
-  "platzhalter": {"groesse": [0.4, 3.4, 2], "farbe": "#ffd48a"}
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      3.4,
+      2
+    ],
+    "farbe": "#ffd48a"
+  },
+  "gruppe": "gebaeude/fassade"
 }

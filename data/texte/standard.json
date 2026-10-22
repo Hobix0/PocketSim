@@ -39,6 +39,7 @@
   "bauen_fehler_forschung": "Erst erforschen: {forschung}",
   "bauen_fehler_rahmen": "Traversen hängen zwischen zwei Stützrahmen im passenden Abstand",
   "bauen_fehler_regal_voll": "In diesem Feld ist keine Höhe mehr frei",
+  "bauen_fehler_traversen": "An diesem Stützrahmen hängen noch Traversen – erst die Ebenen abbauen",
   "bauen_fehler_nicht_leer": "Erst leeren: Hier liegt noch Ware",
   "bauen_abgerissen": "{name} abgerissen (+{betrag})",
   "bauen_flaeche": "{anzahl} Platten gelegt (−{betrag})",

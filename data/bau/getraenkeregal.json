@@ -6,8 +6,27 @@
   "kontext": "regal",
   "preis": 280,
   "freischaltLevel": 1,
-  "werte": {"slots": 3},
-  "regal": {"ebenen": [0.1, 0.55, 1.0], "mitte": 0.03, "laenge": 1.85, "kapazitaet": 24},
+  "werte": {
+    "slots": 3
+  },
+  "regal": {
+    "ebenen": [
+      0.1,
+      0.55,
+      1.0
+    ],
+    "mitte": 0.03,
+    "laenge": 1.85,
+    "kapazitaet": 24
+  },
   "model": "eigen/getraenkeregal",
-  "platzhalter": {"groesse": [0.6, 1.6, 2.0], "farbe": "#3f6b55"}
+  "platzhalter": {
+    "groesse": [
+      0.6,
+      1.6,
+      2.0
+    ],
+    "farbe": "#3f6b55"
+  },
+  "gruppe": "laden/regale"
 }

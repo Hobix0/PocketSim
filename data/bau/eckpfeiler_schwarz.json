@@ -8,5 +8,13 @@
   "werte": {},
   "model": "3d/Baubar/Gebaeude_Erweiterung/SM_Build_Eckpfeiler_Schwarz.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Eckpfeiler_Schwarz.png",
-  "platzhalter": {"groesse": [0.34, 4, 0.34], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.34,
+      4,
+      0.34
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "gebaeude/waende"
 }

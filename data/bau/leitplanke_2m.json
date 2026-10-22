@@ -1,0 +1,22 @@
+{
+  "id": "leitplanke_2m",
+  "name": "Rammschutz-Planke 2 m",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 100,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "zubehoer"
+  },
+  "model": "eigen/leitplanke_2m",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      0.55,
+      2.0
+    ],
+    "farbe": "#e9c23a"
+  },
+  "gruppe": "lager/sicherheit"
+}

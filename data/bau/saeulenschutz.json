@@ -1,0 +1,22 @@
+{
+  "id": "saeulenschutz",
+  "name": "Säulenschutz",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 70,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "zubehoer"
+  },
+  "model": "eigen/saeulenschutz",
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      0.8,
+      0.5
+    ],
+    "farbe": "#e9c23a"
+  },
+  "gruppe": "lager/sicherheit"
+}

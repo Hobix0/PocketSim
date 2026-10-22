@@ -41,5 +41,11 @@
       1.0
     ],
     "farbe": "#f4f1ea"
+  },
+  "gruppe": "cafe/tresen",
+  "variante": {
+    "familie": "bestelltresen",
+    "name": "Metro-Fliese",
+    "farbe": "#f4f1ea"
   }
 }

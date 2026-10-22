@@ -143,7 +143,10 @@ export class Content {
       if (!maschinen.has(r.maschine)) throw new Error(`${where}: keine Maschine vom Typ "${r.maschine}" in data/bau`);
       for (const l of [...r.eingang, r.ausgang]) if (!this.waren.has(l.ware)) throw new Error(`${where}: unbekannte Ware "${l.ware}"`);
     }
+    const gruppen = new Set(this.baumenue.bereiche.flatMap((a) => a.gruppen.map((g) => `${a.id}/${g.id}`)));
     for (const b of this.bau.all()) {
+      if (b.gruppe && !gruppen.has(b.gruppe)) throw new Error(`bau/${b.id}.json: unbekannte Gruppe "${b.gruppe}" (siehe baumenue/standard.json → bereiche)`);
+      if (b.variante && !(b.variante.familie in this.baumenue.familien)) throw new Error(`bau/${b.id}.json: Familie "${b.variante.familie}" fehlt in baumenue/standard.json → familien`);
       for (const f of b.funktionen) if (!FUNKTIONEN.includes(f)) throw new Error(`bau/${b.id}.json: unbekannte Funktion "${f}" (bekannt: ${FUNKTIONEN.join(', ')})`);
       if (b.kontext && !(b.kontext in this.kontexte)) throw new Error(`bau/${b.id}.json: unbekannter Kontext "${b.kontext}"`);
       for (const key of Object.keys(b.werte)) {

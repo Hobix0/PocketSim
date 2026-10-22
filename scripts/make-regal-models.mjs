@@ -220,3 +220,82 @@ model({ id: 'pal_gangendschutz', name: 'Gangendschutz', dims: [44, 20, 6], menue
     for (const y of [8, 16]) box(0, 43, y, y + 2, 1, 4, WARN);
     for (const x of [0, 41]) box(x, x + 3, 0, 0, 0, 5, STAHL_D);
   } });
+
+// ── Warnelemente fürs Lager ──────────────────────────────────────────────────
+const GELB = '#e9c23a', ORANGE = '#e8742c', ROT = '#c8382f', WEISS = '#f4f1ea';
+const BAND = (y) => (Math.floor(y / 3) % 2 ? GELB : SCHWARZ); // Warnstreifen quer
+const SCHRAEG = (x, y, z) => (Math.floor((x + y + z) / 3) % 2 ? GELB : SCHWARZ);
+
+// Rammschutzpfosten: gelbes Stahlrohr mit schwarzen Bändern, Fußplatte
+model({ id: 'rammschutz_pfosten', name: 'Rammschutzpfosten', dims: [8, 44, 8], menue: 'lager',
+  draw: ({ box, cyl }) => { box(0, 7, 0, 0, 0, 7, STAHL_D); cyl('y', 4, 4, 3, 1, 41, (i, j, y) => (y > 30 && y < 36 ? SCHWARZ : y > 18 && y < 24 ? SCHWARZ : GELB)); cyl('y', 4, 4, 2, 42, 43, GELB); } });
+// Rammschutzbügel: U-Bügel 1 m
+model({ id: 'rammschutz_buegel', name: 'Rammschutzbügel', dims: [6, 36, 40], menue: 'lager',
+  draw: ({ box }) => {
+    for (const z of [1, 36]) { box(1, 4, 1, 33, z, z + 2, (x, y) => BAND(y)); box(0, 5, 0, 0, z - 1, z + 3, STAHL_D); }
+    box(1, 4, 31, 34, 1, 38, (x, y, z) => SCHRAEG(x, y, z));
+  } });
+// Säulenschutz: Rahmen aus Planken um eine Stütze (0,5 × 0,5 m)
+model({ id: 'saeulenschutz', name: 'Säulenschutz', dims: [20, 32, 20], menue: 'lager',
+  draw: ({ box }) => {
+    for (const [x0, x1, z0, z1] of [[0, 19, 0, 1], [0, 19, 18, 19], [0, 1, 0, 19], [18, 19, 0, 19]]) box(x0, x1, 4, 31, z0, z1, (x, y, z) => SCHRAEG(x, y, z));
+    for (const [x, z] of [[0, 0], [18, 0], [0, 18], [18, 18]]) box(x, x + 1, 0, 3, z, z + 1, STAHL_D);
+  } });
+// Leitplanke (Rammschutz-Planke) auf Pfosten: 1 m, 2 m und Ecke
+function planke(id, name, nz, ecke = false) {
+  model({ id, name, dims: [ecke ? 40 : 8, 22, nz], menue: 'lager',
+    draw: ({ box }) => {
+      const pfosten = (x, z) => { box(x, x + 3, 0, 0, z, z + 3, STAHL_D); box(x + 1, x + 2, 1, 21, z + 1, z + 2, GELB); };
+      const balken = (x0, x1, z0, z1) => { for (const y of [6, 15]) box(x0, x1, y, y + 4, z0, z1, (x, yy, z) => SCHRAEG(x, yy, z)); };
+      if (!ecke) { for (const z of [0, nz - 4]) pfosten(2, z); if (nz > 50) pfosten(2, Math.floor(nz / 2) - 2); balken(1, 6, 0, nz - 1); return; }
+      pfosten(0, 0); pfosten(36, 0); pfosten(0, 36);
+      balken(0, 39, 1, 5); balken(1, 5, 0, 39);
+    } });
+}
+planke('leitplanke_1m', 'Rammschutz-Planke 1 m', 40);
+planke('leitplanke_2m', 'Rammschutz-Planke 2 m', 80);
+planke('leitplanke_ecke', 'Rammschutz-Planke Ecke', 40, true);
+// Fußgänger-Schutzgeländer 2 m (gelb, Handlauf, Knieleiste, Fußleiste) und mit Schwenktor
+function gelaender(id, name, tor) {
+  model({ id, name, dims: [4, 44, 80], menue: 'lager',
+    draw: ({ box }) => {
+      for (const z of tor ? [0, 39, 40, 79] : [0, 39, 79]) { box(0, 3, 0, 0, Math.max(0, z - 1), Math.min(79, z + 1), STAHL_D); box(1, 2, 1, 43, z, z, GELB); }
+      const [a, b] = tor ? [[0, 39], [41, 78]] : [[0, 79], null];
+      for (const [z0, z1] of [a, b].filter(Boolean)) { box(1, 2, 42, 43, z0, z1, GELB); box(1, 2, 22, 23, z0, z1, GELB); box(1, 2, 2, 5, z0, z1, (x, y, z) => SCHRAEG(x, y, z)); }
+      if (tor) { box(1, 2, 40, 41, 41, 78, ORANGE); box(1, 2, 20, 21, 41, 78, ORANGE); box(1, 2, 1, 41, 78, 78, ORANGE); box(0, 3, 30, 33, 40, 40, SCHWARZ); }
+    } });
+}
+gelaender('schutzgelaender_2m', 'Schutzgeländer 2 m', false);
+gelaender('schutzgelaender_tor', 'Schutzgeländer mit Tor', true);
+// Leitkegel (Pylon) und Leitbake
+model({ id: 'leitkegel', name: 'Leitkegel', dims: [12, 30, 12], menue: 'lager',
+  draw: ({ box, cyl }) => {
+    box(0, 11, 0, 1, 0, 11, SCHWARZ);
+    for (let y = 2; y < 30; y++) cyl('y', 6, 6, Math.max(1, Math.round(5 - (y - 2) / 6.5)), y, y, (y > 10 && y < 14) || (y > 18 && y < 21) ? WEISS : ORANGE);
+  } });
+model({ id: 'leitbake', name: 'Leitbake', dims: [8, 44, 12], menue: 'lager',
+  draw: ({ box }) => { box(0, 7, 0, 1, 0, 11, SCHWARZ); box(3, 4, 2, 43, 1, 10, (x, y, z) => (Math.floor((y + z) / 4) % 2 ? ROT : WEISS)); } });
+// Absperrpfosten mit gelb-schwarzer Kette (1,5 m)
+model({ id: 'absperrkette', name: 'Absperrpfosten mit Kette', dims: [8, 40, 60], menue: 'lager',
+  draw: ({ box, cyl, set }) => {
+    for (const z of [4, 55]) { cyl('y', 4, z, 3, 0, 1, SCHWARZ); box(3, 4, 2, 37, z - 1, z, (x, y) => BAND(y)); box(2, 5, 38, 39, z - 2, z + 1, GELB); }
+    for (let z = 5; z <= 54; z++) { const y = Math.round(34 - Math.sin(((z - 5) / 49) * Math.PI) * 8); set(4, y, z, Math.floor(z / 3) % 2 ? GELB : SCHWARZ); }
+  } });
+// Verkehrsspiegel an Pfosten (Kreuzungen im Lager)
+model({ id: 'verkehrsspiegel', name: 'Verkehrsspiegel', dims: [10, 100, 28], menue: 'lager',
+  draw: ({ box, cyl }) => {
+    box(0, 9, 0, 0, 9, 18, STAHL_D); box(4, 5, 1, 78, 13, 14, '#c3c8cc');
+    cyl('x', 88, 14, 11, 5, 5, ROT); cyl('x', 88, 14, 9, 6, 6, '#bcd2d9'); cyl('x', 86, 12, 3, 7, 7, WEISS);
+  } });
+// Warnschild „Achtung Staplerverkehr“ auf Ständer
+model({ id: 'warnschild_stapler', name: 'Warnschild Staplerverkehr', dims: [6, 60, 28], menue: 'lager',
+  draw: ({ box, set, text, textWidth }) => {
+    for (const z of [3, 24]) { box(0, 5, 0, 0, z - 2, z + 1, STAHL_D); box(2, 3, 1, 36, z, z, STAHL_D); }
+    // Dreieck gelb mit schwarzem Rand
+    for (let y = 0; y < 22; y++) { const half = Math.round((22 - y) * 0.6); for (let z = 14 - half; z <= 13 + half; z++) set(4, 37 + y, z, y < 2 || Math.abs(z - 13.5) > half - 2 ? SCHWARZ : GELB); }
+    box(4, 4, 42, 45, 11, 16, SCHWARZ); box(4, 4, 46, 50, 11, 12, SCHWARZ); // Stapler-Symbol (vereinfacht)
+    box(4, 4, 25, 33, 1, 26, GELB); const w = textWidth('STAPLER', 1); text(5, 31, Math.floor(14 + w / 2), 'STAPLER', SCHWARZ, 1, '+x');
+  } });
+// Radstopper für LKW (rot-gelb)
+model({ id: 'radstopper', name: 'Radstopper', dims: [16, 8, 24], menue: 'lager',
+  draw: ({ box }) => { for (let x = 0; x < 16; x++) box(x, x, 0, Math.max(1, 7 - Math.abs(x - 8)), 0, 23, (xx, y, z) => (Math.floor(z / 4) % 2 ? ROT : GELB)); } });

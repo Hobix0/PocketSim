@@ -25,5 +25,11 @@
       2.7
     ],
     "farbe": "#a9b0b5"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_traverse_270_gitter",
+    "name": "Verzinkt",
+    "farbe": "#a9b0b5"
   }
 }

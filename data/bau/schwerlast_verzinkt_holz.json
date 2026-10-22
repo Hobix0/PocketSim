@@ -23,5 +23,11 @@
       1.8
     ],
     "farbe": "#a9b0b5"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "schwerlast_holz",
+    "name": "Verzinkt",
+    "farbe": "#a9b0b5"
   }
 }

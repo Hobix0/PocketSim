@@ -25,5 +25,11 @@
       2.7
     ],
     "farbe": "#3f6b55"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_traverse_270_offen",
+    "name": "Grün-Gelb",
+    "farbe": "#3f6b55"
   }
 }

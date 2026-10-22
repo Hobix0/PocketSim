@@ -26,5 +26,11 @@
       1.0
     ],
     "farbe": "#eeeae2"
+  },
+  "gruppe": "laden/regale",
+  "variante": {
+    "familie": "vr_aktion",
+    "name": "Weiß",
+    "farbe": "#eeeae2"
   }
 }

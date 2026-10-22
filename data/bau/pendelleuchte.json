@@ -5,9 +5,33 @@
   "ebene": "decke",
   "preis": 90,
   "freischaltLevel": 1,
-  "werte": {"strom": 0.05},
-  "licht": {"position": [0, -1.45, 0], "groesse": [0.14, 0.05, 0.14], "farbe": "#ffd9a0", "staerke": 5, "reichweite": 6},
+  "werte": {
+    "strom": 0.05
+  },
+  "licht": {
+    "position": [
+      0,
+      -1.45,
+      0
+    ],
+    "groesse": [
+      0.14,
+      0.05,
+      0.14
+    ],
+    "farbe": "#ffd9a0",
+    "staerke": 5,
+    "reichweite": 6
+  },
   "model": "3d/Baubar/Einrichtung/SM_Build_Pendelleuchte.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Pendelleuchte.png",
-  "platzhalter": {"groesse": [0.1, 1.451, 0.1], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.1,
+      1.451,
+      0.1
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "licht/leuchten"
 }

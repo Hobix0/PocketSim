@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/betonboden",
-  "platzhalter": {"groesse": [2, 0.05, 2], "farbe": "#b2b1ab"}
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.05,
+      2
+    ],
+    "farbe": "#b2b1ab"
+  },
+  "gruppe": "gebaeude/boden"
 }

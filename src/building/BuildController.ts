@@ -15,7 +15,7 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
 import { checkPlacement, railAt, type PlacementError } from './placement';
 import { snapPlacement } from './snapping';
-import { inBuildCategory } from '../content/definitions';
+import { buildGroupOf } from '../content/definitions';
 import { damp, dampAngle } from '../fx/Tweens';
 import type { Plots } from '../world/Plots';
 
@@ -115,7 +115,7 @@ export class BuildController {
 
   /** Darf dieses Element im Baumenü gebaut, abgerissen und verschoben werden? */
   isBuildable(def: BuildDef | undefined): def is BuildDef {
-    return !!def && this.content.baumenue.kategorien.some((k) => inBuildCategory(def, k));
+    return !!def && buildGroupOf(def, this.content.baumenue) !== null;
   }
 
   startBuilding(def: BuildDef): void {
@@ -291,6 +291,11 @@ export class BuildController {
       this.events.emit('message', { key: 'bauen_fehler_nicht_leer', art: 'warnung' });
       return;
     }
+    // Stützrahmen, an denen noch Traversen hängen, bleiben stehen (erst die Ebenen abbauen)
+    if (target.get(FootprintComponent)?.regalteil === 'rahmen' && this.hasBeams(target)) {
+      this.events.emit('message', { key: 'bauen_fehler_traversen', art: 'warnung' });
+      return;
+    }
     const def = this.content.bau.get(target.typeId);
     setHighlight(target, 'none', this.colors.fehler);
     this.hovered = null;
@@ -330,6 +335,20 @@ export class BuildController {
       this.events.emit('picked', { entity: target });
       this.setTool({ art: 'bauen', def, moving: target }, true);
     }
+  }
+
+  /** Hängt an diesem Stützrahmen noch eine Traversen-Ebene? */
+  private hasBeams(rahmen: Entity): boolean {
+    const r = rahmen.object.position, dicke = rahmen.require(FootprintComponent).groesse[2];
+    for (const [e, f] of this.world.query(FootprintComponent)) {
+      if (f.regalteil !== 'traverse') continue;
+      const breite = this.content.bau.find(e.typeId)?.palettenregal?.breite ?? f.groesse[2];
+      const rot = e.object.rotation.y, ax = Math.sin(rot), az = Math.cos(rot), half = (breite + dicke) / 2;
+      for (const s of [-1, 1]) {
+        if (Math.hypot(e.object.position.x + ax * s * half - r.x, e.object.position.z + az * s * half - r.z) < 0.08) return true;
+      }
+    }
+    return false;
   }
 
   private pick(camera: THREE.Camera): Entity | null {

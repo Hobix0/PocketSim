@@ -25,5 +25,11 @@
       1.8
     ],
     "farbe": "#3f6b55"
+  },
+  "gruppe": "lager/regalsysteme",
+  "variante": {
+    "familie": "pal_traverse_180_offen",
+    "name": "Grün-Gelb",
+    "farbe": "#3f6b55"
   }
 }

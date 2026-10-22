@@ -8,5 +8,13 @@
   "freischaltLevel": 2,
   "werte": {},
   "model": "eigen/sektionaltor",
-  "platzhalter": {"groesse": [0.4, 4, 2], "farbe": "#6d7b85"}
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      4,
+      2
+    ],
+    "farbe": "#6d7b85"
+  },
+  "gruppe": "lager/tore"
 }

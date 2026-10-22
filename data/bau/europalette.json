@@ -5,9 +5,21 @@
   "ebene": "objekt",
   "preis": 15,
   "freischaltLevel": 1,
-  "werte": {"lagerplaetze": 12},
-  "ablage": {"ebenen": 2},
+  "werte": {
+    "lagerplaetze": 12
+  },
+  "ablage": {
+    "ebenen": 2
+  },
   "model": "3d/Baubar/Lager/SM_Build_Europalette.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Europalette.png",
-  "platzhalter": {"groesse": [1.2, 0.144, 0.8], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      1.2,
+      0.144,
+      0.8
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "gruppe": "lager/ablagen"
 }

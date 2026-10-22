@@ -7,5 +7,13 @@
   "freischaltLevel": 3,
   "werte": {},
   "model": "eigen/gabelstapler",
-  "platzhalter": {"groesse": [2.4, 2.2, 1.2], "farbe": "#e6b929"}
+  "platzhalter": {
+    "groesse": [
+      2.4,
+      2.2,
+      1.2
+    ],
+    "farbe": "#e6b929"
+  },
+  "gruppe": "lager/technik"
 }

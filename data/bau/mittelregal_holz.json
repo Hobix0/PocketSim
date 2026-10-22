@@ -28,5 +28,6 @@
     ],
     "farbe": "#c9a26b"
   },
-  "ausgeblendet": true
+  "ausgeblendet": true,
+  "gruppe": "laden/deko"
 }

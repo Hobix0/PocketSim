@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/schild_kasse",
-  "platzhalter": {"groesse": [0.1, 1.4, 1.5], "farbe": "#f1ead9"}
+  "platzhalter": {
+    "groesse": [
+      0.1,
+      1.4,
+      1.5
+    ],
+    "farbe": "#f1ead9"
+  },
+  "gruppe": "laden/schilder"
 }

@@ -164,6 +164,10 @@ export interface BuildDef {
   anSchiene: boolean;
   /** Nicht im Baumenü (ersetzt durch neuere Bauteile); bleibt für alte Spielstände ladbar */
   ausgeblendet: boolean;
+  /** Platz im Baumenü: "bereich/gruppe", z. B. "lager/regalsysteme" */
+  gruppe?: string;
+  /** Variante einer Familie (z. B. Wandregal in Weiß): Familie, Name und Farbe des Farbtupfers */
+  variante?: { familie: string; name: string; farbe: string };
   /** Palettenregal-System: Stützrahmen (Höhe aus dem Platzhalter), Traversen-Ebene zwischen zwei Rahmen (Feldbreite in m) oder Zubehör */
   palettenregal?: { teil: 'rahmen' | 'traverse' | 'zubehoer'; breite?: number };
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
@@ -278,7 +282,21 @@ export interface ContextInfo {
 }
 
 /** Einstellungen des Baumenüs (data/baumenue/standard.json). */
+/** Baumenü: ein Bereich (linke Leiste) mit seinen Gruppen */
+export interface BuildArea {
+  id: string;
+  name: string;
+  icon: string;
+  gruppen: { id: string; name: string; spezial?: 'grundstuecke' | 'gelaende' | 'markierungen' }[];
+}
+
 export interface BuildSettings {
+  /** Bereiche und Gruppen des Baumenüs */
+  bereiche: BuildArea[];
+  /** Anzeigenamen der Familien (Varianten eines Bauteils) */
+  familien: Record<string, string>;
+  /** Rückfall für Bauteile ohne "gruppe" (z. B. aus dem Voxel-Editor): alter Reiter → Gruppe */
+  alteKategorien?: Record<string, string>;
   raster: number;
   deckenhoehe: number;
   /** Palettenregal: mögliche Höhen der Traversen-Ebenen über dem Boden (m), von unten nach oben */
@@ -305,6 +323,13 @@ export interface BuildCategory {
   kategorien?: string[];
   ebenen?: BuildLayer[];
   spezial?: 'grundstuecke' | 'gelaende' | 'markierungen';
+}
+
+/** Gruppe eines Bauteils im Baumenü ("bereich/gruppe") */
+export function buildGroupOf(def: BuildDef, s: BuildSettings): string | null {
+  if (def.gruppe) return def.gruppe;
+  const alt = s.kategorien.find((k) => inBuildCategory(def, k));
+  return alt ? s.alteKategorien?.[alt.id] ?? null : null;
 }
 
 export function inBuildCategory(def: BuildDef, c: BuildCategory): boolean {
@@ -493,6 +518,11 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     schiene: o.schiene === undefined ? false : bool(o, 'schiene', where),
     anSchiene: o.anSchiene === undefined ? false : bool(o, 'anSchiene', where),
     ausgeblendet: o.ausgeblendet === undefined ? false : bool(o, 'ausgeblendet', where),
+    gruppe: optStr(o, 'gruppe', where),
+    variante: o.variante === undefined ? undefined : (() => {
+      const v = asObject(o.variante, `${where} → variante`);
+      return { familie: str(v, 'familie', `${where} → variante`), name: str(v, 'name', `${where} → variante`), farbe: str(v, 'farbe', `${where} → variante`) };
+    })(),
     palettenregal: o.palettenregal === undefined ? undefined : (() => {
       const p = asObject(o.palettenregal, `${where} → palettenregal`);
       const teil = str(p, 'teil', `${where} → palettenregal`);

@@ -1,10 +1,238 @@
 {
   "raster": 0.25,
   "deckenhoehe": 4,
-  "regalEbenen": [0.15, 1.15, 2.15, 3.15, 4.15],
-  "regalFelder": [1.8, 2.7],
+  "regalEbenen": [
+    0.15,
+    1.15,
+    2.15,
+    3.15,
+    4.15
+  ],
+  "regalFelder": [
+    1.8,
+    2.7
+  ],
   "regalDistanz": 0.2,
   "rueckerstattung": 0.5,
+  "bereiche": [
+    {
+      "id": "gebaeude",
+      "name": "Gebäude",
+      "icon": "🏠",
+      "gruppen": [
+        {
+          "id": "boden",
+          "name": "Böden"
+        },
+        {
+          "id": "waende",
+          "name": "Wände & Türen"
+        },
+        {
+          "id": "fenster",
+          "name": "Fenster"
+        },
+        {
+          "id": "fassade",
+          "name": "Fassade"
+        },
+        {
+          "id": "dach",
+          "name": "Dach"
+        }
+      ]
+    },
+    {
+      "id": "laden",
+      "name": "Laden",
+      "icon": "🛒",
+      "gruppen": [
+        {
+          "id": "regale",
+          "name": "Regale"
+        },
+        {
+          "id": "kuehlung",
+          "name": "Kühlung"
+        },
+        {
+          "id": "kasse",
+          "name": "Kasse"
+        },
+        {
+          "id": "schilder",
+          "name": "Schilder"
+        },
+        {
+          "id": "deko",
+          "name": "Deko"
+        }
+      ]
+    },
+    {
+      "id": "cafe",
+      "name": "Café",
+      "icon": "☕",
+      "gruppen": [
+        {
+          "id": "tresen",
+          "name": "Tresen & Theken"
+        },
+        {
+          "id": "maschinen",
+          "name": "Maschinen"
+        },
+        {
+          "id": "moebel",
+          "name": "Möbel"
+        },
+        {
+          "id": "deko",
+          "name": "Deko"
+        }
+      ]
+    },
+    {
+      "id": "lager",
+      "name": "Lager",
+      "icon": "📦",
+      "gruppen": [
+        {
+          "id": "regalsysteme",
+          "name": "Regalsysteme"
+        },
+        {
+          "id": "ablagen",
+          "name": "Ablagen"
+        },
+        {
+          "id": "technik",
+          "name": "Technik"
+        },
+        {
+          "id": "sicherheit",
+          "name": "Sicherheit"
+        },
+        {
+          "id": "tore",
+          "name": "Hallenwände & Tore"
+        }
+      ]
+    },
+    {
+      "id": "produktion",
+      "name": "Produktion",
+      "icon": "⚙️",
+      "gruppen": [
+        {
+          "id": "maschinen",
+          "name": "Maschinen"
+        }
+      ]
+    },
+    {
+      "id": "licht",
+      "name": "Licht",
+      "icon": "💡",
+      "gruppen": [
+        {
+          "id": "leuchten",
+          "name": "Leuchten"
+        },
+        {
+          "id": "schienen",
+          "name": "Lichtschienen"
+        }
+      ]
+    },
+    {
+      "id": "aussen",
+      "name": "Außen",
+      "icon": "🌳",
+      "gruppen": [
+        {
+          "id": "strasse",
+          "name": "Straße"
+        },
+        {
+          "id": "pflanzen",
+          "name": "Pflanzen"
+        },
+        {
+          "id": "terrasse",
+          "name": "Terrasse"
+        },
+        {
+          "id": "zaeune",
+          "name": "Zäune"
+        }
+      ]
+    },
+    {
+      "id": "gelaende",
+      "name": "Gelände",
+      "icon": "🗺️",
+      "gruppen": [
+        {
+          "id": "gelaende",
+          "name": "Gelände formen",
+          "spezial": "gelaende"
+        },
+        {
+          "id": "markierungen",
+          "name": "Markierungen",
+          "spezial": "markierungen"
+        },
+        {
+          "id": "grundstuecke",
+          "name": "Grundstücke",
+          "spezial": "grundstuecke"
+        }
+      ]
+    }
+  ],
+  "familien": {
+    "bestelltresen": "Bestelltresen",
+    "eistruhe": "Eistruhe",
+    "kuehlregal": "Kühlregal offen",
+    "kuehlschrank_1": "Glastür-Kühlschrank (1 Tür)",
+    "kuehlschrank_2": "Glastür-Kühlschrank (2 Türen)",
+    "pal_rahmen_300": "Stützrahmen (3,0 m)",
+    "pal_rahmen_450": "Stützrahmen (4,5 m)",
+    "pal_traverse_180_gitter": "Traversen-Ebene 1,8 m (mit Gitterrost)",
+    "pal_traverse_180_offen": "Traversen-Ebene 1,8 m (für Paletten)",
+    "pal_traverse_270_gitter": "Traversen-Ebene 2,7 m (mit Gitterrost)",
+    "pal_traverse_270_offen": "Traversen-Ebene 2,7 m (für Paletten)",
+    "schwerlast_gitter": "Schwerlastregal (Gitterrost)",
+    "schwerlast_hoch": "Schwerlastregal (hoch, 4 Ebenen)",
+    "schwerlast_holz": "Schwerlastregal (Holzböden)",
+    "schwerlast_stahl": "Schwerlastregal (Stahlböden)",
+    "siebtraeger": "Siebträger",
+    "tresen_ecke": "Tresen (Ecke)",
+    "tresen_ende": "Tresen (Endstück)",
+    "tresen_gerade": "Tresen (gerade)",
+    "truhe_insel": "Truhen-Insel",
+    "truhe_kopf": "Truhen-Kopf",
+    "vr_aktion": "Aktionstisch",
+    "vr_aussenecke": "Wandregal Außenecke",
+    "vr_gondel": "Gondel",
+    "vr_gondel_kurz": "Gondel kurz",
+    "vr_innenecke": "Wandregal Innenecke",
+    "vr_kopf": "Kopfregal",
+    "vr_wand": "Wandregal",
+    "vr_wand_kurz": "Wandregal kurz"
+  },
+  "alteKategorien": {
+    "einrichtung": "laden/deko",
+    "lager": "lager/technik",
+    "maschinen": "produktion/maschinen",
+    "licht": "licht/leuchten",
+    "boden": "gebaeude/boden",
+    "waende": "gebaeude/waende",
+    "fassade": "gebaeude/fassade",
+    "deko": "laden/deko",
+    "schilder": "laden/schilder"
+  },
   "kategorien": [
     {
       "id": "einrichtung",
@@ -98,5 +326,12 @@
     }
   ],
   "wandVersatz": 0.1,
-  "dach": { "abAbstand": 24, "dicke": 0.2, "ueberstand": 0.3, "farbe": "#6f7f6b", "kante": "#e9e2d2" }
+  "dach": {
+    "abAbstand": 24,
+    "dicke": 0.2,
+    "ueberstand": 0.3,
+    "farbe": "#6f7f6b",
+    "kante": "#e9e2d2"
+  },
+  "_hinweis": "Baumenü: Bereiche (linke Leiste) mit Gruppen (Chips). Jedes Bauteil nennt seine Gruppe in data/bau → \"gruppe\": \"bereich/gruppe\", Varianten (Farben/Oberflächen) über \"variante\": {familie, name, farbe}; die Namen der Familien stehen unter \"familien\". Zuordnung neuer Teile: scripts/assign-baumenue.py. \"kategorien\" sind die alten Reiter (nur noch für den Voxel-Editor und als Rückfall über \"alteKategorien\")."
 }

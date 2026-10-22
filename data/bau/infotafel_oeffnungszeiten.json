@@ -7,5 +7,13 @@
   "freischaltLevel": 1,
   "werte": {},
   "model": "eigen/infotafel_oeffnungszeiten",
-  "platzhalter": {"groesse": [0.3, 1.6, 0.8], "farbe": "#c9a26b"}
+  "platzhalter": {
+    "groesse": [
+      0.3,
+      1.6,
+      0.8
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "laden/schilder"
 }

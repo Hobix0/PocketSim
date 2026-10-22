@@ -1,0 +1,19 @@
+{
+  "id": "warnschild_stapler",
+  "name": "Warnschild Staplerverkehr",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 30,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/warnschild_stapler",
+  "platzhalter": {
+    "groesse": [
+      0.15,
+      1.5,
+      0.7
+    ],
+    "farbe": "#e9c23a"
+  },
+  "gruppe": "lager/sicherheit"
+}
