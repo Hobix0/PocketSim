@@ -65,20 +65,27 @@ export function findStockingTask(
 }
 
 /**
- * Können Paletten als Ganzes vom LKW geholt werden? Dafür braucht es einen Hubwagen oder Gabelstapler
- * und einen freien Palettenplatz. Sonst räumt der Lagerist die Palette Karton für Karton von Hand ab.
+ * Kann diese Palette als Ganzes vom LKW geholt werden? Dafür braucht es einen Hubwagen oder Gabelstapler,
+ * der die Ladefläche erreicht (Hubwagen nur bündig an der Rampe), und einen freien Palettenplatz.
+ * Sonst räumt der Lagerist die Palette Karton für Karton von Hand ab.
  */
-export function palletUnloadPossible(world: World): boolean {
+export function palletFetchable(world: World, pallet: PalletComponent): boolean {
+  const platz = pallet.platz;
+  if (!platz) return false;
+  const y = platz.places.slotWorld(platz.slot).y;
   let fahrzeug = false;
-  for (const [, v] of world.query(VehicleComponent)) if (v.art !== 'rollwagen') fahrzeug = true;
+  for (const [e, v] of world.query(VehicleComponent)) {
+    if (v.art !== 'rollwagen' && y - e.object.position.y <= v.maxHoehe + 0.05) fahrzeug = true;
+  }
   if (!fahrzeug) return false;
   for (const [, p] of world.query(PalletPlacesComponent)) if (!p.temporaer && p.free > 0) return true;
   return false;
 }
 
-function onTruckPallet(c: CartonComponent): boolean {
+/** Karton auf einer Palette auf dem LKW, die niemand als Ganzes holen kann */
+function onStuckTruckPallet(world: World, c: CartonComponent): boolean {
   const p = c.ablage?.palette ? c.ablage.entity.get(PalletComponent) : undefined;
-  return !!p && p.aufLkw && p.reservedBy === null;
+  return !!p && p.aufLkw && p.reservedBy === null && !palletFetchable(world, p);
 }
 
 /** Eine Aufgabe für Lageristen: Karton vom LKW (oder lose am Boden) auf einen festen Lagerplatz. */
@@ -106,9 +113,8 @@ export function findHaulTask(
   storage: { nearestFree(near: THREE.Vector3): StorageSurfaceComponent | null },
   isFree: (carton: Entity) => boolean,
 ): HaulTask | null {
-  const vonHand = !palletUnloadPossible(world);
   const candidates = [...world.query(CartonComponent)]
-    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || (c.ablage.temporaer && !c.ablage.palette) || (vonHand && onTruckPallet(c))))
+    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || (c.ablage.temporaer && !c.ablage.palette) || onStuckTruckPallet(world, c)))
     .sort(([, a], [, b]) => Number(!a.ablage) - Number(!b.ablage));
   for (const [carton] of candidates) {
     const ablage = storage.nearestFree(carton.object.position);
