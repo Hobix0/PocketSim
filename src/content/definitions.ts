@@ -253,7 +253,7 @@ export interface DaylightSettings {
   tag: { sonne: number; umgebung: number };
   nacht: { sonne: number; umgebung: number; himmel: string; sonnenfarbe: string };
   daemmerung: { sonnenfarbe: string; himmel: string };
-  lampen: { anzahl: number; nachtVerstaerkung: number };
+  lampen: { anzahl: number; nachtVerstaerkung: number; buendeln?: { abstand: number; zusatz: number; maxFaktor: number; tiefer?: number; abfall?: number } };
   /** Warmer Grund-Look: Farben des Umgebungslichts, Sonnenfarbe, Dunst (m), Belichtung, Schattenweichheit */
   stimmung: { himmelLicht: string; bodenLicht: string; sonne: string; nebel: { nah: number; fern: number }; belichtung: number; schattenWeich: number };
 }

@@ -54,6 +54,23 @@
       { "welle": "sawtooth", "frequenz": 311, "dauer": 0.3, "lautstaerke": 0.08, "filter": 1200, "verzoegerung": 0.3 },
       { "welle": "sawtooth", "frequenz": 392, "dauer": 0.3, "lautstaerke": 0.08, "filter": 1200, "verzoegerung": 0.3 }
     ],
+    "auto": [
+      { "welle": "rauschen", "dauer": 1.4, "lautstaerke": 0.05, "filter": 500, "anschlag": 0.6 }
+    ],
+    "vogel": [
+      { "welle": "sine", "frequenz": 2900, "bis": 3600, "dauer": 0.07, "lautstaerke": 0.04 },
+      { "welle": "sine", "frequenz": 3100, "bis": 3900, "dauer": 0.07, "lautstaerke": 0.035, "verzoegerung": 0.12 },
+      { "welle": "sine", "frequenz": 3400, "bis": 2600, "dauer": 0.12, "lautstaerke": 0.03, "verzoegerung": 0.24 }
+    ],
+    "grille": [
+      { "welle": "triangle", "frequenz": 4300, "dauer": 0.03, "lautstaerke": 0.015 },
+      { "welle": "triangle", "frequenz": 4300, "dauer": 0.03, "lautstaerke": 0.015, "verzoegerung": 0.06 },
+      { "welle": "triangle", "frequenz": 4300, "dauer": 0.03, "lautstaerke": 0.015, "verzoegerung": 0.12 }
+    ],
+    "tauben": [
+      { "welle": "rauschen", "dauer": 0.35, "lautstaerke": 0.06, "filter": 1600 },
+      { "welle": "rauschen", "dauer": 0.25, "lautstaerke": 0.05, "filter": 1300, "verzoegerung": 0.15 }
+    ],
     "tuer": [
       { "welle": "sine", "frequenz": 1568, "dauer": 0.5, "lautstaerke": 0.08 },
       { "welle": "sine", "frequenz": 1245, "dauer": 0.7, "lautstaerke": 0.08, "verzoegerung": 0.18 }

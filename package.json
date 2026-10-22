@@ -15,7 +15,8 @@
     "modelle:maschinen": "node scripts/make-machine-models.mjs",
     "modelle:lager": "node scripts/make-lager-models.mjs",
     "modelle:deko": "node scripts/make-deko-models.mjs",
-    "modelle:store": "node scripts/make-store-models.mjs"
+    "modelle:store": "node scripts/make-store-models.mjs",
+    "modelle:leben": "node scripts/make-leben-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

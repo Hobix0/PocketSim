@@ -15,6 +15,13 @@
     {"id": "gewerbehof", "name": "Gewerbehof (freies Lager)", "rect": {"minX": 10, "maxX": 20, "minZ": -13, "maxZ": 7.2}, "preis": 3500, "freischaltLevel": 2},
     {"id": "hof", "name": "Hof hinten", "rect": {"minX": -10, "maxX": 10, "minZ": -9, "maxZ": -3}, "preis": 4500, "freischaltLevel": 4}
   ],
+  "leben": {
+    "gehweg": { "x": [-9.7, 9.7], "z": [5.3, 6.7], "y": 0.14 },
+    "spuren": [{ "z": 8.6, "richtung": 1 }, { "z": 10.4, "richtung": -1 }],
+    "strasse": { "x": [-21, 21], "y": 0.04 },
+    "schaufenster": [[-3, 4.2], [3, 4.2], [-7, 4.2], [7, 4.2]],
+    "tauben": [[-5.5, 0.14, 5.9], [-5, 0.14, 6.3], [-4.6, 0.14, 5.7], [5.4, 0.14, 6.1], [5.9, 0.14, 5.6], [12, 0.14, 6.2]]
+  },
   "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6]],
   "bloecke": [
     {"name": "Straße", "position": [0, 0.02, 9.5], "groesse": [40, 0.04, 5], "farbe": "#4d5156"},
@@ -53,6 +60,8 @@
     {"typ": "lavendelkuebel", "position": [-0.5, 0.14, 3.7], "drehung": 0},
     {"typ": "lavendelkuebel", "position": [2.3, 0.14, 3.7], "drehung": 0},
     {"typ": "strassenlaterne", "position": [-6.8, 0.14, 6.85], "drehung": 0},
-    {"typ": "strassenlaterne", "position": [4.2, 0.14, 6.85], "drehung": 0}
+    {"typ": "strassenlaterne", "position": [4.2, 0.14, 6.85], "drehung": 0},
+    {"typ": "baum_strasse", "position": [-2.6, 0.14, 6.6], "drehung": 0},
+    {"typ": "baum_strasse", "position": [8.6, 0.14, 6.6], "drehung": 90}
   ]
 }

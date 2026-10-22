@@ -54,6 +54,7 @@ import { MachineComponent } from '../components/MachineComponent';
 import { ShelfWindow } from '../ui/ShelfWindow';
 import { BuyerSystem } from '../world/BuyerSystem';
 import { Effects } from '../fx/Effects';
+import { Ambience, type AmbienceSettings } from '../world/Ambience';
 import { CozyLook, type CozyLookSettings } from '../render/CozyLook';
 import { AudioSystem, type AudioSettings } from '../audio/AudioSystem';
 import { TruckComponent } from '../components/TruckComponent';
@@ -124,6 +125,9 @@ export class Game {
   readonly buyers: BuyerSystem;
   /** Partikel, schwebende Texte und Bewegungen (data/effekte) */
   readonly effects: Effects;
+  /** Leben in der Welt: Passanten, Autos, Tauben, Schmetterlinge, Wolken (data/leben) */
+  readonly ambience: Ambience;
+  private nacht = 0;
   /** Nachbearbeitung: Bloom, Miniatur-Unschärfe, Vignette (data/kamera → look) */
   readonly look: CozyLook;
   /** Töne und Musik (data/audio) */
@@ -256,7 +260,7 @@ export class Game {
       sonne: new THREE.Color(licht.stimmung.sonne), sonneNacht: new THREE.Color(licht.nacht.sonnenfarbe), sonneDaemmerung: new THREE.Color(licht.daemmerung.sonnenfarbe),
     };
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
-    this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl);
+    this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl, licht.lampen.buendeln);
     const dach = this.content.baumenue.dach;
     this.roof = dach ? new RoofLayer(this.scene, this.world, { hoehe: this.content.baumenue.deckenhoehe, ...dach }) : null;
 
@@ -402,6 +406,17 @@ export class Game {
       }
       if (this.store.stats.heute.umsatz >= 500) this.goals.complete('umsatz_500');
     });
+    // Gedankenblasen: zeigen, was fehlt oder zu teuer ist (mit Wahrscheinlichkeit, je Kunde nicht zu oft)
+    const gedanken = readData<AmbienceSettings>('leben/standard').gedanken;
+    const zuletzt = new WeakMap<THREE.Object3D, number>();
+    this.store.events.on('thought', ({ art, produkt, preis, kunde }) => {
+      const jetzt = performance.now();
+      if (Math.random() > (gedanken[art] ?? 0) || jetzt - (zuletzt.get(kunde) ?? -1e9) < 5000) return;
+      zuletzt.set(kunde, jetzt);
+      const vorlagen = gedanken.texte[art] ?? [];
+      const text = (vorlagen[Math.floor(Math.random() * vorlagen.length)] ?? '').replace('{produkt}', produkt?.name ?? '').replace('{preis}', preis !== undefined ? formatMoney(preis) : '');
+      if (text) this.effects.thought(kunde, text, art);
+    });
     let warnedNoCheckout = false;
     this.store.events.on('visit', ({ outcome }) => {
       if (outcome === 'keine_kasse' && !warnedNoCheckout) { warnedNoCheckout = true; this.hud.toasts.show(this.content.text('kunde_keine_kasse'), 'warnung'); }
@@ -425,6 +440,9 @@ export class Game {
     // Effekte: Plopp beim Bauen, Verpuffen beim Abriss, Staub
     this.effects = new Effects(this.scene, this.content.effekte);
     this.build.motion = this.content.effekte.vorschau;
+    this.ambience = new Ambience(this.scene, this.world, this.models, this.content.figuren, this.level.data.leben, readData<AmbienceSettings>('leben/standard'), {
+      sound: (name) => this.audio.play(name),
+    });
     try { const e = localStorage.getItem('urbanevolution.effekte'); if (e !== null) this.effects.settings.an = e === '1'; } catch { /* Standard */ }
     // Töne zu dem, was passiert
     this.build.events.on('placed', () => this.audio.play('bauen'));
@@ -591,6 +609,7 @@ export class Game {
     this.updateDaylight(realDt);
     this.effects.update(realDt);
     this.truckSmoke(simDt);
+    this.ambience.update(simDt, this.clock.totalMinutes % (24 * 60), this.nacht, realDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
     this.terrainView.update();
     this.paint.update();
@@ -649,6 +668,7 @@ export class Game {
     (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
     this.look.nacht = 1 - d.tag;
+    this.nacht = 1 - d.tag;
     this.audio.nacht = 1 - d.tag;
   }
 

@@ -42,4 +42,25 @@ describe('Lampen', () => {
     // Nur so viele Lichtquellen wie in den Daten, egal wie viele Lampen
     expect(scene.children.filter((c) => c instanceof THREE.PointLight)).toHaveLength(1);
   });
+
+  it('viele Lampen an einem Fleck teilen sich ein Licht und brennen nicht aus', () => {
+    const scene = new THREE.Scene();
+    const world = new World(new THREE.Group());
+    const ctx = { content };
+    // Zehn Pendelleuchten dicht an dicht, eine weit weg
+    for (let i = 0; i < 10; i++) world.add(createBuildEntity(content.bau.get('pendelleuchte'), { position: [i * 0.25, 4, 0], drehung: 0 }, ctx));
+    world.add(createBuildEntity(content.bau.get('pendelleuchte'), { position: [12, 4, 0], drehung: 0 }, ctx));
+    const b = { abstand: 2.6, zusatz: 0.2, maxFaktor: 1.8, tiefer: 0 };
+    const lights = new LampLights(scene, world, 4, b);
+    lights.update(1, new THREE.Vector3(0, 0, 0), 1);
+    const on = scene.children.filter((c): c is THREE.PointLight => c instanceof THREE.PointLight && c.intensity > 0);
+    expect(lights.gruppen).toBe(2);
+    expect(on).toHaveLength(2);
+    const einzel = content.bau.get('pendelleuchte').licht!.staerke;
+    // Die Gruppe sitzt in der Mitte der zehn und ist höchstens maxFaktor-mal so hell wie eine Lampe
+    expect(on[0].position.x).toBeCloseTo(1.125);
+    expect(on[0].intensity).toBeLessThanOrEqual(einzel * b.maxFaktor + 1e-9);
+    expect(on[0].intensity).toBeGreaterThan(einzel);
+    expect(on[1].intensity).toBeCloseTo(einzel);
+  });
 });
