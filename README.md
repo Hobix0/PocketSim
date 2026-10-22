@@ -228,6 +228,13 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11a – Forschungsbaum** ✅
+
+- **Forschung (Taste F):** Mit jeder XP sammelst du nebenbei Ideen 💡 (`data/forschung/standard.json`: 0,3 Ideen je XP). Damit schaltest du im Baum neue Produktlinien, Maschinen und Bauteile frei – ohne Zeitdruck, sofort mit Funkeln. Ein Knoten braucht ein Mindestlevel, seine Voraussetzungen und genug Ideen
+- **Zweige** (`data/forschung/baum.json`): Backstube → Saftbar → Café-Ecke → Kaffeerösterei · Kühlregale → Feinkost → Tiefkühltruhen · Haushalt & Drogerie → Modeladen → Einkaufszentrum · Lagerlogistik → Gabelstapler → Zentrallager → Fuhrpark / Produktionshalle · Solardach → Pfandautomat. Knoten mit `"bald": true` sind Vorschau auf die nächsten Etappen
+- Was ein Knoten freischaltet (`schaltetFrei`: `bau`, `rezepte`, `kategorien`), wird beim Laden an den Inhalten eingetragen und überall geprüft: Baumenü, Einkauf, Regale, Sortiment, Maschinen und Kundenwünsche (`src/economy/Research.ts`, Fenster `src/ui/ResearchWindow.ts`)
+- Alte Spielstände (auch der Testmarkt) bekommen beim Laden alles erforscht, was bis zum aktuellen Level möglich ist
+
 **Etappe 10b – Mehr Leben, besseres Licht** ✅
 
 - **Licht ohne Ausbrennen:** Lampen, die nah beieinander hängen, teilen sich eine Lichtquelle in ihrer Mitte (`src/world/LampLights.ts`). Die Helligkeit wächst nur gedämpft, das Licht sitzt etwas unter den Leuchten – zehn Leuchten an einer Schiene machen keinen weißen Fleck mehr. Werte: `data/licht/standard.json` → `lampen.buendeln`

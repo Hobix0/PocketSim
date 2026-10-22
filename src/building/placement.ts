@@ -10,7 +10,7 @@ import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect }
 //  - Schienenleuchten hängen nur unter einer Lichtschiene (und stören die Schiene dabei nicht).
 //  - Kostet Geld (außer beim Verschieben) und muss freigeschaltet sein.
 
-export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende' | 'schiene';
+export type PlacementError = 'boden' | 'belegt' | 'geld' | 'gesperrt' | 'grundstueck' | 'strom' | 'gelaende' | 'schiene' | 'forschung';
 
 export interface PlacementResult {
   ok: boolean;
@@ -40,6 +40,8 @@ export interface PlacementOptions {
   moving?: Entity;
   geld: number;
   level: number;
+  /** Ist diese Forschung erledigt? Ohne Angabe zählt nur das Level */
+  erforscht?: (id: string) => boolean;
   /** Darf hier gebaut werden (eigenes Grundstück)? Ohne Angabe überall. */
   plotOk?: (x: number, z: number, rand: number) => boolean;
   /** Ist das Gelände hier eben genug zum Bauen? (Hügel und Gruben aus dem Gelände-Werkzeug) */
@@ -73,6 +75,7 @@ export function checkPlacement(
     : def.ebene === 'decke' ? settings.deckenhoehe : def.ebene === 'objekt' ? floor ?? 0 : 0;
 
   if (!opts.moving && def.freischaltLevel > opts.level) return { ok: false, grund: 'gesperrt', y };
+  if (!opts.moving && def.forschung && opts.erforscht && !opts.erforscht(def.forschung)) return { ok: false, grund: 'forschung', y };
   if (opts.plotOk && !opts.plotOk(x, z, def.ebene === 'wand' || def.ebene === 'anbau' ? 0.4 : 0)) return { ok: false, grund: 'grundstueck', y };
   if (opts.gelaendeOk && !def.absenkung && def.ebene !== 'decke' && !opts.gelaendeOk(rect)) return { ok: false, grund: 'gelaende', y };
   if (needsFloor && floor === null) return { ok: false, grund: 'boden', y };

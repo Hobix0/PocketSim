@@ -215,7 +215,8 @@ export class BuildMenu {
   }
 
   private card(d: BuildDef, tool: Tool | null): string {
-    const locked = d.freischaltLevel > this.player.level;
+    const ohneForschung = !!d.forschung && !this.build.erforscht(d.forschung);
+    const locked = d.freischaltLevel > this.player.level || ohneForschung;
     const active = tool?.art === 'bauen' && tool.def === d && !tool.moving;
     const icon = iconUrl(d.icon);
     // Ohne Icon: Vorschaubild aus dem Würfelmodell (wird nachgeladen)
@@ -227,7 +228,7 @@ export class BuildMenu {
       <button type="button" class="card ${active ? 'active' : ''} ${locked ? 'locked' : ''}" data-bau="${d.id}" ${locked ? 'disabled' : ''} title="${esc(d.name)}">
         ${img}
         <span class="name">${esc(d.name)}</span>
-        <span class="cost">${locked ? esc(this.content.text('bauen_fehler_gesperrt', { level: d.freischaltLevel })) : formatMoney(d.preis)}</span>
+        <span class="cost">${locked ? esc(this.content.text(ohneForschung ? 'bauen_fehler_forschung' : 'bauen_fehler_gesperrt', this.build.sperrWerte(d))) : formatMoney(d.preis)}</span>
       </button>`;
   }
 
@@ -243,7 +244,7 @@ export class BuildMenu {
     if (this.terrain?.mode) return `<b>${esc(this.content.text(`gelaende_${this.terrain.mode}`))}</b><br>${k('auswaehlen')}${t('gelaende_halten')} ${k('pause')}${t('bauen_abbrechen')}`;
     if (!tool) return '';
     if (tool.art === 'bauen') {
-      const problem = this.build.problem ? `<span class="problem">${esc(this.content.text(`bauen_fehler_${this.build.problem}`, { level: tool.def.freischaltLevel }))}</span>` : '';
+      const problem = this.build.problem ? `<span class="problem">${esc(this.content.text(`bauen_fehler_${this.build.problem}`, this.build.sperrWerte(tool.def)))}</span>` : '';
       const flaeche = tool.def.ebene === 'boden' && !tool.def.absenkung && !tool.moving ? ` · ${t('bauen_flaeche_ziehen')}` : '';
       return `<b>${esc(tool.def.name)}</b> ${problem}<br>${k('auswaehlen')}${t('bauen_platzieren')}${flaeche} ${k('objekt_drehen')}${t('bauen_drehen')} ${k('pause')}${t('bauen_abbrechen')}`;
     }

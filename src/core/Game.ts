@@ -65,6 +65,8 @@ import { TruckFleet } from '../world/TruckFleet';
 import { place } from '../world/CartonStorage';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
+import { ResearchWindow } from '../ui/ResearchWindow';
+import { Research } from '../economy/Research';
 import { LampLights } from '../world/LampLights';
 import { daylight } from '../world/DayCycle';
 import { RoofLayer } from '../world/RoofLayer';
@@ -160,6 +162,9 @@ export class Game {
   readonly deliveries: Deliveries | null;
   readonly fleet: TruckFleet | null;
   readonly logisticsWindow: LogisticsWindow;
+  /** Forschungsbaum: Ideen sammeln, Neues freischalten (data/forschung) */
+  readonly research: Research;
+  readonly researchWindow: ResearchWindow;
   private readonly refreshTerrainCuts: () => void;
   /** Angestellte (id) → ihre Spielfigur */
   private readonly workers = new Map<number, Entity>();
@@ -198,6 +203,7 @@ export class Game {
 
     // Spielzustand ohne Darstellung (Koop-tauglich)
     this.player = new PlayerState('lokal', readData<PlayerStart>('spieler/start'), readData<LevelTable>('spieler/level'));
+    this.research = new Research(this.content.forschung, this.player, this.content.forschungWerte);
     this.clock = new GameClock(readData<ClockSettings>('zeit/standard'));
     const css = getComputedStyle(document.documentElement);
     const accent = css.getPropertyValue('--accent').trim() || '#5fd08a';
@@ -310,6 +316,7 @@ export class Game {
     // Ladenbetrieb (Kunden, Kassen, Wege, Ruf); die Kassen bekommen ihre Abrechnung über die Fabrik
     this.prices = new PriceBook(this.content.kunden.preis);
     this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, this.level.data.kundenPunkte ?? [], () => this.factory, this.prices);
+    this.store.unlocks = this.research;
     this.factory.checkout = this.store.checkoutServices;
 
     // Wirtschaft: Lager (alle Ablageflächen) und Einkauf beim Großhandel
@@ -321,11 +328,11 @@ export class Game {
     this.deliveries = this.fleet
       ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
       : null;
-    this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage);
+    this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage, this.research);
     this.buyers = new BuyerSystem(this.world, this.content.produkte, this.purchasing, this.player, this.content.personal.einkauf, this.deliveries ?? undefined);
     // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
     this.utilities = new Utilities(this.content.versorgung, this.player);
-    this.production = new Production(this.world, this.content, this.storage, this.utilities, () => this.player.level,
+    this.production = new Production(this.world, this.content, this.storage, this.utilities, this.research,
       () => [...this.world.query(MachineComponent)].map(([, m]) => m));
     this.factory.machine = {
       production: this.production,
@@ -339,8 +346,8 @@ export class Game {
         this.hud.toasts.show(this.content.text('produziert_fertig', { menge: r.ausgang.menge, ware: this.content.waren.get(r.ausgang.ware).name }), 'gut');
       },
     };
-    this.machineWindow = new MachineWindow(this.hud.root, this.content, this.production, () => this.player.level);
-    this.shelfWindow = new ShelfWindow(this.hud.root, this.content, () => this.player.level);
+    this.machineWindow = new MachineWindow(this.hud.root, this.content, this.production, this.research);
+    this.shelfWindow = new ShelfWindow(this.hud.root, this.content, this.research);
     this.utilityWindow = new UtilityWindow(this.hud.root, this.utilities, this.production, () => this.player.level);
     this.buyers.events.on('ordered', ({ name, kartons, kosten }) => this.hud.toasts.show(this.content.text('einkaeufer_bestellt', { name, kartons, betrag: formatMoney(kosten) }), 'info'));
     this.buyers.events.on('blocked', ({ name, grund }) => this.hud.toasts.show(this.content.text(`einkaeufer_${grund}`, { name }), 'warnung'));
@@ -490,11 +497,12 @@ export class Game {
       this.effects.floatText(f.clone().setY(2.4), `Level ${level}!`, '#ffd166', 1.5);
       this.audio.play('levelup');
       const neu = [
-        ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.build.isBuildable(d)).map((d) => d.name),
-        ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
+        ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.research.ok(d) && this.build.isBuildable(d)).map((d) => d.name),
+        ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level && this.research.ok(p)).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
         ...this.plots.list.filter((p) => p.freischaltLevel === level && !p.besessen).map((p) => `Grundstück ${p.name}`),
       ];
       if (neu.length) this.hud.toasts.show(this.content.text('freigeschaltet', { liste: neu.join(', ') }), 'gut');
+      if (this.research.bereit) this.hud.toasts.show(this.content.text('forschung_bereit'), 'info');
     });
     this.build.events.on('message', ({ key, werte, art }) => this.hud.toasts.show(this.content.text(key, werte), art));
     this.build.events.on('placed', ({ entity, moved }) => {
@@ -509,12 +517,26 @@ export class Game {
     this.hud.onTool('bauen', () => this.buildMenu.toggleOpen());
     this.hud.onTool('personal', () => this.personalWindow.toggleOpen());
     this.hud.onTool('menue', () => this.openMenu('pause'));
-    this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, () => this.player.level, this.buyers.listing);
+    this.assortment = new AssortmentWindow(this.hud.root, this.content, this.prices, this.store.stats, this.world, this.research, this.buyers.listing);
     this.statsWindow = new StatsWindow(this.hud.root, this.store.stats);
     this.hud.onTool('sortiment', () => this.assortment.toggleOpen());
     this.hud.onTool('bilanz', () => this.statsWindow.toggleOpen());
     this.hud.onTool('versorgung', () => this.utilityWindow.toggleOpen());
     this.hud.onTool('lager', () => this.logisticsWindow.toggleOpen());
+    this.researchWindow = new ResearchWindow(this.hud.root, this.content, this.research);
+    this.hud.onTool('forschung', () => this.researchWindow.toggleOpen());
+    this.build.erforscht = (id) => this.research.isDone(id);
+    this.build.forschungName = (id) => this.research.node(id)?.name ?? id;
+    this.research.events.on('researched', ({ node }) => {
+      const f = this.view.focus.clone();
+      this.effects.sparkle(f.clone().setY(1.2), 60);
+      this.effects.floatText(f.clone().setY(2.4), `${node.icon} ${node.name}!`, '#ffd166', 1.3);
+      this.audio.play('levelup');
+      const c = this.content;
+      const neu = [...node.schaltetFrei.bau.map((id) => c.bau.get(id).name), ...node.schaltetFrei.kategorien.map((id) => c.kategorien.get(id).name),
+        ...(node.schaltetFrei.rezepte.length ? [`${node.schaltetFrei.rezepte.length} Rezepte`] : [])];
+      this.hud.toasts.show(c.text('forschung_fertig', { name: node.name, liste: neu.join(', ') }), 'gut');
+    });
     this.hud.onTool('dach', () => this.toggleRoof());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
@@ -641,6 +663,8 @@ export class Game {
     this.utilityWindow.update();
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
+    this.hud.setToolActive('forschung', this.researchWindow.isOpen);
+    this.hud.setToolBadge('forschung', this.research.bereit > 0);
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.renderStore();
 
@@ -689,6 +713,7 @@ export class Game {
     if (i.wasPressed('bilanz_menue')) this.statsWindow.toggleOpen();
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
+    if (i.wasPressed('forschung_menue')) this.researchWindow.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('ton_stumm')) this.hud.toasts.show(this.audio.toggleStumm() ? 'Ton aus (M)' : 'Ton an (M)');
     if (i.wasPressed('pause')) {
@@ -704,6 +729,7 @@ export class Game {
       else if (this.shelfWindow.isOpen) this.shelfWindow.close();
       else if (this.utilityWindow.isOpen) this.utilityWindow.close();
       else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
+      else if (this.researchWindow.isOpen) this.researchWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();
@@ -790,6 +816,7 @@ export class Game {
         gelaende: this.terrain.state(),
         markierungen: this.paint.state(),
         einkauf: this.buyers.listing.state(),
+        forschung: this.research.state(),
         // Was noch auf einem LKW steht, kommt beim Laden gleich wieder per LKW
         ...(this.deliveries && this.fleet ? { logistik: { ...this.deliveries.state(), aufLkw: this.fleet.cargo() } } : {}),
       },
@@ -830,6 +857,7 @@ export class Game {
     if (d.systeme?.gelaende) this.terrain.restore(d.systeme.gelaende);
     this.paint.restore(d.systeme?.markierungen);
     this.buyers.restore(d.systeme?.einkauf);
+    this.research.restore(d.systeme?.forschung as Parameters<Research['restore']>[0]);
     const log = d.systeme?.logistik as (Partial<DeliveriesState> & { aufLkw?: ShipmentLine[] }) | undefined;
     if (log && this.deliveries) {
       const known = (id: string) => this.content.waren.has(id);

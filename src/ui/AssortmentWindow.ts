@@ -1,4 +1,5 @@
 import type { Content } from '../content/Content';
+import type { Unlocks } from '../economy/Research';
 import type { ProductDef } from '../content/definitions';
 import type { World } from '../ecs/World';
 import type { PriceBook } from '../economy/Prices';
@@ -27,7 +28,7 @@ export class AssortmentWindow {
     private readonly prices: PriceBook,
     private readonly stats: StoreStats,
     private readonly world: World,
-    private readonly level: () => number,
+    private readonly unlocks: Unlocks,
     /** Was der Einkäufer nachkauft (Haken je Produkt) */
     private readonly listing?: Listing,
   ) {
@@ -104,7 +105,7 @@ export class AssortmentWindow {
       const ids = new Set([...this.stock().keys(), ...(this.listing?.gelistet ?? [])]);
       return [...ids].map((id) => this.content.produkte.find(id)).filter((p): p is ProductDef => !!p);
     }
-    return this.content.produkte.all().filter((p) => p.freischaltLevel <= this.level());
+    return this.content.produkte.all().filter((p) => this.unlocks.ok(p));
   }
 
   private render(): void {

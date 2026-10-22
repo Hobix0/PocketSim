@@ -21,6 +21,7 @@
   "bilanz_menue": ["KeyL"],
   "versorgung_menue": ["KeyV"],
   "lager_menue": ["KeyG"],
+  "forschung_menue": ["KeyF"],
   "dach_umschalten": ["KeyT"],
   "ton_stumm": ["KeyM"]
 }

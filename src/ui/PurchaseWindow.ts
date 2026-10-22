@@ -131,7 +131,7 @@ export class PurchaseWindow {
     const c = this.content;
     switch (f.grund) {
       case 'leer': return c.text('einkauf_fehler_leer');
-      case 'gesperrt': return c.text('einkauf_fehler_gesperrt', { produkt: f.produkt.name, level: f.level });
+      case 'gesperrt': return c.text('einkauf_fehler_gesperrt', { produkt: f.produkt.name, sperre: f.sperre });
       case 'platz': return c.text('einkauf_fehler_platz', { frei: f.frei, noetig: f.noetig });
       case 'geld': return c.text('einkauf_fehler_geld');
     }
@@ -163,7 +163,7 @@ export class PurchaseWindow {
            <span>${n}</span>
            <button type="button" data-produkt="${p.id}" data-delta="1" aria-label="mehr">+</button>
          </div>`
-      : `<span class="badge">${esc(this.content.text('einkauf_gesperrt', { level: p.freischaltLevel }))}</span>`;
+      : `<span class="badge">${esc(this.purchasing.unlocks.sperre(p) ?? '')}</span>`;
     return `
       <div class="item ${unlocked ? '' : 'locked'} ${n ? 'chosen' : ''}">
         ${icon ? `<img src="${icon}" alt="" loading="lazy" width="44" height="44">` : '<span class="noicon"></span>'}

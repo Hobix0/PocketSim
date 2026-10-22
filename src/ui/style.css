@@ -2171,3 +2171,40 @@ html, body {
   flex: 1;
   accent-color: var(--accent);
 }
+
+/* Forschungsbaum */
+.window.research { width: min(1060px, calc(100% - 24px)); }
+.research .ideen { margin-left: auto; font-weight: 700; color: #ffd166; }
+.research .tree-scroll { overflow: auto; min-height: 0; padding: 4px 2px 8px; }
+.research .tree { position: relative; }
+.research .tree svg { position: absolute; inset: 0; pointer-events: none; }
+.research .tree path { fill: none; stroke-width: 2.5; stroke-linecap: round; }
+.research .tree path.done { stroke: var(--accent); }
+.research .tree path.open { stroke: #ffd166; stroke-dasharray: 6 5; }
+.research .tree path.later { stroke: rgba(255, 255, 255, 0.14); }
+.research .node {
+  position: absolute; display: grid; grid-template-columns: 38px 1fr; grid-template-rows: auto auto;
+  align-content: center; column-gap: 8px; text-align: left; padding: 8px 10px;
+  border-radius: 12px; border: 2px solid var(--panel-line); background: var(--button-bg);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.research .node:hover { transform: translateY(-2px); }
+.research .node .icon { grid-row: 1 / 3; font-size: 26px; align-self: center; text-align: center; }
+.research .node .name { font-weight: 700; line-height: 1.15; }
+.research .node small { color: var(--text-dim); }
+.research .node.erforscht { border-color: var(--accent); background: #22382c; }
+.research .node.erforscht small { color: var(--accent); }
+.research .node.bereit { border-color: #ffd166; box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.18); animation: forschung-puls 2.2s ease-in-out infinite; }
+.research .node.bereit small { color: #ffd166; }
+.research .node.bald { border-style: dashed; opacity: 0.6; }
+.research .node.voraussetzung, .research .node.level { opacity: 0.8; }
+.research .node.sel { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes forschung-puls { 50% { box-shadow: 0 0 0 7px rgba(255, 209, 102, 0.06); } }
+.research .detail { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
+.research .detail.empty { display: block; color: var(--text-dim); }
+.research .detail .icon { font-size: 36px; text-align: center; }
+.research .detail p { margin: 2px 0 6px; color: var(--text-dim); }
+.research .detail ul { margin: 0; padding-left: 18px; columns: 2; font-size: 13px; }
+.research .detail .action { align-self: center; text-align: right; }
+.research .badge.good { background: var(--accent); color: var(--accent-ink); }
+.tools button.has-new::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 4px; border-radius: 50%; background: #ffd166; vertical-align: middle; }

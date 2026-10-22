@@ -1,6 +1,7 @@
 import { readData, readFolderEntries } from '../core/Data';
 import { Registry } from './Registry';
 import type { FigureSettings } from '../voxel/figure';
+import type { ResearchNode, ResearchSettings } from '../economy/Research';
 import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
@@ -46,6 +47,9 @@ export class Content {
   readonly figuren: FigureSettings;
   /** Kunden: Öffnungszeiten, Andrang, Ruf (data/kunden/standard.json) */
   readonly kunden: CustomerSettings;
+  /** Forschungsbaum (data/forschung/baum.json) und Ideen (data/forschung/standard.json) */
+  readonly forschung: ResearchNode[];
+  readonly forschungWerte: ResearchSettings;
   /** Anzeigetexte, z. B. "auswaehlen" → "Auswählen" (data/texte/standard.json). */
   readonly texte: Record<string, string>;
 
@@ -85,7 +89,40 @@ export class Content {
     this.figuren = readData<FigureSettings>('figuren/standard');
     this.kunden = readData<CustomerSettings>('kunden/standard');
     this.texte = readData<Record<string, string>>('texte/standard');
+    this.forschungWerte = readData<ResearchSettings>('forschung/standard');
+    this.forschung = this.loadResearch();
     this.crossCheck();
+  }
+
+  /** Forschungsbaum lesen, prüfen und an Bauteilen, Rezepten und Produkten eintragen */
+  private loadResearch(): ResearchNode[] {
+    const raw = readData<Partial<ResearchNode>[]>('forschung/baum');
+    const nodes: ResearchNode[] = raw.map((r, i) => {
+      if (!r.id || !r.name) throw new Error(`forschung/baum.json: Eintrag ${i} braucht id und name`);
+      return {
+        id: r.id, name: r.name, icon: r.icon ?? '💡', beschreibung: r.beschreibung ?? '',
+        spalte: r.spalte ?? 0, zeile: r.zeile ?? 0, level: r.level ?? 1, kosten: r.kosten ?? 0,
+        voraussetzungen: r.voraussetzungen ?? [],
+        schaltetFrei: { bau: r.schaltetFrei?.bau ?? [], rezepte: r.schaltetFrei?.rezepte ?? [], kategorien: r.schaltetFrei?.kategorien ?? [] },
+        start: r.start ?? false, bald: r.bald ?? false,
+      };
+    });
+    const ids = new Set(nodes.map((n) => n.id));
+    for (const n of nodes) {
+      const where = `forschung/baum.json (${n.id})`;
+      for (const v of n.voraussetzungen) if (!ids.has(v)) throw new Error(`${where}: unbekannte Voraussetzung "${v}"`);
+      const mark = (d: { forschung?: string }, art: string, id: string) => {
+        if (d.forschung) throw new Error(`${where}: ${art} "${id}" wird schon von "${d.forschung}" freigeschaltet`);
+        d.forschung = n.id;
+      };
+      for (const id of n.schaltetFrei.bau) mark(this.bau.get(id), 'Bauteil', id);
+      for (const id of n.schaltetFrei.rezepte) mark(this.rezepte.get(id), 'Rezept', id);
+      for (const k of n.schaltetFrei.kategorien) {
+        if (!this.kategorien.has(k)) throw new Error(`${where}: unbekannte Kategorie "${k}"`);
+        for (const p of this.produkte.all()) if (p.kategorie === k) mark(p, 'Produkt', p.id);
+      }
+    }
+    return nodes;
   }
 
   /** Text zu einem Schlüssel; Platzhalter wie {level} werden ersetzt. Ohne Text: der Schlüssel selbst. */

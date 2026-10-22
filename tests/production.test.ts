@@ -1,3 +1,4 @@
+import { levelUnlocks } from '../src/economy/Research';
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { Content } from '../src/content/Content';
@@ -25,7 +26,7 @@ function setup() {
   const utilities = new Utilities(content.versorgung, p);
   const ctx: Parameters<typeof createBuildEntity>[2] = { content };
   const storage = new CartonStorage(w, ctx);
-  const production = new Production(w, content, storage, utilities, () => p.level, () => [...w.query(MachineComponent)].map(([, m]) => m));
+  const production = new Production(w, content, storage, utilities, levelUnlocks(() => p.level), () => [...w.query(MachineComponent)].map(([, m]) => m));
   let starts = 0, finished = 0;
   ctx.machine = { production, minutesPerSecond: 1, started: () => { starts++; }, finished: () => { finished++; } };
   w.add(createBuildEntity(content.bau.get('europalette'), { position: [3, 0.05, 0], drehung: 0 }, ctx));

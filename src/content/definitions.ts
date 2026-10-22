@@ -22,6 +22,8 @@ export interface ProductDef {
   /** Muss gekühlt werden (nur in Regale mit Kühlung). */
   kuehlung: boolean;
   freischaltLevel: number;
+  /** Forschung, die das freischaltet (aus data/forschung/baum.json, beim Laden gesetzt) */
+  forschung?: string;
   /** true, solange EK/VK nur Startwerte je Kategorie sind (siehe scripts/import-3d.config.json). */
   preisOffen: boolean;
   /** Pfad unter data/, z. B. "3d/Produkte/…/SM_Apfel_Rot.fbx". */
@@ -52,6 +54,8 @@ export interface RecipeDef {
   /** Spielminuten */
   dauer: number;
   freischaltLevel: number;
+  /** Forschung, die das freischaltet (aus data/forschung/baum.json, beim Laden gesetzt) */
+  forschung?: string;
 }
 
 /** Eine Versorgungsart (Strom, Wasser) mit Hausanschluss und Ausbaustufen (data/versorgung). */
@@ -164,6 +168,8 @@ export interface BuildDef {
   ablage?: { ebenen?: number; boeden?: number[] };
   preis: number;
   freischaltLevel: number;
+  /** Forschung, die das freischaltet (aus data/forschung/baum.json, beim Laden gesetzt) */
+  forschung?: string;
   werte: Record<string, number>;
   platzhalter: PlaceholderDef;
   model?: string;
