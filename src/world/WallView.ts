@@ -61,7 +61,11 @@ export class WallView {
     for (const e of anbau) e.object.visible = !lowered.has(key(e.object.position));
   }
 
-  /** Liegt die Wand zwischen Kamera und Blickpunkt (Strecke schneidet die Wand) und nah genug am Blickpunkt? */
+  /**
+   * Wie bei den Sims: Eine Wand sinkt, wenn sie vor dem Blickpunkt steht (Richtung Kamera)
+   * und mit ihrer Fläche zur Kamera zeigt – so geht die ganze Vorderfront weg, Seiten- und Rückwände bleiben.
+   * Zusätzlich sinkt jede Wand, durch die die Sichtlinie Kamera→Blickpunkt geht.
+   */
   private blocks(e: Entity, f: FootprintComponent, camera: THREE.Vector3, focus: THREE.Vector3): boolean {
     const p = e.object.position;
     if (Math.hypot(p.x - focus.x, p.z - focus.z) > this.settings.radius) return false;
@@ -72,7 +76,14 @@ export class WallView {
     const half = Math.max(w, d) / 2 + this.settings.ueberstand;
     const a = new THREE.Vector2(p.x - along.x * half, p.z - along.y * half);
     const b = new THREE.Vector2(p.x + along.x * half, p.z + along.y * half);
-    return segmentsCross(new THREE.Vector2(camera.x, camera.z), new THREE.Vector2(focus.x, focus.z), a, b);
+    const cam = new THREE.Vector2(camera.x, camera.z), foc = new THREE.Vector2(focus.x, focus.z);
+    if (segmentsCross(cam, foc, a, b)) return true;
+    const blick = cam.clone().sub(foc);
+    if (blick.lengthSq() < 1e-6) return false;
+    blick.normalize();
+    const vor = (p.x - foc.x) * blick.x + (p.z - foc.y) * blick.y;
+    const zeigt = Math.abs(-along.y * blick.x + along.x * blick.y);
+    return vor > this.settings.ueberstand && zeigt > 0.45;
   }
 }
 
