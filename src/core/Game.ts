@@ -54,6 +54,7 @@ import { MachineComponent } from '../components/MachineComponent';
 import { ShelfWindow } from '../ui/ShelfWindow';
 import { BuyerSystem } from '../world/BuyerSystem';
 import { Effects } from '../fx/Effects';
+import { Ambience, type AmbienceSettings } from '../world/Ambience';
 import { CozyLook, type CozyLookSettings } from '../render/CozyLook';
 import { AudioSystem, type AudioSettings } from '../audio/AudioSystem';
 import { TruckComponent } from '../components/TruckComponent';
@@ -124,6 +125,9 @@ export class Game {
   readonly buyers: BuyerSystem;
   /** Partikel, schwebende Texte und Bewegungen (data/effekte) */
   readonly effects: Effects;
+  /** Leben in der Welt: Passanten, Autos, Tauben, Schmetterlinge, Wolken (data/leben) */
+  readonly ambience: Ambience;
+  private nacht = 0;
   /** Nachbearbeitung: Bloom, Miniatur-Unschärfe, Vignette (data/kamera → look) */
   readonly look: CozyLook;
   /** Töne und Musik (data/audio) */
@@ -425,6 +429,9 @@ export class Game {
     // Effekte: Plopp beim Bauen, Verpuffen beim Abriss, Staub
     this.effects = new Effects(this.scene, this.content.effekte);
     this.build.motion = this.content.effekte.vorschau;
+    this.ambience = new Ambience(this.scene, this.world, this.models, this.content.figuren, this.level.data.leben, readData<AmbienceSettings>('leben/standard'), {
+      sound: (name) => this.audio.play(name),
+    });
     try { const e = localStorage.getItem('urbanevolution.effekte'); if (e !== null) this.effects.settings.an = e === '1'; } catch { /* Standard */ }
     // Töne zu dem, was passiert
     this.build.events.on('placed', () => this.audio.play('bauen'));
@@ -591,6 +598,7 @@ export class Game {
     this.updateDaylight(realDt);
     this.effects.update(realDt);
     this.truckSmoke(simDt);
+    this.ambience.update(simDt, this.clock.totalMinutes % (24 * 60), this.nacht, realDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
     this.terrainView.update();
     this.paint.update();
@@ -649,6 +657,7 @@ export class Game {
     (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
     this.look.nacht = 1 - d.tag;
+    this.nacht = 1 - d.tag;
     this.audio.nacht = 1 - d.tag;
   }
 

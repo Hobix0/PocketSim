@@ -52,6 +52,15 @@ export function expandObjects(list: LevelObject[]): PlacedObject[] {
 
 const round = (n: number) => Math.round(n * 1000) / 1000;
 
+export interface LevelLife {
+  gehweg: { x: [number, number]; z: [number, number]; y: number };
+  spuren: { z: number; richtung: 1 | -1 }[];
+  strasse: { x: [number, number]; y: number };
+  /** Punkte vor den Schaufenstern (x, z), an denen Passanten stehen bleiben */
+  schaufenster: [number, number][];
+  tauben: [number, number, number][];
+}
+
 export interface LevelData {
   name: string;
   himmel: string;
@@ -62,6 +71,8 @@ export interface LevelData {
   kameraAbstand?: number;
   /** Wo Kunden auftauchen und wieder verschwinden (z. B. die Enden des Gehwegs). Ohne Angabe: keine Kunden. */
   kundenPunkte?: [number, number, number][];
+  /** Leben in der Welt: wo Passanten gehen, Autos fahren, Tauben picken (src/world/Ambience.ts) */
+  leben?: LevelLife;
   /** Ziele für dieses Level (Datei unter data/ziele/), z. B. "start" */
   ziele?: string;
   /** Strecke der Liefer-LKW (siehe world/TruckFleet.ts); ohne Angabe wird sofort ins Lager geliefert */

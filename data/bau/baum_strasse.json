@@ -1,0 +1,11 @@
+{
+  "id": "baum_strasse",
+  "name": "Straßenbaum",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/baum_strasse",
+  "platzhalter": {"groesse": [0.6, 4.8, 0.6], "farbe": "#6fa05a"}
+}
