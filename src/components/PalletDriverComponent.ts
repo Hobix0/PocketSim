@@ -74,7 +74,6 @@ export class PalletDriverComponent extends Component implements Describable {
 
   override update(dt: number): void {
     if (dt <= 0) return;
-    this.carry();
     if (this.state === 'wartet' && !this.steps.length) {
       this.wait -= dt;
       if (this.wait <= 0) this.start();
@@ -84,6 +83,8 @@ export class PalletDriverComponent extends Component implements Describable {
     const step = this.steps[0];
     if (!step) { this.done(); return; }
     if (this.run(step, dt)) { this.steps.shift(); this.pathSet = false; }
+    // Palette nach der Bewegung an die Gabel (sonst hinkt sie in Kurven hinterher)
+    this.carry();
   }
 
   override onDetach(): void {
@@ -388,6 +389,7 @@ export class PalletDriverComponent extends Component implements Describable {
     const fwd = new THREE.Vector3(Math.sin(o.rotation.y), 0, Math.cos(o.rotation.y));
     p.object.position.set(o.position.x + fwd.x * f.vorn, this.floor() + Math.max(this.lift, f.gabelY), o.position.z + fwd.z * f.vorn);
     p.object.rotation.y = o.rotation.y - Math.PI / 2;
+    p.get(PalletComponent)?.sync();
   }
 
   /** Getragene Palette dort abstellen, wo sie gerade ist (auf dem Boden) */

@@ -97,7 +97,8 @@ export class TruckFleet {
       if (t.state !== 'steht') continue;
       t.wartet -= minutes;
       if (t.kartons === 0) t.depart();
-      else if (t.wartet <= 0) { this.driverUnload(t); t.depart(); }
+      // Holt gerade ein Staplerfahrer eine Palette von diesem LKW, wartet er, bis sie herunter ist
+      else if (t.wartet <= 0 && !this.palletsOn(t).some((p) => p.require(PalletComponent).reservedBy !== null)) { this.driverUnload(t); t.depart(); }
     }
     if (this.queue.length) this.dispatch();
   }
