@@ -40,6 +40,13 @@ describe('Produktionslinien', () => {
     }
   });
 
+  it('die Linien stehen im Forschungs-Tab Produktion; ihre Rezepte schalten mit frei', () => {
+    expect(content.bau.get('linie_abfuellanlage').forschung).toBe('p_fabrik');
+    expect(content.rezepte.get('herstellen_cola_0_5l').forschung).toBe('p_fabrik');
+    expect(content.rezepte.get('herstellen_tshirt').forschung).toBe('p_textil');
+    expect(content.forschung.filter((n) => n.baum === 'produktion').length).toBeGreaterThanOrEqual(6);
+  });
+
   it('Rohstoffe kosten etwa 45 % des Einkaufspreises', () => {
     const p = content.produkte.get('sneaker');
     const r = content.rezepte.get('herstellen_sneaker');

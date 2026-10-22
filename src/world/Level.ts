@@ -46,6 +46,8 @@ export interface BuildingSpec {
   dach?: 'rot' | 'grau' | 'flach';
   /** Reines Wohnhaus: Haustür und Fenster statt Laden im Erdgeschoss */
   wohnhaus?: boolean;
+  /** Halle (Industriegebiet): Betonboden, Trapezblech, Sektionaltore und Lichtbänder */
+  halle?: boolean;
   blick?: 'sued' | 'nord';
 }
 
@@ -53,7 +55,7 @@ export interface BuildingSpec {
 export function buildingParts(b: BuildingSpec): PlacedObject[] {
   const { minX, maxX, minZ, maxZ } = b.rect;
   const nx = Math.round((maxX - minX) / 2), nz = Math.round((maxZ - minZ) / 2);
-  const alt = b.zustand === 'alt', wohn = !!b.wohnhaus, etagen = b.etagen ?? 0, f = b.farbe ?? 'creme';
+  const alt = b.zustand === 'alt', wohn = !!b.wohnhaus, halle = !!b.halle, etagen = b.etagen ?? 0, f = b.farbe ?? 'creme';
   const tiefe = maxZ - minZ, cz = (minZ + maxZ) / 2;
   const sattel = b.dach !== undefined && b.dach !== 'flach' && [6, 8, 10].includes(tiefe);
   const out: PlacedObject[] = [];
@@ -61,15 +63,17 @@ export function buildingParts(b: BuildingSpec): PlacedObject[] {
   const tuer = Math.min(nx - 1, b.tuer ?? Math.floor(nx / 2));
   const top = 4 + 3 * etagen;
   // Erdgeschoss
-  if (!wohn) for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) put(alt ? 'altbau_boden' : 'boden_fliese_innen', minX + 1 + 2 * i, 0, minZ + 1 + 2 * k, 0);
-  const wand = wohn ? `wohn_eg_wand_${f}` : alt ? 'altbau_wand' : 'wand_weiss';
+  if (!wohn) for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) put(halle ? 'betonboden' : alt ? 'altbau_boden' : 'boden_fliese_innen', minX + 1 + 2 * i, 0, minZ + 1 + 2 * k, 0);
+  const wand = halle ? 'trapezblech_wand' : wohn ? `wohn_eg_wand_${f}` : alt ? 'altbau_wand' : 'wand_weiss';
+  // Halle: Tore an der Tür und (bei breiten Hallen) am anderen Ende, dazwischen Lichtbänder im Wechsel
+  const tor = (i: number) => i === tuer || (nx > 8 && i === nx - 2);
   for (let i = 0; i < nx; i++) {
     const x = minX + 1 + 2 * i;
-    put(wohn ? `wohn_eg_fenster_${f}` : wand, x, 0, minZ - 0.1, 90);
-    const front = wohn ? (i === tuer ? `wohn_tuer_${f}` : `wohn_eg_fenster_${f}`)
+    put(wohn ? `wohn_eg_fenster_${f}` : halle && i % 3 === 1 ? 'trapezblech_lichtband' : wand, x, 0, minZ - 0.1, 90);
+    const front = halle ? (tor(i) ? 'sektionaltor' : i % 3 === 1 ? 'trapezblech_lichtband' : 'trapezblech_wand') : wohn ? (i === tuer ? `wohn_tuer_${f}` : `wohn_eg_fenster_${f}`)
       : i === tuer ? (alt ? 'altbau_tuer' : 'eingang_schiebetuer') : alt ? (i === 0 ? 'altbau_fenster_schild' : 'altbau_fenster') : 'schaufenster_gross';
     put(front, x, 0, maxZ + 0.1, -90);
-    if (i === tuer && !alt && !wohn) put('eingangsstufe', x, 0, maxZ + 0.1, -90);
+    if (i === tuer && !alt && !wohn && !halle) put('eingangsstufe', x, 0, maxZ + 0.1, -90);
     if (etagen > 0) put('gesims', x, 4, maxZ + 0.1, -90);
   }
   for (let k = 0; k < nz; k++) {

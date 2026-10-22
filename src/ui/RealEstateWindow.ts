@@ -9,7 +9,7 @@ import { formatMoney } from './format';
 // Die Angebote stehen im Level (data/level → grundstuecke → "angebot").
 
 const GROESSE: Record<string, string> = { klein: 'Klein', mittel: 'Mittel', gross: 'Groß', grundstueck: 'Grundstück' };
-const ICON: Record<string, string> = { klein: '🏠', mittel: '🏬', gross: '🏛️', grundstueck: '🌱' };
+const ICON: Record<string, string> = { klein: '🏠', mittel: '🏬', gross: '🏛️', grundstueck: '🌱', zentrallager: '📦', halle: '🏭' };
 
 export class RealEstateWindow {
   private readonly el: HTMLElement;
@@ -87,7 +87,7 @@ export class RealEstateWindow {
     const locked = !own && p.freischaltLevel > this.level();
     const fort = this.renovations.progress(p.id);
     const alt = this.renovations.needs(p.id);
-    const zustand = a.groesse === 'grundstueck' ? 'leer – selbst bauen' : fort !== null ? `wird renoviert … ${Math.round(fort * 100)} %` : alt ? 'Altbau, renovierungsbedürftig' : 'bezugsfertig';
+    const zustand = a.art === 'zentrallager' ? 'Zentrallager: Ware und Rohstoffe lagern, abholen lassen' : a.art === 'halle' ? 'Produktionshalle: Produktionslinien aufstellen' : a.groesse === 'grundstueck' ? 'leer – selbst bauen' : fort !== null ? `wird renoviert … ${Math.round(fort * 100)} %` : alt ? 'Altbau, renovierungsbedürftig' : 'bezugsfertig';
     const knoepfe: string[] = [];
     if (!own && !locked) {
       knoepfe.push(`<button type="button" class="primary" data-act="kaufen" data-id="${esc(p.id)}">Kaufen · ${formatMoney(p.preis)}</button>`);
@@ -100,7 +100,7 @@ export class RealEstateWindow {
     if (own && alt && fort === null) knoepfe.push(`<button type="button" class="primary" data-act="renovieren" data-id="${esc(p.id)}">Renovieren · ${formatMoney(this.renovations.cost(p.id))}</button>`);
     knoepfe.push(`<button type="button" data-act="zeigen" data-id="${esc(p.id)}">📍 Ansehen</button>`);
     return `<div class="estate ${own ? 'own' : ''} ${locked ? 'locked' : ''}">
-      <div class="estate-head"><span class="icon">${ICON[a.groesse] ?? '🏠'}</span><div><b>${esc(p.name)}</b>
+      <div class="estate-head"><span class="icon">${ICON[a.art ?? a.groesse] ?? '🏠'}</span><div><b>${esc(p.name)}</b>
         <small>${esc(GROESSE[a.groesse] ?? '')} · ${w} × ${d} m (${w * d} m²) · ${esc(a.lage)}${a.parkplatz ? ' · 🅿️ mit Parkplatz' : ''}</small></div>
         <span class="tag">${own ? (rented ? 'gemietet' : 'gehört dir') : locked ? `ab Level ${p.freischaltLevel}` : 'zu haben'}</span></div>
       ${this.lage(p)}
@@ -121,11 +121,11 @@ export class RealEstateWindow {
 
   private render(): void {
     const all = this.plots.list.filter((p) => p.angebot);
-    const shown = all.filter((p) => this.filter === 'alle' || (this.filter === 'meine' ? this.plots.isOwned(p.id) : p.angebot!.groesse === this.filter));
+    const shown = all.filter((p) => this.filter === 'alle' || (this.filter === 'meine' ? this.plots.isOwned(p.id) : this.filter === 'industrie' ? p.angebot!.lage === 'Industriegebiet' : p.angebot!.groesse === this.filter && p.angebot!.lage !== 'Industriegebiet'));
     // Eigene zuerst, dann nach Größe
     const rang = (p: PlotDef) => (this.plots.isOwned(p.id) ? 0 : 10) + ['klein', 'mittel', 'gross', 'grundstueck'].indexOf(p.angebot!.groesse);
     shown.sort((a, b) => rang(a) - rang(b));
-    const filters = [['alle', 'Alle'], ['meine', 'Meine'], ['klein', 'Klein'], ['mittel', 'Mittel'], ['gross', 'Groß'], ['grundstueck', 'Grundstücke']]
+    const filters = [['alle', 'Alle'], ['meine', 'Meine'], ['klein', 'Klein'], ['mittel', 'Mittel'], ['gross', 'Groß'], ['grundstueck', 'Grundstücke'], ['industrie', 'Industrie']]
       .map(([id, name]) => `<button type="button" data-filter="${id}" class="${this.filter === id ? 'active' : ''}">${name}</button>`).join('');
     const miete = this.plots.mieteProTag;
     const plus = this.locations ? Math.round((this.locations.factor() - 1) * 100) : 0;

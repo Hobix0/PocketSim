@@ -2,7 +2,7 @@
   "name": "Mein Laden",
   "himmel": "#cfe0e0",
   "raster": 1,
-  "boden": {"groesse": [120, 50], "farbe": "#98a877"},
+  "boden": {"groesse": [120, 90], "farbe": "#98a877"},
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
   "ziele": "start",
@@ -28,7 +28,11 @@
     {"id": "laden_sued_west", "name": "Laden im Wohnhaus (Lindenhof)", "rect": {"minX": -44, "maxX": -36, "minZ": 14, "maxZ": 22}, "preis": 11000, "freischaltLevel": 3, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Wohnstraße Süd", "miete": 120}},
     {"id": "laden_sued_mitte", "name": "Altbau-Laden mit Wohnungen", "rect": {"minX": -18, "maxX": -12, "minZ": 14, "maxZ": 22}, "preis": 5500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Wohnstraße Süd", "miete": 55}},
     {"id": "laden_sued_ost", "name": "Ecklokal am Brunnen", "rect": {"minX": 10, "maxX": 18, "minZ": 14, "maxZ": 22}, "preis": 10500, "freischaltLevel": 3, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Wohnstraße Süd", "miete": 115}},
-    {"id": "laden_sued_kiosk", "name": "Kleiner Altbau-Kiosk", "rect": {"minX": 44, "maxX": 50, "minZ": 14, "maxZ": 20}, "preis": 4500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Wohnstraße Süd", "miete": 45}}
+    {"id": "laden_sued_kiosk", "name": "Kleiner Altbau-Kiosk", "rect": {"minX": 44, "maxX": 50, "minZ": 14, "maxZ": 20}, "preis": 4500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Wohnstraße Süd", "miete": 45}},
+    {"id": "zentrallager", "name": "Zentrallager", "rect": {"minX": -58, "maxX": -22, "minZ": -44, "maxZ": -21}, "preis": 30000, "freischaltLevel": 4, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Industriegebiet", "miete": 300, "art": "zentrallager"}},
+    {"id": "produktionshalle_1", "name": "Produktionshalle Nord", "rect": {"minX": -20, "maxX": 10, "minZ": -42, "maxZ": -21}, "preis": 28000, "freischaltLevel": 4, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Industriegebiet", "miete": 260, "art": "halle"}},
+    {"id": "produktionshalle_2", "name": "Große Produktionshalle", "rect": {"minX": 12, "maxX": 46, "minZ": -44, "maxZ": -21}, "preis": 40000, "freischaltLevel": 6, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Industriegebiet", "miete": 380, "art": "halle"}},
+    {"id": "gewerbe_ost", "name": "Gewerbegrundstück", "rect": {"minX": 48, "maxX": 59, "minZ": -42, "maxZ": -21}, "preis": 9000, "freischaltLevel": 5, "angebot": {"groesse": "grundstueck", "lage": "Industriegebiet"}}
   ],
   "leben": {
     "gehweg": { "x": [-59, 59], "z": [5.3, 6.7], "y": 0.14 },
@@ -41,7 +45,10 @@
   "bloecke": [
     {"name": "Straße", "position": [0, 0.02, 9.5], "groesse": [120, 0.04, 5], "farbe": "#4d5156"},
     {"name": "Bordstein", "position": [0, 0.07, 6.95], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"},
-    {"name": "Bordstein Süd", "position": [0, 0.07, 12.05], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"}
+    {"name": "Bordstein Süd", "position": [0, 0.07, 12.05], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"},
+    {"name": "Industriestraße", "position": [0, 0.02, -18], "groesse": [120, 0.04, 6], "farbe": "#4d5156"},
+    {"name": "Bordstein Industrie Süd", "position": [0, 0.07, -14.85], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"},
+    {"name": "Bordstein Industrie Nord", "position": [0, 0.07, -21.15], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"}
   ],
   "objekte": [
     {"typ": "boden_fliese_innen", "position": [-3, 0, -2], "drehung": 0, "wiederholen": {"anzahl": [4, 3], "abstand": [2, 2]}},
@@ -127,7 +134,18 @@
     {"typ": "strassenlaterne", "position": [24, 0.14, 12.4], "drehung": 180},
     {"typ": "strassenlaterne", "position": [52, 0.14, 12.4], "drehung": 180},
     {"typ": "baum_strasse", "position": [-29, 0.14, 13.2], "drehung": 0},
-    {"typ": "baum_strasse", "position": [19, 0.14, 13.2], "drehung": 40}
+    {"typ": "baum_strasse", "position": [19, 0.14, 13.2], "drehung": 40},
+    {"gebaeude": {"rect": {"minX": -56, "maxX": -24, "minZ": -42, "maxZ": -22}, "zustand": "neu", "halle": true, "tuer": 2}},
+    {"gebaeude": {"rect": {"minX": -18, "maxX": 8, "minZ": -40, "maxZ": -22}, "zustand": "neu", "halle": true, "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": 14, "maxX": 44, "minZ": -42, "maxZ": -22}, "zustand": "neu", "halle": true, "tuer": 1}},
+    {"typ": "folienpalette", "position": [-52, 0.05, -38], "drehung": 0, "wiederholen": {"anzahl": [6, 3], "abstand": [2.4, 3]}},
+    {"typ": "palettenstapel", "position": [-36, 0.05, -38], "drehung": 0, "wiederholen": {"anzahl": [4, 2], "abstand": [2.4, 3]}},
+    {"typ": "kartonstapel", "position": [-30, 0.05, -26], "drehung": 0, "wiederholen": {"anzahl": [3, 1], "abstand": [1.6, 0]}},
+    {"typ": "warnschild_stapler", "position": [-46, 0.05, -23], "drehung": -90},
+    {"typ": "strassenlaterne", "position": [-30, 0.14, -14.5], "drehung": 180},
+    {"typ": "strassenlaterne", "position": [10, 0.14, -14.5], "drehung": 180},
+    {"typ": "strassenlaterne", "position": [46, 0.14, -14.5], "drehung": 180},
+    {"typ": "bauzaun", "position": [49, 0.14, -21.5], "drehung": -90, "wiederholen": {"anzahl": [5, 1], "abstand": [2, 0]}}
   ],
   "bodenFrueher": [40, 30]
 }

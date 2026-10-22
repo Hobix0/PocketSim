@@ -21,7 +21,8 @@
     "modelle:regale": "node scripts/make-regal-models.mjs",
     "modelle:mode": "node scripts/make-mode-models.mjs",
     "modelle:altbau": "node scripts/make-altbau-models.mjs",
-    "modelle:wohn": "node scripts/make-wohn-models.mjs"
+    "modelle:wohn": "node scripts/make-wohn-models.mjs",
+    "modelle:produktion": "node scripts/make-produktion-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"
