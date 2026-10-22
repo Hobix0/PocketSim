@@ -147,6 +147,10 @@
       "icon": "⚙️",
       "gruppen": [
         {
+          "id": "linien",
+          "name": "Produktionslinien"
+        },
+        {
           "id": "maschinen",
           "name": "Maschinen"
         }

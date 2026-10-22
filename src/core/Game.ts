@@ -48,8 +48,10 @@ import { GameMenu } from '../ui/GameMenu';
 import { AssortmentWindow } from '../ui/AssortmentWindow';
 import { StatsWindow } from '../ui/StatsWindow';
 import { Plots } from '../world/Plots';
+import { CentralWarehouse, type WarehouseSettings } from '../economy/CentralWarehouse';
 import { Renovations, type RenovationSettings } from '../world/Renovations';
 import { RealEstateWindow } from '../ui/RealEstateWindow';
+import { WarehouseWindow } from '../ui/WarehouseWindow';
 import { Locations, type LocationSettings } from '../world/Locations';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
@@ -157,8 +159,12 @@ export class Game {
   readonly statsWindow: StatsWindow;
   /** Grundstücke: wo gebaut werden darf */
   readonly plots: Plots;
+  /** Zentrallager im Industriegebiet und der Einkauf dorthin */
+  readonly warehouse: CentralWarehouse;
+  readonly purchasingZentral: Purchasing;
   readonly renovations: Renovations;
   readonly realEstate: RealEstateWindow;
+  readonly warehouseWindow: WarehouseWindow;
   private realEstateTick = 0;
   /** Strom und Wasser */
   readonly utilities: Utilities;
@@ -349,8 +355,13 @@ export class Game {
     this.buyers = new BuyerSystem(this.world, this.content.produkte, this.purchasing, this.player, this.content.personal.einkauf, this.deliveries ?? undefined);
     // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
     this.utilities = new Utilities(this.content.versorgung, this.player);
+    // Zentrallager: gehört dir das Grundstück „zentrallager“ (gekauft oder gemietet), ist es in Betrieb
+    this.warehouse = new CentralWarehouse(readData<WarehouseSettings>('produktion/zentrallager'), this.content.waren, this.player,
+      () => this.plots?.isOwned('zentrallager') ?? false, () => this.clock.totalMinutes);
+    this.purchasingZentral = new Purchasing(this.content.waren, this.player, this.warehouse, this.research,
+      { kartons: cartonsPerPallet({ content: this.content }), rabatt: this.content.lager.palette.rabatt });
     this.production = new Production(this.world, this.content, this.storage, this.utilities, this.research,
-      () => [...this.world.query(MachineComponent)].map(([, m]) => m));
+      () => [...this.world.query(MachineComponent)].map(([, m]) => m), () => (this.warehouse.active() ? this.warehouse : null));
     this.factory.machine = {
       production: this.production,
       minutesPerSecond: readData<ClockSettings>('zeit/standard').spielminutenProSekunde,
@@ -483,6 +494,13 @@ export class Game {
       (p) => ![...this.world.query(FootprintComponent)].some(([e, f]) => (f.ebene === 'objekt' || f.ebene === 'decke') && e.typeId !== 'geruempel'
         && e.object.position.x > p.rect.minX && e.object.position.x < p.rect.maxX && e.object.position.z > p.rect.minZ && e.object.position.z < p.rect.maxZ),
       locations);
+    // Zentrallager-Fenster; Einkauf ins Zentrallager im Einkaufsfenster
+    this.warehouseWindow = new WarehouseWindow(this.hud.root, this.warehouse, this.deliveries ?? this.storage);
+    const zl = this.warehouse.settings.anlieferung;
+    this.purchaseWindow.zentral = { purchasing: this.purchasingZentral, active: () => this.warehouse.active(),
+      arrival: (art) => this.clock.totalMinutes + (art === 'express' ? zl.expressMinuten : zl.minuten) };
+    this.warehouse.events.on('arrived', ({ kartons }) => { this.hud.toasts.show(this.content.text('zentrallager_angekommen', { kartons }), 'gut'); this.warehouseWindow.refresh(); });
+    this.warehouse.events.on('produced', () => this.warehouseWindow.refresh());
     this.plots.events.on('rented', (p) => { this.hud.toasts.show(this.content.text('miete_gemietet', { name: p.name }), 'gut'); this.audio.play('kasse'); });
     this.plots.events.on('unpaid', ({ plot, tage }) => this.hud.toasts.show(this.content.text('miete_offen', { name: plot.name, tage }), 'warnung'));
     this.plots.events.on('ended', ({ plot }) => this.hud.toasts.show(this.content.text('miete_beendet', { name: plot.name }), 'warnung'));
@@ -571,6 +589,7 @@ export class Game {
     this.researchWindow = new ResearchWindow(this.hud.root, this.content, this.research);
     this.hud.onTool('forschung', () => this.researchWindow.toggleOpen());
     this.hud.onTool('immobilien', () => this.realEstate.toggleOpen());
+    this.hud.onTool('zentrallager', () => this.warehouseWindow.toggleOpen());
     this.build.erforscht = (id) => this.research.isDone(id);
     this.build.forschungName = (id) => this.research.node(id)?.name ?? id;
     this.research.events.on('researched', ({ node }) => {
@@ -677,6 +696,7 @@ export class Game {
     this.buyers.update(this.clock.totalMinutes);
     this.fleet?.update(minutes);
     this.renovations.update(minutes);
+    this.warehouse.update();
     this.world.update(simDt);
     this.updateDaylight(realDt);
     this.effects.update(realDt);
@@ -717,6 +737,7 @@ export class Game {
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
     this.hud.setToolActive('forschung', this.researchWindow.isOpen);
     this.hud.setToolActive('immobilien', this.realEstate.isOpen);
+    this.hud.setToolActive('zentrallager', this.warehouseWindow.isOpen);
     this.hud.setToolBadge('forschung', this.research.bereit > 0);
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.hud.setToolActive('waende', this.walls.mode !== 'oben');
@@ -775,6 +796,7 @@ export class Game {
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('forschung_menue')) this.researchWindow.toggleOpen();
     if (i.wasPressed('immobilien_menue')) this.realEstate.toggleOpen();
+    if (i.wasPressed('zentrallager_menue')) this.warehouseWindow.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('waende_umschalten')) this.cycleWalls();
     if (i.wasPressed('ton_stumm')) this.hud.toasts.show(this.audio.toggleStumm() ? 'Ton aus (M)' : 'Ton an (M)');
@@ -793,6 +815,7 @@ export class Game {
       else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
       else if (this.researchWindow.isOpen) this.researchWindow.close();
       else if (this.realEstate.isOpen) this.realEstate.close();
+      else if (this.warehouseWindow.isOpen) this.warehouseWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();
@@ -877,6 +900,7 @@ export class Game {
         grundstuecke: this.plots.state(),
         renovierungen: this.renovations.state(),
         gemietet: this.plots.rentState(),
+        zentrallager: this.warehouse.state(),
         versorgung: this.utilities.state(),
         gelaende: this.terrain.state(),
         gelaendeRaster: this.terrain.raster(),
@@ -919,6 +943,7 @@ export class Game {
     const grund = d.systeme?.grundstuecke;
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
     this.plots.restoreRent(d.systeme?.gemietet);
+    this.warehouse.restore(d.systeme?.zentrallager);
     this.renovations.restore(d.systeme?.renovierungen);
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);

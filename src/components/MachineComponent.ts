@@ -11,7 +11,7 @@ import type { PersistentComponent } from '../save/SaveGame';
 // Ergebnis als Karton im Lager. Mit „Wiederholen“ startet sie von selbst neu, sobald Rohstoffe,
 // Strom und Lagerplatz da sind. Eine kleine Lampe zeigt den Zustand (grün = läuft, gelb = wartet).
 
-export type MachineStatus = 'bereit' | 'laeuft' | 'wartet_rohstoffe' | 'wartet_strom' | 'wartet_wasser' | 'wartet_lager';
+export type MachineStatus = 'bereit' | 'laeuft' | 'wartet_rohstoffe' | 'wartet_strom' | 'wartet_wasser' | 'wartet_lager' | 'wartet_zentrallager';
 
 export interface MachineServices {
   production: Production;
@@ -83,7 +83,7 @@ export class MachineComponent extends InteractableComponent implements Describab
     if (this.laeuft && this.rezept) {
       this.fortschritt += minutes;
       if (this.fortschritt < this.rezept.dauer) return;
-      if (!this.services.production.deliver(this.rezept)) { this.setStatus('wartet_lager'); return; }
+      if (!this.services.production.deliver(this.rezept, this.def)) { this.setStatus('wartet_lager'); return; }
       this.laeuft = false;
       this.fortschritt = 0;
       this.durchgaenge++;
@@ -131,10 +131,10 @@ export class MachineComponent extends InteractableComponent implements Describab
     const check = this.services.production.canStart(this.rezept, this.def);
     this.letztePruefung = check;
     if (!check.ok) {
-      this.setStatus(check.grund === 'rohstoffe' ? 'wartet_rohstoffe' : check.grund === 'strom' ? 'wartet_strom' : check.grund === 'wasser' ? 'wartet_wasser' : 'bereit');
+      this.setStatus(check.grund === 'rohstoffe' ? 'wartet_rohstoffe' : check.grund === 'strom' ? 'wartet_strom' : check.grund === 'wasser' ? 'wartet_wasser' : check.grund === 'zentrallager' ? 'wartet_zentrallager' : 'bereit');
       return check;
     }
-    this.services.production.consume(this.rezept);
+    this.services.production.consume(this.rezept, this.def);
     this.laeuft = true;
     this.fortschritt = 0;
     this.setStatus('laeuft');
@@ -166,4 +166,5 @@ export const STATUS_TEXT: Record<MachineStatus, string> = {
   wartet_strom: 'Stromanschluss reicht nicht',
   wartet_wasser: 'Wasseranschluss reicht nicht',
   wartet_lager: 'Lager voll – wartet auf Platz',
+  wartet_zentrallager: 'braucht ein Zentrallager (Immobilien → Industriegebiet)',
 };

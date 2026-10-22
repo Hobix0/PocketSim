@@ -24,6 +24,8 @@ export interface PlotOffer {
   miete?: number;
   /** Freistehend mit eigenem Parkplatz (mehr Kundschaft von weiter weg) */
   parkplatz?: boolean;
+  /** Industriegebiet: Zentrallager oder Produktionshalle */
+  art?: 'zentrallager' | 'halle';
 }
 
 export interface PlotEvents extends Record<string, unknown> {

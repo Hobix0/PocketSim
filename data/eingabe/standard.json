@@ -21,6 +21,7 @@
   "bilanz_menue": ["KeyL"],
   "versorgung_menue": ["KeyV"],
   "immobilien_menue": ["KeyI"],
+  "zentrallager_menue": ["KeyZ"],
   "lager_menue": ["KeyG"],
   "forschung_menue": ["KeyF"],
   "dach_umschalten": ["KeyT"],

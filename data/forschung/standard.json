@@ -16,6 +16,11 @@
       "id": "mode",
       "name": "Mode",
       "icon": "👗"
+    },
+    {
+      "id": "produktion",
+      "name": "Produktion",
+      "icon": "🏭"
     }
   ]
 }

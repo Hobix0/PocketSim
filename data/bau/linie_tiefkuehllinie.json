@@ -1,0 +1,26 @@
+{
+  "id": "linie_tiefkuehllinie",
+  "name": "Tiefkühl-Linie",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 9000,
+  "freischaltLevel": 5,
+  "werte": {},
+  "maschine": {
+    "typ": "tiefkuehllinie",
+    "strom": 12,
+    "wasser": 200,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_tiefkuehllinie",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#9fd0e6"
+  },
+  "gruppe": "produktion/linien"
+}

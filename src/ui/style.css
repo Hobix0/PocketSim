@@ -1960,26 +1960,30 @@ html, body {
 }
 
 /* Versandauswahl im Großhandel */
-.purchase .shipping {
+.purchase .shipping,
+.purchase .ziel {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   flex-basis: 100%;
 }
 
-.hud .purchase .shipping button {
+.hud .purchase .shipping button,
+.hud .purchase .ziel button {
   display: grid;
   gap: 1px;
   padding: 5px 10px;
   text-align: left;
 }
 
-.hud .purchase .shipping button small {
+.hud .purchase .shipping button small,
+.hud .purchase .ziel button small {
   color: var(--text-dim);
   font-size: 11px;
 }
 
-.hud .purchase .shipping button.active small {
+.hud .purchase .shipping button.active small,
+.hud .purchase .ziel button.active small {
   color: var(--accent-ink);
 }
 
@@ -2313,4 +2317,55 @@ html, body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* ── Zentrallager ── */
+.warehouse .msg {
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.warehouse .row-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.warehouse .row-tools .versand {
+  display: flex;
+  gap: 6px;
+}
+
+.warehouse .stock {
+  display: grid;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.warehouse .stock h4 {
+  margin: 6px 0 2px;
+}
+
+.warehouse .stock-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.warehouse .stock-row .send {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--text-dim);
+}
+
+.warehouse .stock-row small {
+  color: var(--text-dim);
 }

@@ -11,12 +11,22 @@ import { FootprintComponent } from '../components/FootprintComponent';
 // Produktion: Maschinen holen ihre Rohstoffe selbst aus dem Lager (Kartons) und
 // stellen das Ergebnis als Karton zurück ins Lager – von dort wird es eingeräumt wie gekaufte Ware.
 // Strom und Wasser kommen aus der Versorgung; reicht der Anschluss nicht, startet nichts.
+// Produktionslinien (lager "zentral") hängen am Industrieanschluss: keine Grenze, die Energie steckt im Rohstoffpreis.
 
 export type StartCheck =
   | { ok: true }
   | { ok: false; grund: 'gesperrt' }
+  | { ok: false; grund: 'zentrallager' }
   | { ok: false; grund: 'rohstoffe'; fehlt: { ware: string; menge: number }[] }
   | { ok: false; grund: UtilityKind };
+
+/** Bestand im Zentrallager (für Produktionslinien, siehe CentralWarehouse) */
+export interface CentralStock {
+  available(ware: string): number;
+  take(ware: string, menge: number): void;
+  /** Ergebnis einlagern; false, wenn kein Platz ist */
+  put(ware: string, menge: number): boolean;
+}
 
 /** Laufende Maschine (für den Bedarf) */
 export interface RunningMachine {
@@ -33,6 +43,8 @@ export class Production {
     private readonly unlocks: Unlocks,
     /** Alle Maschinen in der Welt (für den Bedarf) */
     private readonly machines: () => Iterable<RunningMachine>,
+    /** Zentrallager (für Linien mit lager "zentral"); null: keins, dann laufen diese Linien nicht */
+    private readonly zentral: () => CentralStock | null = () => null,
   ) {}
 
   /** Grundlast aller Bauteile (werte.strom, werte.wasser) */
@@ -51,7 +63,8 @@ export class Production {
   demand(): Record<UtilityKind, number> {
     const out = this.baseDemand();
     for (const m of this.machines()) {
-      if (!m.laeuft) continue;
+      // Linien im Industriegebiet hängen am eigenen Industrieanschluss, nicht am Hausanschluss des Ladens
+      if (!m.laeuft || m.def.lager === 'zentral') continue;
       out.strom += m.def.strom;
       out.wasser += m.def.wasser;
     }
@@ -69,10 +82,18 @@ export class Production {
     return n;
   }
 
+  /** Wie viel einer Ware diese Maschine erreicht: Zentrallager für Linien, sonst das Ladenlager */
+  private stock(ware: string, m?: MachineDef): number {
+    if (m?.lager === 'zentral') return this.zentral()?.available(ware) ?? 0;
+    return this.available(ware);
+  }
+
   canStart(r: RecipeDef, m: MachineDef): StartCheck {
     if (!this.unlocks.ok(r)) return { ok: false, grund: 'gesperrt' };
-    const fehlt = r.eingang.filter((l) => this.available(l.ware) < l.menge).map((l) => ({ ware: l.ware, menge: l.menge - this.available(l.ware) }));
+    if (m.lager === 'zentral' && !this.zentral()) return { ok: false, grund: 'zentrallager' };
+    const fehlt = r.eingang.filter((l) => this.stock(l.ware, m) < l.menge).map((l) => ({ ware: l.ware, menge: l.menge - this.stock(l.ware, m) }));
     if (fehlt.length) return { ok: false, grund: 'rohstoffe', fehlt };
+    if (m.lager === 'zentral') return { ok: true };
     const d = this.demand();
     if (d.strom + m.strom > this.utilities.anschluss('strom') + 1e-9) return { ok: false, grund: 'strom' };
     if (d.wasser + m.wasser > this.utilities.anschluss('wasser') + 1e-9) return { ok: false, grund: 'wasser' };
@@ -80,7 +101,9 @@ export class Production {
   }
 
   /** Rohstoffe aus dem Lager nehmen (kleinste Kartons zuerst; leere verschwinden). */
-  consume(r: RecipeDef): void {
+  consume(r: RecipeDef, m?: MachineDef): void {
+    const z = m?.lager === 'zentral' ? this.zentral() : null;
+    if (z) { for (const l of r.eingang) z.take(l.ware, l.menge); return; }
     for (const l of r.eingang) {
       let rest = l.menge;
       const cartons = [...this.world.query(CartonComponent)]
@@ -97,7 +120,8 @@ export class Production {
   }
 
   /** Ergebnis ins Lager stellen; false, wenn kein Platz frei ist. */
-  deliver(r: RecipeDef): boolean {
+  deliver(r: RecipeDef, m?: MachineDef): boolean {
+    if (m?.lager === 'zentral') return this.zentral()?.put(r.ausgang.ware, r.ausgang.menge) ?? false;
     if (this.storage.freeSlots() < 1) return false;
     this.storage.deliver(this.content.waren.get(r.ausgang.ware), r.ausgang.menge);
     return true;

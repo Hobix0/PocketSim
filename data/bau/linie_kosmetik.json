@@ -1,0 +1,26 @@
+{
+  "id": "linie_kosmetik",
+  "name": "Kosmetik-Abfüllung",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 10000,
+  "freischaltLevel": 6,
+  "werte": {},
+  "maschine": {
+    "typ": "kosmetik",
+    "strom": 5,
+    "wasser": 300,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_kosmetik",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#d99ac0"
+  },
+  "gruppe": "produktion/linien"
+}

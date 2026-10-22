@@ -6,7 +6,7 @@ import {
   validateBuild, validateCategory, validateProduct,
   type BuildDef, type BuildSettings, type CategoryDef, type ContextInfo, type ProductDef, type RoleDef,
   type StaffSettings, type StorageSettings, type ValueInfo, type WorkSettings, type CustomerSettings,
-  type RecipeDef, type UtilitySettings, validateRecipe, type LogisticsSettings, type DaylightSettings, type TerrainSettings, type MarkingSettings, type EffectSettings,
+  type RecipeDef, type UtilitySettings, validateRecipe, type ProductionSettings, type LogisticsSettings, type DaylightSettings, type TerrainSettings, type MarkingSettings, type EffectSettings,
 } from './definitions';
 
 /** Funktionen, die ein Bauteil haben kann (je eine Komponente, siehe createBuildEntity) */
@@ -23,6 +23,8 @@ export class Content {
   /** Alles, was es im Großhandel und als Karton gibt: Produkte und Rohstoffe */
   readonly waren: Registry<ProductDef>;
   readonly rezepte: Registry<RecipeDef>;
+  /** Produktionslinien im Industriegebiet (data/produktion) */
+  readonly produktion: ProductionSettings;
   readonly versorgung: UtilitySettings;
   /** Lieferungen per LKW (data/logistik/standard.json) */
   readonly logistik: LogisticsSettings;
@@ -63,12 +65,33 @@ export class Content {
     this.produkte = new Registry('produkte', readFolderEntries('produkte'), validateProduct);
     this.bau = new Registry('bau', readFolderEntries('bau'), validateBuild);
     this.rohstoffe = new Registry('rohstoffe', readFolderEntries('rohstoffe'), (raw, where) => ({ ...validateProduct(raw, where), rohstoff: true }));
+    // Produktionslinien: je Linie ein Rohstoff (Grundstoffe der Warengruppe)
+    this.produktion = readData<ProductionSettings>('produktion/standard');
+    for (const l of this.produktion.linien) {
+      this.rohstoffe.add({
+        id: l.rohstoff.id, name: l.rohstoff.name, kategorie: 'rohstoffe', ek: this.produktion.rohstoffEk, vk: 0,
+        gebinde: this.produktion.rohstoffGebinde, frisch: false, kuehlung: false, freischaltLevel: l.level, rohstoff: true,
+      } as ProductDef);
+    }
     this.waren = new Registry('waren', [], validateProduct);
     for (const p of [...this.produkte.all(), ...this.rohstoffe.all()]) {
       if (this.waren.has(p.id)) throw new Error(`rohstoffe/${p.id}.json: id gibt es schon als Produkt`);
       this.waren.add(p);
     }
     this.rezepte = new Registry('rezepte', readFolderEntries('rezepte'), validateRecipe);
+    // Je Produkt ein Rezept auf seiner Linie: Rohstoffe für rohstoffAnteil des Einkaufspreises
+    const pr = this.produktion;
+    for (const l of pr.linien) {
+      for (const p of this.produkte.all().filter((x) => l.kategorien.includes(x.kategorie))) {
+        this.rezepte.add({
+          id: `herstellen_${p.id}`, name: `${p.name} herstellen`, maschine: l.id,
+          eingang: [{ ware: l.rohstoff.id, menge: Math.max(1, Math.round((p.ek * p.gebinde * pr.rohstoffAnteil) / pr.rohstoffEk)) }],
+          ausgang: { ware: p.id, menge: p.gebinde },
+          dauer: Math.round(pr.minutenGrund + pr.minutenProStueck * p.gebinde),
+          freischaltLevel: l.level,
+        });
+      }
+    }
     this.versorgung = readData<UtilitySettings>('versorgung/standard');
     this.logistik = readData<LogisticsSettings>('logistik/standard');
     this.licht = readData<DaylightSettings>('licht/standard');
@@ -91,6 +114,11 @@ export class Content {
     this.texte = readData<Record<string, string>>('texte/standard');
     this.forschungWerte = readData<ResearchSettings>('forschung/standard');
     this.forschung = this.loadResearch();
+    for (const r of this.rezepte.all()) {
+      if (r.forschung || !r.id.startsWith('herstellen_')) continue;
+      const linie = this.bau.all().find((b) => b.maschine?.typ === r.maschine);
+      if (linie?.forschung) r.forschung = linie.forschung;
+    }
     this.crossCheck();
   }
 

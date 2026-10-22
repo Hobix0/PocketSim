@@ -1,0 +1,26 @@
+{
+  "id": "linie_molkerei",
+  "name": "Molkerei",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 8000,
+  "freischaltLevel": 4,
+  "werte": {},
+  "maschine": {
+    "typ": "molkerei",
+    "strom": 7,
+    "wasser": 900,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_molkerei",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#e9e6df"
+  },
+  "gruppe": "produktion/linien"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "linie_naehstrasse",
+  "name": "Nähstraße",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 9000,
+  "freischaltLevel": 5,
+  "werte": {},
+  "maschine": {
+    "typ": "naehstrasse",
+    "strom": 4,
+    "wasser": 0,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_naehstrasse",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#8fae94"
+  },
+  "gruppe": "produktion/linien"
+}

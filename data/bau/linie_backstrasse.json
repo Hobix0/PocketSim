@@ -1,0 +1,26 @@
+{
+  "id": "linie_backstrasse",
+  "name": "Backstraße",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 8000,
+  "freischaltLevel": 4,
+  "werte": {},
+  "maschine": {
+    "typ": "backstrasse",
+    "strom": 9,
+    "wasser": 80,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_backstrasse",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#d9a45b"
+  },
+  "gruppe": "produktion/linien"
+}

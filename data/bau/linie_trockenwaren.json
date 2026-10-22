@@ -1,0 +1,26 @@
+{
+  "id": "linie_trockenwaren",
+  "name": "Trockenwaren-Abfüllung",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 8000,
+  "freischaltLevel": 4,
+  "werte": {},
+  "maschine": {
+    "typ": "trockenwaren",
+    "strom": 5,
+    "wasser": 50,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_trockenwaren",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#c9b27c"
+  },
+  "gruppe": "produktion/linien"
+}
