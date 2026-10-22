@@ -6,6 +6,9 @@ import { greedyMesh } from '../voxel/greedyMesh';
 import { loadPixels, pixelAt, type Pixels } from '../voxel/pixels';
 import type { VoxelGrid } from '../voxel/VoxelGrid';
 
+/** Farben, die in selbst gebauten Voxel-Modellen Glas bedeuten (Skripte: GLAS = #cfe6ec, Kühlschranktür #bcd8df) */
+const GLASFARBEN = new Set([0xcfe6ec, 0xbcd8df]);
+
 // Lädt die Blender-Modelle aus data/3d und gibt fertige Exemplare heraus.
 //
 // - Jedes FBX wird nur einmal geladen; Exemplare teilen sich Geometrie und Material.
@@ -245,7 +248,20 @@ export class ModelLibrary implements ModelProvider {
    */
   registerVoxelModel(path: string, grid: VoxelGrid): void {
     const stufen = this.voxel?.stufen ?? [{ ab: 0, faktor: 1 }];
-    this.templates.set(path, Promise.resolve(this.voxelObject(grid, null, stufen)));
+    // Würfel in Glasfarbe (Vitrinen, Kühlschranktüren, Truhendeckel) werden durchsichtig gezeichnet
+    // (der Editor bekommt weiter das ganze Gitter)
+    const Grid = grid.constructor as typeof VoxelGrid;
+    let solid = grid, glass: VoxelGrid | null = null;
+    for (let i = 0; i < grid.data.length; i++) {
+      const v = grid.data[i];
+      if (!v || !GLASFARBEN.has(v & 0xffffff)) continue;
+      if (!glass) { glass = new Grid(grid.size, grid.min, grid.dims); solid = new Grid(grid.size, grid.min, grid.dims); solid.data.set(grid.data); }
+      glass.data[i] = v;
+      solid.data[i] = 0;
+    }
+    const obj = this.voxelObject(solid, glass, stufen);
+    obj.userData.voxelGrid = grid;
+    this.templates.set(path, Promise.resolve(obj));
   }
 
   /** Würfelgitter eines Modells (für den Editor als Vorlage); null, wenn es keins gibt. */

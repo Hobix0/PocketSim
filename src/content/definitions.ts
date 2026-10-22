@@ -162,6 +162,8 @@ export interface BuildDef {
   schiene: boolean;
   /** Schienenleuchte: lässt sich nur unter eine Lichtschiene hängen */
   anSchiene: boolean;
+  /** Nicht im Baumenü (ersetzt durch neuere Bauteile); bleibt für alte Spielstände ladbar */
+  ausgeblendet: boolean;
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
   wagenbox?: { anzahl: number };
   /** Sitzplätze (x, z in m relativ zum Bauteil, optional Blickrichtung in Grad: 0 = nach vorne +X), z. B. Stühle am Bistrotisch */
@@ -483,6 +485,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     fahrbahn: o.fahrbahn === undefined ? false : bool(o, 'fahrbahn', where),
     schiene: o.schiene === undefined ? false : bool(o, 'schiene', where),
     anSchiene: o.anSchiene === undefined ? false : bool(o, 'anSchiene', where),
+    ausgeblendet: o.ausgeblendet === undefined ? false : bool(o, 'ausgeblendet', where),
     wagenbox: o.wagenbox === undefined ? undefined : { anzahl: num(asObject(o.wagenbox, `${where} → wagenbox`), 'anzahl', `${where} → wagenbox`, 1) },
     sitze: o.sitze === undefined ? undefined : (() => {
       if (!Array.isArray(o.sitze) || o.sitze.some((p) => !Array.isArray(p) || p.length < 2 || p.some((v) => typeof v !== 'number'))) throw new Error(`${where}: sitze muss eine Liste aus [x, z] sein`);

@@ -500,7 +500,7 @@ export class Game {
       this.effects.floatText(f.clone().setY(2.4), `Level ${level}!`, '#ffd166', 1.5);
       this.audio.play('levelup');
       const neu = [
-        ...this.content.bau.all().filter((d) => d.freischaltLevel === level && this.research.ok(d) && this.build.isBuildable(d)).map((d) => d.name),
+        ...this.content.bau.all().filter((d) => d.freischaltLevel === level && !d.ausgeblendet && this.research.ok(d) && this.build.isBuildable(d)).map((d) => d.name),
         ...[...new Set(this.content.produkte.all().filter((p) => p.freischaltLevel === level && this.research.ok(p)).map((p) => this.content.kategorien.find(p.kategorie)?.name ?? p.kategorie))],
         ...this.plots.list.filter((p) => p.freischaltLevel === level && !p.besessen).map((p) => `Grundstück ${p.name}`),
       ];
@@ -536,7 +536,7 @@ export class Game {
       this.effects.floatText(f.clone().setY(2.4), `${node.icon} ${node.name}!`, '#ffd166', 1.3);
       this.audio.play('levelup');
       const c = this.content;
-      const neu = [...node.schaltetFrei.bau.map((id) => c.bau.get(id).name), ...node.schaltetFrei.kategorien.map((id) => c.kategorien.get(id).name),
+      const neu = [...node.schaltetFrei.bau.filter((id) => !c.bau.get(id).ausgeblendet).map((id) => c.bau.get(id).name), ...node.schaltetFrei.kategorien.map((id) => c.kategorien.get(id).name),
         ...(node.schaltetFrei.rezepte.length ? [`${node.schaltetFrei.rezepte.length} Rezepte`] : [])];
       this.hud.toasts.show(c.text('forschung_fertig', { name: node.name, liste: neu.join(', ') }), 'gut');
       // Neue Rolle (z. B. Barista): gleich neue Bewerbungen

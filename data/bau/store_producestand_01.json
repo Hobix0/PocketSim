@@ -6,9 +6,22 @@
   "kontext": "regal",
   "preis": 600,
   "freischaltLevel": 1,
-  "werte": {"slots": 4},
-  "regal": {"faecher": 4, "kapazitaet": 20},
+  "werte": {
+    "slots": 4
+  },
+  "regal": {
+    "faecher": 4,
+    "kapazitaet": 20
+  },
   "model": "3d/Baubar/Store_Props/SM_Build_SM_Store_ProduceStand_01.fbx",
   "icon": "3d/Icons_Baubar/T_Build_SM_Store_ProduceStand_01.png",
-  "platzhalter": {"groesse": [1.1, 1.955, 1.52], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      1.955,
+      1.52
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "ausgeblendet": true
 }

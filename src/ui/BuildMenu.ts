@@ -148,7 +148,7 @@ export class BuildMenu {
     if (cat.spezial === 'grundstuecke') { this.gridEl.innerHTML = this.plotCards(); this.hintEl.innerHTML = this.hint(); return; }
     if (cat.spezial === 'gelaende') { this.gridEl.innerHTML = this.terrainCards(); this.hintEl.innerHTML = this.hint(); return; }
     if (cat.spezial === 'markierungen') { this.gridEl.innerHTML = this.paintCards(); this.hintEl.innerHTML = this.hint(); return; }
-    const defs = this.content.bau.all().filter((d) => inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
+    const defs = this.content.bau.all().filter((d) => !d.ausgeblendet && inBuildCategory(d, cat)).sort((a, b) => a.freischaltLevel - b.freischaltLevel || a.preis - b.preis);
     this.gridEl.innerHTML = defs.map((d) => this.card(d, tool)).join('') || '<p class="empty-cat">Hier gibt es noch nichts.</p>';
     this.hintEl.innerHTML = this.hint();
     for (const img of this.gridEl.querySelectorAll<HTMLImageElement>('img[data-thumb]:not([src])')) {

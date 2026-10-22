@@ -1,0 +1,31 @@
+{
+  "id": "eistruhe_anthrazit",
+  "name": "Eistruhe Anthrazit",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 540,
+  "freischaltLevel": 4,
+  "werte": {
+    "slots": 1,
+    "strom": 0.4
+  },
+  "regal": {
+    "ebenen": [
+      0.6
+    ],
+    "mitte": 0.0,
+    "laenge": 0.75,
+    "kapazitaet": 14,
+    "kuehlung": true
+  },
+  "model": "eigen/eistruhe_anthrazit",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.0,
+      0.9
+    ],
+    "farbe": "#3a3f44"
+  }
+}

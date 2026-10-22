@@ -1,0 +1,34 @@
+{
+  "id": "kuehlschrank_weiss_1",
+  "name": "Glastür-Kühlschrank Weiß (1 Tür)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 560,
+  "freischaltLevel": 2,
+  "werte": {
+    "slots": 4,
+    "strom": 0.5
+  },
+  "regal": {
+    "ebenen": [
+      0.2,
+      0.6,
+      1.0,
+      1.4
+    ],
+    "mitte": 0.0,
+    "laenge": 0.55,
+    "kapazitaet": 8,
+    "kuehlung": true
+  },
+  "model": "eigen/kuehlschrank_weiss_1",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      2.1,
+      0.7
+    ],
+    "farbe": "#eef0ee"
+  }
+}

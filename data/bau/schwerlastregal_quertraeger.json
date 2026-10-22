@@ -8,5 +8,13 @@
   "werte": {},
   "model": "3d/Baubar/Lager/SM_Build_Schwerlastregal_Quertraeger.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Schwerlastregal_Quertraeger.png",
-  "platzhalter": {"groesse": [0.05, 0.08, 2.797], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.05,
+      0.08,
+      2.797
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "ausgeblendet": true
 }

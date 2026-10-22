@@ -6,9 +6,29 @@
   "kontext": "regal",
   "preis": 180,
   "freischaltLevel": 1,
-  "werte": {"slots": 4},
-  "regal": {"ebenen": [0.1, 0.55, 1, 1.45], "mitte": 0.03, "laenge": 1.85, "kapazitaet": 24},
+  "werte": {
+    "slots": 4
+  },
+  "regal": {
+    "ebenen": [
+      0.1,
+      0.55,
+      1,
+      1.45
+    ],
+    "mitte": 0.03,
+    "laenge": 1.85,
+    "kapazitaet": 24
+  },
   "model": "3d/Baubar/Einrichtung/SM_Build_Wandregal_Weiss.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Wandregal_Weiss.png",
-  "platzhalter": {"groesse": [0.5, 1.8, 2], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      0.5,
+      1.8,
+      2
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "ausgeblendet": true
 }

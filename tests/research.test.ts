@@ -118,3 +118,18 @@ describe('Café-Baum', () => {
     expect(b.lookAt(1).x).toBeLessThan(b.seat(1).x); // zum Tresen
   });
 });
+
+describe('Regal-Baukästen', () => {
+  it('neue Module sind Regale bzw. Lagerablagen, alte Doppelte sind ausgeblendet', async () => {
+    const { ShelfComponent } = await import('../src/components/ShelfComponent');
+    const { StorageSurfaceComponent } = await import('../src/components/StorageSurfaceComponent');
+    const w = new World(new THREE.Group());
+    for (const f of ['weiss', 'holz', 'schwarz', 'salbei']) expect(createBuildEntity(content.bau.get(`vr_wand_${f}`), { position: [0, 0, 0], drehung: 0 }, { content }).get(ShelfComponent)?.faecher.length).toBe(4);
+    expect(content.bau.get('kuehlschrank_anthrazit_2').regal?.kuehlung).toBe(true);
+    const sl = w.add(createBuildEntity(content.bau.get('schwerlast_gruen_hoch'), { position: [0, 0, 0], drehung: 0 }, { content }));
+    expect(sl.require(StorageSurfaceComponent).capacity).toBeGreaterThanOrEqual(40);
+    expect(content.bau.get('wandregal_weiss').ausgeblendet).toBe(true);
+    expect(content.bau.get('vr_wand_schwarz').forschung).toBe('ladendesign');
+    expect(content.bau.get('vr_wand_weiss').forschung).toBeUndefined();
+  });
+});

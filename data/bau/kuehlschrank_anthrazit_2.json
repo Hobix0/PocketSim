@@ -1,0 +1,34 @@
+{
+  "id": "kuehlschrank_anthrazit_2",
+  "name": "Glastür-Kühlschrank Anthrazit (2 Türen)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 980,
+  "freischaltLevel": 2,
+  "werte": {
+    "slots": 4,
+    "strom": 0.9
+  },
+  "regal": {
+    "ebenen": [
+      0.2,
+      0.6,
+      1.0,
+      1.4
+    ],
+    "mitte": 0.0,
+    "laenge": 1.2,
+    "kapazitaet": 16,
+    "kuehlung": true
+  },
+  "model": "eigen/kuehlschrank_anthrazit_2",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      2.1,
+      1.4
+    ],
+    "farbe": "#3a3f44"
+  }
+}

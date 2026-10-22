@@ -1,0 +1,30 @@
+{
+  "id": "vr_aktion_salbei",
+  "name": "Aktionstisch Salbei",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "kontext": "regal",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {
+    "slots": 2
+  },
+  "regal": {
+    "ebenen": [
+      0.4,
+      0.75
+    ],
+    "mitte": 0.0,
+    "laenge": 0.9,
+    "kapazitaet": 14
+  },
+  "model": "eigen/vr_aktion_salbei",
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      0.9,
+      1.0
+    ],
+    "farbe": "#5e7a61"
+  }
+}

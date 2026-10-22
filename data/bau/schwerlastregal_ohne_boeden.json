@@ -8,5 +8,13 @@
   "werte": {},
   "model": "3d/Baubar/Lager/SM_Build_Schwerlastregal_ohne_Boeden.fbx",
   "icon": "3d/Icons_Baubar/T_Build_Schwerlastregal_ohne_Boeden.png",
-  "platzhalter": {"groesse": [1.11, 2.73, 2.9], "farbe": "#b9c0c6"}
+  "platzhalter": {
+    "groesse": [
+      1.11,
+      2.73,
+      2.9
+    ],
+    "farbe": "#b9c0c6"
+  },
+  "ausgeblendet": true
 }
