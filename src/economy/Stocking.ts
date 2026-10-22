@@ -4,7 +4,7 @@ import type { World } from '../ecs/World';
 import { CartonComponent } from '../components/CartonComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import type { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
-import { cartonReachable, PalletComponent } from '../components/PalletComponent';
+import { cartonReachable } from '../components/PalletComponent';
 
 // Einräumen: Ware wandert aus einem Karton in ein Regal.
 // Wird vom Spieler (per Klick) und vom Personal benutzt. Ein leerer Karton verschwindet.
@@ -62,12 +62,6 @@ export function findStockingTask(
   return null;
 }
 
-/** Karton auf einer Palette, die noch auf dem LKW steht und die gerade kein Staplerfahrer holt (zum Abladen von Hand) */
-function onTruckPallet(c: CartonComponent): boolean {
-  const p = c.ablage?.palette ? c.ablage.entity.get(PalletComponent) : undefined;
-  return !!p && p.aufLkw && p.reservedBy === null;
-}
-
 /** Eine Aufgabe für Lageristen: Karton vom LKW (oder lose am Boden) auf einen festen Lagerplatz. */
 export interface HaulTask {
   carton: Entity;
@@ -94,7 +88,7 @@ export function findHaulTask(
   isFree: (carton: Entity) => boolean,
 ): HaulTask | null {
   const candidates = [...world.query(CartonComponent)]
-    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || (c.ablage.temporaer && !c.ablage.palette) || onTruckPallet(c)))
+    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || (c.ablage.temporaer && !c.ablage.palette)))
     .sort(([, a], [, b]) => Number(!a.ablage) - Number(!b.ablage));
   for (const [carton] of candidates) {
     const ablage = storage.nearestFree(carton.object.position);

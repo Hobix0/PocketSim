@@ -23,6 +23,8 @@ export interface StaffServices {
   bedienen?: Omit<CashierServices, Common>;
   /** Staplerfahrer: Paletten mit Gabelstapler und Hubwagen */
   paletten?: Omit<PalletDriverServices, Common>;
+  /** Lagerist: ganze Paletten (auch Mischpaletten) mit Hubwagen oder Stapler vom LKW abladen */
+  abladenFahrzeuge?: Omit<PalletDriverServices, Common>;
   /** Auffüller: Paletten mit dem Hubwagen ans Regal, Kartons mit dem Rollwagen */
   auffuellenFahrzeuge?: Omit<PalletDriverServices, Common>;
   /** Einkäufer: zum Einkaufsterminal gehen, dort nachbestellen */
@@ -42,14 +44,15 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   else if (rolle.verhalten === 'bedienen') entity.add(new CashierComponent(employee, { ...(services.bedienen ?? services.kassieren), ...common }));
   else if (rolle.verhalten === 'einkaufen') entity.add(new BuyerComponent(employee, { ...services.einkaufen, ...common }));
   else if (rolle.verhalten === 'paletten' && services.paletten) entity.add(new PalletDriverComponent(employee, { ...services.paletten, ...common }));
-  else if (rolle.verhalten === 'abladen') entity.add(new WorkerComponent(employee, { ...services.abladen, ...common }));
   else {
-    // Auffüller: trägt einzelne Kartons oder nimmt Hubwagen bzw. Rollwagen – immer nur eins zur Zeit
+    // Lagerist und Auffüller: tragen einzelne Kartons oder nehmen ein Fahrzeug – immer nur eins zur Zeit
+    const lagerist = rolle.verhalten === 'abladen';
     let fahrer: PalletDriverComponent | null = null;
-    const worker = new WorkerComponent(employee, { ...services.auffuellen, ...common, busyElsewhere: () => !!fahrer?.busy });
+    const worker = new WorkerComponent(employee, { ...(lagerist ? services.abladen : services.auffuellen), ...common, busyElsewhere: () => !!fahrer?.busy });
     entity.add(worker);
-    if (services.auffuellenFahrzeuge) {
-      fahrer = new PalletDriverComponent(employee, { ...services.auffuellenFahrzeuge, ...common, busyElsewhere: () => worker.state !== 'wartet' });
+    const fz = lagerist ? services.abladenFahrzeuge : services.auffuellenFahrzeuge;
+    if (fz) {
+      fahrer = new PalletDriverComponent(employee, { ...fz, ...common, busyElsewhere: () => worker.state !== 'wartet' });
       entity.add(fahrer);
     }
   }

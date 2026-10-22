@@ -173,6 +173,16 @@ export class StoreLoop {
         models: this.ctx().models,
         store: (c) => storage.store?.(c) ?? false,
       },
+      abladenFahrzeuge: {
+        findJob: () => findPalletJob(this.world, { arten: ['einlagern'], fahrzeuge: ['hubwagen', 'gabelstapler'] }),
+        findPath: this.findPath,
+        walkable: (x, z) => this.nav.isWalkable(x, z),
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        sekundenProStueck: personal.sekundenProStueck,
+        lager: this.content.lager,
+        models: this.ctx().models,
+        store: (c) => storage.store?.(c) ?? false,
+      },
       auffuellenFahrzeuge: {
         findJob: () => findPalletJob(this.world, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'] }),
         findPath: this.findPath,
