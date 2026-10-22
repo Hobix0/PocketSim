@@ -99,9 +99,12 @@ export class StoreLoop {
     }
     if (!this.kundenPunkte.length || minutes <= 0) return;
     const kassen = [...this.world.query(CheckoutComponent)].length;
-    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen));
+    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen), this.lageFaktor());
     for (let i = 0; i < n; i++) this.spawnCustomer();
   }
+
+  /** Mehr Kundschaft durch weitere Läden in der Stadt (setzt das Spiel, siehe src/world/Locations.ts) */
+  lageFaktor: () => number = () => 1;
 
   get offen(): boolean {
     return this.wasOpen;

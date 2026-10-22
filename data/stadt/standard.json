@@ -1,4 +1,36 @@
 {
-  "_hinweis": "Stadt: Altbauten renovieren. minutenProTeil: Spielminuten je verfallenem Bauteil (mindestens minMinuten); xp: Belohnung, wenn ein Gebäude fertig ist; geruest: Modell, das während der Arbeit vor der Fassade steht. Kosten je Teil stehen am Bauteil (data/bau → renovierung.kosten).",
-  "renovierung": { "minutenProTeil": 6, "minMinuten": 120, "xp": 60, "geruest": "eigen/geruest" }
+  "_hinweis": "Stadt: Altbauten renovieren. minutenProTeil: Spielminuten je verfallenem Bauteil (mindestens minMinuten); xp: Belohnung, wenn ein Gebäude fertig ist; geruest: Modell, das während der Arbeit vor der Fassade steht. Kosten je Teil stehen am Bauteil (data/bau → renovierung.kosten). lage: Jeder weitere eigene Laden mit Ware im Regal bringt mehr Kundschaft: Faktor je Größe × Lage (kunden) × Parkplatz; der Hauptladen zählt 1.",
+  "renovierung": {
+    "minutenProTeil": 6,
+    "minMinuten": 120,
+    "xp": 60,
+    "geruest": "eigen/geruest"
+  },
+  "lage": {
+    "groesse": {
+      "klein": 0.35,
+      "mittel": 0.55,
+      "gross": 0.8,
+      "grundstueck": 0.6
+    },
+    "parkplatz": 1.25,
+    "lagen": {
+      "Einkaufsstraße Ost": {
+        "kunden": 1.3,
+        "text": "belebte Einkaufsstraße, viel Laufkundschaft"
+      },
+      "Hauptstraße West": {
+        "kunden": 1.0,
+        "text": "Hauptstraße, solide Laufkundschaft"
+      },
+      "Wohnstraße Süd": {
+        "kunden": 0.9,
+        "text": "ruhige Wohnstraße, Stammkundschaft aus den Wohnungen"
+      },
+      "Stadtrand West": {
+        "kunden": 0.8,
+        "text": "Stadtrand – mit Parkplatz kommen Kunden von weiter weg"
+      }
+    }
+  }
 }

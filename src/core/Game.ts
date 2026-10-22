@@ -50,6 +50,7 @@ import { StatsWindow } from '../ui/StatsWindow';
 import { Plots } from '../world/Plots';
 import { Renovations, type RenovationSettings } from '../world/Renovations';
 import { RealEstateWindow } from '../ui/RealEstateWindow';
+import { Locations, type LocationSettings } from '../world/Locations';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
@@ -474,11 +475,14 @@ export class Game {
       this.hud.toasts.show(this.content.text('renovierung_start', { name: plot.name, stunden: Math.round(minuten / 6) / 10 }), 'gut');
       this.audio.play('bauen');
     });
+    const locations = new Locations(this.world, this.plots, readData<{ lage: LocationSettings }>('stadt/standard').lage);
+    this.store.lageFaktor = () => locations.factor();
     this.realEstate = new RealEstateWindow(this.hud.root, this.plots, this.renovations, () => this.player.level,
       (p) => this.view.flyTo((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2, Math.max(12, (p.rect.maxX - p.rect.minX) * 1.3)),
       // Leer: innen steht nichts mehr außer dem Gebäude selbst (und Gerümpel)
       (p) => ![...this.world.query(FootprintComponent)].some(([e, f]) => (f.ebene === 'objekt' || f.ebene === 'decke') && e.typeId !== 'geruempel'
-        && e.object.position.x > p.rect.minX && e.object.position.x < p.rect.maxX && e.object.position.z > p.rect.minZ && e.object.position.z < p.rect.maxZ));
+        && e.object.position.x > p.rect.minX && e.object.position.x < p.rect.maxX && e.object.position.z > p.rect.minZ && e.object.position.z < p.rect.maxZ),
+      locations);
     this.plots.events.on('rented', (p) => { this.hud.toasts.show(this.content.text('miete_gemietet', { name: p.name }), 'gut'); this.audio.play('kasse'); });
     this.plots.events.on('unpaid', ({ plot, tage }) => this.hud.toasts.show(this.content.text('miete_offen', { name: plot.name, tage }), 'warnung'));
     this.plots.events.on('ended', ({ plot }) => this.hud.toasts.show(this.content.text('miete_beendet', { name: plot.name }), 'warnung'));

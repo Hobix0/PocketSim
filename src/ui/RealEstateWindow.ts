@@ -1,5 +1,6 @@
 import type { Plots, PlotDef } from '../world/Plots';
 import type { Renovations } from '../world/Renovations';
+import type { Locations } from '../world/Locations';
 import { esc } from './html';
 import { formatMoney } from './format';
 
@@ -24,6 +25,8 @@ export class RealEstateWindow {
     showPlot: (p: PlotDef) => void,
     /** Steht innen nichts mehr von dir? (dann darf gekündigt werden) */
     isEmpty: (p: PlotDef) => boolean,
+    /** Lage: Laufkundschaft je Angebot */
+    private readonly locations?: Locations,
   ) {
     this.el = document.createElement('div');
     this.el.className = 'window realestate panel';
@@ -100,9 +103,20 @@ export class RealEstateWindow {
       <div class="estate-head"><span class="icon">${ICON[a.groesse] ?? '🏠'}</span><div><b>${esc(p.name)}</b>
         <small>${esc(GROESSE[a.groesse] ?? '')} · ${w} × ${d} m (${w * d} m²) · ${esc(a.lage)}${a.parkplatz ? ' · 🅿️ mit Parkplatz' : ''}</small></div>
         <span class="tag">${own ? (rented ? 'gemietet' : 'gehört dir') : locked ? `ab Level ${p.freischaltLevel}` : 'zu haben'}</span></div>
+      ${this.lage(p)}
       <small>${esc(zustand)}${a.miete ? ` · Miete ${formatMoney(a.miete)}/Tag` : ''} · Kauf ${formatMoney(p.preis)}</small>
       <div class="estate-actions">${knoepfe.join('')}</div>
     </div>`;
+  }
+
+  /** Laufkundschaft als Sterne und die Lage in Worten */
+  private lage(p: PlotDef): string {
+    const l = this.locations;
+    if (!l) return '';
+    const v = l.potential(p);
+    const sterne = Math.max(1, Math.min(5, Math.round(v / 0.18)));
+    const laeuft = l.active(p) ? ` · <b>läuft: +${Math.round(v * 100)} % Kundschaft</b>` : '';
+    return `<small>Laufkundschaft ${'★'.repeat(sterne)}${'☆'.repeat(5 - sterne)} · ${esc(l.text(p))}${laeuft}</small>`;
   }
 
   private render(): void {
@@ -114,9 +128,10 @@ export class RealEstateWindow {
     const filters = [['alle', 'Alle'], ['meine', 'Meine'], ['klein', 'Klein'], ['mittel', 'Mittel'], ['gross', 'Groß'], ['grundstueck', 'Grundstücke']]
       .map(([id, name]) => `<button type="button" data-filter="${id}" class="${this.filter === id ? 'active' : ''}">${name}</button>`).join('');
     const miete = this.plots.mieteProTag;
+    const plus = this.locations ? Math.round((this.locations.factor() - 1) * 100) : 0;
     this.el.innerHTML = `
       <header><h2>Immobilien</h2><button type="button" class="close" aria-label="Schließen">✕</button></header>
-      <p class="lead">Ladenlokale in der Stadt kaufen oder mieten – oder ein Grundstück, auf dem du alles selbst baust.${miete ? ` Deine Miete: <b>${formatMoney(miete)}/Tag</b>.` : ''}</p>
+      <p class="lead">Ladenlokale in der Stadt kaufen oder mieten – oder ein Grundstück, auf dem du alles selbst baust.${miete ? ` Deine Miete: <b>${formatMoney(miete)}/Tag</b>.` : ''}${plus ? ` Deine weiteren Läden bringen <b>+${plus} %</b> Kundschaft.` : ''}</p>
       <div class="filters">${filters}</div>
       ${this.message ? `<p class="msg">${esc(this.message)}</p>` : ''}
       <div class="estate-list">${shown.map((p) => this.card(p)).join('') || '<p class="empty-cat">Nichts gefunden.</p>'}</div>`;

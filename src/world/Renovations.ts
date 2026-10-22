@@ -60,10 +60,17 @@ export class Renovations {
     const p = this.plots.list.find((x) => x.id === plotId);
     if (!p) return [];
     const r = p.rect, out: Entity[] = [];
-    for (const [e] of this.world.query(FootprintComponent)) {
+    const cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2;
+    for (const [e, f] of this.world.query(FootprintComponent)) {
       const def = this.content.bau.find(e.typeId);
       const q = e.object.position;
-      if (def?.renovierung && q.x >= r.minX - 0.3 && q.x <= r.maxX + 0.3 && q.z >= r.minZ - 0.3 && q.z <= r.maxZ + 0.3) out.push(e);
+      if (!def?.renovierung || q.x < r.minX - 0.3 || q.x > r.maxX + 0.3 || q.z < r.minZ - 0.3 || q.z > r.maxZ + 0.3) continue;
+      // Wände am Rand: Bei Häusern Wand an Wand gehört eine Wand dem Haus, von dessen Mitte ihre Außenseite wegzeigt
+      if (f.ebene === 'wand') {
+        const aussen = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), e.object.rotation.y);
+        if (aussen.x * (q.x - cx) + aussen.z * (q.z - cz) < 0) continue;
+      }
+      out.push(e);
     }
     return out;
   }

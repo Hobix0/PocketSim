@@ -57,13 +57,14 @@ export class CustomerSpawner {
    * @param imLaden wie viele Kunden schon da sind
    * @param auswahl Anzahl verschiedener Produkte im Regal (ohne Angabe: Faktor 1)
    * @param kassen Anzahl Kassen (mehr Kassen → mehr Kunden gleichzeitig)
+   * @param lage Faktor aus weiteren Läden in der Stadt (Lage und Größe, siehe data/stadt → lage)
    */
-  spawns(minutes: number, minuteOfDay: number, ruf: number, imLaden: number, auswahl?: number, kassen = 1): number {
+  spawns(minutes: number, minuteOfDay: number, ruf: number, imLaden: number, auswahl?: number, kassen = 1, lage = 1): number {
     if (!this.isOpen(minuteOfDay)) { this.acc = 0; return 0; }
     const hour = Math.floor(minuteOfDay / 60) % 24;
     const faktor = auswahl === undefined ? 1 : auswahlFaktor(this.settings, auswahl);
-    const proStunde = (this.settings.kundenProStunde[hour] ?? 0) * rufFaktor(this.settings, ruf) * faktor;
-    const max = this.settings.maxImLaden + (this.settings.maxImLadenProKasse ?? 0) * Math.max(0, kassen - 1);
+    const proStunde = (this.settings.kundenProStunde[hour] ?? 0) * rufFaktor(this.settings, ruf) * faktor * lage;
+    const max = Math.round((this.settings.maxImLaden + (this.settings.maxImLadenProKasse ?? 0) * Math.max(0, kassen - 1)) * lage);
     // Etwas Zufall, damit Kunden nicht im Takt kommen
     this.acc += (proStunde * minutes / 60) * (0.5 + this.random());
     let n = 0;
