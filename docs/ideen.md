@@ -54,6 +54,11 @@ Foto-Modus mit Tilt-Shift macht aus dem Laden eine **Postkarte** (Bild + Spielst
 und laufen als Gast durch deinen Laden (nur ansehen) – oder stellen ihn als Nachbargeschäft in ihre Straße.
 Dazu ein **Tagebuch**: jeden Abend ein Bild, am Ende ein Zeitraffer, wie aus dem kleinen Laden ein Markt wurde.
 
+### 9. Immobilienmarkt wie in Big Ambitions ★★ ●●●
+(Wunsch, festgehalten) Ladenlokale in **klein, mittel, groß und mehrstöckig** zum Kaufen oder Mieten, verteilt über eine Stadt mit Vierteln
+(Lage = mehr oder weniger Laufkundschaft, unterschiedliche Preise). Alternativ **leere Grundstücke**, auf denen man komplett selbst baut –
+bis hin zu **Outlet, Einkaufszentrum und Mall** mit mehreren Läden (eigene oder vermietete Flächen). Etappe 14 (Altbau renovieren) ist der erste Baustein.
+
 ### Weitere kleine Ideen
 - **Pausenraum und Laune** fürs Personal: wer Pausen bekommt, arbeitet schneller; Freundschaften im Team ★ ●
 - **Café-Ecke** im Laden (Kaffeemaschine, Bänke): Kunden bleiben länger, kaufen mehr, Treffpunkt der Nachbarschaft ★ ●

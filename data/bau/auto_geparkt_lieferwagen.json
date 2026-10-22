@@ -1,0 +1,20 @@
+{
+  "id": "auto_geparkt_lieferwagen",
+  "name": "Geparkter Lieferwagen",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "aussen": true,
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/auto_lieferwagen",
+  "platzhalter": {
+    "groesse": [
+      4.8,
+      2.2,
+      1.7
+    ],
+    "farbe": "#e8e6df"
+  },
+  "gruppe": "aussen/strasse"
+}

@@ -20,7 +20,7 @@ describe('Spieldaten in data/', () => {
     const c = new Content();
     for (const id of ['start', 'testgelaende', 'musterschau']) {
       const level = readData<LevelData>(`level/${id}`);
-      for (const o of level.objekte) {
+      for (const o of expandObjects(level.objekte)) {
         if (o.produkt !== undefined) expect(c.produkte.has(o.produkt), `${id}: ${o.produkt}`).toBe(true);
         else expect(c.bau.has(o.typ ?? ''), `${id}: ${o.typ}`).toBe(true);
       }

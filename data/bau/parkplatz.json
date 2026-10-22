@@ -1,0 +1,20 @@
+{
+  "id": "parkplatz",
+  "name": "Parkplatz",
+  "kategorie": "lager",
+  "ebene": "boden",
+  "aussen": true,
+  "preis": 60,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/parkplatz",
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.05,
+      2
+    ],
+    "farbe": "#4a4d52"
+  },
+  "gruppe": "aussen/strasse"
+}

@@ -92,3 +92,51 @@ describe('Altbau', () => {
     expect(b.ren.needs('altes_ladenlokal')).toBe(false);
   });
 });
+
+describe('Immobilienmarkt', () => {
+  it('Angebote in klein, mittel, groß und leere Grundstücke; die Gebäude kommen aus dem Generator', () => {
+    const angebote = (level.grundstuecke ?? []).filter((p) => p.angebot);
+    expect(new Set(angebote.map((p) => p.angebot!.groesse))).toEqual(new Set(['klein', 'mittel', 'gross', 'grundstueck']));
+    const teile = expandObjects(level.objekte);
+    const imRect = (id: string, typ: string) => {
+      const r = angebote.find((p) => p.id === id)!.rect;
+      return teile.filter((o) => o.typ === typ && o.position[0] > r.minX && o.position[0] < r.maxX && o.position[2] > r.minZ && o.position[2] < r.maxZ).length;
+    };
+    expect(imRect('laden_mittel_ost', 'boden_fliese_innen')).toBe(20); // 10 × 8 m
+    expect(imRect('laden_gross_ost', 'altbau_boden')).toBe(40); // 16 × 10 m, Altbau
+    expect(imRect('grundstueck_gross_west', 'boden_fliese_innen')).toBe(0);
+  });
+
+  it('mieten: erste Miete sofort, dann jeden Morgen; nach drei Tagen ohne Geld endet der Vertrag', () => {
+    const player = new PlayerState('t', { geld: 300, xp: 300 }, { xpFuerLevel: [0, 100, 250, 500, 900] });
+    const plots = new Plots(level.grundstuecke ?? [], player);
+    expect(plots.rent('bauplatz_west')).toEqual({ ok: false, grund: 'keine_miete' });
+    expect(plots.rent('laden_klein_ost').ok).toBe(true);
+    expect(player.geld).toBe(190);
+    expect(plots.isOwned('laden_klein_ost') && plots.isRented('laden_klein_ost')).toBe(true);
+    expect(plots.allows(25, 0)).toBe(true);
+    plots.payRent();
+    expect(player.geld).toBe(80);
+    const ended: string[] = [];
+    plots.events.on('ended', ({ grund }) => ended.push(grund));
+    plots.payRent(); plots.payRent(); plots.payRent();
+    expect(ended).toEqual(['keine_miete']);
+    expect(plots.isOwned('laden_klein_ost')).toBe(false);
+  });
+
+  it('kündigen nur, wenn leer; kaufen beendet die Miete; steht im Spielstand', () => {
+    const player = new PlayerState('t', { geld: 50000, xp: 900 }, { xpFuerLevel: [0, 100, 250, 500, 900] });
+    const plots = new Plots(level.grundstuecke ?? [], player);
+    plots.rent('laden_mittel_ost');
+    expect(plots.cancel('laden_mittel_ost', () => false)).toEqual({ ok: false, grund: 'nicht_leer' });
+    const b = new Plots(level.grundstuecke ?? [], player);
+    b.restoreRent(JSON.parse(JSON.stringify(plots.rentState())));
+    expect(b.isRented('laden_mittel_ost')).toBe(true);
+    expect(plots.cancel('laden_mittel_ost').ok).toBe(true);
+    expect(plots.isOwned('laden_mittel_ost')).toBe(false);
+    b.buy('laden_mittel_ost');
+    expect(b.isRented('laden_mittel_ost')).toBe(false);
+    expect(b.isOwned('laden_mittel_ost')).toBe(true);
+    expect(b.mieteProTag).toBe(0);
+  });
+});

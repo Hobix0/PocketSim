@@ -128,6 +128,12 @@ export class ManagementCamera {
     this.place();
   }
 
+  /** Sanft zu einem Punkt fahren (z. B. „Ansehen“ im Immobilienmarkt) */
+  flyTo(x: number, z: number, d?: number): void {
+    this.goalTarget.set(x, 0, z);
+    if (d !== undefined) this.goalDistance = THREE.MathUtils.clamp(d, this.settings.abstand.min, this.settings.abstand.max);
+  }
+
   setAspect(aspect: number): void {
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
