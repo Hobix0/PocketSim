@@ -14,6 +14,8 @@ import { RampComponent } from '../components/RampComponent';
 import { LampComponent } from '../components/LampComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
 import { SeatComponent } from '../components/SeatComponent';
+import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
+import { VehicleComponent } from '../components/VehicleComponent';
 import { TerrainCutComponent } from '../components/TerrainCutComponent';
 import type { BuildDef } from '../content/definitions';
 import type { FactoryContext } from './FactoryContext';
@@ -48,6 +50,11 @@ export function createBuildEntity(def: BuildDef, placement: Placement, ctx: Fact
   if (def.licht) entity.add(new LampComponent(def.licht));
   if (def.wagenbox) entity.add(new CartStationComponent(def.wagenbox.anzahl, content.kunden.einkaufswagen?.model, ctx.models));
   if (def.sitze?.length) entity.add(new SeatComponent(def.sitze, def.platzhalter.groesse));
+  if (def.palettenplaetze) {
+    const { anzahl, hoehe } = def.palettenplaetze;
+    entity.add(new PalletPlacesComponent(PalletPlacesComponent.row(anzahl, def.platzhalter.groesse[2], hoehe)));
+  }
+  if (def.fahrzeug) entity.add(new VehicleComponent(def.fahrzeug, content.lager.fahrzeuge[def.fahrzeug].maxHoehe));
   if (def.ablage) {
     entity.add(new StorageSurfaceComponent(def.platzhalter.groesse, def.ablage, content.lager.karton.groesse));
     entity.add(new StorageDropComponent(ctx.actions));

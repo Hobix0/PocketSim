@@ -3,10 +3,9 @@
   "deckenhoehe": 4,
   "regalEbenen": [
     0.15,
-    1.15,
-    2.15,
-    3.15,
-    4.15
+    1.45,
+    2.75,
+    4.05
   ],
   "regalFelder": [
     1.8,
@@ -200,9 +199,9 @@
     "pal_rahmen_300": "Stützrahmen (3,0 m)",
     "pal_rahmen_450": "Stützrahmen (4,5 m)",
     "pal_traverse_180_gitter": "Traversen-Ebene 1,8 m (mit Gitterrost)",
-    "pal_traverse_180_offen": "Traversen-Ebene 1,8 m (für Paletten)",
+    "pal_traverse_180_offen": "Traversen-Ebene 1,8 m (Palettenplätze)",
     "pal_traverse_270_gitter": "Traversen-Ebene 2,7 m (mit Gitterrost)",
-    "pal_traverse_270_offen": "Traversen-Ebene 2,7 m (für Paletten)",
+    "pal_traverse_270_offen": "Traversen-Ebene 2,7 m (Palettenplätze)",
     "schwerlast_gitter": "Schwerlastregal (Gitterrost)",
     "schwerlast_hoch": "Schwerlastregal (hoch, 4 Ebenen)",
     "schwerlast_holz": "Schwerlastregal (Holzböden)",

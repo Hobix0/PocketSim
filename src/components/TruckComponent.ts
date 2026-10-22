@@ -3,6 +3,8 @@ import { Component } from '../ecs/Component';
 import type { Entity } from '../ecs/Entity';
 import type { Describable, InfoRow } from '../ui/describe';
 import { StorageSurfaceComponent } from './StorageSurfaceComponent';
+import { PalletPlacesComponent } from './PalletPlacesComponent';
+import type { ShipmentLine } from '../economy/Deliveries';
 import { LampComponent } from './LampComponent';
 
 // Ein Liefer-LKW: fährt eine Strecke ab, steht zum Abladen und fährt wieder weg.
@@ -42,7 +44,7 @@ export class TruckComponent extends Component implements Describable {
 
   constructor(
     /** Kartons, die er bringt (werden bei Ankunft auf die Ladefläche gestellt) */
-    readonly ladung: { produkt: string; menge: number }[],
+    readonly ladung: ShipmentLine[],
     anfahrt: RoutePoint[],
     private readonly abfahrt: RoutePoint[],
     private readonly speed: number,
@@ -60,9 +62,14 @@ export class TruckComponent extends Component implements Describable {
     return this.entity.require(StorageSurfaceComponent);
   }
 
-  /** Kartons, die noch auf der Ladefläche stehen */
+  /** Kartons (lose) und Paletten, die noch auf der Ladefläche stehen */
   get kartons(): number {
-    return this.state === 'anfahrt' ? this.ladung.length : this.ladeflaeche.used;
+    return this.state === 'anfahrt' ? this.ladung.length : this.ladeflaeche.used + this.paletten;
+  }
+
+  /** Paletten auf der Ladefläche */
+  get paletten(): number {
+    return this.state === 'anfahrt' ? this.ladung.filter((l) => (l.palette ?? 0) > 0).length : this.entity.get(PalletPlacesComponent)?.used ?? 0;
   }
 
   depart(): void {

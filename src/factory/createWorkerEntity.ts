@@ -4,6 +4,7 @@ import { SelectableComponent } from '../components/SelectableComponent';
 import { WorkerComponent, type WorkerServices } from '../components/WorkerComponent';
 import { CashierComponent, type CashierServices } from '../components/CashierComponent';
 import { BuyerComponent, type BuyerServices } from '../components/BuyerComponent';
+import { PalletDriverComponent, type PalletDriverServices } from '../components/PalletDriverComponent';
 import type { Employee } from '../economy/Staff';
 import type { FactoryContext } from './FactoryContext';
 import { lookFromSeed } from '../voxel/figure';
@@ -20,6 +21,8 @@ export interface StaffServices {
   kassieren: Omit<CashierServices, Common>;
   /** Barista: Café-Tresen besetzen, Bestellungen zubereiten und kassieren */
   bedienen?: Omit<CashierServices, Common>;
+  /** Staplerfahrer: Paletten mit Gabelstapler und Hubwagen */
+  paletten?: Omit<PalletDriverServices, Common>;
   /** Einkäufer: zum Einkaufsterminal gehen, dort nachbestellen */
   einkaufen: Omit<BuyerServices, Common>;
 }
@@ -36,6 +39,7 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   if (rolle.verhalten === 'kassieren') entity.add(new CashierComponent(employee, { ...services.kassieren, ...common }));
   else if (rolle.verhalten === 'bedienen') entity.add(new CashierComponent(employee, { ...(services.bedienen ?? services.kassieren), ...common }));
   else if (rolle.verhalten === 'einkaufen') entity.add(new BuyerComponent(employee, { ...services.einkaufen, ...common }));
+  else if (rolle.verhalten === 'paletten' && services.paletten) entity.add(new PalletDriverComponent(employee, { ...services.paletten, ...common }));
   else if (rolle.verhalten === 'abladen') entity.add(new WorkerComponent(employee, { ...services.abladen, ...common }));
   else entity.add(new WorkerComponent(employee, { ...services.auffuellen, ...common }));
   return entity;
@@ -43,5 +47,5 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
 
 /** Status-Text der Person (für das Personal-Fenster), egal welches Verhalten sie hat. */
 export function staffStatus(entity: Entity | undefined): string | undefined {
-  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent))?.statusText();
+  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent) ?? entity?.get(PalletDriverComponent))?.statusText();
 }

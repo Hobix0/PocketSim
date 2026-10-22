@@ -7,6 +7,9 @@ import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { createCartonEntity } from '../factory/createProductEntity';
 import type { FactoryContext } from '../factory/FactoryContext';
+import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
+import { PalletComponent, GREIFHOEHE } from '../components/PalletComponent';
+import { createPalletEntity, loadPallet } from '../factory/createPalletEntity';
 
 // Das Lager: alle festen Ablageflächen in der Welt zusammen (Paletten, Regale, Gitterboxen …).
 // Ladeflächen von LKW zählen nicht dazu (`temporaer`).
@@ -17,7 +20,7 @@ export class CartonStorage implements StoragePort {
 
   /** Feste Ablagen (ohne LKW-Ladeflächen) */
   surfaces(): StorageSurfaceComponent[] {
-    return [...this.world.query(StorageSurfaceComponent)].map(([, s]) => s).filter((s) => !s.temporaer);
+    return [...this.world.query(StorageSurfaceComponent)].map(([, s]) => s).filter((s) => !s.temporaer && !s.palette);
   }
 
   freeSlots(): number {
@@ -34,6 +37,44 @@ export class CartonStorage implements StoragePort {
     const carton = createCartonEntity(produkt, menge, this.ctx);
     this.world.add(carton);
     place(carton, surface);
+  }
+
+  /** Feste Palettenplätze (Regal, Boden – ohne LKW) */
+  palletPlaces(): PalletPlacesComponent[] {
+    return [...this.world.query(PalletPlacesComponent)].map(([, p]) => p).filter((p) => !p.temporaer);
+  }
+
+  freePalletSlots(): number {
+    return this.palletPlaces().reduce((n, p) => n + p.free, 0);
+  }
+
+  /** Freier Palettenplatz: am Boden zuerst (da kommt man ohne Stapler hin), sonst im Regal */
+  private freePalletSlot(near?: THREE.Vector3): { places: PalletPlacesComponent; slot: number } | null {
+    const list = this.palletPlaces().filter((p) => p.free > 0)
+      .sort((a, b) => Number(a.hoehe >= GREIFHOEHE) - Number(b.hoehe >= GREIFHOEHE)
+        || (near ? a.entity.object.position.distanceToSquared(near) - b.entity.object.position.distanceToSquared(near) : 0));
+    for (const places of list) {
+      for (let slot = 0; slot < places.capacity; slot++) if (places.isFree(slot)) return { places, slot };
+    }
+    return null;
+  }
+
+  /** Ganze Palette direkt ins Lager (ohne LKW) */
+  deliverPallet(produkt: ProductDef, kartons: number): void {
+    const ziel = this.freePalletSlot();
+    if (!ziel) throw new Error('Kein freier Palettenplatz – der Einkauf hätte das vorher prüfen müssen');
+    const pallet = this.world.add(createPalletEntity(this.ctx));
+    pallet.require(PalletComponent).stand(ziel.places, ziel.slot);
+    loadPallet(pallet, produkt, kartons, produkt.gebinde, this.ctx);
+  }
+
+  /** Vorhandene Palette auf den nächsten freien Palettenplatz stellen (z. B. der LKW-Fahrer lädt ab); false, wenn alles voll ist */
+  storePallet(pallet: Entity): boolean {
+    const ziel = this.freePalletSlot(pallet.object.position);
+    if (!ziel) return false;
+    const pc = pallet.require(PalletComponent);
+    pc.leave();
+    return pc.stand(ziel.places, ziel.slot);
   }
 
   /** Freie Ablage, die `near` am nächsten liegt (oder null) */

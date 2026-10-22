@@ -7,6 +7,7 @@ import type { Describable, InfoRow } from '../ui/describe';
 // entweder gestapelt auf der Oberseite (Palette) oder die Regalböden (Schwerlastregal).
 // Belegt wird von unten nach oben.
 // `temporaer`: nur zum Abholen, z. B. die Ladefläche eines LKW – zählt nicht als Lagerplatz.
+// `palette`: Ware auf einer beweglichen Palette – kein freier Lagerplatz, aber eingelagert.
 
 export class StorageSurfaceComponent extends Component implements Describable {
   /** Platz-Mittelpunkte (Unterkante des Kartons) in lokalen Koordinaten der Entity. */
@@ -15,15 +16,17 @@ export class StorageSurfaceComponent extends Component implements Describable {
   private readonly occupied = new Map<number, number>();
 
   readonly temporaer: boolean;
+  readonly palette: boolean;
 
   constructor(
     footprint: [number, number, number],
     ablage: { ebenen?: number; boeden?: number[] },
     karton: [number, number, number],
-    options: { temporaer?: boolean; versatz?: [number, number, number]; vonHinten?: boolean } = {},
+    options: { temporaer?: boolean; palette?: boolean; versatz?: [number, number, number]; vonHinten?: boolean } = {},
   ) {
     super();
     this.temporaer = options.temporaer ?? false;
+    this.palette = options.palette ?? false;
     const [ox, oy, oz] = options.versatz ?? [0, 0, 0];
     const [w, h, d] = footprint;
     const [kw, kh, kd] = karton;

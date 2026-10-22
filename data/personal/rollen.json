@@ -34,5 +34,12 @@
     "farbe": "#9a6a43",
     "verhalten": "bedienen",
     "forschung": "cafe"
+  },
+  "staplerfahrer": {
+    "name": "Staplerfahrer",
+    "beschreibung": "Fährt Gabelstapler und Hubwagen: lädt Paletten vom LKW ins Regal, holt sie herunter und füllt mit dem Hubwagen die Verkaufsregale direkt von der Palette auf.",
+    "lohnProTag": 100,
+    "farbe": "#e6b929",
+    "verhalten": "paletten"
   }
 }

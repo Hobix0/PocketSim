@@ -1,21 +1,14 @@
 {
   "id": "pal_traverse_verzinkt_270_offen",
-  "name": "Traversen-Ebene Verzinkt 2,7 m (für Paletten)",
+  "name": "Traversen-Ebene Verzinkt 2,7 m (Palettenplätze)",
   "kategorie": "lager",
   "ebene": "objekt",
   "preis": 80,
   "freischaltLevel": 1,
-  "werte": {
-    "lagerplaetze": 14
-  },
+  "werte": {},
   "palettenregal": {
     "teil": "traverse",
     "breite": 2.7
-  },
-  "ablage": {
-    "boeden": [
-      0.125
-    ]
   },
   "model": "eigen/pal_traverse_verzinkt_270_offen",
   "platzhalter": {
@@ -31,5 +24,9 @@
     "familie": "pal_traverse_270_offen",
     "name": "Verzinkt",
     "farbe": "#a9b0b5"
+  },
+  "palettenplaetze": {
+    "anzahl": 3,
+    "hoehe": 0.1
   }
 }

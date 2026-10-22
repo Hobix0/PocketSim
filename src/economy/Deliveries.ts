@@ -11,11 +11,14 @@ import { parseTime } from './Customers';
 
 const DAY = 24 * 60;
 
-/** Ein Karton einer Lieferung */
+/** Ein Karton einer Lieferung – oder eine ganze Palette (`palette` = so viele Kartons zu je `menge` Stück) */
 export interface ShipmentLine {
   produkt: string;
   menge: number;
+  palette?: number;
 }
+
+const isPallet = (l: ShipmentLine) => (l.palette ?? 0) > 0;
 
 export interface Shipment {
   id: number;
@@ -45,11 +48,13 @@ export class Deliveries implements StoragePort {
   constructor(
     readonly settings: LogisticsSettings,
     /** Das eigentliche Lager (alle festen Ablagen) */
-    private readonly storage: Pick<StoragePort, 'freeSlots'>,
+    private readonly storage: Pick<StoragePort, 'freeSlots' | 'freePalletSlots'>,
     /** Aktuelle Zeit in Spielminuten */
     private readonly now: () => number,
     /** Kartons, die gerade auf einem LKW stehen und noch Platz brauchen */
     private readonly onTrucks: () => number = () => 0,
+    /** Paletten, die gerade auf einem LKW stehen */
+    private readonly palletsOnTrucks: () => number = () => 0,
   ) {
     this.termine = settings.liefertermine.map(parseTime).sort((a, b) => a - b);
     if (!this.termine.length) throw new Error('logistik/standard.json: "liefertermine" darf nicht leer sein');
@@ -57,13 +62,18 @@ export class Deliveries implements StoragePort {
 
   /** Freie Plätze abzüglich allem, was schon unterwegs ist */
   freeSlots(): number {
-    return Math.max(0, this.storage.freeSlots() - this.pendingCartons() - this.onTrucks() - this.draft.length);
+    return Math.max(0, this.storage.freeSlots() - this.pendingCartons() - this.onTrucks() - this.draft.filter((l) => !isPallet(l)).length);
   }
 
-  fee(kartons: number, art: ShippingKind): number {
-    if (kartons <= 0) return 0;
+  /** Freie Palettenplätze abzüglich der Paletten, die schon unterwegs sind */
+  freePalletSlots(): number {
+    return Math.max(0, (this.storage.freePalletSlots?.() ?? 0) - this.pendingPallets() - this.palletsOnTrucks() - this.draft.filter(isPallet).length);
+  }
+
+  fee(kartons: number, art: ShippingKind, paletten = 0): number {
+    if (kartons <= 0 && paletten <= 0) return 0;
     const k = this.settings.lieferkosten;
-    return k.grund + k.proKarton * kartons + (art === 'express' ? this.settings.express.aufschlag : 0);
+    return k.grund + k.proKarton * kartons + (k.proPalette ?? 4) * paletten + (art === 'express' ? this.settings.express.aufschlag : 0);
   }
 
   /** Wann eine Lieferung ankäme, wenn jetzt bestellt wird */
@@ -76,6 +86,10 @@ export class Deliveries implements StoragePort {
 
   deliver(produkt: ProductDef, menge: number): void {
     this.draft.push({ produkt: produkt.id, menge });
+  }
+
+  deliverPallet(produkt: ProductDef, kartons: number): void {
+    this.draft.push({ produkt: produkt.id, menge: produkt.gebinde, palette: kartons });
   }
 
   ship(art: ShippingKind): number {
@@ -109,8 +123,14 @@ export class Deliveries implements StoragePort {
     return this.pending;
   }
 
+  /** Lose Kartons, die noch kommen */
   pendingCartons(): number {
-    return this.pending.reduce((n, s) => n + s.kartons.length, 0);
+    return this.pending.reduce((n, s) => n + s.kartons.filter((l) => !isPallet(l)).length, 0);
+  }
+
+  /** Paletten, die noch kommen */
+  pendingPallets(): number {
+    return this.pending.reduce((n, s) => n + s.kartons.filter(isPallet).length, 0);
   }
 
   state(): DeliveriesState {

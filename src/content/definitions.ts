@@ -74,7 +74,7 @@ export type UtilitySettings = Record<'strom' | 'wasser', UtilityDef>;
 export interface LogisticsSettings {
   /** Uhrzeiten "HH:MM", zu denen normale Lieferungen kommen */
   liefertermine: string[];
-  lieferkosten: { grund: number; proKarton: number };
+  lieferkosten: { grund: number; proKarton: number; proPalette?: number };
   /** Express: kommt nach `minuten` Spielminuten, kostet `aufschlag` zusätzlich */
   express: { aufschlag: number; minuten: number };
   /** So lange wartet der LKW aufs Abladen, dann lädt der Fahrer selbst ab */
@@ -168,6 +168,10 @@ export interface BuildDef {
   gruppe?: string;
   /** Variante einer Familie (z. B. Wandregal in Weiß): Familie, Name und Farbe des Farbtupfers */
   variante?: { familie: string; name: string; farbe: string };
+  /** Palettenplätze: so viele Paletten nebeneinander (entlang lokal Z) auf dieser Höhe (m), z. B. Traverse oder Bodenstellplatz */
+  palettenplaetze?: { anzahl: number; hoehe: number };
+  /** Fahrzeug für Paletten (steht hier geparkt): Gabelstapler oder Hubwagen */
+  fahrzeug?: VehicleKind;
   /** Palettenregal-System: Stützrahmen (Höhe aus dem Platzhalter), Traversen-Ebene zwischen zwei Rahmen (Feldbreite in m) oder Zubehör */
   palettenregal?: { teil: 'rahmen' | 'traverse' | 'zubehoer'; breite?: number };
   /** Unterstand für Einkaufswagen: so viele Wagen stehen darin */
@@ -344,7 +348,7 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen' | 'paletten';
   /** Bewirbt sich erst, wenn diese Forschung erledigt ist (z. B. Barista → Café-Ecke) */
   forschung?: string;
 }
@@ -445,7 +449,15 @@ export interface GoalDef {
 /** Einstellungen für Kartons (data/lager/standard.json). */
 export interface StorageSettings {
   karton: { groesse: [number, number, number]; farbe: string };
+  /** Europalette: Maße (m), Lagen Kartons, Rabatt beim Kauf ganzer Paletten, Modell */
+  palette: { groesse: [number, number, number]; lagen: number; rabatt: number; model: string };
+  /** Gabelstapler und Hubwagen: Tempo (m/s), Hubgeschwindigkeit (m/s), größte Hubhöhe (m), Modelle */
+  fahrzeuge: Record<VehicleKind, { tempo: number; hub: number; maxHoehe: number; model: string; gabel?: string; vorn: number; gabelY: number; modellVersatz: number }>;
+  sekundenAufnehmen: number;
+  palettenEinraeumenSekundenProKarton: number;
 }
+
+export type VehicleKind = 'gabelstapler' | 'hubwagen';
 
 /** Anzeigename und Einheit eines Werts (data/werte/standard.json). */
 export interface ValueInfo {
@@ -522,6 +534,14 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     variante: o.variante === undefined ? undefined : (() => {
       const v = asObject(o.variante, `${where} → variante`);
       return { familie: str(v, 'familie', `${where} → variante`), name: str(v, 'name', `${where} → variante`), farbe: str(v, 'farbe', `${where} → variante`) };
+    })(),
+    palettenplaetze: o.palettenplaetze === undefined ? undefined : (() => {
+      const p = asObject(o.palettenplaetze, `${where} → palettenplaetze`);
+      return { anzahl: num(p, 'anzahl', `${where} → palettenplaetze`, 1), hoehe: num(p, 'hoehe', `${where} → palettenplaetze`, 0) };
+    })(),
+    fahrzeug: o.fahrzeug === undefined ? undefined : (() => {
+      if (o.fahrzeug !== 'gabelstapler' && o.fahrzeug !== 'hubwagen') throw new Error(`${where}: fahrzeug muss gabelstapler oder hubwagen sein`);
+      return o.fahrzeug;
     })(),
     palettenregal: o.palettenregal === undefined ? undefined : (() => {
       const p = asObject(o.palettenregal, `${where} → palettenregal`);

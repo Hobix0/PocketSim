@@ -15,5 +15,7 @@
     ],
     "farbe": "#e6b929"
   },
-  "gruppe": "lager/technik"
+  "gruppe": "lager/technik",
+  "fahrzeug": "gabelstapler",
+  "kontext": "fahrzeug"
 }

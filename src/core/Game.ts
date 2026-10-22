@@ -66,6 +66,7 @@ import { place } from '../world/CartonStorage';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
 import { ResearchWindow } from '../ui/ResearchWindow';
+import { cartonsPerPallet } from '../factory/createPalletEntity';
 import { Research } from '../economy/Research';
 import { LampLights } from '../world/LampLights';
 import { daylight } from '../world/DayCycle';
@@ -326,9 +327,10 @@ export class Game {
     this.fleet = route ? new TruckFleet(this.world, this.factory, this.content.logistik, route, this.storage, this.player, this.level.bounds,
       (x, z) => this.terrain.editAt(x, z)) : null;
     this.deliveries = this.fleet
-      ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks())
+      ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks(), () => this.fleet!.palletsOnTrucks())
       : null;
-    this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage, this.research);
+    this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage, this.research,
+      { kartons: cartonsPerPallet({ content: this.content }), rabatt: this.content.lager.palette.rabatt });
     this.buyers = new BuyerSystem(this.world, this.content.produkte, this.purchasing, this.player, this.content.personal.einkauf, this.deliveries ?? undefined);
     // Versorgung und Produktion: Maschinen holen Rohstoffe aus dem Lager und liefern dorthin
     this.utilities = new Utilities(this.content.versorgung, this.player);

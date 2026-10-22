@@ -45,19 +45,21 @@ describe('Palettenregal', () => {
     expect(rackBays(w, 2.7)).toHaveLength(1);
     const p = snapPlacement(w, traverse, 0.4, 0.3, 0, s);
     expect([p.x, p.z]).toEqual([0, 0]);
-    const ys = [0, 1, 2].map(() => place(w, traverse, 0, 0).object.position.y);
-    expect(ys.map((y) => +y.toFixed(2))).toEqual([0.15, 1.15, 2.15].map((v) => +(v + 0.05).toFixed(2)));
-    // 3-m-Rahmen: 3,15 + 0,35 passt nicht mehr
+    const ys = [0, 1].map(() => place(w, traverse, 0, 0).object.position.y);
+    expect(ys.map((y) => +y.toFixed(2))).toEqual([0.15, 1.45].map((v) => +(v + 0.05).toFixed(2)));
+    // 3-m-Rahmen: 2,75 + 0,35 passt nicht mehr (Raster mit Platz für volle Paletten)
     expect(checkPlacement(w, traverse, 0, 0, 0, s, opts).grund).toBe('regal_voll');
     // Falsche Feldbreite passt nicht
     expect(checkPlacement(w, content.bau.get('pal_traverse_klassik_180_offen'), 0, 0, 0, s, opts).grund).toBe('rahmen');
   });
 
-  it('jede Ebene ist eine Lagerfläche für Kartons', () => {
+  it('Gitterrost-Ebenen sind Kartonplätze, offene Ebenen Palettenplätze (3 auf 2,7 m)', async () => {
+    const { PalletPlacesComponent } = await import('../src/components/PalletPlacesComponent');
     const w = halle();
     place(w, rahmen, 0, -1.4); place(w, rahmen, 0, 1.4);
-    const t = place(w, traverse, 0, 0);
-    const a = t.require(StorageSurfaceComponent);
-    expect(a.capacity).toBe(content.bau.get('pal_traverse_klassik_270_offen').werte.lagerplaetze);
+    const gitter = place(w, content.bau.get('pal_traverse_klassik_270_gitter'), 0, 0);
+    expect(gitter.require(StorageSurfaceComponent).capacity).toBe(content.bau.get('pal_traverse_klassik_270_gitter').werte.lagerplaetze);
+    const offen = place(w, traverse, 0, 0);
+    expect(offen.require(PalletPlacesComponent).capacity).toBe(3);
   });
 });

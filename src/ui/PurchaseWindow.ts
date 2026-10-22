@@ -14,7 +14,8 @@ export interface ShippingInfo {
   now(): number;
 }
 
-// Großhandel-Fenster: Produkte nach Warenkategorie (Tabs), Kartons wählen, bestellen.
+// Großhandel-Fenster: Produkte nach Warenkategorie (Tabs), einzelne Kartons oder ganze Paletten wählen, bestellen.
+// Paletten sind günstiger je Karton, brauchen aber einen Palettenplatz (Bodenstellplatz oder Palettenregal).
 // Die Produktliste kommt automatisch aus data/produkte.
 
 export class PurchaseWindow {
@@ -24,8 +25,8 @@ export class PurchaseWindow {
   private readonly summaryEl: HTMLElement;
   private readonly errorEl: HTMLElement;
   private readonly orderBtn: HTMLButtonElement;
-  /** Produkt-id → gewählte Kartons */
-  private readonly cart = new Map<string, number>();
+  /** Produkt-id → gewählte Kartons und Paletten */
+  private readonly cart = new Map<string, { kartons: number; paletten: number }>();
   private kategorie: string;
   private versand: ShippingKind = 'normal';
   private readonly shippingEl: HTMLElement;
@@ -85,8 +86,10 @@ export class PurchaseWindow {
       if (!b?.dataset.produkt) return;
       b.blur();
       const id = b.dataset.produkt;
-      const n = Math.max(0, (this.cart.get(id) ?? 0) + Number(b.dataset.delta));
-      if (n) this.cart.set(id, n); else this.cart.delete(id);
+      const c = { ...(this.cart.get(id) ?? { kartons: 0, paletten: 0 }) };
+      const key = b.dataset.art === 'palette' ? 'paletten' : 'kartons';
+      c[key] = Math.max(0, c[key] + Number(b.dataset.delta));
+      if (c.kartons || c.paletten) this.cart.set(id, c); else this.cart.delete(id);
       this.errorEl.textContent = '';
       this.render();
     });
@@ -112,8 +115,12 @@ export class PurchaseWindow {
     this.el.hidden = true;
   }
 
+  private lines(): { produkt: string; kartons: number; paletten: number }[] {
+    return [...this.cart].map(([produkt, c]) => ({ produkt, ...c }));
+  }
+
   private order(): void {
-    const lines = [...this.cart].map(([produkt, kartons]) => ({ produkt, kartons }));
+    const lines = this.lines();
     const result = this.purchasing.order(lines, this.versand);
     if (!result.ok) {
       this.errorEl.textContent = this.errorText(result.fehler);
@@ -122,8 +129,8 @@ export class PurchaseWindow {
     this.cart.clear();
     this.errorEl.textContent = '';
     if (result.ankunft !== undefined && this.shipping) {
-      this.toasts.show(this.content.text('einkauf_bestellt', { kartons: result.kartons, zeit: formatClock(result.ankunft, this.shipping.now()) }), 'gut');
-    } else this.toasts.show(this.content.text('einkauf_geliefert', { kartons: result.kartons }), 'gut');
+      this.toasts.show(this.content.text('einkauf_bestellt', { kartons: this.wasText(lines), zeit: formatClock(result.ankunft, this.shipping.now()) }), 'gut');
+    } else this.toasts.show(this.content.text('einkauf_geliefert', { kartons: this.wasText(lines) }), 'gut');
     this.render();
   }
 
@@ -133,6 +140,7 @@ export class PurchaseWindow {
       case 'leer': return c.text('einkauf_fehler_leer');
       case 'gesperrt': return c.text('einkauf_fehler_gesperrt', { produkt: f.produkt.name, sperre: f.sperre });
       case 'platz': return c.text('einkauf_fehler_platz', { frei: f.frei, noetig: f.noetig });
+      case 'palettenplatz': return c.text('einkauf_fehler_palettenplatz', { frei: f.frei, noetig: f.noetig });
       case 'geld': return c.text('einkauf_fehler_geld');
     }
   }
@@ -155,44 +163,56 @@ export class PurchaseWindow {
 
   private row(p: ProductDef): string {
     const unlocked = this.purchasing.isUnlocked(p);
-    const n = this.cart.get(p.id) ?? 0;
+    const c = this.cart.get(p.id) ?? { kartons: 0, paletten: 0 };
     const icon = iconUrl(p.icon);
-    const control = unlocked
-      ? `<div class="stepper">
-           <button type="button" data-produkt="${p.id}" data-delta="-1" ${n ? '' : 'disabled'} aria-label="weniger">−</button>
+    const stepper = (art: 'karton' | 'palette', n: number) => `<div class="stepper">
+           <button type="button" data-produkt="${p.id}" data-art="${art}" data-delta="-1" ${n ? '' : 'disabled'} aria-label="weniger">−</button>
            <span>${n}</span>
-           <button type="button" data-produkt="${p.id}" data-delta="1" aria-label="mehr">+</button>
-         </div>`
-      : `<span class="badge">${esc(this.purchasing.unlocks.sperre(p) ?? '')}</span>`;
+           <button type="button" data-produkt="${p.id}" data-art="${art}" data-delta="1" aria-label="mehr">+</button>
+         </div>`;
+    const pal = this.purchasing.pallets && this.purchasing.palette;
+    const control = !unlocked ? `<span class="badge">${esc(this.purchasing.unlocks.sperre(p) ?? '')}</span>`
+      : `<div class="buy-options">
+          <div class="buy"><div class="price">${formatMoney(this.purchasing.cartonPrice(p))}<small>Karton</small></div>${stepper('karton', c.kartons)}</div>
+          ${pal ? `<div class="buy pallet"><div class="price">${formatMoney(this.purchasing.palletPrice(p))}<small>Palette · ${pal.kartons} Kartons · −${Math.round(pal.rabatt * 100)} %</small></div>${stepper('palette', c.paletten)}</div>` : ''}
+        </div>`;
     return `
-      <div class="item ${unlocked ? '' : 'locked'} ${n ? 'chosen' : ''}">
+      <div class="item ${unlocked ? '' : 'locked'} ${c.kartons || c.paletten ? 'chosen' : ''}">
         ${icon ? `<img src="${icon}" alt="" loading="lazy" width="44" height="44">` : '<span class="noicon"></span>'}
         <div class="item-text"><b>${esc(p.name)}</b>
           <small>EK ${formatMoney(p.ek)} · VK ${formatMoney(p.vk)} · ${p.gebinde} Stück/Karton${p.preisOffen ? ' · Preis vorläufig' : ''}</small></div>
-        <div class="price">${formatMoney(this.purchasing.cartonPrice(p))}<small>pro Karton</small></div>
         ${control}
       </div>`;
   }
 
+  /** „3 Kartons und 2 Paletten“ */
+  private wasText(lines: { kartons: number; paletten: number }[]): string {
+    const k = lines.reduce((n, l) => n + l.kartons, 0), p = lines.reduce((n, l) => n + l.paletten, 0);
+    const parts = [k ? `${k} Karton${k === 1 ? '' : 's'}` : '', p ? `${p} Palette${p === 1 ? '' : 'n'}` : ''].filter(Boolean);
+    return parts.join(' und ');
+  }
+
   private renderSummary(): void {
-    const lines = [...this.cart].map(([produkt, kartons]) => ({ produkt, kartons }));
-    const { kosten, kartons, versand } = this.purchasing.quote(lines, this.versand);
+    const lines = this.lines();
+    const { kosten, kartons, paletten, versand } = this.purchasing.quote(lines, this.versand);
     const frei = this.purchasing.freeSlots();
+    const palFrei = this.purchasing.freePalletSlots();
     const t = (k: string, v?: Record<string, string | number>) => esc(this.content.text(k, v));
     if (this.shipping) {
       const option = (art: ShippingKind) => {
         const fee = this.purchasing.quote(lines, art).versand;
         const zeit = formatClock(this.shipping!.arrival(art), this.shipping!.now());
         return `<button type="button" role="radio" data-versand="${art}" aria-checked="${this.versand === art}" class="${this.versand === art ? 'active' : ''}">
-          <b>${t(`einkauf_versand_${art}`)}</b><small>${t('einkauf_ankunft', { zeit })}${kartons ? ` · ${formatMoney(fee)}` : ''}</small></button>`;
+          <b>${t(`einkauf_versand_${art}`)}</b><small>${t('einkauf_ankunft', { zeit })}${kartons || paletten ? ` · ${formatMoney(fee)}` : ''}</small></button>`;
       };
       this.shippingEl.innerHTML = option('normal') + option('express');
     }
     this.summaryEl.innerHTML = `
       ${versand ? `<span>${t('einkauf_lieferkosten')} <b>${formatMoney(versand)}</b></span>` : ''}
       <span>${t('einkauf_summe')} <b class="${kosten > this.player.geld ? 'bad' : ''}">${formatMoney(kosten)}</b></span>
-      <span>${kartons} Kartons</span>
-      <span>${t('einkauf_platz')} <b class="${kartons > frei ? 'bad' : ''}">${frei}</b></span>`;
-    this.orderBtn.disabled = kartons === 0;
+      <span>${kartons} Kartons${paletten ? ` · ${paletten} Paletten` : ''}</span>
+      <span>${t('einkauf_platz')} <b class="${kartons > frei ? 'bad' : ''}">${frei}</b></span>
+      ${this.purchasing.pallets ? `<span>${t('einkauf_palettenplatz')} <b class="${paletten > palFrei ? 'bad' : ''}">${palFrei}</b></span>` : ''}`;
+    this.orderBtn.disabled = kartons === 0 && paletten === 0;
   }
 }
