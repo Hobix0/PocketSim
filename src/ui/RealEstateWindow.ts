@@ -98,7 +98,7 @@ export class RealEstateWindow {
     knoepfe.push(`<button type="button" data-act="zeigen" data-id="${esc(p.id)}">📍 Ansehen</button>`);
     return `<div class="estate ${own ? 'own' : ''} ${locked ? 'locked' : ''}">
       <div class="estate-head"><span class="icon">${ICON[a.groesse] ?? '🏠'}</span><div><b>${esc(p.name)}</b>
-        <small>${esc(GROESSE[a.groesse] ?? '')} · ${w} × ${d} m (${w * d} m²) · ${esc(a.lage)}</small></div>
+        <small>${esc(GROESSE[a.groesse] ?? '')} · ${w} × ${d} m (${w * d} m²) · ${esc(a.lage)}${a.parkplatz ? ' · 🅿️ mit Parkplatz' : ''}</small></div>
         <span class="tag">${own ? (rented ? 'gemietet' : 'gehört dir') : locked ? `ab Level ${p.freischaltLevel}` : 'zu haben'}</span></div>
       <small>${esc(zustand)}${a.miete ? ` · Miete ${formatMoney(a.miete)}/Tag` : ''} · Kauf ${formatMoney(p.preis)}</small>
       <div class="estate-actions">${knoepfe.join('')}</div>

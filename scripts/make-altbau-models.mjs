@@ -160,3 +160,14 @@ model({
     box(5, 5, 36, 40, 26, 54, '#2b2b2e');
   },
 });
+
+// ── Stadt: Parkplatz ──────────────────────────────────────────────────────────
+
+// Parkplatz-Boden (2 × 2 m): Asphalt mit weißer Trennlinie am linken Rand (−X) und Fahrbahnkante
+model({
+  id: 'parkplatz', name: 'Parkplatz', dims: [80, 2, 80], menue: 'aussen',
+  draw: ({ box }) => {
+    box(0, 79, 0, 1, 0, 79, (x, y, z) => shade('#4a4d52', 0.92 + hash(Math.floor(x / 3), y, Math.floor(z / 3)) * 0.12));
+    box(0, 2, 1, 1, 2, 77, '#e9e9e4'); // Trennlinie
+  },
+});

@@ -1,0 +1,20 @@
+{
+  "id": "auto_geparkt_kombi",
+  "name": "Geparkter Kombi",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "aussen": true,
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/auto_kombi",
+  "platzhalter": {
+    "groesse": [
+      4,
+      1.6,
+      1.7
+    ],
+    "farbe": "#7fa07c"
+  },
+  "gruppe": "aussen/strasse"
+}

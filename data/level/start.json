@@ -18,16 +18,18 @@
     {"id": "altes_ladenlokal", "name": "Altes Ladenlokal", "rect": {"minX": -20, "maxX": -12, "minZ": -3, "maxZ": 3}, "preis": 5000, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Hauptstraße West", "miete": 60}},
     {"id": "bauplatz_west", "name": "Bauplatz West", "rect": {"minX": -32, "maxX": -22, "minZ": -4, "maxZ": 3}, "preis": 3500, "freischaltLevel": 3, "angebot": {"groesse": "grundstueck", "lage": "Hauptstraße West"}},
     {"id": "gehweg_ost", "name": "Gehweg Ost", "rect": {"minX": 20, "maxX": 60, "minZ": 3, "maxZ": 7.2}, "preis": 0, "freischaltLevel": 1, "besessen": true},
-    {"id": "laden_klein_ost", "name": "Ladenlokal Eckstraße", "rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "preis": 9000, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "neu", "lage": "Hauptstraße Ost", "miete": 110}},
-    {"id": "laden_mittel_ost", "name": "Ladenlokal am Markt", "rect": {"minX": 30, "maxX": 40, "minZ": -5, "maxZ": 3}, "preis": 16000, "freischaltLevel": 4, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Hauptstraße Ost", "miete": 190}},
-    {"id": "laden_gross_ost", "name": "Alte Markthalle", "rect": {"minX": 42, "maxX": 58, "minZ": -7, "maxZ": 3}, "preis": 22000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "alt", "lage": "Hauptstraße Ost", "miete": 260}},
-    {"id": "grundstueck_gross_west", "name": "Großes Grundstück", "rect": {"minX": -58, "maxX": -36, "minZ": -11, "maxZ": 3}, "preis": 12000, "freischaltLevel": 5, "angebot": {"groesse": "grundstueck", "lage": "Stadtrand West"}}
+    {"id": "laden_klein_ost", "name": "Ladenlokal Eckstraße", "rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "preis": 9000, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "neu", "lage": "Einkaufsstraße Ost", "miete": 110}},
+    {"id": "laden_mittel_ost", "name": "Ladenlokal am Markt", "rect": {"minX": 28, "maxX": 38, "minZ": -5, "maxZ": 3}, "preis": 16000, "freischaltLevel": 4, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Einkaufsstraße Ost", "miete": 190}},
+    {"id": "laden_gross_ost", "name": "Alte Markthalle", "rect": {"minX": 38, "maxX": 54, "minZ": -7, "maxZ": 3}, "preis": 22000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "alt", "lage": "Einkaufsstraße Ost", "miete": 260}},
+    {"id": "eckladen_ost", "name": "Eckladen am Stadttor", "rect": {"minX": 54, "maxX": 60, "minZ": -3, "maxZ": 3}, "preis": 6500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Einkaufsstraße Ost", "miete": 70}},
+    {"id": "grundstueck_gross_west", "name": "Großes Grundstück", "rect": {"minX": -44, "maxX": -34, "minZ": -13, "maxZ": 3}, "preis": 12000, "freischaltLevel": 5, "angebot": {"groesse": "grundstueck", "lage": "Stadtrand West"}},
+    {"id": "fachmarkt_west", "name": "Fachmarkt mit Parkplatz", "rect": {"minX": -59, "maxX": -45, "minZ": -11, "maxZ": 3}, "preis": 26000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Stadtrand West", "miete": 240, "parkplatz": true}}
   ],
   "leben": {
     "gehweg": { "x": [-59, 59], "z": [5.3, 6.7], "y": 0.14 },
     "spuren": [{ "z": 8.6, "richtung": 1 }, { "z": 10.4, "richtung": -1 }],
     "strasse": { "x": [-61, 61], "y": 0.04 },
-    "schaufenster": [[-3, 4.2], [3, 4.2], [-7, 4.2], [7, 4.2], [-17, 4.2], [-13, 4.2], [25, 4.2], [33, 4.2], [37, 4.2], [46, 4.2], [54, 4.2]],
+    "schaufenster": [[-3, 4.2], [3, 4.2], [-7, 4.2], [7, 4.2], [-17, 4.2], [-13, 4.2], [25, 4.2], [31, 4.2], [35, 4.2], [43, 4.2], [49, 4.2], [57, 4.2]],
     "tauben": [[-5.5, 0.14, 5.9], [-5, 0.14, 6.3], [-4.6, 0.14, 5.7], [5.4, 0.14, 6.1], [5.9, 0.14, 5.6], [12, 0.14, 6.2], [-25.5, 0.14, 5.8], [-25, 0.14, 6.2]]
   },
   "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6], [-36.5, 0.14, 5.4], [-36.5, 0.14, 6.6], [58.5, 0.14, 5.4], [58.5, 0.14, 6.6], [-58.5, 0.14, 5.4], [-58.5, 0.14, 6.6]],
@@ -77,9 +79,6 @@
     {"typ": "baum_strasse", "position": [-26, 0.14, 6.6], "drehung": 0},
     {"typ": "baum_strasse", "position": [-11, 0.14, 6.6], "drehung": 45},
     {"gebaeude": {"rect": {"minX": -20, "maxX": -12, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 2}},
-    {"gebaeude": {"rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "zustand": "neu"}},
-    {"gebaeude": {"rect": {"minX": 30, "maxX": 40, "minZ": -5, "maxZ": 3}, "zustand": "neu", "tuer": 2}},
-    {"gebaeude": {"rect": {"minX": 42, "maxX": 58, "minZ": -7, "maxZ": 3}, "zustand": "alt", "tuer": 4}},
     {"typ": "boden_gehweg", "position": [-59, 0, 4.2], "drehung": 0, "wiederholen": {"anzahl": [11, 2], "abstand": [2, 2]}},
     {"typ": "boden_gehweg", "position": [21, 0, 4.2], "drehung": 0, "wiederholen": {"anzahl": [20, 2], "abstand": [2, 2]}},
     {"typ": "strassenlaterne", "position": [-44, 0.14, 6.85], "drehung": 0},
@@ -89,7 +88,18 @@
     {"typ": "baum_strasse", "position": [24, 0.14, 6.6], "drehung": 30},
     {"typ": "baum_strasse", "position": [41, 0.14, 6.6], "drehung": 60},
     {"typ": "baum_strasse", "position": [56, 0.14, 6.6], "drehung": 0},
-    {"typ": "bauzaun", "position": [-57, 0.14, 3.0], "drehung": -90, "wiederholen": {"anzahl": [11, 1], "abstand": [2, 0]}}
+    {"gebaeude": {"rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "zustand": "neu"}},
+    {"gebaeude": {"rect": {"minX": 28, "maxX": 38, "minZ": -5, "maxZ": 3}, "zustand": "neu", "tuer": 2}},
+    {"gebaeude": {"rect": {"minX": 38, "maxX": 54, "minZ": -7, "maxZ": 3}, "zustand": "alt", "tuer": 4}},
+    {"gebaeude": {"rect": {"minX": 54, "maxX": 60, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": -58, "maxX": -46, "minZ": -11, "maxZ": -3}, "zustand": "neu", "tuer": 3}},
+    {"typ": "parkplatz", "position": [-57, 0, -2], "drehung": 0, "wiederholen": {"anzahl": [6, 2], "abstand": [2, 2]}},
+    {"typ": "asphalt_hof", "position": [-57, 0, 2], "drehung": 0, "wiederholen": {"anzahl": [6, 1], "abstand": [2, 0]}},
+    {"typ": "auto_geparkt_kombi", "position": [-55, 0.05, -1], "drehung": 90},
+    {"typ": "auto_geparkt_klein", "position": [-51, 0.05, -1], "drehung": -90},
+    {"typ": "auto_geparkt_lieferwagen", "position": [-47, 0.05, -1], "drehung": 90},
+    {"typ": "strassenlaterne", "position": [-45.4, 0.14, 2.5], "drehung": 0},
+    {"typ": "bauzaun", "position": [-43, 0.14, 3.0], "drehung": -90, "wiederholen": {"anzahl": [5, 1], "abstand": [2, 0]}}
   ],
   "bodenFrueher": [40, 30]
 }

@@ -1,0 +1,20 @@
+{
+  "id": "auto_geparkt_klein",
+  "name": "Geparkter Kleinwagen",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "aussen": true,
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/auto_klein",
+  "platzhalter": {
+    "groesse": [
+      4,
+      1.6,
+      1.7
+    ],
+    "farbe": "#d9a441"
+  },
+  "gruppe": "aussen/strasse"
+}

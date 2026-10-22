@@ -22,6 +22,8 @@ export interface PlotOffer {
   zustand?: 'alt' | 'neu';
   lage: string;
   miete?: number;
+  /** Freistehend mit eigenem Parkplatz (mehr Kundschaft von weiter weg) */
+  parkplatz?: boolean;
 }
 
 export interface PlotEvents extends Record<string, unknown> {

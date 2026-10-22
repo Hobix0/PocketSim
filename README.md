@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 15 – Immobilienmarkt (wie in Big Ambitions)** ✅
+
+- **Fenster „Immobilien“** (Knopf oder Taste `I`): alle Angebote mit Größe, Fläche, Lage, Zustand, Kauf- und Mietpreis; Filter *Alle · Meine · Klein · Mittel · Groß · Grundstücke*; **📍 Ansehen** fährt die Kamera hin
+- **Kaufen oder mieten:** Die Miete wird jeden Morgen abgebucht. Kündigen geht, wenn innen nichts mehr von dir steht; gemietet und später doch gekauft beendet die Miete. Kann die Miete drei Tage lang nicht bezahlt werden, endet der Vertrag. Auch gemietete Läden darfst du einrichten und renovieren
+- **Die Stadt (120 m breit):** *Einkaufsstraße Ost* Wand an Wand – Ladenlokal Eckstraße (klein, neu), Ladenlokal am Markt (mittel, neu), Alte Markthalle (groß, Altbau), Eckladen am Stadttor (klein, Altbau). *Hauptstraße West* – Altes Ladenlokal, Bauplatz. *Stadtrand West* – **Fachmarkt mit Parkplatz** (freistehend, 🅿️, geparkte Autos) und ein großes Grundstück für eigene Großprojekte
+- **Gebäude-Generator:** Im Level reicht `{"gebaeude": {"rect": …, "zustand": "alt" | "neu", "tuer": 2}}` – Boden, Wände, Schaufenster, Tür, Eckpfeiler und Dachkante entstehen von selbst (`src/world/Level.ts` → `buildingParts`)
+- Neue Bauteile unter Außen → Straße: **Parkplatz** (Asphalt mit Linie) und **geparkte Autos**
+- Angebote: `data/level/start.json` → `grundstuecke` → `angebot` (`groesse`, `zustand`, `lage`, `miete`, `parkplatz`); Code: `src/world/Plots.ts`, `src/ui/RealEstateWindow.ts`
+
 **Etappe 14 – Stadt: Altbau kaufen und renovieren** ✅
 
 - **Größere Karte (80 × 30 m)** mit einer Ladenzeile nach Westen: Gehweg, Laternen, Bäume, die Straße ist länger
