@@ -11,6 +11,7 @@ import { FootprintComponent } from '../components/FootprintComponent';
 // Produktion: Maschinen holen ihre Rohstoffe selbst aus dem Lager (Kartons) und
 // stellen das Ergebnis als Karton zurück ins Lager – von dort wird es eingeräumt wie gekaufte Ware.
 // Strom und Wasser kommen aus der Versorgung; reicht der Anschluss nicht, startet nichts.
+// Produktionslinien (lager "zentral") hängen am Industrieanschluss: keine Grenze, die Energie steckt im Rohstoffpreis.
 
 export type StartCheck =
   | { ok: true }
@@ -62,7 +63,8 @@ export class Production {
   demand(): Record<UtilityKind, number> {
     const out = this.baseDemand();
     for (const m of this.machines()) {
-      if (!m.laeuft) continue;
+      // Linien im Industriegebiet hängen am eigenen Industrieanschluss, nicht am Hausanschluss des Ladens
+      if (!m.laeuft || m.def.lager === 'zentral') continue;
       out.strom += m.def.strom;
       out.wasser += m.def.wasser;
     }
@@ -91,6 +93,7 @@ export class Production {
     if (m.lager === 'zentral' && !this.zentral()) return { ok: false, grund: 'zentrallager' };
     const fehlt = r.eingang.filter((l) => this.stock(l.ware, m) < l.menge).map((l) => ({ ware: l.ware, menge: l.menge - this.stock(l.ware, m) }));
     if (fehlt.length) return { ok: false, grund: 'rohstoffe', fehlt };
+    if (m.lager === 'zentral') return { ok: true };
     const d = this.demand();
     if (d.strom + m.strom > this.utilities.anschluss('strom') + 1e-9) return { ok: false, grund: 'strom' };
     if (d.wasser + m.wasser > this.utilities.anschluss('wasser') + 1e-9) return { ok: false, grund: 'wasser' };

@@ -228,6 +228,16 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 17 – Produktion und Zentrallager** ✅
+
+- **Industriegebiet** hinter der Einkaufsstraße (Karte jetzt 120 × 90 m) an der Industriestraße: **Zentrallager** (32 × 20 m, ab Level 4), **Produktionshalle Nord** (26 × 18 m, Level 4), **Große Produktionshalle** (30 × 20 m, Level 6) und ein Gewerbegrundstück – kaufen oder mieten im Immobilien-Fenster (Filter „Industrie“)
+- **13 Produktionslinien** nach echtem Vorbild, vereinfacht: Getränke-Abfüllanlage, Backstraße, Konditorei, Molkerei, Fleischerei, Tiefkühl-Linie, Obst- & Gemüse-Packstation, Trockenwaren-Abfüllung, Süßwaren-Linie, Chemie-Mischanlage, Kosmetik-Abfüllung, Nähstraße, Schuhfertigung. **Jede Linie stellt alle Produkte ihrer Warengruppe her** – damit lässt sich alles produzieren, was du sonst beim Großhandel kaufst (außer frischem Café-Kaffee)
+- **Rohstoffe:** je Linie ein Grundstoff-Paket beim Großhandel (Reiter „Rohstoffe“, z. B. „Getränke-Grundstoffe“, „Stoffe, Garn & Knöpfe“). Eigene Herstellung kostet etwa 45 % des Einkaufspreises; die Rezepte entstehen automatisch (`data/produktion/standard.json`)
+- **Forschung → Produktion 🏭:** Erste Produktion → Lebensmittelwerk, Molkerei & Fleischerei, Textilwerkstatt → Tiefkühl & Süßwaren, Drogerie-Werk (bald: Automatisierung, Eigenmarke)
+- **Zentrallager** (Knopf oder Taste `Z`): Bestand, Platz (1.200 Kartons), was unterwegs ist. **Einkaufen mit Ziel „Ins Zentrallager“** (Schalter im Einkaufsfenster, sobald du eines hast); Linien holen ihre Rohstoffe dort und liefern fertige Kartons zurück; **„in den Laden“** schickt 1, 5 oder alle Kartons mit dem LKW zum nächsten Liefertermin oder per Express (8 € je Fahrt + 0,25 € je Karton)
+- Linien hängen am eigenen **Industrieanschluss** (belasten den Hausanschluss des Ladens nicht)
+- Code: `src/economy/CentralWarehouse.ts`, `Production.ts` (Linien mit `lager: "zentral"`), `src/ui/WarehouseWindow.ts`; Hallen kommen aus dem Gebäude-Generator (`halle: true`); Modelle: `npm run modelle:produktion`
+
 **Etappe 16 – Viertel und Lage** ✅
 
 - **Jeder weitere eigene Laden bringt Kundschaft** – sobald er dir gehört (gekauft oder gemietet) und ein Regal mit Ware darin steht. Wie viel, hängt ab von der **Größe** (klein 35 %, mittel 55 %, groß 80 %), der **Lage** (Einkaufsstraße Ost ×1,3 belebt · Hauptstraße West ×1,0 · Wohnstraße Süd ×0,9 ruhig mit Stammkundschaft · Stadtrand West ×0,8) und einem **Parkplatz** (×1,25). Mit mehr Läden passen auch mehr Kunden gleichzeitig in die Stadt
