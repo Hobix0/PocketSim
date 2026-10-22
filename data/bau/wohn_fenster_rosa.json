@@ -1,0 +1,21 @@
+{
+  "id": "wohn_fenster_rosa",
+  "name": "Wohnhaus Fenster",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/wohn_fenster_rosa",
+  "platzhalter": {
+    "groesse": [
+      0.22,
+      3,
+      2
+    ],
+    "farbe": "#e8c4bc"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

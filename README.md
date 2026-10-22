@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 15b – Wohnhäuser: unten Läden, darüber Wohnungen** ✅
+
+- **Südseite der Straße** (die Karte ist jetzt 120 × 50 m): 15 Häuser Wand an Wand in Creme, Rosa, Salbei und Hellblau, 1–3 Wohnetagen mit Fenstern, Blumenkästen und Balkonen, rote oder graue Satteldächer mit Giebel und Schornstein, Haustüren mit Klingel und Briefkasten
+- **Vereinzelt Läden im Erdgeschoss** (Immobilienmarkt, „Wohnstraße Süd“): Laden im Wohnhaus (Lindenhof), Altbau-Laden mit Wohnungen, Ecklokal am Brunnen, Kleiner Altbau-Kiosk
+- **Nordseite:** Die Läden der Einkaufsstraße und das alte Ladenlokal haben jetzt Wohnetagen und Satteldächer
+- **Bewohner kommen aus den Haustüren** und gehen einkaufen
+- **Wohnetagen und Dächer blenden sich wie das Dach aus**, sobald du hineinzoomst oder baust; bei „Wände unten“ und im Schnitt sinken sie mit den Wänden
+- Gebäude-Generator (`src/world/Level.ts`): `etagen`, `farbe`, `dach` (`rot` | `grau` | `flach`), `wohnhaus`, `blick` (`nord` für die Südseite). Modelle: `npm run modelle:wohn` (Dächer mit 10-cm-Würfeln, damit die Dateien klein bleiben)
+
 **Etappe 15 – Immobilienmarkt (wie in Big Ambitions)** ✅
 
 - **Fenster „Immobilien“** (Knopf oder Taste `I`): alle Angebote mit Größe, Fläche, Lage, Zustand, Kauf- und Mietpreis; Filter *Alle · Meine · Klein · Mittel · Groß · Grundstücke*; **📍 Ansehen** fährt die Kamera hin

@@ -132,14 +132,18 @@ export class Renovations {
     this.running.set(plotId, { rest, total, gerueste: this.scaffold(plotId) });
   }
 
-  /** Gerüst vor jedes Wandteil, das zur Straße (+Z) zeigt */
+  /** Gerüst vor jedes Wandteil der Front (die Seite mit der Tür, sonst +Z) */
   private scaffold(plotId: string): THREE.Object3D[] {
     if (!this.scene || !this.models) return [];
     const out: THREE.Object3D[] = [];
-    for (const e of this.parts(plotId)) {
+    const parts = this.parts(plotId);
+    const achse = new THREE.Vector3(0, 1, 0);
+    const tuer = parts.find((e) => e.typeId.includes('tuer'));
+    const front = tuer ? new THREE.Vector3(1, 0, 0).applyAxisAngle(achse, tuer.object.rotation.y) : new THREE.Vector3(0, 0, 1);
+    for (const e of parts) {
       if (e.get(FootprintComponent)?.ebene !== 'wand') continue;
-      const out3 = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), e.object.rotation.y);
-      if (out3.z < 0.7) continue;
+      const out3 = new THREE.Vector3(1, 0, 0).applyAxisAngle(achse, e.object.rotation.y);
+      if (out3.dot(front) < 0.7) continue;
       const g = new THREE.Group();
       g.position.copy(e.object.position).addScaledVector(out3, 0.45);
       g.rotation.y = e.object.rotation.y;

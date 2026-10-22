@@ -1,0 +1,21 @@
+{
+  "id": "satteldach_8_rot",
+  "name": "Satteldach",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/satteldach_8_rot",
+  "platzhalter": {
+    "groesse": [
+      2,
+      3.3,
+      8.6
+    ],
+    "farbe": "#b0533f"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

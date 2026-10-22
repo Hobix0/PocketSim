@@ -28,49 +28,112 @@ export interface LevelObject {
 }
 
 /**
- * Ein Ladengebäude aus 2-m-Modulen: Boden, Wände ringsum, die Front (Straßenseite +Z) mit Schaufenstern und Tür,
- * Eckpfeiler und Dachkante. `alt`: verfallener Altbau (zum Renovieren), `neu`: bezugsfertig.
- * Breite und Tiefe der Fläche müssen Vielfache von 2 m sein.
+ * Ein Gebäude aus 2-m-Modulen: Erdgeschoss (Laden oder Wohnhaus, 4 m), darüber `etagen` Wohnetagen (je 3 m) und
+ * ein Satteldach (bei 6, 8 oder 10 m Tiefe) oder eine flache Dachkante. Die Front zeigt zur Straße:
+ * `blick` "sued" = nach +Z (Standard, Nordseite der Straße), "nord" = nach −Z (Südseite).
+ * `alt`: verfallener Laden (zum Renovieren), `neu`: bezugsfertig. Breite und Tiefe: Vielfache von 2 m.
  */
 export interface BuildingSpec {
   rect: { minX: number; maxX: number; minZ: number; maxZ: number };
   zustand: 'alt' | 'neu';
   /** Welches Frontmodul die Tür ist (von links, 0 = ganz links); Standard: Mitte */
   tuer?: number;
+  /** Wohnetagen über dem Erdgeschoss */
+  etagen?: number;
+  /** Putzfarbe der Wohnetagen bzw. des Wohnhauses */
+  farbe?: 'creme' | 'rosa' | 'salbei' | 'hellblau';
+  /** Satteldach in Rot oder Grau, oder flach */
+  dach?: 'rot' | 'grau' | 'flach';
+  /** Reines Wohnhaus: Haustür und Fenster statt Laden im Erdgeschoss */
+  wohnhaus?: boolean;
+  blick?: 'sued' | 'nord';
 }
 
-/** Alle Bauteile eines Ladengebäudes */
+/** Alle Bauteile eines Gebäudes */
 export function buildingParts(b: BuildingSpec): PlacedObject[] {
   const { minX, maxX, minZ, maxZ } = b.rect;
   const nx = Math.round((maxX - minX) / 2), nz = Math.round((maxZ - minZ) / 2);
-  const alt = b.zustand === 'alt';
+  const alt = b.zustand === 'alt', wohn = !!b.wohnhaus, etagen = b.etagen ?? 0, f = b.farbe ?? 'creme';
+  const tiefe = maxZ - minZ, cz = (minZ + maxZ) / 2;
+  const sattel = b.dach !== undefined && b.dach !== 'flach' && [6, 8, 10].includes(tiefe);
   const out: PlacedObject[] = [];
   const put = (typ: string, x: number, y: number, z: number, drehung: number) => out.push({ typ, position: [round(x), y, round(z)], drehung });
-  const wand = alt ? 'altbau_wand' : 'wand_weiss';
-  for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) put(alt ? 'altbau_boden' : 'boden_fliese_innen', minX + 1 + 2 * i, 0, minZ + 1 + 2 * k, 0);
   const tuer = Math.min(nx - 1, b.tuer ?? Math.floor(nx / 2));
+  const top = 4 + 3 * etagen;
+  // Erdgeschoss
+  if (!wohn) for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) put(alt ? 'altbau_boden' : 'boden_fliese_innen', minX + 1 + 2 * i, 0, minZ + 1 + 2 * k, 0);
+  const wand = wohn ? `wohn_eg_wand_${f}` : alt ? 'altbau_wand' : 'wand_weiss';
   for (let i = 0; i < nx; i++) {
     const x = minX + 1 + 2 * i;
-    put(wand, x, 0, minZ - 0.1, 90);
-    const front = i === tuer ? (alt ? 'altbau_tuer' : 'eingang_schiebetuer') : alt ? (i === 0 ? 'altbau_fenster_schild' : 'altbau_fenster') : 'schaufenster_gross';
+    put(wohn ? `wohn_eg_fenster_${f}` : wand, x, 0, minZ - 0.1, 90);
+    const front = wohn ? (i === tuer ? `wohn_tuer_${f}` : `wohn_eg_fenster_${f}`)
+      : i === tuer ? (alt ? 'altbau_tuer' : 'eingang_schiebetuer') : alt ? (i === 0 ? 'altbau_fenster_schild' : 'altbau_fenster') : 'schaufenster_gross';
     put(front, x, 0, maxZ + 0.1, -90);
-    if (i === tuer && !alt) put('eingangsstufe', x, 0, maxZ + 0.1, -90);
-    put('attika_dachkante', x, 4, maxZ + 0.1, -90);
-    put('attika_dachkante', x, 4, minZ - 0.1, 90);
+    if (i === tuer && !alt && !wohn) put('eingangsstufe', x, 0, maxZ + 0.1, -90);
+    if (etagen > 0) put('gesims', x, 4, maxZ + 0.1, -90);
   }
   for (let k = 0; k < nz; k++) {
     const z = minZ + 1 + 2 * k;
     put(wand, minX - 0.1, 0, z, 180);
     put(wand, maxX + 0.1, 0, z, 0);
-    put('attika_dachkante', minX - 0.1, 4, z, 180);
-    put('attika_dachkante', maxX + 0.1, 4, z, 0);
   }
-  for (const x of [minX - 0.1, maxX + 0.1]) for (const z of [minZ - 0.1, maxZ + 0.1]) put('eckpfeiler_schwarz', x, 0, z, 0);
-  if (alt) {
+  for (const x of [minX - 0.1, maxX + 0.1]) for (const z of [minZ - 0.1, maxZ + 0.1]) {
+    if (wohn) { put(`wohn_ecke_${f}`, x, 0, z, 0); put(`wohn_ecke_${f}`, x, 1, z, 0); } else put('eckpfeiler_schwarz', x, 0, z, 0);
+  }
+  if (alt && !wohn) {
     put('geruempel', minX + 1.6, 0.05, minZ + 0.8, 20);
-    put('geruempel', maxX - 1.8, 0.05, (minZ + maxZ) / 2 + 0.6, -70);
+    put('geruempel', maxX - 1.8, 0.05, cz + 0.6, -70);
+  }
+  // Wohnetagen: vorne Fenster, Blumenkästen und Balkone im Wechsel, hinten Fenster, seitlich Wand
+  for (let e = 0; e < etagen; e++) {
+    const y = 4 + 3 * e;
+    for (let i = 0; i < nx; i++) {
+      const x = minX + 1 + 2 * i;
+      const art = (i + e) % 3 === 1 ? 'balkon' : (i * 7 + e * 3) % 4 === 0 ? 'blumen' : 'fenster';
+      put(`wohn_${art}_${f}`, x, y, maxZ + 0.1, -90);
+      put(`wohn_fenster_${f}`, x, y, minZ - 0.1, 90);
+    }
+    for (let k = 0; k < nz; k++) {
+      const z = minZ + 1 + 2 * k;
+      put(`wohn_wand_${f}`, minX - 0.1, y, z, 180);
+      put(`wohn_wand_${f}`, maxX + 0.1, y, z, 0);
+    }
+    for (const x of [minX - 0.1, maxX + 0.1]) for (const z of [minZ - 0.1, maxZ + 0.1]) put(`wohn_ecke_${f}`, x, y, z, 0);
+  }
+  // Dach
+  if (sattel) {
+    // Ein Schornstein je Haus (auf dem zweiten Modul)
+    for (let i = 0; i < nx; i++) put(`satteldach_${tiefe}_${b.dach}${i === Math.min(1, nx - 1) ? '_kamin' : ''}`, minX + 1 + 2 * i, top, cz, 0);
+    put(`giebel_${tiefe}_${f}`, minX - 0.1, top, cz, 180);
+    put(`giebel_${tiefe}_${f}`, maxX + 0.1, top, cz, 0);
+  } else {
+    for (let i = 0; i < nx; i++) {
+      put('attika_dachkante', minX + 1 + 2 * i, top, maxZ + 0.1, -90);
+      put('attika_dachkante', minX + 1 + 2 * i, top, minZ - 0.1, 90);
+    }
+    for (let k = 0; k < nz; k++) {
+      put('attika_dachkante', minX - 0.1, top, minZ + 1 + 2 * k, 180);
+      put('attika_dachkante', maxX + 0.1, top, minZ + 1 + 2 * k, 0);
+    }
+  }
+  // Südseite der Straße: um 180° um die Mitte drehen, damit die Front nach −Z zeigt
+  if (b.blick === 'nord') {
+    const cx = (minX + maxX) / 2;
+    for (const o of out) {
+      o.position = [round(2 * cx - o.position[0]), o.position[1], round(2 * cz - o.position[2])];
+      o.drehung = ((o.drehung + 360) % 360) - 180;
+    }
   }
   return out;
+}
+
+/** Wo vor der Haustür eines Wohnhauses jemand herauskommt (Welt, auf dem Gehweg) */
+export function buildingDoor(b: BuildingSpec): [number, number, number] | null {
+  if (!b.wohnhaus) return null;
+  const { minX, maxX, minZ, maxZ } = b.rect;
+  const nx = Math.round((maxX - minX) / 2);
+  const x = minX + 1 + 2 * Math.min(nx - 1, b.tuer ?? Math.floor(nx / 2));
+  return b.blick === 'nord' ? [round(minX + maxX - x), 0.14, minZ - 0.7] : [x, 0.14, maxZ + 0.7];
 }
 
 /** Ein einzelnes, fertig ausgerechnetes Objekt (nach dem Auflösen von "wiederholen"). */

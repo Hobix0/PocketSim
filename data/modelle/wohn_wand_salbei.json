@@ -1,0 +1,18 @@
+{
+  "id": "wohn_wand_salbei",
+  "name": "Wohnhaus Wand",
+  "typ": "modell",
+  "menue": "gebaeude",
+  "preis": 0,
+  "ebene": "objekt",
+  "kantenlaenge": 0.025,
+  "groesse": [
+    8,
+    120,
+    80
+  ],
+  "palette": [
+    "#c5d3b8"
+  ],
+  "voxel": "76800*1"
+}

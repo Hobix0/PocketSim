@@ -1,0 +1,20 @@
+{
+  "id": "wohn_eg_fenster_creme",
+  "name": "Wohnhaus Erdgeschoss Fenster",
+  "kategorie": "gebaeude_basis",
+  "ebene": "wand",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/wohn_eg_fenster_creme",
+  "platzhalter": {
+    "groesse": [
+      0.22,
+      4,
+      2
+    ],
+    "farbe": "#efe3c8"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

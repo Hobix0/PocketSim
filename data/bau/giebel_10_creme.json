@@ -1,0 +1,21 @@
+{
+  "id": "giebel_10_creme",
+  "name": "Giebel",
+  "kategorie": "gebaeude_basis",
+  "ebene": "anbau",
+  "preis": 0,
+  "freischaltLevel": 1,
+  "werte": {},
+  "obergeschoss": true,
+  "model": "eigen/giebel_10_creme",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      3.75,
+      10
+    ],
+    "farbe": "#efe3c8"
+  },
+  "gruppe": "gebaeude/fassade",
+  "ausgeblendet": true
+}

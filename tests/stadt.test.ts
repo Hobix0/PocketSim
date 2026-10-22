@@ -6,7 +6,7 @@ import { PlayerState } from '../src/state/PlayerState';
 import { Plots } from '../src/world/Plots';
 import { Renovations } from '../src/world/Renovations';
 import { createBuildEntity } from '../src/factory/createBuildEntity';
-import { expandObjects, type LevelData } from '../src/world/Level';
+import { buildingDoor, buildingParts, expandObjects, type LevelData } from '../src/world/Level';
 import start from '../data/level/start.json';
 import stadt from '../data/stadt/standard.json';
 
@@ -138,5 +138,34 @@ describe('Immobilienmarkt', () => {
     expect(b.isRented('laden_mittel_ost')).toBe(false);
     expect(b.isOwned('laden_mittel_ost')).toBe(true);
     expect(b.mieteProTag).toBe(0);
+  });
+});
+
+describe('Wohnhäuser', () => {
+  it('Laden unten, Wohnetagen darüber, Satteldach mit einem Schornstein', () => {
+    const teile = buildingParts({ rect: { minX: 0, maxX: 6, minZ: -3, maxZ: 3 }, zustand: 'neu', etagen: 2, farbe: 'rosa', dach: 'rot' });
+    const t = teile.map((o) => o.typ!);
+    expect(t.filter((x) => x === 'schaufenster_gross').length).toBe(2);
+    expect(t.filter((x) => x.startsWith('wohn_') && x.endsWith('_rosa') && !x.includes('ecke')).length).toBe(2 * (3 + 3 + 3 + 3)); // je Etage vorne, hinten, zwei Seiten
+    expect(t.filter((x) => x.startsWith('satteldach_6_rot')).length).toBe(3);
+    expect(t.filter((x) => x.endsWith('_kamin')).length).toBe(1);
+    expect(teile.find((o) => o.typ!.startsWith('satteldach'))!.position[1]).toBe(10); // 4 m Laden + 2 × 3 m
+    for (const id of new Set(t)) {
+      const def = content.bau.get(id);
+      if (id.startsWith('wohn_') && !id.includes('_eg_') && !id.includes('tuer')) expect(def.obergeschoss, id).toBe(true);
+    }
+  });
+
+  it('Südseite: das Wohnhaus dreht sich zur Straße, aus der Haustür kommen Kunden', () => {
+    const spec = { rect: { minX: 0, maxX: 8, minZ: 14, maxZ: 22 }, zustand: 'neu' as const, wohnhaus: true, etagen: 1, blick: 'nord' as const, tuer: 0 };
+    const teile = buildingParts(spec);
+    const tuer = teile.find((o) => o.typ!.startsWith('wohn_tuer'))!;
+    expect(tuer.position[2]).toBeCloseTo(13.9);
+    expect(tuer.position[0]).toBe(7); // links von der Straße aus gesehen
+    expect(tuer.drehung).toBe(90);
+    expect(teile.some((o) => o.typ === 'boden_fliese_innen')).toBe(false);
+    expect(buildingDoor(spec)).toEqual([7, 0.14, 13.3]);
+    const tueren = expandObjects(level.objekte).filter((o) => o.typ?.startsWith('wohn_tuer'));
+    expect(tueren.length).toBeGreaterThanOrEqual(8);
   });
 });

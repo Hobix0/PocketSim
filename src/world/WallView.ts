@@ -38,7 +38,8 @@ export class WallView {
     return this.mode;
   }
 
-  update(dt: number, camera: THREE.Vector3, focus: THREE.Vector3): void {
+  /** `oben`: Wohnetagen und Dächer zeigen (wie das flache Dach nur herausgezoomt) */
+  update(dt: number, camera: THREE.Vector3, focus: THREE.Vector3, oben = true): void {
     const s = this.settings;
     const walls: [Entity, FootprintComponent][] = [];
     const anbau: Entity[] = [];
@@ -58,7 +59,7 @@ export class WallView {
       if (v < 0.95) lowered.add(key(e.object.position));
     }
     // Anbauteile hängen an „ihrem“ Wandmodul (gleiche Stelle)
-    for (const e of anbau) e.object.visible = !lowered.has(key(e.object.position));
+    for (const e of anbau) e.object.visible = !lowered.has(key(e.object.position)) && (oben || !e.object.userData.obergeschoss);
   }
 
   /**

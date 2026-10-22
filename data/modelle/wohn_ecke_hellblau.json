@@ -1,0 +1,18 @@
+{
+  "id": "wohn_ecke_hellblau",
+  "name": "Wohnhaus Ecke",
+  "typ": "modell",
+  "menue": "gebaeude",
+  "preis": 0,
+  "ebene": "objekt",
+  "kantenlaenge": 0.025,
+  "groesse": [
+    8,
+    120,
+    8
+  ],
+  "palette": [
+    "#bbc9d1"
+  ],
+  "voxel": "7680*1"
+}

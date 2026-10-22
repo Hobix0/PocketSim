@@ -3,7 +3,7 @@ import { hasData, readData } from './Data';
 import { InputMap, type Bindings } from '../input/InputMap';
 import { Pointer } from '../input/Pointer';
 import { ManagementCamera, type CameraSettings } from '../camera/ManagementCamera';
-import { Level, expandObjects, type LevelData } from '../world/Level';
+import { Level, buildingDoor, expandObjects, type LevelData } from '../world/Level';
 import { ModelLibrary, type VoxelSettings } from '../assets/ModelLibrary';
 import { GridCursor } from '../world/GridCursor';
 import { Content } from '../content/Content';
@@ -326,7 +326,11 @@ export class Game {
 
     // Ladenbetrieb (Kunden, Kassen, Wege, Ruf); die Kassen bekommen ihre Abrechnung über die Fabrik
     this.prices = new PriceBook(this.content.kunden.preis);
-    this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, this.level.data.kundenPunkte ?? [], () => this.factory, this.prices);
+    this.store = new StoreLoop(this.world, this.content, this.player, this.level.bounds, [
+      ...(this.level.data.kundenPunkte ?? []),
+      // Bewohner kommen auch aus den Haustüren der Wohnhäuser
+      ...this.level.data.objekte.flatMap((o) => (o.gebaeude ? [buildingDoor(o.gebaeude)] : [])).filter((p): p is [number, number, number] => p !== null),
+    ], () => this.factory, this.prices);
     this.store.unlocks = this.research;
     this.factory.checkout = this.store.checkoutServices;
 
@@ -675,7 +679,7 @@ export class Game {
     this.truckSmoke(simDt);
     this.ambience.update(simDt, this.clock.totalMinutes % (24 * 60), this.nacht, realDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
-    this.walls.update(realDt, this.view.camera.position, this.view.focus);
+    this.walls.update(realDt, this.view.camera.position, this.view.focus, !this.roof || this.roof.visible);
     this.terrainView.update();
     this.paint.update();
 

@@ -2,7 +2,7 @@
   "name": "Mein Laden",
   "himmel": "#cfe0e0",
   "raster": 1,
-  "boden": {"groesse": [120, 30], "farbe": "#98a877"},
+  "boden": {"groesse": [120, 50], "farbe": "#98a877"},
   "kameraStart": [0, 0, 0.5],
   "kameraAbstand": 17,
   "ziele": "start",
@@ -23,7 +23,12 @@
     {"id": "laden_gross_ost", "name": "Alte Markthalle", "rect": {"minX": 38, "maxX": 54, "minZ": -7, "maxZ": 3}, "preis": 22000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "alt", "lage": "Einkaufsstraße Ost", "miete": 260}},
     {"id": "eckladen_ost", "name": "Eckladen am Stadttor", "rect": {"minX": 54, "maxX": 60, "minZ": -3, "maxZ": 3}, "preis": 6500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Einkaufsstraße Ost", "miete": 70}},
     {"id": "grundstueck_gross_west", "name": "Großes Grundstück", "rect": {"minX": -44, "maxX": -34, "minZ": -13, "maxZ": 3}, "preis": 12000, "freischaltLevel": 5, "angebot": {"groesse": "grundstueck", "lage": "Stadtrand West"}},
-    {"id": "fachmarkt_west", "name": "Fachmarkt mit Parkplatz", "rect": {"minX": -59, "maxX": -45, "minZ": -11, "maxZ": 3}, "preis": 26000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Stadtrand West", "miete": 240, "parkplatz": true}}
+    {"id": "fachmarkt_west", "name": "Fachmarkt mit Parkplatz", "rect": {"minX": -59, "maxX": -45, "minZ": -11, "maxZ": 3}, "preis": 26000, "freischaltLevel": 5, "angebot": {"groesse": "gross", "zustand": "neu", "lage": "Stadtrand West", "miete": 240, "parkplatz": true}},
+    {"id": "gehweg_sued", "name": "Gehweg Süd", "rect": {"minX": -60, "maxX": 60, "minZ": 12, "maxZ": 14}, "preis": 0, "freischaltLevel": 1, "besessen": true},
+    {"id": "laden_sued_west", "name": "Laden im Wohnhaus (Lindenhof)", "rect": {"minX": -44, "maxX": -36, "minZ": 14, "maxZ": 22}, "preis": 11000, "freischaltLevel": 3, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Wohnstraße Süd", "miete": 120}},
+    {"id": "laden_sued_mitte", "name": "Altbau-Laden mit Wohnungen", "rect": {"minX": -18, "maxX": -12, "minZ": 14, "maxZ": 22}, "preis": 5500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Wohnstraße Süd", "miete": 55}},
+    {"id": "laden_sued_ost", "name": "Ecklokal am Brunnen", "rect": {"minX": 10, "maxX": 18, "minZ": 14, "maxZ": 22}, "preis": 10500, "freischaltLevel": 3, "angebot": {"groesse": "mittel", "zustand": "neu", "lage": "Wohnstraße Süd", "miete": 115}},
+    {"id": "laden_sued_kiosk", "name": "Kleiner Altbau-Kiosk", "rect": {"minX": 44, "maxX": 50, "minZ": 14, "maxZ": 20}, "preis": 4500, "freischaltLevel": 3, "angebot": {"groesse": "klein", "zustand": "alt", "lage": "Wohnstraße Süd", "miete": 45}}
   ],
   "leben": {
     "gehweg": { "x": [-59, 59], "z": [5.3, 6.7], "y": 0.14 },
@@ -32,10 +37,11 @@
     "schaufenster": [[-3, 4.2], [3, 4.2], [-7, 4.2], [7, 4.2], [-17, 4.2], [-13, 4.2], [25, 4.2], [31, 4.2], [35, 4.2], [43, 4.2], [49, 4.2], [57, 4.2]],
     "tauben": [[-5.5, 0.14, 5.9], [-5, 0.14, 6.3], [-4.6, 0.14, 5.7], [5.4, 0.14, 6.1], [5.9, 0.14, 5.6], [12, 0.14, 6.2], [-25.5, 0.14, 5.8], [-25, 0.14, 6.2]]
   },
-  "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6], [-36.5, 0.14, 5.4], [-36.5, 0.14, 6.6], [58.5, 0.14, 5.4], [58.5, 0.14, 6.6], [-58.5, 0.14, 5.4], [-58.5, 0.14, 6.6]],
+  "kundenPunkte": [[-9.6, 0.14, 5.4], [9.6, 0.14, 5.4], [-9.6, 0.14, 6.6], [9.6, 0.14, 6.6], [-36.5, 0.14, 5.4], [-36.5, 0.14, 6.6], [58.5, 0.14, 5.4], [58.5, 0.14, 6.6], [-58.5, 0.14, 5.4], [-58.5, 0.14, 6.6], [-58.5, 0.14, 13], [58.5, 0.14, 13]],
   "bloecke": [
     {"name": "Straße", "position": [0, 0.02, 9.5], "groesse": [120, 0.04, 5], "farbe": "#4d5156"},
-    {"name": "Bordstein", "position": [0, 0.07, 6.95], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"}
+    {"name": "Bordstein", "position": [0, 0.07, 6.95], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"},
+    {"name": "Bordstein Süd", "position": [0, 0.07, 12.05], "groesse": [120, 0.14, 0.3], "farbe": "#a7a29a"}
   ],
   "objekte": [
     {"typ": "boden_fliese_innen", "position": [-3, 0, -2], "drehung": 0, "wiederholen": {"anzahl": [4, 3], "abstand": [2, 2]}},
@@ -78,7 +84,7 @@
     {"typ": "strassenlaterne", "position": [-18, 0.14, 6.85], "drehung": 0},
     {"typ": "baum_strasse", "position": [-26, 0.14, 6.6], "drehung": 0},
     {"typ": "baum_strasse", "position": [-11, 0.14, 6.6], "drehung": 45},
-    {"gebaeude": {"rect": {"minX": -20, "maxX": -12, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 2}},
+    {"gebaeude": {"rect": {"minX": -20, "maxX": -12, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 2, "etagen": 1, "farbe": "creme", "dach": "rot"}},
     {"typ": "boden_gehweg", "position": [-59, 0, 4.2], "drehung": 0, "wiederholen": {"anzahl": [11, 2], "abstand": [2, 2]}},
     {"typ": "boden_gehweg", "position": [21, 0, 4.2], "drehung": 0, "wiederholen": {"anzahl": [20, 2], "abstand": [2, 2]}},
     {"typ": "strassenlaterne", "position": [-44, 0.14, 6.85], "drehung": 0},
@@ -88,10 +94,10 @@
     {"typ": "baum_strasse", "position": [24, 0.14, 6.6], "drehung": 30},
     {"typ": "baum_strasse", "position": [41, 0.14, 6.6], "drehung": 60},
     {"typ": "baum_strasse", "position": [56, 0.14, 6.6], "drehung": 0},
-    {"gebaeude": {"rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "zustand": "neu"}},
-    {"gebaeude": {"rect": {"minX": 28, "maxX": 38, "minZ": -5, "maxZ": 3}, "zustand": "neu", "tuer": 2}},
+    {"gebaeude": {"rect": {"minX": 22, "maxX": 28, "minZ": -3, "maxZ": 3}, "zustand": "neu", "etagen": 2, "farbe": "hellblau", "dach": "rot"}},
+    {"gebaeude": {"rect": {"minX": 28, "maxX": 38, "minZ": -5, "maxZ": 3}, "zustand": "neu", "tuer": 2, "etagen": 1, "farbe": "salbei", "dach": "grau"}},
     {"gebaeude": {"rect": {"minX": 38, "maxX": 54, "minZ": -7, "maxZ": 3}, "zustand": "alt", "tuer": 4}},
-    {"gebaeude": {"rect": {"minX": 54, "maxX": 60, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": 54, "maxX": 60, "minZ": -3, "maxZ": 3}, "zustand": "alt", "tuer": 1, "etagen": 2, "farbe": "rosa", "dach": "rot"}},
     {"gebaeude": {"rect": {"minX": -58, "maxX": -46, "minZ": -11, "maxZ": -3}, "zustand": "neu", "tuer": 3}},
     {"typ": "parkplatz", "position": [-57, 0, -2], "drehung": 0, "wiederholen": {"anzahl": [6, 2], "abstand": [2, 2]}},
     {"typ": "asphalt_hof", "position": [-57, 0, 2], "drehung": 0, "wiederholen": {"anzahl": [6, 1], "abstand": [2, 0]}},
@@ -99,7 +105,29 @@
     {"typ": "auto_geparkt_klein", "position": [-51, 0.05, -1], "drehung": -90},
     {"typ": "auto_geparkt_lieferwagen", "position": [-47, 0.05, -1], "drehung": 90},
     {"typ": "strassenlaterne", "position": [-45.4, 0.14, 2.5], "drehung": 0},
-    {"typ": "bauzaun", "position": [-43, 0.14, 3.0], "drehung": -90, "wiederholen": {"anzahl": [5, 1], "abstand": [2, 0]}}
+    {"typ": "bauzaun", "position": [-43, 0.14, 3.0], "drehung": -90, "wiederholen": {"anzahl": [5, 1], "abstand": [2, 0]}},
+    {"gebaeude": {"rect": {"minX": -58, "maxX": -50, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 3, "farbe": "rosa", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": -50, "maxX": -44, "minZ": 14, "maxZ": 24}, "zustand": "neu", "etagen": 2, "farbe": "salbei", "dach": "grau", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": -44, "maxX": -36, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 2, "farbe": "creme", "dach": "rot", "blick": "nord", "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": -36, "maxX": -30, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 3, "farbe": "hellblau", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": -28, "maxX": -18, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 2, "farbe": "creme", "dach": "grau", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": -18, "maxX": -12, "minZ": 14, "maxZ": 22}, "zustand": "alt", "etagen": 2, "farbe": "rosa", "dach": "rot", "blick": "nord", "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": -12, "maxX": -4, "minZ": 14, "maxZ": 24}, "zustand": "neu", "etagen": 3, "farbe": "salbei", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": -4, "maxX": 4, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 2, "farbe": "hellblau", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": 4, "maxX": 10, "minZ": 14, "maxZ": 20}, "zustand": "neu", "etagen": 2, "farbe": "rosa", "dach": "grau", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": 10, "maxX": 18, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 1, "farbe": "creme", "dach": "rot", "blick": "nord", "tuer": 2}},
+    {"gebaeude": {"rect": {"minX": 20, "maxX": 28, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 3, "farbe": "salbei", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": 28, "maxX": 34, "minZ": 14, "maxZ": 24}, "zustand": "neu", "etagen": 2, "farbe": "creme", "dach": "grau", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": 34, "maxX": 44, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 3, "farbe": "rosa", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"gebaeude": {"rect": {"minX": 44, "maxX": 50, "minZ": 14, "maxZ": 20}, "zustand": "alt", "etagen": 2, "farbe": "hellblau", "dach": "rot", "blick": "nord", "tuer": 1}},
+    {"gebaeude": {"rect": {"minX": 50, "maxX": 58, "minZ": 14, "maxZ": 22}, "zustand": "neu", "etagen": 2, "farbe": "salbei", "dach": "rot", "blick": "nord", "wohnhaus": true}},
+    {"typ": "boden_gehweg", "position": [-59, 0, 13], "drehung": 0, "wiederholen": {"anzahl": [60, 1], "abstand": [2, 0]}},
+    {"typ": "strassenlaterne", "position": [-40, 0.14, 12.4], "drehung": 180},
+    {"typ": "strassenlaterne", "position": [-8, 0.14, 12.4], "drehung": 180},
+    {"typ": "strassenlaterne", "position": [24, 0.14, 12.4], "drehung": 180},
+    {"typ": "strassenlaterne", "position": [52, 0.14, 12.4], "drehung": 180},
+    {"typ": "baum_strasse", "position": [-29, 0.14, 13.2], "drehung": 0},
+    {"typ": "baum_strasse", "position": [19, 0.14, 13.2], "drehung": 40}
   ],
   "bodenFrueher": [40, 30]
 }
