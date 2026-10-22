@@ -178,6 +178,8 @@ export interface BuildDef {
   wagenbox?: { anzahl: number };
   /** Sitzplätze (x, z in m relativ zum Bauteil, optional Blickrichtung in Grad: 0 = nach vorne +X), z. B. Stühle am Bistrotisch */
   sitze?: [number, number, number?][];
+  /** Umkleidekabine: Modell des geschlossenen Vorhangs und wo man davor wartet (x, z in m relativ zum Bauteil) */
+  umkleide?: { vorhang: string; eingang: [number, number] };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -422,6 +424,8 @@ export interface CustomerSettings {
   einkaufswagen?: { model: string; abArtikel: number; packSekundenProArtikel: number };
   /** Café: Wer etwas aus diesen Kategorien gekauft hat, setzt sich (wenn ein Platz frei ist) so lange hin (Sekunden) */
   cafe?: { kategorien: string[]; chance: number; sitzSekunden: { min: number; max: number }; sitzTiefe: number; zubereitenSekundenProArtikel: number };
+  /** Mode: Wer Kleidung im Korb hat, probiert sie (mit `chance`) in einer freien Umkleide an; `passtNicht`: hängt ein Teil zurück */
+  anprobieren?: { kategorien: string[]; chance: number; sekunden: { min: number; max: number }; passtNicht: number };
   /**
    * Auswahl (Balancing): Je mehr verschiedene Produkte im Regal stehen, desto mehr Kunden kommen
    * (Faktor `min` bei keinem, 1 bei `referenz` Produkten, bis `max`) und desto größer ist der Einkauf
@@ -555,6 +559,12 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
     sitze: o.sitze === undefined ? undefined : (() => {
       if (!Array.isArray(o.sitze) || o.sitze.some((p) => !Array.isArray(p) || p.length < 2 || p.some((v) => typeof v !== 'number'))) throw new Error(`${where}: sitze muss eine Liste aus [x, z] sein`);
       return (o.sitze as number[][]).map((p) => [p[0], p[1], p[2]] as [number, number, number?]);
+    })(),
+    umkleide: o.umkleide === undefined ? undefined : (() => {
+      const u = asObject(o.umkleide, `${where} → umkleide`);
+      const e = u.eingang;
+      if (!Array.isArray(e) || e.length !== 2 || e.some((v) => typeof v !== 'number')) throw new Error(`${where}: umkleide.eingang muss [x, z] sein`);
+      return { vorhang: str(u, 'vorhang', `${where} → umkleide`), eingang: [e[0], e[1]] as [number, number] };
     })(),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),

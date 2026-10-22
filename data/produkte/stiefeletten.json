@@ -1,0 +1,17 @@
+{
+  "id": "stiefeletten",
+  "name": "Stiefeletten",
+  "kategorie": "schuhe",
+  "ek": 28,
+  "vk": 79,
+  "gebinde": 4,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/stiefel_braun",
+  "groesse": [
+    0.28,
+    0.22,
+    0.11
+  ]
+}

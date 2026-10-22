@@ -1,0 +1,38 @@
+{
+  "id": "boutique_tresen",
+  "name": "Boutique-Kassentresen",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 1100,
+  "freischaltLevel": 3,
+  "werte": {
+    "kassen": 1,
+    "strom": 0.2
+  },
+  "kontext": "kasse",
+  "kasse": {
+    "kunde": [
+      0.75,
+      0.3
+    ],
+    "personal": [
+      -0.65,
+      0.3
+    ],
+    "richtung": [
+      1,
+      0
+    ],
+    "abstand": 0.75
+  },
+  "model": "eigen/boutique_tresen",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.2,
+      1.6
+    ],
+    "farbe": "#e7b8b5"
+  },
+  "gruppe": "mode/kasse"
+}

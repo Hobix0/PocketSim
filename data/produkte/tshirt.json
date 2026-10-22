@@ -1,0 +1,17 @@
+{
+  "id": "tshirt",
+  "name": "T-Shirt Salbei",
+  "kategorie": "mode",
+  "ek": 4.5,
+  "vk": 14.9,
+  "gebinde": 10,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/tshirt_salbei",
+  "groesse": [
+    0.4,
+    0.8,
+    0.06
+  ]
+}

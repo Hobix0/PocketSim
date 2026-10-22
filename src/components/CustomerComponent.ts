@@ -14,6 +14,7 @@ import { formatMoney } from '../ui/format';
 import type { ModelProvider } from '../assets/ModelLibrary';
 import { CartStationComponent } from './CartStationComponent';
 import { SeatComponent } from './SeatComponent';
+import { FittingRoomComponent } from './FittingRoomComponent';
 
 // Ein Kunde als Zustandsmaschine:
 //   [holt_wagen] → sucht (geht zum Regal) → greift → … nächster Wunsch … → zur_kasse → wartet → an_kasse
@@ -23,7 +24,7 @@ import { SeatComponent } from './SeatComponent';
 // Fehlt ein Produkt, wird es gemerkt (Tagesbericht, Ruf). Ohne Kasse oder nach zu langem Warten
 // legt der Kunde die Ware zurück und geht. Bezahlt wird über das Spiel (paid()).
 
-export type CustomerState = 'holt_wagen' | 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'packt' | 'bringt_wagen' | 'zum_platz' | 'sitzt' | 'geht';
+export type CustomerState = 'holt_wagen' | 'sucht' | 'greift' | 'zur_kasse' | 'wartet' | 'an_kasse' | 'packt' | 'bringt_wagen' | 'zum_platz' | 'sitzt' | 'zur_kabine' | 'probiert' | 'geht';
 
 export interface CustomerServices {
   findPath?: PathFinder;
@@ -52,11 +53,13 @@ export interface CustomerServices {
   /** Der Besuch ist entschieden (für Ruf und Tagesbericht) */
   left(outcome: VisitOutcome, fehlend: ProductDef[], zuTeuer: ProductDef[], schnaeppchen: number): void;
   /** Der Kunde denkt etwas (für Gedankenblasen): fehlt, zu teuer, Schnäppchen, glücklich (alles gefunden) */
-  denkt?(art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich', produkt?: ProductDef): void;
+  denkt?(art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich' | 'anprobiert' | 'passt_nicht', produkt?: ProductDef): void;
   /** Nächster Tisch mit freiem Sitzplatz (Café); ohne: niemand setzt sich */
   findSeat?(from: THREE.Vector3): Entity | null;
   /** Nächste Bedientheke (Café-Tresen), an der es das Produkt gibt; ohne: keine Bedienung */
   findCounter?(produkt: ProductDef, from: THREE.Vector3): Entity | null;
+  /** Nächste freie Umkleidekabine (Mode); ohne: niemand probiert an */
+  findFittingRoom?(from: THREE.Vector3): Entity | null;
 }
 
 export interface BasketLine {
@@ -93,6 +96,9 @@ export class CustomerComponent extends Component implements Describable {
   /** Sitzplatz im Café (Tisch und Platz) und wie weit das Hinsetzen ist */
   private seat: { table: Entity; index: number } | null = null;
   private sitIn = 0;
+  /** Umkleide, in der der Kunde anprobiert; ob er es schon versucht hat */
+  private room: Entity | null = null;
+  private anprobiert = false;
 
   constructor(readonly wishes: Wish[], private readonly services: CustomerServices) {
     super();
@@ -123,6 +129,7 @@ export class CustomerComponent extends Component implements Describable {
 
   override onDetach(): void {
     this.seat?.table.get(SeatComponent)?.release(this.entity);
+    this.room?.get(FittingRoomComponent)?.release(this.entity);
     this.checkout?.get(CheckoutComponent)?.leave(this.entity);
     this.checkout = null;
     if (this.basketMesh) this.entity.object.remove(this.basketMesh);
@@ -227,6 +234,24 @@ export class CustomerComponent extends Component implements Describable {
         if (this.timer <= 0) this.standUp();
         break;
       }
+      case 'zur_kabine': {
+        const fr = this.room?.get(FittingRoomComponent);
+        if (!this.room?.world || !fr) { this.endTryOn(); return; }
+        if (this.walk(dt)) {
+          // Hinein, Vorhang zu
+          this.entity.object.position.copy(fr.inside());
+          this.entity.object.visible = false;
+          fr.close(true);
+          const t = this.services.settings.anprobieren?.sekunden ?? { min: 8, max: 14 };
+          this.timer = t.min + Math.random() * (t.max - t.min);
+          this.setState('probiert');
+        }
+        break;
+      }
+      case 'probiert':
+        this.timer -= dt;
+        if (this.timer <= 0 || !this.room?.world) this.endTryOn();
+        break;
       case 'geht':
         if (this.walk(dt)) this.entity.world?.remove(this.entity);
         break;
@@ -286,7 +311,47 @@ export class CustomerComponent extends Component implements Describable {
     }
     this.current = null;
     if (this.bestellt) this.goToCheckout(counter ?? this.wishes.map((w) => (w.tresen && w.status === 'offen' ? this.services.findCounter?.(w.produkt, this.entity.object.position) : null)).find((e) => e) ?? undefined);
-    else if (this.basket.length) this.goToCheckout();
+    else if (this.basket.length) { if (!this.tryOn()) this.goToCheckout(); }
+    else this.leave('ohne_einkauf');
+  }
+
+  /** Mode im Korb und eine Umkleide frei: erst anprobieren (einmal je Besuch). Gibt zurück, ob es losgeht. */
+  private tryOn(): boolean {
+    const a = this.services.settings.anprobieren;
+    if (this.anprobiert || !a || !this.basket.some((l) => a.kategorien.includes(l.produkt.kategorie))) return false;
+    this.anprobiert = true;
+    if (Math.random() >= a.chance) return false;
+    const room = this.services.findFittingRoom?.(this.entity.object.position) ?? null;
+    const fr = room?.get(FittingRoomComponent);
+    if (!room || !fr?.reserve(this.entity)) return false;
+    this.room = room;
+    this.path.goTo(this.entity.object, fr.entrance(), this.services.findPath);
+    this.setState('zur_kabine');
+    return true;
+  }
+
+  /** Fertig mit Anprobieren: Vorhang auf, heraus; passt ein Teil nicht, hängt es zurück. Dann zur Kasse. */
+  private endTryOn(): void {
+    const fr = this.room?.get(FittingRoomComponent);
+    const o = this.entity.object;
+    if (!o.visible) {
+      o.visible = true;
+      if (fr && this.room?.world) o.position.copy(fr.entrance());
+    }
+    fr?.release(this.entity);
+    this.room = null;
+    const a = this.services.settings.anprobieren;
+    const mode = a ? this.basket.filter((l) => a.kategorien.includes(l.produkt.kategorie)) : [];
+    if (mode.length && a && Math.random() < a.passtNicht) {
+      const l = mode[Math.floor(Math.random() * mode.length)];
+      this.basket.splice(this.basket.indexOf(l), 1);
+      if (l.regal.world) l.regal.get(ShelfComponent)?.add(l.produkt, l.menge);
+      this.services.denkt?.('passt_nicht', l.produkt);
+      this.renderBasket();
+    } else if (mode.length) {
+      this.services.denkt?.('anprobiert', mode[0].produkt);
+    }
+    if (this.basket.length) this.goToCheckout();
     else this.leave('ohne_einkauf');
   }
 

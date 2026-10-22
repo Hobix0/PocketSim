@@ -25,6 +25,7 @@ import { FootprintComponent } from '../components/FootprintComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
 import { SeatComponent } from '../components/SeatComponent';
+import { FittingRoomComponent } from '../components/FittingRoomComponent';
 import { findPalletJob } from '../economy/PalletLogistics';
 
 // Ladenbetrieb: Kunden kommen, kaufen ein, bezahlen an der Kasse, gehen wieder.
@@ -36,7 +37,7 @@ export interface StoreLoopEvents extends Record<string, unknown> {
   sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3 };
   visit: { outcome: VisitOutcome };
   /** Ein Kunde denkt etwas (Gedankenblase): `kunde` ist seine Figur */
-  thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
+  thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich' | 'anprobiert' | 'passt_nicht'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
   opened: undefined;
   closed: undefined;
 }
@@ -238,6 +239,14 @@ export class StoreLoop {
         for (const [e, st] of this.world.query(SeatComponent)) {
           const d = e.object.position.distanceToSquared(from);
           if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
+        }
+        return best;
+      },
+      findFittingRoom: (from) => {
+        let best: Entity | null = null, bestD = Infinity;
+        for (const [e, fr] of this.world.query(FittingRoomComponent)) {
+          const d = e.object.position.distanceToSquared(from);
+          if (fr.frei && d < bestD) { best = e; bestD = d; }
         }
         return best;
       },

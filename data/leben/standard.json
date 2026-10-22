@@ -26,12 +26,16 @@
     "schnaeppchen": 0.35,
     "gluecklich": 0.08,
     "gemuetlich": 0.7,
+    "anprobiert": 0.8,
+    "passt_nicht": 0.8,
     "texte": {
       "fehlt": ["Kein {produkt}?", "Wo ist {produkt}?", "Schade, kein {produkt}"],
       "zu_teuer": ["{produkt}? Zu teuer!", "Puh, {preis} …", "Das ist mir zu teuer"],
       "schnaeppchen": ["Schnäppchen!", "Günstig!", "Super Preis!"],
       "gluecklich": ["Schöner Laden!", "Lecker!", "Gemütlich hier", "Alles da!"],
-      "gemuetlich": ["Herrlich, ein Kaffee!", "So gemütlich hier", "Mmh, lecker", "Kurz durchatmen …"]
+      "gemuetlich": ["Herrlich, ein Kaffee!", "So gemütlich hier", "Mmh, lecker", "Kurz durchatmen …"],
+      "anprobiert": ["Passt perfekt!", "{produkt} steht mir!", "Genau meine Größe", "Das nehm ich!"],
+      "passt_nicht": ["{produkt} passt leider nicht", "Zu eng …", "Hmm, doch nicht", "Häng ich zurück"]
     }
   },
   "geraeusche": { "vogelAlleSekunden": 7, "grilleAlleSekunden": 2.5 }

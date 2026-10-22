@@ -1,0 +1,17 @@
+{
+  "id": "ledertasche",
+  "name": "Ledertasche",
+  "kategorie": "accessoires",
+  "ek": 14,
+  "vk": 39.9,
+  "gebinde": 4,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/tasche_leder",
+  "groesse": [
+    0.14,
+    0.34,
+    0.3
+  ]
+}

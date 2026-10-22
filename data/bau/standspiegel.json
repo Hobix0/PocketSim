@@ -1,0 +1,19 @@
+{
+  "id": "standspiegel",
+  "name": "Standspiegel",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 120,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/standspiegel",
+  "platzhalter": {
+    "groesse": [
+      0.3,
+      1.8,
+      0.7
+    ],
+    "farbe": "#e4edf1"
+  },
+  "gruppe": "mode/umkleide"
+}

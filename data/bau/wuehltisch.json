@@ -1,0 +1,29 @@
+{
+  "id": "wuehltisch",
+  "name": "Wühltisch",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 220,
+  "freischaltLevel": 3,
+  "werte": {},
+  "kontext": "regal",
+  "regal": {
+    "ebenen": [
+      0.75,
+      0.3
+    ],
+    "mitte": -0.12,
+    "laenge": 1.3,
+    "kapazitaet": 10
+  },
+  "model": "eigen/wuehltisch",
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      0.75,
+      1.4
+    ],
+    "farbe": "#d2a77a"
+  },
+  "gruppe": "mode/staender"
+}

@@ -11,6 +11,11 @@
       "id": "cafe",
       "name": "Café",
       "icon": "☕"
+    },
+    {
+      "id": "mode",
+      "name": "Mode",
+      "icon": "👗"
     }
   ]
 }

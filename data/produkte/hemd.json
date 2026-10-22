@@ -1,0 +1,17 @@
+{
+  "id": "hemd",
+  "name": "Hemd Hellblau",
+  "kategorie": "mode",
+  "ek": 9,
+  "vk": 27.9,
+  "gebinde": 8,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/hemd_blau",
+  "groesse": [
+    0.4,
+    0.8,
+    0.06
+  ]
+}

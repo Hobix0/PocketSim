@@ -1,0 +1,17 @@
+{
+  "id": "sommerkleid",
+  "name": "Sommerkleid",
+  "kategorie": "mode",
+  "ek": 13,
+  "vk": 39.9,
+  "gebinde": 6,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/kleid_rot",
+  "groesse": [
+    0.4,
+    0.8,
+    0.06
+  ]
+}

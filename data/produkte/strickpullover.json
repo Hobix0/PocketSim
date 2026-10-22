@@ -1,0 +1,17 @@
+{
+  "id": "strickpullover",
+  "name": "Strickpullover",
+  "kategorie": "mode",
+  "ek": 12,
+  "vk": 34.9,
+  "gebinde": 6,
+  "frisch": false,
+  "kuehlung": false,
+  "freischaltLevel": 3,
+  "model": "eigen/pullover_creme",
+  "groesse": [
+    0.4,
+    0.8,
+    0.06
+  ]
+}
