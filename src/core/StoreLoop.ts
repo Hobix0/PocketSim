@@ -25,6 +25,7 @@ import { FootprintComponent } from '../components/FootprintComponent';
 import { SelectableComponent } from '../components/SelectableComponent';
 import { CartStationComponent } from '../components/CartStationComponent';
 import { SeatComponent } from '../components/SeatComponent';
+import { findPalletJob } from '../economy/PalletLogistics';
 
 // Ladenbetrieb: Kunden kommen, kaufen ein, bezahlen an der Kasse, gehen wieder.
 // Verbindet Wegfindung, Kundenzustrom, Kassen und Kennzahlen. Die Darstellung (HUD, Fenster)
@@ -161,6 +162,14 @@ export class StoreLoop {
         serve: (checkout) => this.serve(checkout, false),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
         sekundenProArtikel: this.settings.kassierenSekundenProArtikel,
+      },
+      paletten: {
+        findJob: () => findPalletJob(this.world),
+        findPath: this.findPath,
+        walkable: (x, z) => this.nav.isWalkable(x, z),
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        lager: this.content.lager,
+        models: this.ctx().models,
       },
       bedienen: {
         findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && k.def.bedienung)?.[0] ?? null,

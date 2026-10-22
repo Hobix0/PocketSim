@@ -12,7 +12,8 @@
   ],
   "lieferkosten": {
     "grund": 12,
-    "proKarton": 0.4
+    "proKarton": 0.4,
+    "proPalette": 4
   },
   "express": {
     "aufschlag": 30,

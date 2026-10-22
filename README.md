@@ -228,6 +228,18 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 12 – Palettenlogistik wie im echten Lager** ✅
+
+- **Einkauf:** je Produkt **einzelne Kartons oder ganze Paletten** (18 Kartons, 10 % günstiger). Paletten brauchen einen freien **Palettenplatz** – im Fenster steht, wie viele frei sind. Werte: `data/lager/standard.json` → `palette`
+- **LKW mit Paletten:** Ein LKW fährt entweder Paletten (bis zu 8, zwei nebeneinander auf der Ladefläche) oder lose Kartons. Lieferkosten je Palette: `data/logistik/standard.json` → `lieferkosten.proPalette`
+- **Palettenplätze:** Traversen-Ebenen „Palettenplätze“ im Palettenregal (2 auf 1,8 m, 3 auf 2,7 m) und der neue **Palettenstellplatz** am Boden (Baumenü → Lager → Ablagen). Gitterrost-Ebenen bleiben Kartonplätze. Das Lochraster ist jetzt so hoch, dass volle Paletten zwischen die Ebenen passen (0,15 · 1,45 · 2,75 · 4,05 m)
+- **Neue Rolle Staplerfahrer:** holt sich einen geparkten **Gabelstapler** (hebt bis 4,6 m) oder **Hubwagen** (nur Boden und bündige LKW an der Rampe), fährt – der Gabelträger fährt beim Heben wirklich hoch – und parkt das Fahrzeug danach wieder:
+  1. **Einlagern:** Palette vom LKW mit dem Stapler oben ins Regal (Reserve), sonst auf den Boden bzw. die unterste Ebene
+  2. **Auffüllen:** Palette vom Boden mit dem Hubwagen zum Verkaufsregal schieben und Karton für Karton direkt von der Palette einräumen; der Rest kommt zurück an seinen Platz, leere Paletten kommen weg
+  3. **Nachschub:** fehlt im Laden etwas, das sonst niemand erreicht, holt der Stapler die Palette von oben auf einen Bodenstellplatz
+- Kartons auf Paletten am Boden nimmt auch der **Auffüller** (und du von Hand); oben im Regal sind sie tabu. Holt ein Staplerfahrer gerade eine Palette vom LKW, wartet der LKW
+- Paletten (mit Kartons und Platz) stehen im **Spielstand**. Code: `src/components/PalletComponent.ts`, `PalletPlacesComponent.ts`, `VehicleComponent.ts`, `PalletDriverComponent.ts`, Aufgaben in `src/economy/PalletLogistics.ts`
+
 **Etappe 11g – Neues Baumenü** ✅
 
 - **Bereiche** als Leiste links: 🏠 Gebäude · 🛒 Laden · ☕ Café · 📦 Lager · ⚙️ Produktion · 💡 Licht · 🌳 Außen · 🗺️ Gelände, darin **Gruppen** als Chips mit Anzahl (z. B. Lager → Regalsysteme, Ablagen, Technik, Sicherheit, Hallenwände & Tore)

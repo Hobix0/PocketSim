@@ -40,5 +40,11 @@
   },
   "wagenbox": {
     "name": "Einkaufswagen"
+  },
+  "palette": {
+    "name": "Palette"
+  },
+  "fahrzeug": {
+    "name": "Fahrzeug"
   }
 }

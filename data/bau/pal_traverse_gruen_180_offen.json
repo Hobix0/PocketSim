@@ -1,21 +1,14 @@
 {
   "id": "pal_traverse_gruen_180_offen",
-  "name": "Traversen-Ebene Grün-Gelb 1,8 m (für Paletten)",
+  "name": "Traversen-Ebene Grün-Gelb 1,8 m (Palettenplätze)",
   "kategorie": "lager",
   "ebene": "objekt",
   "preis": 60,
   "freischaltLevel": 1,
-  "werte": {
-    "lagerplaetze": 10
-  },
+  "werte": {},
   "palettenregal": {
     "teil": "traverse",
     "breite": 1.8
-  },
-  "ablage": {
-    "boeden": [
-      0.125
-    ]
   },
   "model": "eigen/pal_traverse_gruen_180_offen",
   "platzhalter": {
@@ -31,5 +24,9 @@
     "familie": "pal_traverse_180_offen",
     "name": "Grün-Gelb",
     "farbe": "#3f6b55"
+  },
+  "palettenplaetze": {
+    "anzahl": 2,
+    "hoehe": 0.1
   }
 }

@@ -2237,3 +2237,9 @@ html, body {
 .hud .catalog > .card .swatch { width: 16px; height: 16px; min-width: 0; padding: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.25); }
 .hud .catalog > .card .swatch.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
 .hud .catalog > .card .swatch.locked { opacity: 0.45; background-image: linear-gradient(45deg, transparent 45%, rgba(0, 0, 0, 0.6) 45%, rgba(0, 0, 0, 0.6) 55%, transparent 55%) !important; }
+
+/* Einkauf: Karton oder Palette */
+.purchase .buy-options { display: grid; gap: 4px; justify-items: end; }
+.purchase .buy { display: flex; align-items: center; gap: 8px; }
+.purchase .buy .price { text-align: right; }
+.purchase .buy.pallet .price small { color: var(--accent); }

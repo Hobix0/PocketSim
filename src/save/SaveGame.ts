@@ -10,6 +10,10 @@ import { ShelfComponent } from '../components/ShelfComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { CustomerComponent } from '../components/CustomerComponent';
+import { PalletComponent } from '../components/PalletComponent';
+import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
+import { createPalletEntity } from '../factory/createPalletEntity';
+import { place } from '../world/CartonStorage';
 import type { Employee } from '../economy/Staff';
 import type { StoreStatsState } from '../economy/StoreStats';
 
@@ -40,6 +44,14 @@ export interface SavedCarton {
   ablage?: { bau: number; platz: number };
 }
 
+/** Eine Palette mit Kartons, auf einem Palettenplatz (Bauteil-Nummer und Platz) oder lose */
+export interface SavedPallet {
+  pos: [number, number, number];
+  rot: number;
+  platz?: { bau: number; slot: number };
+  kartons: { produkt: string; menge: number }[];
+}
+
 export interface SaveData {
   version: number;
   level: string;
@@ -49,6 +61,8 @@ export interface SaveData {
   bauten: SavedBuild[];
   kartons: SavedCarton[];
   waren: { produkt: string; pos: [number, number, number]; rot: number }[];
+  /** Paletten (Lager, Regal); Paletten auf LKW speichert die Logistik */
+  paletten?: SavedPallet[];
   personal: { team: Employee[]; bewerber: Employee[]; naechsteId: number };
   laden: StoreStatsState;
   ziele: string[];
@@ -73,7 +87,7 @@ const vec = (v: THREE.Vector3): [number, number, number] => [round(v.x), round(v
 const deg = (rad: number) => Math.round(THREE.MathUtils.radToDeg(rad) * 100) / 100;
 
 /** Welt einsammeln (Gebautes, Kartons, Ware). */
-export function collectWorld(world: World, content: Content): Pick<SaveData, 'bauten' | 'kartons' | 'waren'> {
+export function collectWorld(world: World, content: Content): Pick<SaveData, 'bauten' | 'kartons' | 'waren' | 'paletten'> {
   const bauten: SavedBuild[] = [];
   const index = new Map<Entity, number>();
   // Ware aus Körben zurück ins Regal, aus dem sie kam
@@ -104,7 +118,7 @@ export function collectWorld(world: World, content: Content): Pick<SaveData, 'ba
     const carton = e.get(CartonComponent);
     if (carton) {
       // Kartons auf einem LKW speichert die Logistik (sie kommen beim Laden wieder per LKW)
-      if (carton.menge <= 0 || carton.ablage?.temporaer) continue;
+      if (carton.menge <= 0 || carton.ablage?.temporaer || carton.ablage?.palette) continue;
       const pos = vec(e.object.position);
       // Getragene Kartons schweben – beim Laden stehen sie auf dem Boden
       if (!carton.ablage && carton.reservedBy !== null) pos[1] = round(Math.max(0, pos[1] - 0.75));
@@ -119,7 +133,18 @@ export function collectWorld(world: World, content: Content): Pick<SaveData, 'ba
       waren.push({ produkt: e.typeId, pos: vec(e.object.position), rot: deg(e.object.rotation.y) });
     }
   }
-  return { bauten, kartons, waren };
+  const paletten: SavedPallet[] = [];
+  for (const [e, pc] of world.query(PalletComponent)) {
+    if (pc.platz?.places.temporaer || pc.kartons === 0) continue;
+    const pos = vec(e.object.position);
+    // Fährt gerade jemand die Palette: beim Laden steht sie am Boden
+    if (!pc.platz && pos[1] > 0.3) pos[1] = 0.05;
+    const p: SavedPallet = { pos, rot: deg(e.object.rotation.y), kartons: pc.cartons().map((c) => { const k = c.require(CartonComponent); return { produkt: k.produkt.id, menge: k.menge }; }) };
+    const bau = pc.platz ? index.get(pc.platz.places.entity) : undefined;
+    if (pc.platz && bau !== undefined) p.platz = { bau, slot: pc.platz.slot };
+    paletten.push(p);
+  }
+  return { bauten, kartons, waren, paletten };
 }
 
 /** Regalinhalt plus zurückgelegte Ware (passt nur, was Platz hat). */
@@ -141,7 +166,7 @@ function mergeBack(shelf: ShelfComponent, back: { produkt: string; menge: number
 }
 
 /** Welt aus dem Spielstand aufbauen. Unbekannte Typen und Produkte werden übersprungen (mit Warnung). */
-export function applyWorld(data: Pick<SaveData, 'bauten' | 'kartons' | 'waren'>, world: World, content: Content, ctx: FactoryContext): void {
+export function applyWorld(data: Pick<SaveData, 'bauten' | 'kartons' | 'waren' | 'paletten'>, world: World, content: Content, ctx: FactoryContext): void {
   const built: (Entity | null)[] = [];
   const produkt = (id: string) => content.waren.find(id);
   for (const b of data.bauten) {
@@ -169,6 +194,22 @@ export function applyWorld(data: Pick<SaveData, 'bauten' | 'kartons' | 'waren'>,
       e.object.position.set(...k.pos);
       e.object.rotation.y = THREE.MathUtils.degToRad(k.rot);
     }
+  }
+  for (const sp of data.paletten ?? []) {
+    const pallet = world.add(createPalletEntity(ctx));
+    const pc = pallet.require(PalletComponent);
+    const places = sp.platz ? built[sp.platz.bau]?.get(PalletPlacesComponent) : undefined;
+    if (!places || !pc.stand(places, sp.platz!.slot)) {
+      pallet.object.position.set(...sp.pos);
+      pallet.object.rotation.y = THREE.MathUtils.degToRad(sp.rot);
+    }
+    for (const k of sp.kartons) {
+      const p = produkt(k.produkt);
+      if (!p) continue;
+      const c = world.add(createCartonEntity(p, k.menge, ctx));
+      if (!place(c, pc.surface)) world.remove(c);
+    }
+    pc.sync(true);
   }
   for (const w of data.waren) {
     const p = produkt(w.produkt);

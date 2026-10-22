@@ -15,5 +15,7 @@
     ],
     "farbe": "#e07b24"
   },
-  "gruppe": "lager/technik"
+  "gruppe": "lager/technik",
+  "fahrzeug": "hubwagen",
+  "kontext": "fahrzeug"
 }

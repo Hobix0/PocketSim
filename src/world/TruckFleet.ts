@@ -19,6 +19,11 @@ import { NavGrid, type Bounds } from '../navigation/NavGrid';
 import { TruckComponent, type RoutePoint } from '../components/TruckComponent';
 import { createCartonEntity } from '../factory/createProductEntity';
 import { place, type CartonStorage } from './CartonStorage';
+import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
+import { PalletComponent } from '../components/PalletComponent';
+import { createPalletEntity, loadPallet } from '../factory/createPalletEntity';
+
+const isPallet = (l: ShipmentLine) => (l.palette ?? 0) > 0;
 
 // Die Liefer-LKW in der Welt. Fällige Lieferungen (Deliveries → "arrived") kommen in eine Warteschlange;
 // sobald ein Halteplatz frei ist, fährt ein LKW los: an eine freie Laderampe oder sonst auf die Straße vor dem Laden.
@@ -92,15 +97,26 @@ export class TruckFleet {
       if (t.state !== 'steht') continue;
       t.wartet -= minutes;
       if (t.kartons === 0) t.depart();
-      else if (t.wartet <= 0) { this.driverUnload(t); t.depart(); }
+      // Holt gerade ein Staplerfahrer eine Palette von diesem LKW, wartet er, bis sie herunter ist
+      else if (t.wartet <= 0 && !this.palletsOn(t).some((p) => p.require(PalletComponent).reservedBy !== null)) { this.driverUnload(t); t.depart(); }
     }
     if (this.queue.length) this.dispatch();
   }
 
-  /** Kartons, die noch kommen oder auf einem LKW stehen (brauchen noch Lagerplatz) */
+  /** Lose Kartons, die noch kommen oder auf einem LKW stehen (brauchen noch Lagerplatz) */
   onTrucks(): number {
-    let n = this.queue.length;
-    for (const e of this.trucks) n += e.require(TruckComponent).kartons;
+    let n = this.queue.filter((l) => !isPallet(l)).length;
+    for (const e of this.trucks) {
+      const t = e.require(TruckComponent);
+      n += t.state === 'anfahrt' ? t.ladung.filter((l) => !isPallet(l)).length : t.ladeflaeche.used;
+    }
+    return n;
+  }
+
+  /** Paletten, die noch kommen oder auf einem LKW stehen (brauchen noch einen Palettenplatz) */
+  palletsOnTrucks(): number {
+    let n = this.queue.filter(isPallet).length;
+    for (const e of this.trucks) n += e.require(TruckComponent).paletten;
     return n;
   }
 
@@ -115,7 +131,14 @@ export class TruckFleet {
     for (const e of this.trucks) {
       const t = e.require(TruckComponent);
       if (t.state === 'anfahrt') out.push(...t.ladung);
-      else out.push(...this.cartonsOn(t).map((c) => ({ produkt: c.produkt.id, menge: c.menge })));
+      else {
+        out.push(...this.cartonsOn(t).map((c) => ({ produkt: c.produkt.id, menge: c.menge })));
+        for (const p of this.palletsOn(t)) {
+          const pc = p.require(PalletComponent);
+          const first = pc.cartons()[0]?.get(CartonComponent);
+          if (first) out.push({ produkt: first.produkt.id, menge: first.menge, palette: pc.kartons });
+        }
+      }
     }
     return out.map((k) => ({ ...k }));
   }
@@ -126,17 +149,46 @@ export class TruckFleet {
     return [...this.world.query(CartonComponent)].filter(([e]) => ids.has(e.id)).map(([, c]) => c);
   }
 
+  /** Paletten auf der Ladefläche eines LKW */
+  palletsOn(t: TruckComponent): Entity[] {
+    return t.entity.get(PalletPlacesComponent)?.pallets() ?? [];
+  }
+
   // ── intern ──────────────────────────────────────────────────────
 
   /** Freie Halteplätze mit LKW besetzen, solange Ware wartet */
   private dispatch(): void {
-    const cap = this.capacity();
     while (this.queue.length) {
       const dock = this.freeDock();
       if (dock === undefined) return;
-      const ladung = this.queue.splice(0, cap);
+      // Ein LKW fährt entweder Paletten oder lose Kartons
+      const pal = isPallet(this.queue[0]);
+      const cap = pal ? this.palletCapacity() : this.capacity();
+      const ladung: ShipmentLine[] = [];
+      for (let i = 0; i < this.queue.length && ladung.length < cap;) {
+        if (isPallet(this.queue[i]) === pal) ladung.push(...this.queue.splice(i, 1)); else i++;
+      }
       this.spawn(ladung, dock);
     }
+  }
+
+  private palletCapacity(): number {
+    return this.makePalletPlaces().capacity;
+  }
+
+  /** Palettenplätze auf der Ladefläche: zwei nebeneinander, so viele hintereinander, wie passen; Zugang von hinten */
+  private makePalletPlaces(): PalletPlacesComponent {
+    const l = this.settings.lkw.ladeflaeche;
+    const [pl, , pb] = this.ctx.content.lager.palette.groesse;
+    const slots: THREE.Vector3[] = [];
+    const reihen = Math.max(1, Math.floor((l.bis - l.von) / pl)), quer = Math.max(1, Math.floor(l.breite / pb));
+    // Hinten (kleines X) zuerst, damit die ersten Paletten gleich an der Kante stehen
+    for (let i = 0; i < reihen; i++) for (let j = 0; j < quer; j++) {
+      slots.push(new THREE.Vector3(l.von + pl * (i + 0.5), l.hoehe, (j - (quer - 1) / 2) * (pb + 0.05)));
+    }
+    const places = new PalletPlacesComponent(slots, true);
+    places.nurVonHinten = true;
+    return places;
   }
 
   /** Freie Rampe, sonst die Straße (null), sonst nichts frei (undefined) */
@@ -177,6 +229,7 @@ export class TruckFleet {
     e.add(new ModelComponent({ groesse: [laenge, hoehe, breite], farbe: '#d9dde0' }, lkw.model, this.ctx.models));
     e.add(new SelectableComponent('lkw', this.ctx.content.text('lkw_name'), this.ctx.content.kontexte.lkw?.name ?? 'LKW'));
     e.add(this.makeSurface());
+    e.add(this.makePalletPlaces());
     // Scheinwerfer, Rück- und Begrenzungsleuchten, Blinker
     if (lkw.licht) e.add(new LampComponent(lkw.licht));
     const truck = new TruckComponent(ladung, anfahrt.slice(1), abfahrt, lkw.geschwindigkeit, dock, {
@@ -199,21 +252,37 @@ export class TruckFleet {
   /** Bei Ankunft: Kartons auf die Ladefläche stellen */
   private unloadOntoBed(t: TruckComponent): void {
     const bed = t.ladeflaeche;
+    const places = t.entity.get(PalletPlacesComponent);
     for (const k of t.ladung) {
       const produkt = this.ctx.content.waren.find(k.produkt);
       if (!produkt) continue;
+      if (isPallet(k)) {
+        const slot = places ? places.slots.findIndex((_, i) => places.isFree(i)) : -1;
+        if (!places || slot < 0) { this.queue.push(k); continue; }
+        const pallet = this.world.add(createPalletEntity(this.ctx));
+        pallet.require(PalletComponent).stand(places, slot);
+        loadPallet(pallet, produkt, k.palette!, k.menge, this.ctx);
+        continue;
+      }
       const carton = createCartonEntity(produkt, k.menge, this.ctx);
       this.world.add(carton);
       if (!place(carton, bed)) { this.world.remove(carton); this.queue.push(k); }
     }
     t.ladung.splice(0);
     t.wartet = this.settings.wartezeitMinuten;
-    this.events.emit('arrived', { truck: t.entity, kartons: bed.used });
+    this.events.emit('arrived', { truck: t.entity, kartons: bed.used + (places?.used ?? 0) });
   }
 
   /** Wartezeit vorbei: Fahrer stellt den Rest ins Lager (gegen Gebühr) oder nimmt ihn zurück */
   private driverUnload(t: TruckComponent): void {
     let stored = 0, back = 0, betrag = 0;
+    // Paletten stellt der Fahrer mit seinem Hubwagen auf freie Palettenplätze (zählen wie Kartons)
+    for (const p of this.palletsOn(t)) {
+      if (this.storage.storePallet(p)) { stored++; continue; }
+      back++;
+      for (const c of p.require(PalletComponent).cartons()) { const k = c.require(CartonComponent); betrag += k.menge * k.produkt.ek; }
+      this.world.remove(p);
+    }
     for (const c of this.cartonsOn(t)) {
       if (this.storage.store(c.entity)) stored++;
       else {

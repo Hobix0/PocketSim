@@ -173,10 +173,25 @@ model({
 
 // ── Lager: Fahrzeuge und Geräte ─────────────────────────────────
 
-// Gabelstapler (Deko): Gabeln vorne (+X), Hubmast, Fahrerschutzdach, Gegengewicht hinten
+// Gabelstapler: Gabeln vorne (+X), Hubmast, Fahrerschutzdach, Gegengewicht hinten.
+// Drei Fassungen: komplett (geparkt), Fahrzeug ohne Gabelträger und der Gabelträger allein (fährt beim Heben hoch)
+function stapler(id, name, teil) {
 model({
-  id: 'gabelstapler', name: 'Gabelstapler', dims: [96, 88, 48],
-  draw: ({ box, cyl, frame, text, nz }) => {
+  id, name, dims: teil === 'gabel' ? [20, 16, 48] : [96, 88, 48], menue: teil === 'ganz' ? 'lager' : 'leben',
+  draw: (api) => {
+    const nz = 48;
+    if (teil === 'gabel') {
+      // Gabelträger (x 76–77 im Fahrzeug) und zwei Gabelzinken, 3 Würfel über dem Boden
+      api.box(0, 1, 1, 15, 8, nz - 9, DUNKEL);
+      for (const z of [12, nz - 16]) { api.box(0, 19, 0, 1, z, z + 3, STAHL); api.box(0, 2, 1, 13, z, z + 3, STAHL); }
+      return;
+    }
+    staplerKoerper(api, nz, teil === 'ganz');
+  },
+});
+}
+function staplerKoerper({ box, cyl, frame, text }, nz, mitGabel) {
+  {
     const mid = nz / 2;
     // Räder
     for (const [x, r] of [[62, 9], [16, 7]]) for (const z of [3, nz - 4]) {
@@ -197,12 +212,39 @@ model({
     // Hubmast vorne mit Gabelträger und Gabeln
     for (const z of [10, nz - 13]) box(72, 75, 4, 86, z, z + 2, STAHL_D);
     box(72, 75, 84, 86, 10, nz - 11, STAHL_D);
-    box(76, 77, 4, 18, 8, nz - 9, DUNKEL);
-    for (const z of [12, nz - 16]) { box(76, 95, 3, 4, z, z + 3, STAHL); box(76, 78, 4, 16, z, z + 3, STAHL); }
+    if (mitGabel) {
+      box(76, 77, 4, 18, 8, nz - 9, DUNKEL);
+      for (const z of [12, nz - 16]) { box(76, 95, 3, 4, z, z + 3, STAHL); box(76, 78, 4, 16, z, z + 3, STAHL); }
+    }
     // Lichter und Warnstreifen
     box(70, 70, 16, 19, 8, 11, '#fff3c4'); box(70, 70, 16, 19, nz - 12, nz - 9, '#fff3c4');
     box(4, 4, 30, 33, mid - 2, mid + 1, ROT);
     text(70, 15, mid + 5, 'UE', SCHWARZ);
+  }
+}
+stapler('gabelstapler', 'Gabelstapler', 'ganz');
+stapler('stapler_koerper', 'Gabelstapler (Fahrzeug)', 'koerper');
+stapler('stapler_gabel', 'Gabelstapler (Gabelträger)', 'gabel');
+
+// Europalette (1,20 × 0,80 m) für Ware auf Paletten: Deckbretter, Klötze, Bodenbretter
+model({
+  id: 'palette_euro', name: 'Europalette', dims: [48, 6, 32], menue: 'leben',
+  draw: ({ box }) => {
+    const HELL = '#d2b27c', DUNK = '#b8955f';
+    for (const x of [0, 21, 44]) box(x, x + 3, 0, 0, 0, 31, DUNK);
+    for (const x of [0, 21, 44]) for (const z of [0, 14, 28]) box(x, x + 3, 1, 4, z, z + 3, (xx, y) => (y === 4 ? HELL : '#a7845a'));
+    for (let z = 0; z < 32; z += 6) box(0, 47, 5, 5, z, Math.min(31, z + 3), z % 12 ? HELL : DUNK);
+  },
+});
+
+// Palettenstellplatz: gelbe Eckmarkierung am Boden (1,40 × 1,00 m)
+model({
+  id: 'palettenplatz', name: 'Palettenstellplatz', dims: [56, 1, 40], menue: 'lager',
+  draw: ({ box }) => {
+    for (const [x0, z0, dx, dz] of [[0, 0, 1, 1], [55, 0, -1, 1], [0, 39, 1, -1], [55, 39, -1, -1]]) {
+      for (let i = 0; i < 10; i++) { box(x0 + dx * i, x0 + dx * i, 0, 0, z0, z0 + dz, '#e9c23a'); box(x0, x0 + dx, 0, 0, z0 + dz * i, z0 + dz * i, '#e9c23a'); }
+    }
+    box(25, 30, 0, 0, 18, 21, '#e9c23a');
   },
 });
 

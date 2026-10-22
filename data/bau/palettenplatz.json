@@ -1,0 +1,23 @@
+{
+  "id": "palettenplatz",
+  "name": "Palettenstellplatz",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 10,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenplaetze": {
+    "anzahl": 1,
+    "hoehe": 0.03
+  },
+  "gruppe": "lager/ablagen",
+  "model": "eigen/palettenplatz",
+  "platzhalter": {
+    "groesse": [
+      1.4,
+      0.03,
+      1.0
+    ],
+    "farbe": "#e9c23a"
+  }
+}

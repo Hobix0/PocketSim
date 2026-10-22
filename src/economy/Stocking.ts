@@ -4,6 +4,7 @@ import type { World } from '../ecs/World';
 import { CartonComponent } from '../components/CartonComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
 import type { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
+import { cartonReachable } from '../components/PalletComponent';
 
 // Einräumen: Ware wandert aus einem Karton in ein Regal.
 // Wird vom Spieler (per Klick) und vom Personal benutzt. Ein leerer Karton verschwindet.
@@ -42,7 +43,7 @@ export function findStockingTask(world: World, isFree: (carton: Entity) => boole
   // Produkte mit festen Fächern kommen nur in diese Fächer
   const fest = new Set(shelves.flatMap(([, s]) => s.faecher.map((f) => f.fest?.id).filter((id): id is string => !!id)));
   for (const [carton, c] of world.query(CartonComponent)) {
-    if (c.reservedBy !== null || c.produkt.rohstoff || !isFree(carton)) continue;
+    if (c.reservedBy !== null || c.produkt.rohstoff || !isFree(carton) || !cartonReachable(c)) continue;
     const nurFest = fest.has(c.produkt.id);
     let best: Entity | null = null;
     for (const [shelf, s] of shelves) {
@@ -82,7 +83,7 @@ export function findHaulTask(
   isFree: (carton: Entity) => boolean,
 ): HaulTask | null {
   const candidates = [...world.query(CartonComponent)]
-    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || c.ablage.temporaer))
+    .filter(([e, c]) => c.reservedBy === null && c.menge > 0 && isFree(e) && (!c.ablage || (c.ablage.temporaer && !c.ablage.palette)))
     .sort(([, a], [, b]) => Number(!a.ablage) - Number(!b.ablage));
   for (const [carton] of candidates) {
     const ablage = storage.nearestFree(carton.object.position);
