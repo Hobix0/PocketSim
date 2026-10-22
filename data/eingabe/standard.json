@@ -20,6 +20,7 @@
   "sortiment_menue": ["KeyO"],
   "bilanz_menue": ["KeyL"],
   "versorgung_menue": ["KeyV"],
+  "immobilien_menue": ["KeyI"],
   "lager_menue": ["KeyG"],
   "forschung_menue": ["KeyF"],
   "dach_umschalten": ["KeyT"],

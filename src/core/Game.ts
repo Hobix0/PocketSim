@@ -49,6 +49,7 @@ import { AssortmentWindow } from '../ui/AssortmentWindow';
 import { StatsWindow } from '../ui/StatsWindow';
 import { Plots } from '../world/Plots';
 import { Renovations, type RenovationSettings } from '../world/Renovations';
+import { RealEstateWindow } from '../ui/RealEstateWindow';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
@@ -156,6 +157,8 @@ export class Game {
   /** Grundstücke: wo gebaut werden darf */
   readonly plots: Plots;
   readonly renovations: Renovations;
+  readonly realEstate: RealEstateWindow;
+  private realEstateTick = 0;
   /** Strom und Wasser */
   readonly utilities: Utilities;
   /** Maschinen, Rezepte, Rohstoffe */
@@ -402,6 +405,7 @@ export class Game {
     this.clock.events.on('newDay', ({ tag }) => {
       // Strom und Wasser des abgelaufenen Tages bezahlen, dann den Tag abschließen
       this.utilities.bill();
+      this.plots.payRent();
       const report = this.store.stats.closeDay(tag);
       this.staff.payDay();
       this.goals.complete('tag_beenden');
@@ -466,6 +470,14 @@ export class Game {
       this.hud.toasts.show(this.content.text('renovierung_start', { name: plot.name, stunden: Math.round(minuten / 6) / 10 }), 'gut');
       this.audio.play('bauen');
     });
+    this.realEstate = new RealEstateWindow(this.hud.root, this.plots, this.renovations, () => this.player.level,
+      (p) => this.view.flyTo((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2, Math.max(12, (p.rect.maxX - p.rect.minX) * 1.3)),
+      // Leer: innen steht nichts mehr außer dem Gebäude selbst (und Gerümpel)
+      (p) => ![...this.world.query(FootprintComponent)].some(([e, f]) => (f.ebene === 'objekt' || f.ebene === 'decke') && e.typeId !== 'geruempel'
+        && e.object.position.x > p.rect.minX && e.object.position.x < p.rect.maxX && e.object.position.z > p.rect.minZ && e.object.position.z < p.rect.maxZ));
+    this.plots.events.on('rented', (p) => { this.hud.toasts.show(this.content.text('miete_gemietet', { name: p.name }), 'gut'); this.audio.play('kasse'); });
+    this.plots.events.on('unpaid', ({ plot, tage }) => this.hud.toasts.show(this.content.text('miete_offen', { name: plot.name, tage }), 'warnung'));
+    this.plots.events.on('ended', ({ plot }) => this.hud.toasts.show(this.content.text('miete_beendet', { name: plot.name }), 'warnung'));
     this.renovations.events.on('done', ({ plot, mitte }) => {
       this.hud.toasts.show(this.content.text('renovierung_fertig', { name: plot.name }), 'gut');
       this.effects.sparkle(mitte.clone().setY(2), 60);
@@ -550,6 +562,7 @@ export class Game {
     this.hud.onTool('lager', () => this.logisticsWindow.toggleOpen());
     this.researchWindow = new ResearchWindow(this.hud.root, this.content, this.research);
     this.hud.onTool('forschung', () => this.researchWindow.toggleOpen());
+    this.hud.onTool('immobilien', () => this.realEstate.toggleOpen());
     this.build.erforscht = (id) => this.research.isDone(id);
     this.build.forschungName = (id) => this.research.node(id)?.name ?? id;
     this.research.events.on('researched', ({ node }) => {
@@ -691,9 +704,11 @@ export class Game {
     this.machineWindow.update();
     this.shelfWindow.update();
     this.utilityWindow.update();
+    if (this.realEstate.isOpen && this.renovations.state().length && (this.realEstateTick += realDt) > 2) { this.realEstateTick = 0; this.realEstate.refresh(); }
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
     this.hud.setToolActive('forschung', this.researchWindow.isOpen);
+    this.hud.setToolActive('immobilien', this.realEstate.isOpen);
     this.hud.setToolBadge('forschung', this.research.bereit > 0);
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
     this.hud.setToolActive('waende', this.walls.mode !== 'oben');
@@ -751,6 +766,7 @@ export class Game {
     if (i.wasPressed('versorgung_menue')) this.utilityWindow.toggleOpen();
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('forschung_menue')) this.researchWindow.toggleOpen();
+    if (i.wasPressed('immobilien_menue')) this.realEstate.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('waende_umschalten')) this.cycleWalls();
     if (i.wasPressed('ton_stumm')) this.hud.toasts.show(this.audio.toggleStumm() ? 'Ton aus (M)' : 'Ton an (M)');
@@ -768,6 +784,7 @@ export class Game {
       else if (this.utilityWindow.isOpen) this.utilityWindow.close();
       else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
       else if (this.researchWindow.isOpen) this.researchWindow.close();
+      else if (this.realEstate.isOpen) this.realEstate.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
       else if (this.selection.current) this.selection.clear();
@@ -851,6 +868,7 @@ export class Game {
       systeme: {
         grundstuecke: this.plots.state(),
         renovierungen: this.renovations.state(),
+        gemietet: this.plots.rentState(),
         versorgung: this.utilities.state(),
         gelaende: this.terrain.state(),
         gelaendeRaster: this.terrain.raster(),
@@ -892,6 +910,7 @@ export class Game {
     this.staff.restore(d.personal);
     const grund = d.systeme?.grundstuecke;
     if (Array.isArray(grund)) this.plots.restore(grund.filter((x): x is string => typeof x === 'string'));
+    this.plots.restoreRent(d.systeme?.gemietet);
     this.renovations.restore(d.systeme?.renovierungen);
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);

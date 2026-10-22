@@ -2243,3 +2243,74 @@ html, body {
 .purchase .buy { display: flex; align-items: center; gap: 8px; }
 .purchase .buy .price { text-align: right; }
 .purchase .buy.pallet .price small { color: var(--accent); }
+
+/* ── Immobilien ── */
+.realestate .msg {
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.realestate .filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.realestate .estate-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.realestate .estate {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.realestate .estate.own {
+  border-color: var(--accent);
+}
+
+.realestate .estate.locked {
+  opacity: 0.6;
+}
+
+.realestate .estate-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.realestate .estate-head > div {
+  display: grid;
+  flex: 1;
+}
+
+.realestate .estate-head .icon {
+  font-size: 26px;
+}
+
+.realestate .estate small {
+  color: var(--text-dim);
+}
+
+.realestate .estate .tag {
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-line);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.realestate .estate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
