@@ -1,0 +1,29 @@
+{
+  "id": "pal_traverse_verzinkt_180_gitter",
+  "name": "Traversen-Ebene Verzinkt 1,8 m (mit Gitterrost)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {
+    "lagerplaetze": 10
+  },
+  "palettenregal": {
+    "teil": "traverse",
+    "breite": 1.8
+  },
+  "ablage": {
+    "boeden": [
+      0.125
+    ]
+  },
+  "model": "eigen/pal_traverse_verzinkt_180_gitter",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      0.125,
+      1.8
+    ],
+    "farbe": "#a9b0b5"
+  }
+}

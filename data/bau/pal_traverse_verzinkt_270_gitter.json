@@ -1,0 +1,29 @@
+{
+  "id": "pal_traverse_verzinkt_270_gitter",
+  "name": "Traversen-Ebene Verzinkt 2,7 m (mit Gitterrost)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 110,
+  "freischaltLevel": 1,
+  "werte": {
+    "lagerplaetze": 14
+  },
+  "palettenregal": {
+    "teil": "traverse",
+    "breite": 2.7
+  },
+  "ablage": {
+    "boeden": [
+      0.125
+    ]
+  },
+  "model": "eigen/pal_traverse_verzinkt_270_gitter",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      0.125,
+      2.7
+    ],
+    "farbe": "#a9b0b5"
+  }
+}

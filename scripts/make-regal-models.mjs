@@ -146,3 +146,77 @@ for (const [sid, S] of Object.entries(SCHWER)) {
   model({ id: `schwerlast_${sid}_hoch`, name: `Schwerlastregal ${S.name} (hoch, 4 Ebenen)`, dims: [32, 128, 72], menue: 'lager',
     draw: (api) => schwerlast(api, 32, 128, 72, S, [0.05, 0.85, 1.65, 2.45], DECKS.stahl) });
 }
+
+// ── Verkaufsregale: kurze Stücke und Ecken ───────────────────────────────────
+for (const [id, L] of Object.entries(LOOK)) {
+  model({ id: `vr_wand_kurz_${id}`, name: `Wandregal kurz ${L.name}`, dims: [20, 76, 20], menue: 'einrichtung',
+    draw: (api) => regal(api, 20, 76, 20, L, [0.12, 0.56, 1.0, 1.44]) });
+  model({ id: `vr_gondel_kurz_${id}`, name: `Gondel kurz ${L.name}`, dims: [20, 60, 20], menue: 'einrichtung',
+    draw: (api) => regal(api, 20, 60, 20, L, [0.12, 0.55, 0.98]) });
+  // Innenecke: Rückwände hinten (−X) und links (−Z), offen nach vorne und rechts – passt in eine Raumecke
+  model({ id: `vr_innenecke_${id}`, name: `Wandregal Innenecke ${L.name}`, dims: [20, 76, 20], menue: 'einrichtung',
+    draw: ({ box }) => {
+      box(0, 1, 0, 75, 0, 19, L.rueck); box(0, 19, 0, 75, 0, 1, L.rueck);
+      box(19, 19, 0, 75, 19, 19, L.korpus); box(2, 19, 0, 3, 2, 19, L.korpus);
+      for (const m of [0.12, 0.56, 1.0, 1.44]) { const y = h(m) - 1; box(2, 19, y, y, 2, 19, L.boden); box(19, 19, y - 1, y, 2, 18, L.leiste); box(2, 18, y - 1, y, 19, 19, L.leiste); }
+      box(0, 19, 74, 75, 0, 19, L.korpus);
+    } });
+  // Außenecke: Viertelkreis-Böden um einen Pfosten hinten links – schließt eine Regalreihe rund ab
+  model({ id: `vr_aussenecke_${id}`, name: `Wandregal Außenecke ${L.name}`, dims: [20, 76, 20], menue: 'einrichtung',
+    draw: ({ box, set }) => {
+      box(0, 1, 0, 75, 0, 1, L.korpus);
+      for (const m of [0.06, 0.12, 0.56, 1.0, 1.44, 1.88]) {
+        const y = Math.max(0, h(m) - 1);
+        for (let x = 0; x < 20; x++) for (let z = 0; z < 20; z++) {
+          const r = Math.hypot(x + 0.5, z + 0.5);
+          if (r <= 19.5) set(x, y, z, r > 18.5 ? L.leiste : m < 0.1 || m > 1.8 ? L.korpus : L.boden);
+        }
+      }
+    } });
+}
+
+// ── Palettenregal-System (wie im Zentrallager) ───────────────────────────────
+// Stützrahmen: 1,10 m tief, 10 cm stark, mit Lochraster; Traversen-Ebenen hängen zwischen zwei Rahmen
+const PAL = {
+  klassik: { name: 'Blau-Orange', rahmen: '#2f5d9e', traeger: '#e07a2a' },
+  verzinkt: { name: 'Verzinkt', rahmen: '#a9b0b5', traeger: '#d3d8dc' },
+  gruen: { name: 'Grün-Gelb', rahmen: '#3f6b55', traeger: '#e9c23a' },
+};
+for (const [pid, P] of Object.entries(PAL)) {
+  for (const [hm, ny] of [['300', 120], ['450', 180]]) {
+    model({ id: `pal_rahmen_${pid}_${hm}`, name: `Stützrahmen ${P.name} (${Number(hm) / 100} m)`, dims: [44, ny, 4], menue: 'lager',
+      draw: ({ box, set }) => {
+        for (const x0 of [0, 41]) {
+          box(x0, x0 + 2, 0, ny - 1, 0, 3, P.rahmen);
+          for (let y = 4; y < ny - 2; y += 2) for (const z of [0, 3]) set(x0 + 1, y, z, shade(P.rahmen, 0.7)); // Lochraster
+          box(x0 - (x0 ? 1 : 0), x0 + 3 - (x0 ? 1 : 0), 0, 0, 0, 3, STAHL_D); // Fußplatte
+        }
+        // Diagonalverbände zwischen den Stützen
+        for (let y0 = 6; y0 + 16 < ny - 2; y0 += 16) {
+          const [xa, xb] = (y0 / 16) % 2 < 1 ? [3, 40] : [40, 3];
+          for (let i = 0; i <= 90; i++) { const t = i / 90, x = Math.round(xa + (xb - xa) * t), y = Math.round(y0 + 16 * t); box(x, x, y, y + 1, 1, 2, P.rahmen); }
+        }
+        for (const y of [2, ny - 3]) box(3, 40, y, y + 1, 1, 2, P.rahmen);
+      } });
+  }
+  for (const [bm, nz] of [['180', 72], ['270', 108]]) {
+    for (const [did, dname] of [['offen', 'für Paletten'], ['gitter', 'mit Gitterrost']]) {
+      model({ id: `pal_traverse_${pid}_${bm}_${did}`, name: `Traversen-Ebene ${P.name} ${Number(bm) / 100} m (${dname})`, dims: [44, 5, nz], menue: 'lager',
+        draw: ({ box }) => {
+          for (const x0 of [0, 42]) { box(x0, x0 + 1, 0, 3, 0, nz - 1, P.traeger); for (const z of [0, nz - 1]) box(x0, x0 + 1, 0, 4, z, z, shade(P.traeger, 0.75)); }
+          if (did === 'gitter') box(2, 41, 4, 4, 1, nz - 2, (x, y, z) => (x % 3 === 0 || z % 3 === 0 ? STAHL_D : 0));
+          else for (let z = 6; z < nz - 4; z += 18) box(2, 41, 3, 3, z, z + 1, STAHL_D); // Palettenauflagen
+        } });
+    }
+  }
+}
+// Anfahrschutz (vor die Stütze stellen) und Gangendschutz (vor das Regalende), gelb-schwarz
+const WARN = (x, y, z) => (Math.floor((x + y + z) / 3) % 2 ? '#e9c23a' : SCHWARZ);
+model({ id: 'pal_anfahrschutz', name: 'Anfahrschutz', dims: [10, 16, 10], menue: 'lager',
+  draw: ({ box }) => { box(0, 9, 0, 15, 0, 1, WARN); box(0, 1, 0, 15, 0, 9, WARN); box(0, 9, 0, 0, 0, 9, STAHL_D); } });
+model({ id: 'pal_gangendschutz', name: 'Gangendschutz', dims: [44, 20, 6], menue: 'lager',
+  draw: ({ box }) => {
+    for (const x of [1, 42]) box(x, x + 1, 0, 19, 2, 3, '#e9c23a');
+    for (const y of [8, 16]) box(0, 43, y, y + 2, 1, 4, WARN);
+    for (const x of [0, 41]) box(x, x + 3, 0, 0, 0, 5, STAHL_D);
+  } });

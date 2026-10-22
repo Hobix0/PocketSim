@@ -1,0 +1,21 @@
+{
+  "id": "pal_rahmen_gruen_450",
+  "name": "Stützrahmen Grün-Gelb (4,5 m)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 130,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "rahmen"
+  },
+  "model": "eigen/pal_rahmen_gruen_450",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      4.5,
+      0.1
+    ],
+    "farbe": "#3f6b55"
+  }
+}

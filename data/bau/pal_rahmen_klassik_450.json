@@ -1,0 +1,21 @@
+{
+  "id": "pal_rahmen_klassik_450",
+  "name": "Stützrahmen Blau-Orange (4,5 m)",
+  "kategorie": "lager",
+  "ebene": "objekt",
+  "preis": 130,
+  "freischaltLevel": 1,
+  "werte": {},
+  "palettenregal": {
+    "teil": "rahmen"
+  },
+  "model": "eigen/pal_rahmen_klassik_450",
+  "platzhalter": {
+    "groesse": [
+      1.1,
+      4.5,
+      0.1
+    ],
+    "farbe": "#2f5d9e"
+  }
+}
