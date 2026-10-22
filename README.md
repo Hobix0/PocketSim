@@ -228,6 +228,14 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 13 – Modeladen (eigener Forschungs-Tab „Mode“ 👗)** ✅
+
+- **Forschung → Mode:** *Modeecke* (Kleiderständer, Wühltisch, Boutique-Kassentresen, Hängeschild; T-Shirt, Hemd, Sommerkleid, Strickpullover, Wolljacke, Jeans) → *Umkleide* (Umkleidekabine mit Vorhang, Standspiegel, Samtsessel) · *Accessoires* (Accessoire-Regal; Schal, Strickmütze, Ledertasche) · *Schaufenster* (Schaufensterpuppen mit Kleid und Anzug, große Kleiderwand) → *Schuhe* (Schuhregal; Sneaker, Stiefeletten). Bald: Nähstube, Second-Hand-Ecke
+- **Baumenü → 👗 Mode** mit Ständer & Regale, Umkleide, Kasse, Deko
+- **Hängende Kleidung:** Kleidung hängt seitlich auf Bügeln an der Stange (alle Kleidermodelle 80 cm hoch, Haken oben); Jeans, Mützen und Schals liegen gefaltet auf dem Wühltisch, Schuhe stehen im Schuhregal
+- **Anprobieren:** Wer Kleidung im Korb hat, geht (meist) erst in eine freie Umkleide, zieht den Vorhang zu und probiert an – „Passt perfekt!“. Ab und zu passt etwas nicht, dann hängt der Kunde es zurück an den Ständer. Werte: `data/kunden/standard.json` → `anprobieren`; Code: `src/components/FittingRoomComponent.ts`, Ablauf in `CustomerComponent.ts`
+- Neue Modelle: `npm run modelle:mode` (`scripts/make-mode-models.mjs`)
+
 **Etappe 12b – Mischpaletten, Rollwagen, Fahrzeuge fürs ganze Team, Wände wie bei Sims** ✅
 
 - **Alles kommt auf Paletten:** auch einzeln bestellte Kartons. Der LKW packt sie nach Produkt sortiert auf **Mischpaletten** (18 Kartons je Palette, gemischt erlaubt); höchstens 8 Paletten je LKW
