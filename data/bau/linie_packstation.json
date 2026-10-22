@@ -1,0 +1,26 @@
+{
+  "id": "linie_packstation",
+  "name": "Obst- & Gemüse-Packstation",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 8000,
+  "freischaltLevel": 4,
+  "werte": {},
+  "maschine": {
+    "typ": "packstation",
+    "strom": 3,
+    "wasser": 150,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_packstation",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#7fb35a"
+  },
+  "gruppe": "produktion/linien"
+}

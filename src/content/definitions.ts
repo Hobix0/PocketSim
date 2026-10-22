@@ -42,6 +42,30 @@ export interface MachineDef {
   strom: number;
   /** l/h, solange sie läuft */
   wasser: number;
+  /** "zentral": Produktionslinie – holt Rohstoffe aus dem Zentrallager und liefert dorthin (sonst: Ladenlager) */
+  lager?: 'zentral';
+}
+
+/** Produktion im Industriegebiet (data/produktion/standard.json) */
+export interface ProductionLineDef {
+  id: string;
+  name: string;
+  /** Diese Warengruppen kann die Linie herstellen (alle Produkte darin) */
+  kategorien: string[];
+  rohstoff: { id: string; name: string };
+  farbe: string;
+  strom: number;
+  wasser: number;
+  level: number;
+}
+
+export interface ProductionSettings {
+  rohstoffAnteil: number;
+  rohstoffEk: number;
+  rohstoffGebinde: number;
+  minutenGrund: number;
+  minutenProStueck: number;
+  linien: ProductionLineDef[];
 }
 
 /** Ein Rezept (data/rezepte/*.json): aus Waren wird in einer Maschine eine neue Ware. */
@@ -620,7 +644,9 @@ function shelf(raw: unknown, where: string): ShelfDef {
 
 function machine(raw: unknown, where: string): MachineDef {
   const o = asObject(raw, where);
-  return { typ: str(o, 'typ', where), strom: num(o, 'strom', where, 0), wasser: o.wasser === undefined ? 0 : num(o, 'wasser', where, 0) };
+  const lager = o.lager === undefined ? undefined : str(o, 'lager', where);
+  if (lager !== undefined && lager !== 'zentral') throw new Error(`${where}: lager muss "zentral" sein`);
+  return { typ: str(o, 'typ', where), strom: num(o, 'strom', where, 0), wasser: o.wasser === undefined ? 0 : num(o, 'wasser', where, 0), ...(lager ? { lager } : {}) };
 }
 
 function checkout(raw: unknown, where: string): CheckoutDef {

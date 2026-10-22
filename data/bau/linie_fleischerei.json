@@ -1,0 +1,26 @@
+{
+  "id": "linie_fleischerei",
+  "name": "Fleischerei",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 9000,
+  "freischaltLevel": 5,
+  "werte": {},
+  "maschine": {
+    "typ": "fleischerei",
+    "strom": 6,
+    "wasser": 300,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_fleischerei",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#c25b52"
+  },
+  "gruppe": "produktion/linien"
+}

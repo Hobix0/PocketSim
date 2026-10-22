@@ -1,0 +1,206 @@
+{
+  "_hinweis": "Produktion im Industriegebiet. Jede Linie stellt alle Produkte ihrer Warengruppen her. Rohstoff je Linie: kostet ek je Einheit beim Großhandel; ein Karton braucht so viele Einheiten, dass die Rohstoffe rohstoffAnteil des Einkaufspreises kosten. dauer = minutenGrund + minutenProStueck × Stück im Karton. Linien holen Rohstoffe aus dem Zentrallager und liefern dorthin.",
+  "rohstoffAnteil": 0.45,
+  "rohstoffEk": 1.0,
+  "rohstoffGebinde": 50,
+  "minutenGrund": 20,
+  "minutenProStueck": 1.5,
+  "linien": [
+    {
+      "id": "abfuellanlage",
+      "name": "Getränke-Abfüllanlage",
+      "kategorien": [
+        "getraenke"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_getraenke",
+        "name": "Getränke-Grundstoffe (Konzentrat, Flaschen)"
+      },
+      "farbe": "#4f8fbf",
+      "strom": 8,
+      "wasser": 600,
+      "level": 4
+    },
+    {
+      "id": "backstrasse",
+      "name": "Backstraße",
+      "kategorien": [
+        "backwaren"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_backwaren",
+        "name": "Mehl, Hefe & Saaten"
+      },
+      "farbe": "#d9a45b",
+      "strom": 9,
+      "wasser": 80,
+      "level": 4
+    },
+    {
+      "id": "molkerei",
+      "name": "Molkerei",
+      "kategorien": [
+        "molkerei_eier"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_molkerei",
+        "name": "Rohmilch & Eier vom Hof"
+      },
+      "farbe": "#e9e6df",
+      "strom": 7,
+      "wasser": 900,
+      "level": 4
+    },
+    {
+      "id": "fleischerei",
+      "name": "Fleischerei",
+      "kategorien": [
+        "fleisch_wurst"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_fleisch",
+        "name": "Fleisch & Gewürze"
+      },
+      "farbe": "#c25b52",
+      "strom": 6,
+      "wasser": 300,
+      "level": 5
+    },
+    {
+      "id": "tiefkuehllinie",
+      "name": "Tiefkühl-Linie",
+      "kategorien": [
+        "tiefkuehl"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_tiefkuehl",
+        "name": "Gemüse & Zutaten für Tiefkühlware"
+      },
+      "farbe": "#9fd0e6",
+      "strom": 12,
+      "wasser": 200,
+      "level": 5
+    },
+    {
+      "id": "packstation",
+      "name": "Obst- & Gemüse-Packstation",
+      "kategorien": [
+        "obst_gemuese"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_obst",
+        "name": "Ernte vom Großmarkt"
+      },
+      "farbe": "#7fb35a",
+      "strom": 3,
+      "wasser": 150,
+      "level": 4
+    },
+    {
+      "id": "trockenwaren",
+      "name": "Trockenwaren-Abfüllung",
+      "kategorien": [
+        "grundnahrung"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_trocken",
+        "name": "Getreide, Reis & Hülsenfrüchte"
+      },
+      "farbe": "#c9b27c",
+      "strom": 5,
+      "wasser": 50,
+      "level": 4
+    },
+    {
+      "id": "suesswaren",
+      "name": "Süßwaren-Linie",
+      "kategorien": [
+        "suesswaren_snacks"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_suess",
+        "name": "Kakao, Zucker & Kartoffeln"
+      },
+      "farbe": "#8a5a3a",
+      "strom": 7,
+      "wasser": 120,
+      "level": 5
+    },
+    {
+      "id": "mischanlage",
+      "name": "Chemie-Mischanlage",
+      "kategorien": [
+        "haushalt_reinigung"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_chemie",
+        "name": "Tenside, Duftstoffe & Gebinde"
+      },
+      "farbe": "#6fb0a8",
+      "strom": 6,
+      "wasser": 400,
+      "level": 6
+    },
+    {
+      "id": "kosmetik",
+      "name": "Kosmetik-Abfüllung",
+      "kategorien": [
+        "drogerie_koerperpflege"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_kosmetik",
+        "name": "Öle, Pflanzenextrakte & Tuben"
+      },
+      "farbe": "#d99ac0",
+      "strom": 5,
+      "wasser": 300,
+      "level": 6
+    },
+    {
+      "id": "naehstrasse",
+      "name": "Nähstraße",
+      "kategorien": [
+        "mode",
+        "accessoires"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_textil",
+        "name": "Stoffe, Garn & Knöpfe"
+      },
+      "farbe": "#8fae94",
+      "strom": 4,
+      "wasser": 0,
+      "level": 5
+    },
+    {
+      "id": "schuhfertigung",
+      "name": "Schuhfertigung",
+      "kategorien": [
+        "schuhe"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_schuhe",
+        "name": "Leder, Sohlen & Schnürsenkel"
+      },
+      "farbe": "#6e4a2e",
+      "strom": 5,
+      "wasser": 0,
+      "level": 6
+    },
+    {
+      "id": "konditorei",
+      "name": "Konditorei",
+      "kategorien": [
+        "kuchen"
+      ],
+      "rohstoff": {
+        "id": "grundstoff_konditorei",
+        "name": "Butter, Sahne & Früchte"
+      },
+      "farbe": "#f0c6c0",
+      "strom": 6,
+      "wasser": 60,
+      "level": 5
+    }
+  ]
+}

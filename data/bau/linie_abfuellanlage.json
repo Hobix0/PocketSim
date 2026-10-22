@@ -1,0 +1,26 @@
+{
+  "id": "linie_abfuellanlage",
+  "name": "Getränke-Abfüllanlage",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 8000,
+  "freischaltLevel": 4,
+  "werte": {},
+  "maschine": {
+    "typ": "abfuellanlage",
+    "strom": 8,
+    "wasser": 600,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_abfuellanlage",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#4f8fbf"
+  },
+  "gruppe": "produktion/linien"
+}

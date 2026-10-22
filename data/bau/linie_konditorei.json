@@ -1,0 +1,26 @@
+{
+  "id": "linie_konditorei",
+  "name": "Konditorei",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 9000,
+  "freischaltLevel": 5,
+  "werte": {},
+  "maschine": {
+    "typ": "konditorei",
+    "strom": 6,
+    "wasser": 60,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_konditorei",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#f0c6c0"
+  },
+  "gruppe": "produktion/linien"
+}

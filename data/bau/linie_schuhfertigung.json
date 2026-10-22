@@ -1,0 +1,26 @@
+{
+  "id": "linie_schuhfertigung",
+  "name": "Schuhfertigung",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 10000,
+  "freischaltLevel": 6,
+  "werte": {},
+  "maschine": {
+    "typ": "schuhfertigung",
+    "strom": 5,
+    "wasser": 0,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_schuhfertigung",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#6e4a2e"
+  },
+  "gruppe": "produktion/linien"
+}

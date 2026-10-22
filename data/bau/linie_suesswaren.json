@@ -1,0 +1,26 @@
+{
+  "id": "linie_suesswaren",
+  "name": "Süßwaren-Linie",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 9000,
+  "freischaltLevel": 5,
+  "werte": {},
+  "maschine": {
+    "typ": "suesswaren",
+    "strom": 7,
+    "wasser": 120,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_suesswaren",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#8a5a3a"
+  },
+  "gruppe": "produktion/linien"
+}

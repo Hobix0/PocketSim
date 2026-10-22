@@ -1,0 +1,26 @@
+{
+  "id": "linie_mischanlage",
+  "name": "Chemie-Mischanlage",
+  "kategorie": "maschinen",
+  "ebene": "objekt",
+  "kontext": "maschine",
+  "preis": 10000,
+  "freischaltLevel": 6,
+  "werte": {},
+  "maschine": {
+    "typ": "mischanlage",
+    "strom": 6,
+    "wasser": 400,
+    "lager": "zentral"
+  },
+  "model": "eigen/linie_mischanlage",
+  "platzhalter": {
+    "groesse": [
+      2,
+      2.2,
+      4
+    ],
+    "farbe": "#6fb0a8"
+  },
+  "gruppe": "produktion/linien"
+}

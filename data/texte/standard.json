@@ -133,6 +133,8 @@
   "bauen_fehler_gelaende": "Der Boden ist hier nicht eben – erst mit dem Gelände-Werkzeug ebnen",
   "versorgung": "Versorgung",
   "immobilien": "Immobilien",
+  "zentrallager": "Zentrallager",
+  "zentrallager_angekommen": "Im Zentrallager angekommen: {kartons} Kartons",
   "miete_gemietet": "Gemietet: {name} – die Miete kommt jeden Morgen",
   "miete_offen": "Miete für {name} nicht bezahlt ({tage}. Tag)",
   "miete_beendet": "Mietvertrag beendet: {name}",
