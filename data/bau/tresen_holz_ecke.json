@@ -1,0 +1,18 @@
+{
+  "id": "tresen_holz_ecke",
+  "name": "Tresen Holz (Ecke)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 220,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_holz_ecke",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.7
+    ],
+    "farbe": "#9a6a43"
+  }
+}

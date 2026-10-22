@@ -1,0 +1,20 @@
+{
+  "id": "tresen_kuehlung",
+  "name": "Tresen mit Milchkühlschrank",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 520,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.3
+  },
+  "model": "eigen/tresen_kuehlung",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      1.0
+    ],
+    "farbe": "#c3c8cc"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "tresen_metro_ecke",
+  "name": "Tresen Metro-Fliese (Ecke)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 220,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_metro_ecke",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.7
+    ],
+    "farbe": "#f4f1ea"
+  }
+}

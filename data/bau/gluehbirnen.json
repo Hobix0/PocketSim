@@ -1,0 +1,35 @@
+{
+  "id": "gluehbirnen",
+  "name": "Glühbirnen-Pendel (3er)",
+  "kategorie": "einrichtung",
+  "ebene": "decke",
+  "preis": 110,
+  "freischaltLevel": 3,
+  "werte": {
+    "strom": 0.06
+  },
+  "licht": {
+    "position": [
+      0,
+      -0.95,
+      0
+    ],
+    "groesse": [
+      0.1,
+      0.1,
+      0.9
+    ],
+    "farbe": "#ffd59a",
+    "staerke": 4,
+    "reichweite": 5
+  },
+  "model": "eigen/gluehbirnen",
+  "platzhalter": {
+    "groesse": [
+      0.3,
+      1.2,
+      1.2
+    ],
+    "farbe": "#ffe7a8"
+  }
+}

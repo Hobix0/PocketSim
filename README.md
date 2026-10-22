@@ -228,6 +228,12 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 11d – Barista-Baukasten** ✅
+
+- **Tresen-Baukasten** (Forschung im Café-Baum, 30 Ideen): Module zum Zusammenstecken in vier Oberflächen – *Holz, Metro-Fliese, Beton, Salbei* – je als gerades Stück (1 m), Ecke, Endstück und **Bestelltresen** (Bedientheke mit Kasse, Becher stehen oben drauf). Vorne ist die Gästeseite, hinten hat jedes Modul Fächer mit Tassen und Gläsern
+- **Barista-Ausstattung** (40 Ideen): Tresen mit Spüle, mit Milchkühlschrank, mit Kuchenhauben, Mühlen-Station, Filterkaffee-Bar, Rückbuffet mit Bohnen, Menütafel, Neon-Schrift „COFFEE“ (leuchtet), Glühbirnen-Pendel (leuchtet)
+- **Siebträger-Sammlung** (50 Ideen): Siebträger Rot (3 Gruppen), Creme mit Kupfer, Schwarz mit Messing – Maschinen mit denselben Rezepten wie die Kaffeemaschine
+
 **Etappe 11c – Cozy Café: eigener Forschungsbaum, neue Möbel** ✅
 
 - **Forschung mit Reitern** (`data/forschung/standard.json` → `baeume`, Knoten mit `"baum"`): *Supermarkt* und *Café*. Voraussetzungen aus einem anderen Baum stehen als Hinweis auf der Karte (Café-Ecke ↖ Backstube); am Reiter zeigt eine Zahl, wie viel gerade erforschbar ist

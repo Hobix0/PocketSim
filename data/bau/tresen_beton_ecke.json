@@ -1,0 +1,18 @@
+{
+  "id": "tresen_beton_ecke",
+  "name": "Tresen Beton (Ecke)",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 220,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/tresen_beton_ecke",
+  "platzhalter": {
+    "groesse": [
+      0.7,
+      1.05,
+      0.7
+    ],
+    "farbe": "#9aa0a3"
+  }
+}

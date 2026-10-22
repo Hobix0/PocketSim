@@ -1,0 +1,18 @@
+{
+  "id": "rueckbuffet",
+  "name": "Rückbuffet mit Bohnen",
+  "kategorie": "einrichtung",
+  "ebene": "objekt",
+  "preis": 460,
+  "freischaltLevel": 3,
+  "werte": {},
+  "model": "eigen/rueckbuffet",
+  "platzhalter": {
+    "groesse": [
+      0.4,
+      2.1,
+      1.4
+    ],
+    "farbe": "#6e4a2e"
+  }
+}
