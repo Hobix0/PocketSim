@@ -66,6 +66,8 @@ import { place } from '../world/CartonStorage';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { LogisticsWindow } from '../ui/LogisticsWindow';
 import { ResearchWindow } from '../ui/ResearchWindow';
+import { WallView } from '../world/WallView';
+import { PalletComponent } from '../components/PalletComponent';
 import { cartonsPerPallet } from '../factory/createPalletEntity';
 import { Research } from '../economy/Research';
 import { LampLights } from '../world/LampLights';
@@ -178,6 +180,8 @@ export class Game {
   private readonly lampLights: LampLights;
   /** Dach über den Innenräumen (herausgezoomt sichtbar, Taste „Dach“ blendet aus) */
   private readonly roof: RoofLayer | null;
+  /** Wände oben / Schnitt / unten (wie bei den Sims) */
+  readonly walls: WallView;
   /** Gelände (Höhenfeld) und seine Darstellung */
   readonly terrain: Terrain;
   private readonly terrainView: TerrainView;
@@ -269,6 +273,7 @@ export class Game {
     // Lampen: feste Zahl echter Lichtquellen für die Lampen nahe der Kamera
     this.lampLights = new LampLights(this.scene, this.world, licht.lampen.anzahl, licht.lampen.buendeln);
     const dach = this.content.baumenue.dach;
+    this.walls = new WallView(this.world, this.content.baumenue.waende ?? { sockel: 0.3, radius: 16, ueberstand: 0.6, tempo: 8 });
     this.roof = dach ? new RoofLayer(this.scene, this.world, { hoehe: this.content.baumenue.deckenhoehe, ...dach }) : null;
 
     // Kamera
@@ -545,6 +550,7 @@ export class Game {
       if (Object.values(c.rollen).some((r) => r.forschung === node.id)) this.staff.refreshCandidates();
     });
     this.hud.onTool('dach', () => this.toggleRoof());
+    this.hud.onTool('waende', () => this.cycleWalls());
 
     // Hand: Anzeige im HUD und Markierung des getragenen Kartons
     let lastCarried: Entity | null = null;
@@ -640,6 +646,7 @@ export class Game {
     this.truckSmoke(simDt);
     this.ambience.update(simDt, this.clock.totalMinutes % (24 * 60), this.nacht, realDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
+    this.walls.update(realDt, this.view.camera.position, this.view.focus);
     this.terrainView.update();
     this.paint.update();
 
@@ -673,6 +680,7 @@ export class Game {
     this.hud.setToolActive('forschung', this.researchWindow.isOpen);
     this.hud.setToolBadge('forschung', this.research.bereit > 0);
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
+    this.hud.setToolActive('waende', this.walls.mode !== 'oben');
     this.renderStore();
 
     const { min, max } = this.view.settings.abstand;
@@ -682,6 +690,12 @@ export class Game {
   }
 
   /** Dach ausblenden bzw. wieder zeigen (herausgezoomt) */
+  /** Wände: oben → Schnitt → unten → oben */
+  private cycleWalls(): void {
+    const m = this.walls.next();
+    this.hud.toasts.show(this.content.text(`waende_${m}`));
+  }
+
   private toggleRoof(): void {
     if (!this.roof) return;
     this.roof.hidden = !this.roof.hidden;
@@ -722,6 +736,7 @@ export class Game {
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('forschung_menue')) this.researchWindow.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
+    if (i.wasPressed('waende_umschalten')) this.cycleWalls();
     if (i.wasPressed('ton_stumm')) this.hud.toasts.show(this.audio.toggleStumm() ? 'Ton aus (M)' : 'Ton an (M)');
     if (i.wasPressed('pause')) {
       if (this.report.isOpen) this.report.close();
@@ -770,7 +785,7 @@ export class Game {
     const c = carton?.get(CartonComponent);
     if (!carton || !target || !c || c.reservedBy !== null) return;
     if (target.free <= 0) { this.hud.toasts.show(this.content.text('abstellen_voll'), 'warnung'); return; }
-    const vomLkw = c.ablage?.temporaer ?? false;
+    const vomLkw = (c.ablage?.temporaer ?? false) || !!(c.ablage?.palette && c.ablage.entity.get(PalletComponent)?.aufLkw);
     c.leaveStorage();
     place(carton, target);
     this.hand.clear();

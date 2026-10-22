@@ -23,7 +23,7 @@ import { formatMoney } from '../ui/format';
 //   → Gabel senken → zurück zum Parkplatz → absteigen.
 // Die Palette hängt währenddessen an der Gabel; ihre Kartons wandern mit (PalletComponent).
 
-export type PalletDriverState = 'wartet' | 'zum_fahrzeug' | 'faehrt' | 'hebt' | 'nimmt' | 'setzt' | 'raeumt' | 'parkt';
+export type PalletDriverState = 'wartet' | 'zum_fahrzeug' | 'faehrt' | 'hebt' | 'nimmt' | 'setzt' | 'raeumt' | 'laedt' | 'parkt';
 
 export interface PalletDriverServices {
   findJob(): PalletJob | null;
@@ -35,6 +35,12 @@ export interface PalletDriverServices {
   models?: ModelProvider;
   /** Palette ist leer geräumt und kommt weg */
   palletEmptied?(pallet: Entity): void;
+  /** Karton zurück ins Lager stellen (Reste vom Rollwagen); false, wenn kein Platz ist */
+  store?(carton: Entity): boolean;
+  /** Sekunden je Stück beim Einräumen vom Rollwagen (wie beim Auffüller) */
+  sekundenProStueck: number;
+  /** Ist die Figur gerade anders beschäftigt (Auffüller trägt einen Karton)? */
+  busyElsewhere?(): boolean;
   rollenName: string;
   text(key: string, werte?: Record<string, string | number>): string;
 }
@@ -42,11 +48,14 @@ export interface PalletDriverServices {
 type Step =
   | { kind: 'gehen'; ziel: THREE.Vector3 }
   | { kind: 'aufsitzen' }
-  | { kind: 'fahren'; ziel: THREE.Vector3; blick: THREE.Vector3 }
+  | { kind: 'fahren'; ziel: THREE.Vector3; blick: THREE.Vector3; abstand?: number }
   | { kind: 'heben'; hoehe: number }
   | { kind: 'aufnehmen' }
   | { kind: 'absetzen'; ziel: PalletTarget }
   | { kind: 'einraeumen'; regal: Entity }
+  | { kind: 'laden'; carton: Entity }
+  | { kind: 'abgeben'; carton: Entity; regal: Entity }
+  | { kind: 'rest' }
   | { kind: 'zurueck' }
   | { kind: 'absteigen' };
 
@@ -67,6 +76,18 @@ export class PalletDriverComponent extends Component implements Describable {
   private lift = FAHRHOEHE;
   /** Platz, auf den die Palette nach dem Auffüllen zurückkommt */
   private zurueck: PalletTarget | null = null;
+  /** Kartons auf dem Rollwagen */
+  private cart: Entity[] = [];
+
+  /** Palette der aktuellen Aufgabe (beim Kommissionieren keine) */
+  private get pallet(): Entity | null {
+    return this.job && this.job.art !== 'kommissionieren' ? this.job.pallet : null;
+  }
+
+  /** Hat gerade eine Aufgabe (für Auffüller, die auch einzelne Kartons tragen) */
+  get busy(): boolean {
+    return !!this.job;
+  }
 
   constructor(readonly employee: Employee, private readonly services: PalletDriverServices) {
     super();
@@ -92,7 +113,7 @@ export class PalletDriverComponent extends Component implements Describable {
   }
 
   statusText(): string {
-    const p = this.job?.pallet.get(PalletComponent)?.produkt?.name ?? '';
+    const p = this.pallet?.get(PalletComponent)?.produkt?.name ?? this.cart[0]?.get(CartonComponent)?.produkt.name ?? '';
     const key = this.job && this.state === 'faehrt' ? `palette_${this.job.art}` : `palette_status_${this.state}`;
     return this.services.text(key, { produkt: p });
   }
@@ -110,9 +131,11 @@ export class PalletDriverComponent extends Component implements Describable {
   // ── Ablauf ──────────────────────────────────────────────────────
 
   private start(): void {
+    if (this.services.busyElsewhere?.()) { this.wait = 1; return; }
     const job = this.services.findJob();
     if (!job) { this.wait = 1.5; return; }
     this.job = job;
+    if (job.art === 'kommissionieren') { this.startPick(job); return; }
     const pc = job.pallet.require(PalletComponent);
     pc.reservedBy = this.entity.id;
     job.fahrzeug.require(VehicleComponent).fahrer = this.entity.id;
@@ -130,10 +153,7 @@ export class PalletDriverComponent extends Component implements Describable {
     ];
     if (job.art === 'auffuellen') {
       const r = job.regal;
-      const n = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), r.object.rotation.y);
-      const tiefe = r.get(FootprintComponent)?.groesse[0] ?? 0.6;
-      const vorRegal = r.object.position.clone().addScaledVector(n, tiefe / 2 + 0.75 + f.vorn).setY(0);
-      this.steps.push({ kind: 'fahren', ziel: vorRegal, blick: r.object.position.clone() }, { kind: 'einraeumen', regal: r });
+      this.steps.push({ kind: 'fahren', ziel: this.vorRegal(r, f.vorn + 0.75), blick: r.object.position.clone() }, { kind: 'einraeumen', regal: r });
       // Zurück an den alten Platz (wird beim Aufnehmen reserviert)
       if (von) this.zurueck = { places: von.places, slot: von.slot };
     } else {
@@ -142,6 +162,36 @@ export class PalletDriverComponent extends Component implements Describable {
     this.steps.push({ kind: 'zurueck' }, { kind: 'absteigen' });
     this.state = 'zum_fahrzeug';
     this.notifyChanged();
+  }
+
+  /** Rollwagen: Kartons einsammeln, dann die Regale der Reihe nach auffüllen, Reste zurück ins Lager */
+  private startPick(job: Extract<PalletJob, { art: 'kommissionieren' }>): void {
+    const f = this.services.lager.fahrzeuge.rollwagen;
+    job.fahrzeug.require(VehicleComponent).fahrer = this.entity.id;
+    for (const a of job.auftraege) a.carton.require(CartonComponent).reservedBy = this.entity.id;
+    this.steps = [{ kind: 'gehen', ziel: job.fahrzeug.object.position.clone() }, { kind: 'aufsitzen' }];
+    for (const a of job.auftraege) {
+      this.steps.push({ kind: 'fahren', ziel: a.carton.object.position.clone().setY(0), blick: a.carton.object.position.clone(), abstand: f.vorn + 0.35 }, { kind: 'laden', carton: a.carton });
+    }
+    // Regale in der Reihenfolge, in der sie am wenigsten Weg kosten (nächstes zuerst)
+    const offen = [...job.auftraege];
+    let pos = offen[offen.length - 1]?.carton.object.position.clone() ?? this.entity.object.position.clone();
+    while (offen.length) {
+      offen.sort((a, b) => a.regal.object.position.distanceToSquared(pos) - b.regal.object.position.distanceToSquared(pos));
+      const a = offen.shift()!;
+      pos = a.regal.object.position.clone();
+      this.steps.push({ kind: 'fahren', ziel: this.vorRegal(a.regal, f.vorn + 0.45), blick: a.regal.object.position.clone() }, { kind: 'abgeben', carton: a.carton, regal: a.regal });
+    }
+    this.steps.push({ kind: 'rest' }, { kind: 'zurueck' }, { kind: 'absteigen' });
+    this.state = 'zum_fahrzeug';
+    this.notifyChanged();
+  }
+
+  /** Punkt vor einem Regal (lokal +X), so weit weg, dass Palette bzw. Rollwagen davor Platz hat */
+  private vorRegal(r: Entity, abstand: number): THREE.Vector3 {
+    const n = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), r.object.rotation.y);
+    const tiefe = r.get(FootprintComponent)?.groesse[0] ?? 0.6;
+    return r.object.position.clone().addScaledVector(n, tiefe / 2 + abstand).setY(0);
   }
 
   private pushDrop(ziel: PalletTarget, vorn: number): void {
@@ -167,7 +217,7 @@ export class PalletDriverComponent extends Component implements Describable {
         this.mount();
         return true;
       case 'fahren': {
-        if (!this.pathSet) { this.goTo(step.ziel, 0); this.state = 'faehrt'; this.notifyChanged(); }
+        if (!this.pathSet) { this.goTo(step.ziel, step.abstand ?? 0); this.state = 'faehrt'; this.notifyChanged(); }
         if (!this.path.step(o, (f?.tempo ?? 1.5) * this.employee.tempo, dt)) return false;
         // Am Ziel: genau ausrichten (zur Palette bzw. zum Regal schauen)
         const want = Math.atan2(step.blick.x - o.position.x, step.blick.z - o.position.z);
@@ -186,11 +236,36 @@ export class PalletDriverComponent extends Component implements Describable {
         if (this.state !== 'nimmt') { this.state = 'nimmt'; this.timer = this.services.lager.sekundenAufnehmen / this.employee.tempo; this.notifyChanged(); }
         this.timer -= dt;
         if (this.timer > 0) return false;
-        const pc = this.job!.pallet.require(PalletComponent);
+        const pallet = this.pallet!;
+        const pc = pallet.require(PalletComponent);
         const von = pc.platz;
         pc.leave();
-        if (von && this.zurueck) von.places.reserveAt(von.slot, this.job!.pallet.id);
-        this.carried = this.job!.pallet;
+        if (von && this.zurueck) von.places.reserveAt(von.slot, pallet.id);
+        this.carried = pallet;
+        return true;
+      }
+      case 'laden': {
+        if (this.state !== 'laedt') { this.state = 'laedt'; this.timer = 1.2 / this.employee.tempo; this.notifyChanged(); }
+        this.timer -= dt;
+        if (this.timer > 0) return false;
+        const c = step.carton.get(CartonComponent);
+        if (step.carton.world && c && c.reservedBy === this.entity.id) { c.leaveStorage(); this.cart.push(step.carton); }
+        return true;
+      }
+      case 'abgeben': {
+        if (!this.cart.includes(step.carton) || !step.regal.world) return true;
+        if (this.state !== 'raeumt') { this.state = 'raeumt'; this.timer = step.carton.require(CartonComponent).menge * this.services.sekundenProStueck / this.employee.tempo; this.notifyChanged(); }
+        turnTowards(o, Math.atan2(step.regal.object.position.x - o.position.x, step.regal.object.position.z - o.position.z), dt, 6);
+        this.timer -= dt;
+        if (this.timer > 0) return false;
+        const result = stockFromCarton(step.carton, step.regal);
+        if (result.ok && result.leer) this.cart = this.cart.filter((c) => c !== step.carton);
+        return true;
+      }
+      case 'rest': {
+        // Was nicht ins Regal passte, kommt zurück ins Lager (oder neben den Wagen)
+        for (const c of this.cart) this.unload(c);
+        this.cart = [];
         return true;
       }
       case 'absetzen': {
@@ -273,15 +348,22 @@ export class PalletDriverComponent extends Component implements Describable {
     return true;
   }
 
+  /** Karton vom Rollwagen herunter: ins Lager, sonst auf den Boden */
+  private unload(c: Entity): void {
+    const k = c.get(CartonComponent);
+    if (!c.world || !k) return;
+    k.reservedBy = null;
+    if (this.services.store?.(c)) return;
+    c.object.position.y = this.floor();
+  }
+
   private perCarton(): number {
     return this.services.lager.palettenEinraeumenSekundenProKarton / this.employee.tempo;
   }
 
   private done(): void {
-    if (this.job) {
-      const pc = this.job.pallet.get(PalletComponent);
-      if (pc && pc.reservedBy === this.entity.id) pc.reservedBy = null;
-    }
+    const pc = this.pallet?.get(PalletComponent);
+    if (pc && pc.reservedBy === this.entity.id) pc.reservedBy = null;
     this.job = null;
     this.state = 'wartet';
     this.wait = 0.5;
@@ -292,6 +374,7 @@ export class PalletDriverComponent extends Component implements Describable {
   private valid(): boolean {
     const j = this.job!;
     if (!j.fahrzeug.world) return false;
+    if (j.art === 'kommissionieren') return true;
     const offen = (k: Step['kind']) => this.steps.some((s) => s.kind === k);
     // Palette weg (abgerissenes Regal, Spielstand …), obwohl sie noch gebraucht wird
     if (!j.pallet.world && (offen('aufnehmen') || offen('absetzen') || offen('einraeumen'))) return false;
@@ -307,7 +390,11 @@ export class PalletDriverComponent extends Component implements Describable {
   /** Aufgabe abbrechen: Palette abstellen, Reservierungen lösen, Fahrzeug zurück an den Parkplatz */
   private abort(entlassen = false): void {
     const j = this.job;
-    if (j) {
+    if (j?.art === 'kommissionieren') {
+      for (const a of j.auftraege) { const c = a.carton.get(CartonComponent); if (c && c.reservedBy === this.entity.id) c.reservedBy = null; }
+      for (const c of this.cart) this.unload(c);
+      this.cart = [];
+    } else if (j) {
       if (j.art !== 'auffuellen') j.ziel.places.unreserve(j.pallet.id);
       this.zurueck?.places.unreserve(j.pallet.id);
       const pc = j.pallet.get(PalletComponent);
@@ -383,10 +470,17 @@ export class PalletDriverComponent extends Component implements Describable {
   private carry(): void {
     const p = this.carried;
     const v = this.vehicle;
-    if (!p || !v) return;
+    if (!v) return;
     const f = this.services.lager.fahrzeuge[v.art];
     const o = this.entity.object;
     const fwd = new THREE.Vector3(Math.sin(o.rotation.y), 0, Math.cos(o.rotation.y));
+    // Kartons auf dem Rollwagen: zwei je Boden, drei Böden
+    this.cart.forEach((c, i) => {
+      const along = f.vorn + (i % 2 ? 0.2 : -0.2), y = this.floor() + 0.12 + Math.floor(i / 2) * 0.4;
+      c.object.position.set(o.position.x + fwd.x * along, y, o.position.z + fwd.z * along);
+      c.object.rotation.y = o.rotation.y;
+    });
+    if (!p) return;
     p.object.position.set(o.position.x + fwd.x * f.vorn, this.floor() + Math.max(this.lift, f.gabelY), o.position.z + fwd.z * f.vorn);
     p.object.rotation.y = o.rotation.y - Math.PI / 2;
     p.get(PalletComponent)?.sync();

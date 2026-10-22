@@ -135,7 +135,7 @@ export class StoreLoop {
   /** Was das Personal braucht (Auffüller und Kassierer). */
   staffServices(
     isCartonFree: (carton: Entity) => boolean,
-    storage: { nearestFree(near: THREE.Vector3): StorageSurfaceComponent | null } = { nearestFree: () => null },
+    storage: { nearestFree(near: THREE.Vector3): StorageSurfaceComponent | null; store?(carton: Entity): boolean } = { nearestFree: () => null },
   ): StaffServices {
     const personal = this.content.personal;
     return {
@@ -164,12 +164,24 @@ export class StoreLoop {
         sekundenProArtikel: this.settings.kassierenSekundenProArtikel,
       },
       paletten: {
-        findJob: () => findPalletJob(this.world),
+        findJob: () => findPalletJob(this.world, { arten: ['einlagern', 'nachschub', 'auffuellen'] }),
         findPath: this.findPath,
         walkable: (x, z) => this.nav.isWalkable(x, z),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        sekundenProStueck: personal.sekundenProStueck,
         lager: this.content.lager,
         models: this.ctx().models,
+        store: (c) => storage.store?.(c) ?? false,
+      },
+      auffuellenFahrzeuge: {
+        findJob: () => findPalletJob(this.world, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'] }),
+        findPath: this.findPath,
+        walkable: (x, z) => this.nav.isWalkable(x, z),
+        gehgeschwindigkeit: personal.gehgeschwindigkeit,
+        sekundenProStueck: personal.sekundenProStueck,
+        lager: this.content.lager,
+        models: this.ctx().models,
+        store: (c) => storage.store?.(c) ?? false,
       },
       bedienen: {
         findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && k.def.bedienung)?.[0] ?? null,

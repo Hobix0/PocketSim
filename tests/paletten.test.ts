@@ -12,6 +12,8 @@ import { PalletPlacesComponent } from '../src/components/PalletPlacesComponent';
 import { PalletDriverComponent } from '../src/components/PalletDriverComponent';
 import { ShelfComponent } from '../src/components/ShelfComponent';
 import { CartonComponent } from '../src/components/CartonComponent';
+import { StorageSurfaceComponent } from '../src/components/StorageSurfaceComponent';
+import { createCartonEntity } from '../src/factory/createProductEntity';
 import { VehicleComponent } from '../src/components/VehicleComponent';
 import { CartonStorage } from '../src/world/CartonStorage';
 import { Purchasing } from '../src/economy/Purchasing';
@@ -52,7 +54,7 @@ function fahrer(w: World) {
   const e = w.add(new Entity('personal'));
   e.object.position.set(0, 0.05, 6);
   const d = e.add(new PalletDriverComponent({ id: 7, name: 'Pia', rolle: 'staplerfahrer', lohn: 100, tempo: 1 },
-    { findJob: () => findPalletJob(w), gehgeschwindigkeit: 3, lager: content.lager, rollenName: 'Staplerfahrer', text: (k) => k })) as PalletDriverComponent;
+    { findJob: () => findPalletJob(w), gehgeschwindigkeit: 3, sekundenProStueck: 0.2, lager: content.lager, rollenName: 'Staplerfahrer', text: (k) => k })) as PalletDriverComponent;
   return d;
 }
 const run = (w: World, sekunden: number) => { for (let t = 0; t < sekunden; t += 0.1) w.update(0.1); };
@@ -147,5 +149,51 @@ describe('Paletten', () => {
     expect(pc2.platz?.slot).toBe(2);
     expect(pc2.cartons()[0].require(CartonComponent).menge).toBe(12);
     expect(e2.object.position.distanceTo(pallet.object.position)).toBeLessThan(1e-6);
+  });
+});
+
+describe('Rollwagen, Mischpaletten, Auffüller mit Fahrzeug', () => {
+  it('Auffüller holt mit dem Rollwagen mehrere Kartons und füllt mehrere Regale', () => {
+    const w = halle();
+    build(w, 'rollwagen', 5, 5);
+    const lager = build(w, 'europalette', -5, 4);
+    const wasser = content.produkte.get('wasser_sprudel_0_5l');
+    const { place } = { place: (c: Entity) => { const s = lager.require(StorageSurfaceComponent); const pos = s.occupy(c.id)!; c.object.position.copy(pos); c.require(CartonComponent).ablage = s; } };
+    for (const p of [cola, cola, wasser]) place(w.add(createCartonEntity(p, p.gebinde, ctx)));
+    const r1 = build(w, 'vr_wand_weiss', 2, -6, -90), r2 = build(w, 'vr_wand_holz', 4, -6, -90);
+    const job = findPalletJob(w, { arten: ['kommissionieren'], fahrzeuge: ['rollwagen'] });
+    expect(job?.art).toBe('kommissionieren');
+    const e = w.add(new Entity('personal'));
+    e.object.position.set(0, 0.05, 6);
+    e.add(new PalletDriverComponent({ id: 8, name: 'Ole', rolle: 'auffueller', lohn: 80, tempo: 1 },
+      { findJob: () => findPalletJob(w, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'] }), gehgeschwindigkeit: 3, sekundenProStueck: 0.1, lager: content.lager, rollenName: 'Auffüller', text: (k) => k }));
+    run(w, 120);
+    const bestand = r1.require(ShelfComponent).bestand + r2.require(ShelfComponent).bestand;
+    expect(bestand).toBe(2 * cola.gebinde + wasser.gebinde);
+    expect([...w.query(CartonComponent)]).toHaveLength(0);
+  });
+
+  it('der Staplerfahrer nimmt keinen Rollwagen, der Auffüller keinen Gabelstapler', () => {
+    const w = halle();
+    build(w, 'rollwagen', 5, 5);
+    build(w, 'gabelstapler', 5, 2);
+    for (const z of [-1.4, 1.4]) build(w, 'pal_rahmen_klassik_450', 0, z);
+    build(w, 'pal_traverse_klassik_270_offen', 0, 0); build(w, 'pal_traverse_klassik_270_offen', 0, 0);
+    lkw(w, -5, 4);
+    expect(findPalletJob(w, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'] })).toBeNull();
+    const j = findPalletJob(w, { arten: ['einlagern', 'nachschub', 'auffuellen'] });
+    expect(j?.fahrzeug.require(VehicleComponent).art).toBe('gabelstapler');
+  });
+
+  it('leere Paletten verschwinden (Leergut)', () => {
+    const w = halle();
+    const platz = build(w, 'palettenplatz', 2, 2);
+    const p = w.add(createPalletEntity(ctx));
+    p.require(PalletComponent).stand(platz.require(PalletPlacesComponent), 0);
+    loadPallet(p, cola, 1, cola.gebinde, ctx);
+    w.remove(p.require(PalletComponent).cartons()[0]);
+    w.update(0.1);
+    expect(p.world).toBeNull();
+    expect(platz.require(PalletPlacesComponent).free).toBe(1);
   });
 });

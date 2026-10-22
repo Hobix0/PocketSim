@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Kartons und Paletten. palette: Maße (m), Kartons je Lage und Lagen (3 × 2 × 3 = 18 Kartons), Rabatt beim Kauf ganzer Paletten, Modell. fahrzeuge: Tempo (m/s), Hubgeschwindigkeit (m/s) und größte Hubhöhe (m) von Gabelstapler und Hubwagen; sekundenAufnehmen = Zeit zum Aufnehmen/Absetzen einer Palette. palettenEinraeumenSekundenProKarton: so lange braucht der Fahrer am Verkaufsregal je Karton. vorn = Abstand Fahrer → Palettenmitte (m), gabelY = Höhe der Gabel über dem Boden, modellVersatz = Abstand Fahrer → Mitte des Fahrzeugmodells.",
+  "_hinweis": "Kartons und Paletten. palette: Maße (m), Kartons je Lage und Lagen (3 × 2 × 3 = 18 Kartons), Rabatt beim Kauf ganzer Paletten, Modell. fahrzeuge: Tempo (m/s), Hubgeschwindigkeit (m/s) und größte Hubhöhe (m) von Gabelstapler und Hubwagen; sekundenAufnehmen = Zeit zum Aufnehmen/Absetzen einer Palette. palettenEinraeumenSekundenProKarton: so lange braucht der Fahrer am Verkaufsregal je Karton. vorn = Abstand Fahrer → Palettenmitte (m), gabelY = Höhe der Gabel über dem Boden, modellVersatz = Abstand Fahrer → Mitte des Fahrzeugmodells. rollwagen.plaetze = so viele Kartons passen auf den Rollwagen.",
   "karton": {
     "groesse": [
       0.38,
@@ -37,6 +37,16 @@
       "vorn": 1.2,
       "gabelY": 0.1,
       "modellVersatz": 1.0
+    },
+    "rollwagen": {
+      "tempo": 1.3,
+      "hub": 0,
+      "maxHoehe": 0,
+      "model": "eigen/rollwagen",
+      "vorn": 0.75,
+      "gabelY": 0,
+      "modellVersatz": 0.75,
+      "plaetze": 6
     }
   },
   "sekundenAufnehmen": 2.5,

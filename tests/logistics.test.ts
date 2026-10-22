@@ -12,6 +12,7 @@ import { createBuildEntity } from '../src/factory/createBuildEntity';
 import { createWorkerEntity } from '../src/factory/createWorkerEntity';
 import { createCartonEntity } from '../src/factory/createProductEntity';
 import { CartonComponent } from '../src/components/CartonComponent';
+import { PalletComponent } from '../src/components/PalletComponent';
 import { StorageSurfaceComponent } from '../src/components/StorageSurfaceComponent';
 import { StorageDropComponent } from '../src/components/StorageDropComponent';
 import { TruckComponent } from '../src/components/TruckComponent';
@@ -51,7 +52,8 @@ function runUntil(world: World, cond: () => boolean, max = 2000, onStep?: () => 
   return cond();
 }
 
-const cartonsOnTruck = (w: World) => [...w.query(CartonComponent)].filter(([, c]) => c.ablage?.temporaer).length;
+/** Kartons auf dem LKW: lose auf der Ladefläche oder auf einer (Misch-)Palette, die noch auf dem LKW steht */
+const cartonsOnTruck = (w: World) => [...w.query(CartonComponent)].filter(([, c]) => c.ablage?.temporaer || c.ablage?.entity.get(PalletComponent)?.aufLkw).length;
 
 describe('Liefertermine und Lieferkosten', () => {
   it('normale Lieferung kommt zum nächsten Termin, nach dem letzten am nächsten Morgen; Express nach den Minuten aus den Daten', () => {
@@ -130,9 +132,11 @@ describe('LKW', () => {
     expect(cartonsOnTruck(world)).toBe(4);
     expect(storage.freeSlots()).toBe(12); // Ladefläche zählt nicht als Lager
     expect(deliveries.freeSlots()).toBe(8);
-    // Kartons stehen auf der Ladefläche (oben auf dem LKW)
+    // Kartons kommen auf einer Mischpalette, die auf der Ladefläche (oben auf dem LKW) steht
     const [, c] = [...world.query(CartonComponent)][0];
-    expect(c.ablage!.entity).toBe(truck);
+    const pallet = c.ablage!.entity.require(PalletComponent);
+    expect(pallet.misch).toBe(true);
+    expect(pallet.platz?.places.entity).toBe(truck);
     expect([...world.query(CartonComponent)][0][0].object.position.y).toBeGreaterThan(1);
   });
 

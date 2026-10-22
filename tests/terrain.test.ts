@@ -8,7 +8,7 @@ import { TruckFleet } from '../src/world/TruckFleet';
 import { CartonStorage } from '../src/world/CartonStorage';
 import { createBuildEntity } from '../src/factory/createBuildEntity';
 import { snapPlacement } from '../src/building/snapping';
-import { CartonComponent } from '../src/components/CartonComponent';
+import { PalletComponent } from '../src/components/PalletComponent';
 import { TerrainCutComponent } from '../src/components/TerrainCutComponent';
 
 // Gelände: Höhenfeld, Pinsel, Absenkungen; abgesenkte Rampe vor dem Ladetor
@@ -96,7 +96,8 @@ describe('Abgesenkte Rampe', () => {
     expect(tiefster).toBeCloseTo(-1.1, 2);
     expect(o.rotation.z).toBe(0);
     // Ladefläche (1,15 m über der Fahrbahn) liegt auf Höhe des Hallenbodens (0,05 m)
-    const carton = [...world.query(CartonComponent)].find(([, c]) => c.ablage?.temporaer)!;
-    expect(carton[0].object.position.y).toBeCloseTo(0.05, 2);
+    // (die Kartons stehen auf einer Palette: Unterkante der Palette)
+    const [pallet] = [...world.query(PalletComponent)][0];
+    expect(pallet.object.position.y).toBeCloseTo(0.05, 2);
   });
 });

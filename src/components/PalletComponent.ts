@@ -17,6 +17,8 @@ export class PalletComponent extends Component implements Describable {
   platz: { places: PalletPlacesComponent; slot: number } | null = null;
   /** Entity-id des Fahrers, der die Palette gerade holt oder fährt */
   reservedBy: number | null = null;
+  /** Mischpalette aus einzeln bestellten Kartons (zählt beim Lagerplatz wie lose Kartons) */
+  misch = false;
   private lastKey = '';
 
   get surface(): StorageSurfaceComponent {
@@ -62,7 +64,14 @@ export class PalletComponent extends Component implements Describable {
     this.platz = null;
   }
 
+  /** Steht die Palette noch auf einem LKW? */
+  get aufLkw(): boolean {
+    return !!this.platz?.places.temporaer;
+  }
+
   override update(): void {
+    // Leere Palette (alle Kartons ausgeräumt) kommt weg – als Leergut
+    if (this.surface.used === 0 && this.reservedBy === null) { this.entity.world?.remove(this.entity); return; }
     this.sync();
   }
 

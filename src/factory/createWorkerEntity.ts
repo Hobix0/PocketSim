@@ -23,6 +23,8 @@ export interface StaffServices {
   bedienen?: Omit<CashierServices, Common>;
   /** Staplerfahrer: Paletten mit Gabelstapler und Hubwagen */
   paletten?: Omit<PalletDriverServices, Common>;
+  /** Auffüller: Paletten mit dem Hubwagen ans Regal, Kartons mit dem Rollwagen */
+  auffuellenFahrzeuge?: Omit<PalletDriverServices, Common>;
   /** Einkäufer: zum Einkaufsterminal gehen, dort nachbestellen */
   einkaufen: Omit<BuyerServices, Common>;
 }
@@ -41,11 +43,22 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   else if (rolle.verhalten === 'einkaufen') entity.add(new BuyerComponent(employee, { ...services.einkaufen, ...common }));
   else if (rolle.verhalten === 'paletten' && services.paletten) entity.add(new PalletDriverComponent(employee, { ...services.paletten, ...common }));
   else if (rolle.verhalten === 'abladen') entity.add(new WorkerComponent(employee, { ...services.abladen, ...common }));
-  else entity.add(new WorkerComponent(employee, { ...services.auffuellen, ...common }));
+  else {
+    // Auffüller: trägt einzelne Kartons oder nimmt Hubwagen bzw. Rollwagen – immer nur eins zur Zeit
+    let fahrer: PalletDriverComponent | null = null;
+    const worker = new WorkerComponent(employee, { ...services.auffuellen, ...common, busyElsewhere: () => !!fahrer?.busy });
+    entity.add(worker);
+    if (services.auffuellenFahrzeuge) {
+      fahrer = new PalletDriverComponent(employee, { ...services.auffuellenFahrzeuge, ...common, busyElsewhere: () => worker.state !== 'wartet' });
+      entity.add(fahrer);
+    }
+  }
   return entity;
 }
 
 /** Status-Text der Person (für das Personal-Fenster), egal welches Verhalten sie hat. */
 export function staffStatus(entity: Entity | undefined): string | undefined {
-  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent) ?? entity?.get(PalletDriverComponent))?.statusText();
+  const fahrer = entity?.get(PalletDriverComponent);
+  if (fahrer?.busy) return fahrer.statusText();
+  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent) ?? fahrer)?.statusText();
 }

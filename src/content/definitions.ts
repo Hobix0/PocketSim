@@ -305,6 +305,8 @@ export interface BuildSettings {
   deckenhoehe: number;
   /** Palettenregal: mögliche Höhen der Traversen-Ebenen über dem Boden (m), von unten nach oben */
   regalEbenen?: number[];
+  /** Wände ein-/ausblenden (Sockelhöhe, Umkreis, Überstand, Tempo) */
+  waende?: { sockel: number; radius: number; ueberstand: number; tempo: number };
   /** Palettenregal: Feldbreiten (m) zum Einrasten der Stützrahmen und Abstand Rücken an Rücken (m) */
   regalFelder?: number[];
   regalDistanz?: number;
@@ -452,12 +454,12 @@ export interface StorageSettings {
   /** Europalette: Maße (m), Lagen Kartons, Rabatt beim Kauf ganzer Paletten, Modell */
   palette: { groesse: [number, number, number]; lagen: number; rabatt: number; model: string };
   /** Gabelstapler und Hubwagen: Tempo (m/s), Hubgeschwindigkeit (m/s), größte Hubhöhe (m), Modelle */
-  fahrzeuge: Record<VehicleKind, { tempo: number; hub: number; maxHoehe: number; model: string; gabel?: string; vorn: number; gabelY: number; modellVersatz: number }>;
+  fahrzeuge: Record<VehicleKind, { tempo: number; hub: number; maxHoehe: number; model: string; gabel?: string; vorn: number; gabelY: number; modellVersatz: number; plaetze?: number }>;
   sekundenAufnehmen: number;
   palettenEinraeumenSekundenProKarton: number;
 }
 
-export type VehicleKind = 'gabelstapler' | 'hubwagen';
+export type VehicleKind = 'gabelstapler' | 'hubwagen' | 'rollwagen';
 
 /** Anzeigename und Einheit eines Werts (data/werte/standard.json). */
 export interface ValueInfo {
@@ -540,7 +542,7 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
       return { anzahl: num(p, 'anzahl', `${where} → palettenplaetze`, 1), hoehe: num(p, 'hoehe', `${where} → palettenplaetze`, 0) };
     })(),
     fahrzeug: o.fahrzeug === undefined ? undefined : (() => {
-      if (o.fahrzeug !== 'gabelstapler' && o.fahrzeug !== 'hubwagen') throw new Error(`${where}: fahrzeug muss gabelstapler oder hubwagen sein`);
+      if (o.fahrzeug !== 'gabelstapler' && o.fahrzeug !== 'hubwagen' && o.fahrzeug !== 'rollwagen') throw new Error(`${where}: fahrzeug muss gabelstapler, hubwagen oder rollwagen sein`);
       return o.fahrzeug;
     })(),
     palettenregal: o.palettenregal === undefined ? undefined : (() => {
