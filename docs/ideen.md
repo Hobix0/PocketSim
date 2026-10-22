@@ -47,6 +47,7 @@ Aussehen); gute Eigenmarken werden zum Kult und ziehen Kunden aus der ganzen Sta
 ### 7. Eigene LKW und Fahrten zum Zentrallager ★ ●●●
 (schon angekündigt) Fuhrpark kaufen, Fahrer einstellen, auf einer kleinen Karte zu Großhändlern fahren
 (Preise und Entfernungen unterschiedlich), Kühl-LKW für Tiefkühlware, Touren mit mehreren Stopps.
+- **Festgelegt:** Eigene LKW werden **immer selbst abgeladen** (Lagerist, Staplerfahrer oder von Hand) – kein Fahrer, der gegen Gebühr ablädt. Im Zweifel bleiben sie eben länger an der Rampe stehen.
 
 ### 8. Nachbarschaft zum Teilen: Postkarten und Besuche ★★★ ●●
 Foto-Modus mit Tilt-Shift macht aus dem Laden eine **Postkarte** (Bild + Spielstand). Andere öffnen die Postkarte

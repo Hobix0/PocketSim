@@ -332,5 +332,11 @@
     "farbe": "#6f7f6b",
     "kante": "#e9e2d2"
   },
-  "_hinweis": "Baumenü: Bereiche (linke Leiste) mit Gruppen (Chips). Jedes Bauteil nennt seine Gruppe in data/bau → \"gruppe\": \"bereich/gruppe\", Varianten (Farben/Oberflächen) über \"variante\": {familie, name, farbe}; die Namen der Familien stehen unter \"familien\". Zuordnung neuer Teile: scripts/assign-baumenue.py. \"kategorien\" sind die alten Reiter (nur noch für den Voxel-Editor und als Rückfall über \"alteKategorien\")."
+  "_hinweis": "Baumenü: Bereiche (linke Leiste) mit Gruppen (Chips). Jedes Bauteil nennt seine Gruppe in data/bau → \"gruppe\": \"bereich/gruppe\", Varianten (Farben/Oberflächen) über \"variante\": {familie, name, farbe}; die Namen der Familien stehen unter \"familien\". Zuordnung neuer Teile: scripts/assign-baumenue.py. \"kategorien\" sind die alten Reiter (nur noch für den Voxel-Editor und als Rückfall über \"alteKategorien\").",
+  "waende": {
+    "sockel": 0.3,
+    "radius": 16,
+    "ueberstand": 0.6,
+    "tempo": 8
+  }
 }

@@ -1,7 +1,7 @@
 {
   "auffueller": {
     "name": "Auffüller",
-    "beschreibung": "Holt Kartons aus dem Lager und räumt sie in passende Regale.",
+    "beschreibung": "Räumt Kartons in passende Regale – einzeln, mit dem Rollwagen (bis zu 6 Kartons) oder mit dem Hubwagen direkt von der Palette.",
     "lohnProTag": 80,
     "farbe": "#3f7cac",
     "verhalten": "auffuellen"
@@ -15,7 +15,7 @@
   },
   "lagerist": {
     "name": "Lagerist",
-    "beschreibung": "Lädt den LKW ab und bringt lose Kartons auf freie Lagerplätze.",
+    "beschreibung": "Lädt den LKW ab – ganze Paletten mit Hubwagen oder Gabelstapler auf Palettenplätze – und bringt lose Kartons auf freie Lagerplätze.",
     "lohnProTag": 75,
     "farbe": "#c98a2e",
     "verhalten": "abladen"

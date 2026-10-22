@@ -25,6 +25,8 @@ export interface WorkerServices {
   rollenName: string;
   /** Text aus data/texte/standard.json */
   text(key: string, werte?: Record<string, string | number>): string;
+  /** Ist die Figur gerade anders beschäftigt (z. B. Auffüller mit dem Rollwagen)? */
+  busyElsewhere?(): boolean;
 }
 
 export class WorkerComponent extends Component implements Describable {
@@ -97,6 +99,7 @@ export class WorkerComponent extends Component implements Describable {
   }
 
   private startTask(): void {
+    if (this.services.busyElsewhere?.()) { this.wait = 1; return; }
     const task = this.services.findTask();
     if (!task) { this.wait = 1; return; }
     this.task = task;

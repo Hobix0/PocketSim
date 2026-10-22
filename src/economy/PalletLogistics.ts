@@ -7,6 +7,8 @@ import { PalletPlacesComponent } from '../components/PalletPlacesComponent';
 import { VehicleComponent } from '../components/VehicleComponent';
 import { CartonComponent } from '../components/CartonComponent';
 import { ShelfComponent } from '../components/ShelfComponent';
+import { findStockingTask } from './Stocking';
+import type { VehicleKind } from '../content/definitions';
 
 // Aufgaben für Staplerfahrer – wie im echten Lager:
 //   1. Einlagern: Palette vom LKW (oder lose abgestellt) auf einen freien Palettenplatz.
@@ -16,7 +18,10 @@ import { ShelfComponent } from '../components/ShelfComponent';
 //      Kartons direkt von der Palette einräumen, Rest zurück an ihren Platz (leere Paletten kommen weg).
 //   3. Nachschub: Palette oben aus dem Regal mit dem Stapler auf einen Bodenstellplatz holen,
 //      wenn im Laden etwas fehlt, das sonst niemand erreicht.
-// Fahrzeuge können nur bis zu ihrer Hubhöhe heben (Hubwagen: Boden und bündige LKW an der Rampe).
+//   4. Kommissionieren (Auffüller): mit dem Rollwagen bis zu sechs Kartons aus dem Lager holen und die
+//      Verkaufsregale der Reihe nach auffüllen.
+// Fahrzeuge können nur bis zu ihrer Hubhöhe heben (Hubwagen: Boden und bündige LKW an der Rampe);
+// Paletten fahren nur Gabelstapler und Hubwagen, der Rollwagen nimmt Kartons.
 
 export interface PalletTarget {
   places: PalletPlacesComponent;
@@ -26,7 +31,17 @@ export interface PalletTarget {
 export type PalletJob =
   | { art: 'einlagern'; pallet: Entity; fahrzeug: Entity; ziel: PalletTarget }
   | { art: 'nachschub'; pallet: Entity; fahrzeug: Entity; ziel: PalletTarget }
-  | { art: 'auffuellen'; pallet: Entity; fahrzeug: Entity; regal: Entity };
+  | { art: 'auffuellen'; pallet: Entity; fahrzeug: Entity; regal: Entity }
+  | { art: 'kommissionieren'; fahrzeug: Entity; auftraege: { carton: Entity; regal: Entity }[] };
+
+/** Welche Aufgaben und Fahrzeuge in Frage kommen (Staplerfahrer: alles mit Paletten; Auffüller: Hubwagen und Rollwagen) */
+export interface PalletJobFilter {
+  arten?: PalletJob['art'][];
+  fahrzeuge?: VehicleKind[];
+}
+
+/** Aufgaben, die eine Palette betreffen */
+export type PalletMove = Exclude<PalletJob, { art: 'kommissionieren' }>;
 
 /** Höhe eines Platzes über dem Boden, auf dem das Fahrzeug steht */
 function hoeheUeber(places: PalletPlacesComponent, slot: number, boden: number): number {
@@ -37,9 +52,10 @@ function reicht(v: Entity, places: PalletPlacesComponent, slot: number): boolean
   return hoeheUeber(places, slot, v.object.position.y) <= v.require(VehicleComponent).maxHoehe + 0.05;
 }
 
-/** Freie Fahrzeuge, Gabelstapler zuerst (oder Hubwagen zuerst) */
-function freeVehicles(world: World, hubwagenZuerst = false): Entity[] {
-  const list = [...world.query(VehicleComponent)].filter(([, v]) => v.frei).map(([e]) => e);
+/** Freie Fahrzeuge für Paletten, Gabelstapler zuerst (oder Hubwagen zuerst) */
+function freeVehicles(world: World, hubwagenZuerst = false, erlaubt?: VehicleKind[]): Entity[] {
+  const list = [...world.query(VehicleComponent)]
+    .filter(([, v]) => v.frei && v.art !== 'rollwagen' && (!erlaubt || erlaubt.includes(v.art))).map(([e]) => e);
   return list.sort((a, b) => {
     const ra = a.require(VehicleComponent).art === 'hubwagen' ? 0 : 1, rb = b.require(VehicleComponent).art === 'hubwagen' ? 0 : 1;
     return hubwagenZuerst ? ra - rb : rb - ra;
@@ -94,14 +110,16 @@ function available(p: Entity): boolean {
   return pc.reservedBy === null && pc.kartons > 0 && pc.cartons().every((c) => c.require(CartonComponent).reservedBy === null);
 }
 
-export function findPalletJob(world: World): PalletJob | null {
+export function findPalletJob(world: World, filter: PalletJobFilter = {}): PalletJob | null {
   const pallets = [...world.query(PalletComponent)].map(([e]) => e).filter(available);
+  const art = (a: PalletJob['art']) => !filter.arten || filter.arten.includes(a);
+  const fv = (hubwagenZuerst = false) => freeVehicles(world, hubwagenZuerst, filter.fahrzeuge);
 
   // 1. Einlagern: vom LKW oder lose abgestellt
-  for (const p of pallets) {
+  for (const p of art('einlagern') ? pallets : []) {
     const pc = p.require(PalletComponent);
     if (pc.platz && !pc.platz.places.temporaer) continue;
-    for (const v of freeVehicles(world)) {
+    for (const v of fv()) {
       if (pc.platz && !reicht(v, pc.platz.places, pc.platz.slot)) continue;
       const stapler = v.require(VehicleComponent).art === 'gabelstapler';
       const ziel = (stapler ? freeSlot(world, v, p.object.position, 'regal', p.id) : null) ?? freeSlot(world, v, p.object.position, 'boden', p.id);
@@ -109,7 +127,7 @@ export function findPalletJob(world: World): PalletJob | null {
     }
   }
   // 2. Auffüllen direkt von der Palette (Palette am Boden)
-  for (const p of pallets) {
+  for (const p of art('auffuellen') ? pallets : []) {
     const pc = p.require(PalletComponent);
     if (!pc.platz || pc.platz.places.temporaer || pc.platz.places.hoehe >= GREIFHOEHE) continue;
     const produkt = pc.produkt;
@@ -117,11 +135,11 @@ export function findPalletJob(world: World): PalletJob | null {
     if (!produkt || produkt.rohstoff) continue;
     const regal = shelfFor(world, produkt, menge);
     if (!regal) continue;
-    const v = freeVehicles(world, true).find((x) => reicht(x, pc.platz!.places, pc.platz!.slot));
+    const v = fv(true).find((x) => reicht(x, pc.platz!.places, pc.platz!.slot));
     if (v) return { art: 'auffuellen', pallet: p, fahrzeug: v, regal };
   }
   // 3. Nachschub: Palette oben aus dem Regal herunterholen, wenn sonst nichts greifbar ist
-  for (const p of pallets) {
+  for (const p of art('nachschub') ? pallets : []) {
     const pc = p.require(PalletComponent);
     if (!pc.platz || pc.platz.places.temporaer || pc.platz.places.hoehe < GREIFHOEHE) continue;
     const produkt = pc.produkt;
@@ -129,10 +147,31 @@ export function findPalletJob(world: World): PalletJob | null {
     if (!produkt || produkt.rohstoff) continue;
     const regal = shelfFor(world, produkt, menge);
     if (!regal || reachableStock(world, produkt)) continue;
-    const v = freeVehicles(world).find((x) => x.require(VehicleComponent).art === 'gabelstapler' && reicht(x, pc.platz!.places, pc.platz!.slot));
+    const v = fv().find((x) => x.require(VehicleComponent).art === 'gabelstapler' && reicht(x, pc.platz!.places, pc.platz!.slot));
     if (!v) continue;
     const ziel = freeSlot(world, v, regal.object.position, 'boden', p.id);
     if (ziel) return { art: 'nachschub', pallet: p, fahrzeug: v, ziel };
+  }
+  // 4. Kommissionieren mit dem Rollwagen: lohnt sich ab zwei Kartons
+  if (art('kommissionieren')) {
+    const wagen = [...world.query(VehicleComponent)].find(([, v]) => v.frei && v.art === 'rollwagen' && (!filter.fahrzeuge || filter.fahrzeuge.includes('rollwagen')));
+    if (wagen) {
+      const plaetze = 6;
+      const auftraege: { carton: Entity; regal: Entity }[] = [];
+      const schon = new Set<Entity>();
+      // Platz in den Regalen merken, damit nicht zu viel für dasselbe Fach geladen wird
+      const geplant = new Map<string, number>();
+      while (auftraege.length < plaetze) {
+        const t = findStockingTask(world, (c) => !schon.has(c), (shelf, produkt) => geplant.get(`${shelf.id}:${produkt}`) ?? 0);
+        if (!t) break;
+        schon.add(t.carton);
+        const c = t.carton.require(CartonComponent);
+        const k = `${t.shelf.id}:${c.produkt.id}`;
+        geplant.set(k, (geplant.get(k) ?? 0) + c.menge);
+        auftraege.push({ carton: t.carton, regal: t.shelf });
+      }
+      if (auftraege.length >= 2) return { art: 'kommissionieren', fahrzeug: wagen[0], auftraege };
+    }
   }
   return null;
 }

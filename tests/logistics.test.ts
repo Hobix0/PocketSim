@@ -12,6 +12,9 @@ import { createBuildEntity } from '../src/factory/createBuildEntity';
 import { createWorkerEntity } from '../src/factory/createWorkerEntity';
 import { createCartonEntity } from '../src/factory/createProductEntity';
 import { CartonComponent } from '../src/components/CartonComponent';
+import { PalletComponent } from '../src/components/PalletComponent';
+import { PalletPlacesComponent } from '../src/components/PalletPlacesComponent';
+import { findPalletJob } from '../src/economy/PalletLogistics';
 import { StorageSurfaceComponent } from '../src/components/StorageSurfaceComponent';
 import { StorageDropComponent } from '../src/components/StorageDropComponent';
 import { TruckComponent } from '../src/components/TruckComponent';
@@ -51,7 +54,8 @@ function runUntil(world: World, cond: () => boolean, max = 2000, onStep?: () => 
   return cond();
 }
 
-const cartonsOnTruck = (w: World) => [...w.query(CartonComponent)].filter(([, c]) => c.ablage?.temporaer).length;
+/** Kartons auf dem LKW: lose auf der Ladefläche oder auf einer (Misch-)Palette, die noch auf dem LKW steht */
+const cartonsOnTruck = (w: World) => [...w.query(CartonComponent)].filter(([, c]) => c.ablage?.temporaer || c.ablage?.entity.get(PalletComponent)?.aufLkw).length;
 
 describe('Liefertermine und Lieferkosten', () => {
   it('normale Lieferung kommt zum nächsten Termin, nach dem letzten am nächsten Morgen; Express nach den Minuten aus den Daten', () => {
@@ -130,9 +134,11 @@ describe('LKW', () => {
     expect(cartonsOnTruck(world)).toBe(4);
     expect(storage.freeSlots()).toBe(12); // Ladefläche zählt nicht als Lager
     expect(deliveries.freeSlots()).toBe(8);
-    // Kartons stehen auf der Ladefläche (oben auf dem LKW)
+    // Kartons kommen auf einer Mischpalette, die auf der Ladefläche (oben auf dem LKW) steht
     const [, c] = [...world.query(CartonComponent)][0];
-    expect(c.ablage!.entity).toBe(truck);
+    const pallet = c.ablage!.entity.require(PalletComponent);
+    expect(pallet.misch).toBe(true);
+    expect(pallet.platz?.places.entity).toBe(truck);
     expect([...world.query(CartonComponent)][0][0].object.position.y).toBeGreaterThan(1);
   });
 
@@ -171,23 +177,48 @@ describe('LKW', () => {
     expect(cartonsOnTruck(world)).toBe(0);
   });
 
-  it('ein Lagerist lädt den LKW ab und stellt die Kartons auf die Palette', () => {
-    const { world, fleet, storage, palette, ctx } = setup();
-    fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }, { produkt: 'cola_0_5l', menge: 12 }] });
+  it('ein Lagerist lädt die Mischpalette als Ganzes vom LKW ab (mit dem Gabelstapler auf einen Palettenplatz)', () => {
+    const { world, fleet, storage, ctx } = setup();
+    for (const x of [4, 6]) for (const z of [4, 6]) world.add(createBuildEntity(content.bau.get('betonboden'), { position: [x, 0, z], drehung: 0 }, ctx));
+    const platz = world.add(createBuildEntity(content.bau.get('palettenplatz'), { position: [4, 0.05, 4], drehung: 0 }, ctx));
+    world.add(createBuildEntity(content.bau.get('gabelstapler'), { position: [6, 0.05, 6], drehung: 0 }, ctx));
+    fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }, { produkt: 'wasser_sprudel_0_5l', menge: 12 }] });
     runUntil(world, () => fleet.list[0]?.state === 'steht');
+    expect(cartonsOnTruck(world)).toBe(2);
     const employee = { id: 1, name: 'Test', rolle: 'lagerist', lohn: 75, tempo: 1 };
     const services = { gehgeschwindigkeit: 3, sekundenProStueck: 0.1 };
     world.add(createWorkerEntity(employee, {
       auffuellen: { findTask: () => null, ...services },
       abladen: { findTask: () => findHaulTask(world, storage, () => true), ...services },
+      abladenFahrzeuge: { findJob: () => findPalletJob(world, { arten: ['einlagern'], fahrzeuge: ['hubwagen', 'gabelstapler'] }), lager: content.lager, ...services },
       kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1, sekundenProArtikel: 1 },
       einkaufen: { findTerminal: () => null, gehgeschwindigkeit: 1 },
     }, ctx)).object.position.set(0, 0.04, 6);
-    // Fertig, wenn beide Kartons wirklich auf der Palette stehen (der Platz wird schon beim Losgehen reserviert)
-    const onPalette = () => [...world.query(CartonComponent)].filter(([, c]) => c.ablage === palette.require(StorageSurfaceComponent) && c.reservedBy === null).length;
-    expect(runUntil(world, () => onPalette() === 2, 4000)).toBe(true);
+    // Fertig, wenn die Palette mit beiden Kartons auf dem Stellplatz steht
+    const places = platz.require(PalletPlacesComponent);
+    expect(runUntil(world, () => places.used === 1 && places.pallets()[0].require(PalletComponent).reservedBy === null, 6000)).toBe(true);
+    expect(places.pallets()[0].require(PalletComponent).kartons).toBe(2);
     expect(cartonsOnTruck(world)).toBe(0);
-    expect(palette.require(StorageSurfaceComponent).used).toBe(2);
+    fleet.update(1);
+    expect(fleet.list[0].state).toBe('abfahrt');
+  });
+
+  it('ohne Hubwagen/Stapler räumt der Lagerist die Mischpalette Karton für Karton von Hand ab', () => {
+    const { world, fleet, storage, ctx } = setup();
+    fleet.receive({ id: 1, ankunft: 0, art: 'normal', kartons: [{ produkt: 'cola_0_5l', menge: 12 }, { produkt: 'wasser_sprudel_0_5l', menge: 12 }] });
+    runUntil(world, () => fleet.list[0]?.state === 'steht');
+    expect(cartonsOnTruck(world)).toBe(2);
+    const employee = { id: 1, name: 'Test', rolle: 'lagerist', lohn: 75, tempo: 1 };
+    const services = { gehgeschwindigkeit: 3, sekundenProStueck: 0.1 };
+    world.add(createWorkerEntity(employee, {
+      auffuellen: { findTask: () => null, ...services },
+      abladen: { findTask: () => findHaulTask(world, storage, () => true), ...services },
+      abladenFahrzeuge: { findJob: () => findPalletJob(world, { arten: ['einlagern'], fahrzeuge: ['hubwagen', 'gabelstapler'] }), lager: content.lager, ...services },
+      kassieren: { findCheckout: () => null, serve: () => {}, gehgeschwindigkeit: 1, sekundenProArtikel: 1 },
+      einkaufen: { findTerminal: () => null, gehgeschwindigkeit: 1 },
+    }, ctx)).object.position.set(0, 0.04, 6);
+    expect(runUntil(world, () => fleet.list[0].kartons === 0, 6000)).toBe(true);
+    expect(cartonsOnTruck(world)).toBe(0);
     fleet.update(1);
     expect(fleet.list[0].state).toBe('abfahrt');
   });

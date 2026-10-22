@@ -597,3 +597,16 @@ model({
     text(nx - 2, 66 - 2, Math.floor(mid + w / 2), 'UE', GRUEN_D, 1);
   },
 });
+
+// Rollwagen (Kommissionierwagen): drei Böden für Kartons, Schiebebügel hinten (−X), Lenkrollen
+model({
+  id: 'rollwagen', name: 'Rollwagen', dims: [36, 46, 24], menue: 'lager',
+  draw: ({ box, cyl, nz }) => {
+    for (const [x, z] of [[2, 2], [2, nz - 3], [33, 2], [33, nz - 3]]) { cyl('z', x, 1, 1, z - 1, z + 1, GUMMI); box(x, x, 2, 3, z, z, GRAU); }
+    for (const [x, z] of [[1, 1], [1, nz - 2], [34, 1], [34, nz - 2]]) box(x, x, 3, 40, z, z, VERZINKT_D);
+    for (const y of [4, 20, 36]) box(1, 34, y, y, 1, nz - 2, (x, yy, z) => ((x + z) % 4 ? VERZINKT : VERZINKT_D));
+    // Schiebebügel
+    for (const z of [3, nz - 4]) box(0, 0, 36, 45, z, z, ROT);
+    box(0, 0, 44, 45, 3, nz - 4, ROT);
+  },
+});

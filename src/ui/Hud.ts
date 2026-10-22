@@ -56,6 +56,7 @@ export class Hud {
           <button type="button" data-tool="lager"></button>
           <button type="button" data-tool="forschung"></button>
           <button type="button" data-tool="dach"></button>
+          <button type="button" data-tool="waende"></button>
           <button type="button" data-tool="menue" aria-label="Menü">☰</button>
         </span>
       </div>
@@ -181,6 +182,7 @@ export class Hud {
     this.toolsEl.querySelector('[data-tool="lager"]')!.innerHTML = `${esc(this.texts('lager'))} ${key('lager_menue')}`;
     this.toolsEl.querySelector('[data-tool="forschung"]')!.innerHTML = `${esc(this.texts('forschung'))} ${key('forschung_menue')}`;
     this.toolsEl.querySelector('[data-tool="dach"]')!.innerHTML = `${esc(this.texts('dach'))} ${key('dach_umschalten')}`;
+    this.toolsEl.querySelector('[data-tool="waende"]')!.innerHTML = `${esc(this.texts('waende'))} ${key('waende_umschalten')}`;
   }
 
   private renderHelp(): void {

@@ -228,6 +228,14 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 12b – Mischpaletten, Rollwagen, Fahrzeuge fürs ganze Team, Wände wie bei Sims** ✅
+
+- **Alles kommt auf Paletten:** auch einzeln bestellte Kartons. Der LKW packt sie nach Produkt sortiert auf **Mischpaletten** (18 Kartons je Palette, gemischt erlaubt); höchstens 8 Paletten je LKW
+- **Mischpaletten werden als Ganzes abgeladen:** Lagerist oder Staplerfahrer holen sie mit Hubwagen oder Gabelstapler vom LKW auf einen Palettenplatz – nicht Karton für Karton
+- **Lagerist** darf Hubwagen und Gabelstapler fahren, **Auffüller** den Hubwagen und den neuen **Rollwagen** (Baumenü → Lager → Technik): Er packt bis zu 6 Kartons für verschiedene Regale um, fährt die Runde im Laden ab und räumt ein
+- **Wände ein-/ausblenden** (Knopf „Wände“ neben „Dach“ oder Taste `U`): *oben* – alle Wände ganz · *Schnitt* – die Wände vor dem Blickpunkt, die zur Kamera zeigen, sinken auf Sockelhöhe (wie bei den Sims) · *unten* – alle Wände niedrig. Anbauteile an gesenkten Wänden werden ausgeblendet. Werte: `data/baumenue/standard.json` → `waende`; Code: `src/world/WallView.ts`
+- Für später festgelegt: **eigene LKW** werden immer selbst abgeladen (siehe `docs/ideen.md`)
+
 **Etappe 12 – Palettenlogistik wie im echten Lager** ✅
 
 - **Einkauf:** je Produkt **einzelne Kartons oder ganze Paletten** (18 Kartons, 10 % günstiger). Paletten brauchen einen freien **Palettenplatz** – im Fenster steht, wie viele frei sind. Werte: `data/lager/standard.json` → `palette`
