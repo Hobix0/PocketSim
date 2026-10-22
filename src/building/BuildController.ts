@@ -71,6 +71,16 @@ export class BuildController {
   private ghostShown = false;
   private zeit = 0;
 
+  /** Ist eine Forschung erledigt? (Game setzt den Forschungsbaum ein) */
+  erforscht: (id: string) => boolean = () => true;
+  /** Name einer Forschung für Meldungen */
+  forschungName: (id: string) => string = (id) => id;
+
+  /** Platzhalter für Sperr-Meldungen: Level und Name der Forschung */
+  sperrWerte(def: BuildDef): Record<string, string | number> {
+    return { level: def.freischaltLevel, forschung: def.forschung ? this.forschungName(def.forschung) : '' };
+  }
+
   constructor(
     private readonly world: World,
     private readonly content: Content,
@@ -162,7 +172,7 @@ export class BuildController {
     const { x, z } = snapped;
     const rotY = THREE.MathUtils.degToRad(snapped.drehung);
     const check = checkPlacement(this.world, tool.def, x, z, rotY, this.content.baumenue, {
-      moving: tool.moving, geld: this.player.geld, level: this.player.level,
+      moving: tool.moving, geld: this.player.geld, level: this.player.level, erforscht: this.erforscht,
       plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
       stromFrei: this.stromFrei?.(),
       gelaendeOk: this.gelaende ? (r) => this.gelaende!(r) <= 0.05 : undefined,
@@ -177,7 +187,7 @@ export class BuildController {
     if (isAreaPiece(tool)) { this.updateArea(tool.def, x, z, snapped.drehung); return; }
     if (!this.input.wasPressed('auswaehlen')) return;
     if (!check.ok) {
-      this.events.emit('message', { key: `bauen_fehler_${check.grund}`, werte: { level: tool.def.freischaltLevel }, art: 'warnung' });
+      this.events.emit('message', { key: `bauen_fehler_${check.grund}`, werte: this.sperrWerte(tool.def), art: 'warnung' });
       return;
     }
     if (tool.moving) {
@@ -210,7 +220,7 @@ export class BuildController {
     this.clearAreaGhosts();
     this.dragStart = null;
     if (!ok.length) {
-      this.events.emit('message', { key: `bauen_fehler_${tiles[0]?.grund ?? 'belegt'}`, werte: { level: def.freischaltLevel }, art: 'warnung' });
+      this.events.emit('message', { key: `bauen_fehler_${tiles[0]?.grund ?? 'belegt'}`, werte: this.sperrWerte(def), art: 'warnung' });
       return;
     }
     if (!this.player.spend(def.preis * ok.length, 'bau')) return;
@@ -234,7 +244,7 @@ export class BuildController {
     for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
       const x = a.x + i * dx, z = a.z + j * dz;
       const check = checkPlacement(this.world, def, x, z, rotY, this.content.baumenue, {
-        geld, level: this.player.level,
+        geld, level: this.player.level, erforscht: this.erforscht,
         plotOk: this.plots ? (px, pz, rand) => this.plots!.allows(px, pz, rand) : undefined,
         gelaendeOk: this.gelaende ? (r) => this.gelaende!(r) <= 0.05 : undefined,
       });

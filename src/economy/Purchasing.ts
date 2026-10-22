@@ -1,4 +1,5 @@
 import { Emitter } from '../core/Emitter';
+import { levelUnlocks, type Unlocks } from './Research';
 import type { ProductDef } from '../content/definitions';
 import type { Registry } from '../content/Registry';
 import type { PlayerState } from '../state/PlayerState';
@@ -31,7 +32,7 @@ export interface StoragePort {
 
 export type OrderError =
   | { grund: 'leer' }
-  | { grund: 'gesperrt'; produkt: ProductDef; level: number }
+  | { grund: 'gesperrt'; produkt: ProductDef; level: number; sperre: string }
   | { grund: 'platz'; frei: number; noetig: number }
   | { grund: 'geld'; kosten: number };
 
@@ -50,6 +51,8 @@ export class Purchasing {
     private readonly produkte: Registry<ProductDef>,
     private readonly player: PlayerState,
     private readonly storage: StoragePort,
+    /** Was freigeschaltet ist (Level und Forschung); ohne Angabe nur nach Level */
+    readonly unlocks: Unlocks = levelUnlocks(() => player.level),
   ) {}
 
   /** Preis eines Kartons: EK × Stück pro Karton, auf Cent gerundet. */
@@ -58,7 +61,7 @@ export class Purchasing {
   }
 
   isUnlocked(p: ProductDef): boolean {
-    return p.freischaltLevel <= this.player.level;
+    return this.unlocks.ok(p);
   }
 
   /** Kosten (Ware + Versand) und Kartonzahl einer Auswahl (ohne zu kaufen). */
@@ -89,7 +92,7 @@ export class Purchasing {
 
     for (const l of lines) {
       const p = this.produkte.get(l.produkt);
-      if (!this.isUnlocked(p)) return { ok: false, fehler: { grund: 'gesperrt', produkt: p, level: p.freischaltLevel } };
+      if (!this.isUnlocked(p)) return { ok: false, fehler: { grund: 'gesperrt', produkt: p, level: p.freischaltLevel, sperre: this.unlocks.sperre(p) ?? '' } };
     }
     const { kosten, ware, versand, kartons } = this.quote(lines, art);
     const frei = this.storage.freeSlots();

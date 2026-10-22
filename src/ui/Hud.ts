@@ -54,6 +54,7 @@ export class Hud {
           <button type="button" data-tool="bilanz"></button>
           <button type="button" data-tool="versorgung"></button>
           <button type="button" data-tool="lager"></button>
+          <button type="button" data-tool="forschung"></button>
           <button type="button" data-tool="dach"></button>
           <button type="button" data-tool="menue" aria-label="Menü">☰</button>
         </span>
@@ -159,6 +160,11 @@ export class Hud {
     this.toolsEl.querySelector(`[data-tool="${tool}"]`)?.classList.toggle('active', active);
   }
 
+  /** Punkt am Knopf: es gibt etwas Neues (z. B. Forschung bereit) */
+  setToolBadge(tool: string, on: boolean): void {
+    this.toolsEl.querySelector(`[data-tool="${tool}"]`)?.classList.toggle('has-new', on);
+  }
+
   /** Was der Spieler in der Hand hält; null blendet die Anzeige aus. */
   showHand(text: string | null, hint = ''): void {
     this.handEl.hidden = text === null;
@@ -173,6 +179,7 @@ export class Hud {
     this.toolsEl.querySelector('[data-tool="bilanz"]')!.innerHTML = `${esc(this.texts('bilanz'))} ${key('bilanz_menue')}`;
     this.toolsEl.querySelector('[data-tool="versorgung"]')!.innerHTML = `${esc(this.texts('versorgung'))} ${key('versorgung_menue')}`;
     this.toolsEl.querySelector('[data-tool="lager"]')!.innerHTML = `${esc(this.texts('lager'))} ${key('lager_menue')}`;
+    this.toolsEl.querySelector('[data-tool="forschung"]')!.innerHTML = `${esc(this.texts('forschung'))} ${key('forschung_menue')}`;
     this.toolsEl.querySelector('[data-tool="dach"]')!.innerHTML = `${esc(this.texts('dach'))} ${key('dach_umschalten')}`;
   }
 

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { levelUnlocks, type Unlocks } from '../economy/Research';
 import { Emitter } from './Emitter';
 import { readData } from './Data';
 import type { Content } from '../content/Content';
@@ -41,6 +42,8 @@ export interface StoreLoopEvents extends Record<string, unknown> {
 export class StoreLoop {
   readonly events = new Emitter<StoreLoopEvents>();
   readonly settings: CustomerSettings;
+  /** Was Kunden sich wünschen können (Level und Forschung); Game setzt die Forschung ein */
+  unlocks: Unlocks;
   readonly nav: NavGrid;
   readonly spawner: CustomerSpawner;
   readonly stats: StoreStats;
@@ -61,6 +64,7 @@ export class StoreLoop {
     private readonly random: () => number = Math.random,
   ) {
     this.settings = content.kunden;
+    this.unlocks = levelUnlocks(() => player.level);
     this.nav = new NavGrid(bounds, readData<NavSettings>('navigation/standard'), world);
     this.spawner = new CustomerSpawner(this.settings, random);
     this.stats = new StoreStats(this.settings, player);
@@ -160,7 +164,7 @@ export class StoreLoop {
   private spawnCustomer(): void {
     const s = this.settings;
     const sortiment = this.sortiment();
-    const alle = this.content.produkte.all().filter((p) => p.freischaltLevel <= this.player.level);
+    const alle = this.content.produkte.all().filter((p) => this.unlocks.ok(p));
     const wishes = planWishes(s, sortiment, alle, this.random);
     const start = this.kundenPunkte[Math.floor(this.random() * this.kundenPunkte.length)];
     const names = this.content.namen;

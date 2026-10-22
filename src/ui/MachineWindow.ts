@@ -1,4 +1,5 @@
 import type { Content } from '../content/Content';
+import type { Unlocks } from '../economy/Research';
 import type { RecipeDef } from '../content/definitions';
 import type { Entity } from '../ecs/Entity';
 import type { Production, StartCheck } from '../economy/Production';
@@ -16,7 +17,7 @@ export class MachineWindow {
   private message = '';
   private lastKey = '';
 
-  constructor(parent: HTMLElement, private readonly content: Content, private readonly production: Production, private readonly level: () => number) {
+  constructor(parent: HTMLElement, private readonly content: Content, private readonly production: Production, private readonly unlocks: Unlocks) {
     this.el = document.createElement('div');
     this.el.className = 'window machine panel';
     this.el.hidden = true;
@@ -105,7 +106,7 @@ export class MachineWindow {
 
   private card(r: RecipeDef, m: MachineComponent): string {
     const ware = (id: string) => this.content.waren.get(id);
-    const locked = r.freischaltLevel > this.level();
+    const locked = !this.unlocks.ok(r);
     const active = m.rezept?.id === r.id;
     const inputs = r.eingang.map((l) => {
       const have = this.production.available(l.ware);
@@ -117,7 +118,7 @@ export class MachineWindow {
       <ul>${inputs}</ul>
       <span class="out">→ ${r.ausgang.menge}× ${esc(ware(r.ausgang.ware).name)} · ${r.dauer} min</span>
       <small>Verkaufswert minus Rohstoffe: ${margin < 0 ? '−' : ''}${formatMoney(Math.abs(margin))}</small>
-      ${locked ? `<span class="cost">ab Level ${r.freischaltLevel}</span>`
+      ${locked ? `<span class="cost">${esc(this.unlocks.sperre(r) ?? '')}</span>`
         : active && m.laeuft ? '<span class="cost">läuft</span>'
           : `<button type="button" class="primary" data-rezept="${r.id}">${active ? 'Starten' : 'Wählen & starten'}</button>`}
     </div>`;

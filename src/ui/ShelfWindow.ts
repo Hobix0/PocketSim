@@ -1,4 +1,5 @@
 import type { Content } from '../content/Content';
+import type { Unlocks } from '../economy/Research';
 import type { ProductDef } from '../content/definitions';
 import type { Entity } from '../ecs/Entity';
 import { ShelfComponent } from '../components/ShelfComponent';
@@ -13,7 +14,7 @@ export class ShelfWindow {
   private shelf: Entity | null = null;
   private lastKey = '';
 
-  constructor(parent: HTMLElement, private readonly content: Content, private readonly level: () => number) {
+  constructor(parent: HTMLElement, private readonly content: Content, private readonly unlocks: Unlocks) {
     this.el = document.createElement('div');
     this.el.className = 'window shelf-window panel';
     this.el.hidden = true;
@@ -78,7 +79,7 @@ export class ShelfWindow {
     this.lastKey = this.key(s);
     const name = this.shelf!.get(SelectableComponent)?.titel ?? 'Regal';
     const passend = this.content.produkte.all()
-      .filter((p) => !p.rohstoff && p.freischaltLevel <= this.level() && (!p.kuehlung || s.kuehlung));
+      .filter((p) => !p.rohstoff && this.unlocks.ok(p) && (!p.kuehlung || s.kuehlung));
     const rows = s.faecher.map((f, i) => {
       const anteil = Math.round((f.menge / s.kapazitaet) * 100);
       return `<div class="fach-row ${f.fest ? 'fest' : ''}">

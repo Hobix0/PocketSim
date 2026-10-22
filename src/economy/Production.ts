@@ -1,4 +1,5 @@
 import type { Content } from '../content/Content';
+import type { Unlocks } from './Research';
 import type { MachineDef, RecipeDef } from '../content/definitions';
 import type { World } from '../ecs/World';
 import type { Entity } from '../ecs/Entity';
@@ -29,7 +30,7 @@ export class Production {
     private readonly content: Content,
     private readonly storage: StoragePort,
     private readonly utilities: Utilities,
-    private readonly level: () => number,
+    private readonly unlocks: Unlocks,
     /** Alle Maschinen in der Welt (für den Bedarf) */
     private readonly machines: () => Iterable<RunningMachine>,
   ) {}
@@ -69,7 +70,7 @@ export class Production {
   }
 
   canStart(r: RecipeDef, m: MachineDef): StartCheck {
-    if (r.freischaltLevel > this.level()) return { ok: false, grund: 'gesperrt' };
+    if (!this.unlocks.ok(r)) return { ok: false, grund: 'gesperrt' };
     const fehlt = r.eingang.filter((l) => this.available(l.ware) < l.menge).map((l) => ({ ware: l.ware, menge: l.menge - this.available(l.ware) }));
     if (fehlt.length) return { ok: false, grund: 'rohstoffe', fehlt };
     const d = this.demand();
