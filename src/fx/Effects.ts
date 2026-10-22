@@ -42,7 +42,17 @@ interface FloatSprite {
   leben: number;
   dauer: number;
   hoch: number;
+  /** Folgt dieser Figur (Gedankenblasen) statt aufzusteigen */
+  folgt?: THREE.Object3D;
 }
+
+/** Farbe und Zeichen je Art der Gedankenblase */
+const GEDANKEN: Record<string, { zeichen: string; farbe: string }> = {
+  fehlt: { zeichen: '?', farbe: '#6f8fb3' },
+  zu_teuer: { zeichen: '€', farbe: '#c8483c' },
+  schnaeppchen: { zeichen: '%', farbe: '#4f9a5c' },
+  gluecklich: { zeichen: '♥', farbe: '#e46b7b' },
+};
 
 const MAX = 700;
 
@@ -135,6 +145,48 @@ export class Effects {
     ctx.fillStyle = farbe;
     ctx.fillText(text, c.width / 2, 42);
     this.addSprite(c, pos, 0.26 * groesse, 1.4);
+  }
+
+  /** Gedankenblase über einer Figur (folgt ihr), z. B. „Kein Cola 0,5 L?“ */
+  thought(figur: THREE.Object3D, text: string, art: string): void {
+    if (!this.aktiv || !this.settings.texte) return;
+    const g = GEDANKEN[art] ?? GEDANKEN.fehlt;
+    const c = document.createElement('canvas');
+    const ctx = c.getContext('2d')!;
+    const font = '700 30px system-ui, sans-serif';
+    ctx.font = font;
+    const tw = Math.ceil(ctx.measureText(text).width);
+    c.width = tw + 86;
+    c.height = 84;
+    // Blase: helle, runde Fläche mit kleinen Denk-Kreisen nach unten
+    ctx.fillStyle = 'rgba(40, 30, 20, 0.25)';
+    const blase = (dx: number, dy: number) => { ctx.beginPath(); ctx.roundRect(4 + dx, 4 + dy, c.width - 10, 56, 26); ctx.fill(); };
+    blase(2, 3);
+    ctx.fillStyle = '#fffaf0';
+    blase(0, 0);
+    for (const [x, y, r] of [[30, 66, 6], [20, 77, 4]]) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+    // Zeichen im farbigen Kreis, dann der Text
+    ctx.fillStyle = g.farbe;
+    ctx.beginPath(); ctx.arc(34, 32, 19, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 26px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(g.zeichen, 34, 33);
+    ctx.fillStyle = '#3b3f44';
+    ctx.font = font;
+    ctx.textAlign = 'left';
+    ctx.fillText(text, 62, 33);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    const h = 0.42;
+    sprite.scale.set(h * (c.width / c.height), h, 1);
+    sprite.center.set(0.15, 0); // links unten an der Figur
+    sprite.position.copy(figur.position).setY(figur.position.y + 1.95);
+    sprite.renderOrder = 31;
+    this.scene.add(sprite);
+    this.sprites.push({ sprite, leben: 0, dauer: 2.6, hoch: 0, folgt: figur });
   }
 
   /** Herz über einem zufriedenen Kunden */
@@ -239,7 +291,8 @@ export class Effects {
       const f = this.sprites[i];
       f.leben += dt;
       const t = f.leben / f.dauer;
-      f.sprite.position.y += (f.hoch * dt) * (1 - t * 0.7);
+      if (f.folgt) f.sprite.position.copy(f.folgt.position).setY(f.folgt.position.y + 1.95 + Math.sin(f.leben * 3) * 0.02);
+      else f.sprite.position.y += (f.hoch * dt) * (1 - t * 0.7);
       (f.sprite.material as THREE.SpriteMaterial).opacity = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
       // Kurz nach dem Erscheinen leicht schwingend aufrichten
       if (t < 0.15) f.sprite.material.rotation = (1 - ease.outBack(t / 0.15)) * 0.2;

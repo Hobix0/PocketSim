@@ -32,6 +32,8 @@ export interface StoreLoopEvents extends Record<string, unknown> {
   /** `kasse`, `kunde`: wo es passiert ist (für Effekte) */
   sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3 };
   visit: { outcome: VisitOutcome };
+  /** Ein Kunde denkt etwas (Gedankenblase): `kunde` ist seine Figur */
+  thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
   opened: undefined;
   closed: undefined;
 }
@@ -164,7 +166,9 @@ export class StoreLoop {
     const names = this.content.namen;
     const name = names[Math.floor(this.random() * names.length)];
     const speed = s.gehgeschwindigkeit.min + this.random() * (s.gehgeschwindigkeit.max - s.gehgeschwindigkeit.min);
+    let figur: THREE.Object3D | null = null;
     const entity = createCustomerEntity(this.nummer++, name, start, wishes, {
+      denkt: (art, p) => { if (figur) this.events.emit('thought', { art, produkt: p, preis: p ? this.prices.get(p) : undefined, kunde: figur }); },
       findPath: this.findPath,
       findShelf: (p, from, exclude) => this.findShelf(p, from, exclude),
       findCheckout: () => this.findCheckout(),
@@ -191,6 +195,7 @@ export class StoreLoop {
         this.events.emit('visit', { outcome });
       },
     }, this.ctx());
+    figur = entity.object;
     this.world.add(entity);
   }
 

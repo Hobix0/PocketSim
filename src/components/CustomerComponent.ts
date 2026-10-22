@@ -50,6 +50,8 @@ export interface CustomerServices {
   models?: ModelProvider;
   /** Der Besuch ist entschieden (für Ruf und Tagesbericht) */
   left(outcome: VisitOutcome, fehlend: ProductDef[], zuTeuer: ProductDef[], schnaeppchen: number): void;
+  /** Der Kunde denkt etwas (für Gedankenblasen): fehlt, zu teuer, Schnäppchen, glücklich (alles gefunden) */
+  denkt?(art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich', produkt?: ProductDef): void;
 }
 
 export interface BasketLine {
@@ -199,6 +201,7 @@ export class CustomerComponent extends Component implements Describable {
 
   /** Das Spiel hat abgerechnet: hinter der Kasse einpacken (wenn eingestellt), dann gehen. */
   paid(): void {
+    if (this.wishes.length && this.wishes.every((w) => w.status === 'gefunden')) this.services.denkt?.('gluecklich');
     const c = this.checkout?.get(CheckoutComponent);
     const packSpot = c?.spot(-1.6);
     c?.leave(this.entity);
@@ -241,6 +244,7 @@ export class CustomerComponent extends Component implements Describable {
       const shelf = this.services.findShelf(w.produkt, this.entity.object.position);
       if (shelf) { this.goToShelf(w, shelf); return; }
       w.status = 'fehlt';
+      this.services.denkt?.('fehlt', w.produkt);
     }
     this.current = null;
     if (this.basket.length) this.goToCheckout();
@@ -253,7 +257,7 @@ export class CustomerComponent extends Component implements Describable {
     if (!w) { this.nextWish(); return; }
     const other = this.services.findShelf(w.produkt, this.entity.object.position, this.shelf ?? undefined);
     if (other) this.goToShelf(w, other);
-    else { w.status = 'fehlt'; this.nextWish(); }
+    else { w.status = 'fehlt'; this.services.denkt?.('fehlt', w.produkt); this.nextWish(); }
   }
 
   private goToShelf(w: Wish, shelf: Entity): void {
@@ -273,6 +277,7 @@ export class CustomerComponent extends Component implements Describable {
     // Steht da, aber zu teuer: nicht kaufen
     if (shelf?.world && !this.services.willBuy(w.produkt)) {
       w.status = 'zu_teuer';
+      this.services.denkt?.('zu_teuer', w.produkt);
       this.nextWish();
       return;
     }
@@ -280,6 +285,7 @@ export class CustomerComponent extends Component implements Describable {
     if (n > 0 && shelf) {
       w.genommen = n;
       w.status = 'gefunden';
+      if (this.services.isBargain(w.produkt)) this.services.denkt?.('schnaeppchen', w.produkt);
       this.basket.push({ produkt: w.produkt, menge: n, regal: shelf, preis: this.services.priceOf(w.produkt) });
       this.renderBasket();
       this.nextWish();

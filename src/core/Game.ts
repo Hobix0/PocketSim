@@ -406,6 +406,17 @@ export class Game {
       }
       if (this.store.stats.heute.umsatz >= 500) this.goals.complete('umsatz_500');
     });
+    // Gedankenblasen: zeigen, was fehlt oder zu teuer ist (mit Wahrscheinlichkeit, je Kunde nicht zu oft)
+    const gedanken = readData<AmbienceSettings>('leben/standard').gedanken;
+    const zuletzt = new WeakMap<THREE.Object3D, number>();
+    this.store.events.on('thought', ({ art, produkt, preis, kunde }) => {
+      const jetzt = performance.now();
+      if (Math.random() > (gedanken[art] ?? 0) || jetzt - (zuletzt.get(kunde) ?? -1e9) < 5000) return;
+      zuletzt.set(kunde, jetzt);
+      const vorlagen = gedanken.texte[art] ?? [];
+      const text = (vorlagen[Math.floor(Math.random() * vorlagen.length)] ?? '').replace('{produkt}', produkt?.name ?? '').replace('{preis}', preis !== undefined ? formatMoney(preis) : '');
+      if (text) this.effects.thought(kunde, text, art);
+    });
     let warnedNoCheckout = false;
     this.store.events.on('visit', ({ outcome }) => {
       if (outcome === 'keine_kasse' && !warnedNoCheckout) { warnedNoCheckout = true; this.hud.toasts.show(this.content.text('kunde_keine_kasse'), 'warnung'); }
