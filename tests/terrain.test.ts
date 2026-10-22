@@ -45,6 +45,15 @@ describe('Gelände', () => {
     expect(t2.maxEditIn(-20, 20, -15, 15)).toBe(0);
   });
 
+  it('Spielstand einer kleineren Karte: Änderungen bleiben nach dem Vergrößern am selben Ort', () => {
+    const klein = new Terrain(bounds, 0.5, 2.5);
+    for (let i = 0; i < 10; i++) klein.brush(5, 5, 1.5, -1, () => true);
+    const gross = new Terrain({ minX: -40, maxX: 40, minZ: -15, maxZ: 15 }, 0.5, 2.5);
+    gross.restore(JSON.parse(JSON.stringify(klein.state())), klein.raster());
+    expect(gross.editAt(5, 5)).toBeCloseTo(klein.editAt(5, 5));
+    expect(gross.editAt(-15, 5)).toBe(0);
+  });
+
   it('Absenkung: flach in voller Tiefe, dann Schräge hinauf, seitlich davon nichts', () => {
     const c = { x: 0, z: 0, dx: 1, dz: 0, breite: 3.6, tiefe: 1.1, flach: 8, schraege: 6 };
     expect(cutDepth(c, 4, 0, 0)).toBeCloseTo(-1.1);

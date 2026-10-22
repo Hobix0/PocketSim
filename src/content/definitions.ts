@@ -180,6 +180,8 @@ export interface BuildDef {
   sitze?: [number, number, number?][];
   /** Umkleidekabine: Modell des geschlossenen Vorhangs und wo man davor wartet (x, z in m relativ zum Bauteil) */
   umkleide?: { vorhang: string; eingang: [number, number] };
+  /** Verfallenes Altbau-Teil: wird beim Renovieren durch `zu` ersetzt (null: kommt weg); `kosten` je Teil */
+  renovierung?: { zu: string | null; kosten: number };
   /** Lampe: wo sie leuchtet (relativ zum Bauteil), wie groß die Leuchtfläche ist, Farbe, Stärke, Reichweite (m) */
   licht?: LightDef;
   /** Ablagefläche für Kartons: gestapelt auf der Oberseite (`ebenen`) oder auf Regalböden (`boeden`, Höhen in m). */
@@ -565,6 +567,10 @@ export function validateBuild(raw: unknown, where: string): BuildDef {
       const e = u.eingang;
       if (!Array.isArray(e) || e.length !== 2 || e.some((v) => typeof v !== 'number')) throw new Error(`${where}: umkleide.eingang muss [x, z] sein`);
       return { vorhang: str(u, 'vorhang', `${where} → umkleide`), eingang: [e[0], e[1]] as [number, number] };
+    })(),
+    renovierung: o.renovierung === undefined ? undefined : (() => {
+      const r = asObject(o.renovierung, `${where} → renovierung`);
+      return { zu: r.zu === null ? null : str(r, 'zu', `${where} → renovierung`), kosten: num(r, 'kosten', `${where} → renovierung`, 0) };
     })(),
     preis: num(o, 'preis', where, 0),
     freischaltLevel: num(o, 'freischaltLevel', where, 1),

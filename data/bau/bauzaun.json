@@ -1,0 +1,20 @@
+{
+  "id": "bauzaun",
+  "name": "Bauzaun",
+  "kategorie": "gebaeude_basis",
+  "ebene": "objekt",
+  "preis": 25,
+  "freischaltLevel": 1,
+  "werte": {},
+  "aussen": true,
+  "model": "eigen/bauzaun",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      1.9,
+      2
+    ],
+    "farbe": "#8f969d"
+  },
+  "gruppe": "aussen/zaeune"
+}

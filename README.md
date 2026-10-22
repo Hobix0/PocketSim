@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 14 – Stadt: Altbau kaufen und renovieren** ✅
+
+- **Größere Karte (80 × 30 m)** mit einer Ladenzeile nach Westen: Gehweg, Laternen, Bäume, die Straße ist länger
+- **Altes Ladenlokal** (8 × 6 m, ab Level 3, 5.000 €): ein verfallener Altbau mit rissigem Putz, vernagelten Fenstern („ZU VERMIETEN“), vernagelter Tür, staubigen Dielen und Gerümpel
+- **Renovieren:** Baumenü → Grundstücke → *Renovieren* (Summe der Teile, hier 4.700 €). Die Handwerker brauchen ein paar Spielstunden, solange steht ein Gerüst mit grünem Netz vor der Fassade und es staubt. Danach ist jedes Teil frisch: weiße Wände, Schaufenster, Schiebetür, Fliesenboden, das Gerümpel ist weg (+60 XP). Einrichten kannst du es wie du willst – Supermarkt, Café oder Mode
+- **Bauplatz West** (10 × 7 m, ab Level 3, 3.500 €) mit Bauzaun: ganz neu bauen
+- Werte: `data/stadt/standard.json`, je Altbau-Teil `data/bau/altbau_*.json` → `renovierung` (`zu`, `kosten`); Code: `src/world/Renovations.ts`; Modelle: `npm run modelle:altbau`
+- Ältere Spielstände behalten ihre Gelände-Änderungen am richtigen Ort (das Raster steht jetzt mit im Spielstand)
+
 **Etappe 13 – Modeladen (eigener Forschungs-Tab „Mode“ 👗)** ✅
 
 - **Forschung → Mode:** *Modeecke* (Kleiderständer, Wühltisch, Boutique-Kassentresen, Hängeschild; T-Shirt, Hemd, Sommerkleid, Strickpullover, Wolljacke, Jeans) → *Umkleide* (Umkleidekabine mit Vorhang, Standspiegel, Samtsessel) · *Accessoires* (Accessoire-Regal; Schal, Strickmütze, Ledertasche) · *Schaufenster* (Schaufensterpuppen mit Kleid und Anzug, große Kleiderwand) → *Schuhe* (Schuhregal; Sneaker, Stiefeletten). Bald: Nähstube, Second-Hand-Ecke

@@ -66,6 +66,8 @@ export interface LevelData {
   himmel: string;
   raster: number;
   boden: { groesse: [number, number]; farbe: string };
+  /** Frühere Bodengröße (für Gelände-Änderungen aus älteren Spielständen, die die Größe noch nicht mitspeichern) */
+  bodenFrueher?: [number, number];
   kameraStart: [number, number, number];
   /** Optionaler Kameraabstand zu Beginn (sonst aus data/kamera) */
   kameraAbstand?: number;

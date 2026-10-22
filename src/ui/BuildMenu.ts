@@ -1,6 +1,7 @@
 import type { Content } from '../content/Content';
 import { buildGroupOf, type BuildDef } from '../content/definitions';
 import type { Plots } from '../world/Plots';
+import type { Renovations } from '../world/Renovations';
 import type { InputMap } from '../input/InputMap';
 import type { PlayerState } from '../state/PlayerState';
 import type { BuildController, Tool } from '../building/BuildController';
@@ -32,6 +33,8 @@ export class BuildMenu {
   private gruppe: string;
   private suche = '';
   private plotMessage = '';
+  /** Altbauten renovieren (setzt das Spiel) */
+  renovations?: Pick<Renovations, 'needs' | 'cost' | 'progress' | 'start' | 'minutes'>;
   /** Zuletzt gewählte Variante je Familie */
   private readonly wahl = new Map<string, string>();
   private zuletzt: string[] = [];
@@ -102,6 +105,11 @@ export class BuildMenu {
         if (def.variante) this.wahl.set(def.variante.familie, def.id);
         this.terrain?.cancel(); this.paint?.cancel();
         if (this.isUnlocked(def)) build.startBuilding(def); else this.render();
+      }
+      else if (b.dataset.renovieren && this.renovations) {
+        const r = this.renovations.start(b.dataset.renovieren);
+        this.plotMessage = r.ok ? '' : r.grund === 'geld' ? 'Für die Renovierung reicht das Geld nicht.' : '';
+        this.render();
       }
       else if (b.dataset.plot && this.plots) {
         const r = this.plots.buy(b.dataset.plot);
@@ -319,9 +327,16 @@ export class BuildMenu {
       const own = this.plots!.isOwned(p.id);
       const locked = p.freischaltLevel > this.player.level;
       const w = p.rect.maxX - p.rect.minX, d = p.rect.maxZ - p.rect.minZ;
+      // Altbau darauf: Renovierung anbieten (oder Fortschritt zeigen)
+      const rv = this.renovations, alt = rv?.needs(p.id) ?? false, fort = rv?.progress(p.id) ?? null;
+      const ren = alt ? `<small>🏚️ Altbau · Renovierung ${formatMoney(rv!.cost(p.id))}, ca. ${Math.round(rv!.minutes(p.id) / 60)} h</small>` : '';
+      const renBtn = !own || !alt ? '' : fort !== null
+        ? `<span class="cost">🔨 wird renoviert … ${Math.round(fort * 100)} %</span>`
+        : `<button type="button" class="primary" data-renovieren="${esc(p.id)}">Renovieren · ${formatMoney(rv!.cost(p.id))}</button>`;
       return `<div class="card plot ${own ? 'own' : ''} ${locked ? 'locked' : ''}">
         <span class="name">${esc(p.name)}</span><small>${w} × ${d} m</small>
-        ${own ? '<span class="cost">gehört dir</span>'
+        ${ren}
+        ${own ? (renBtn || '<span class="cost">gehört dir</span>')
           : locked ? `<span class="cost">ab Level ${p.freischaltLevel}</span>`
             : `<button type="button" class="primary" data-plot="${esc(p.id)}">Kaufen · ${formatMoney(p.preis)}</button>`}
       </div>`;

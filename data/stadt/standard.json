@@ -1,0 +1,4 @@
+{
+  "_hinweis": "Stadt: Altbauten renovieren. minutenProTeil: Spielminuten je verfallenem Bauteil (mindestens minMinuten); xp: Belohnung, wenn ein Gebäude fertig ist; geruest: Modell, das während der Arbeit vor der Fassade steht. Kosten je Teil stehen am Bauteil (data/bau → renovierung.kosten).",
+  "renovierung": { "minutenProTeil": 6, "minMinuten": 120, "xp": 60, "geruest": "eigen/geruest" }
+}
