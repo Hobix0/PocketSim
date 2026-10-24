@@ -3,7 +3,7 @@
   "sichtfeld": 40,
   "neigung": 56,
   "neigungNah": 34,
-  "abstand": { "min": 7, "max": 60, "start": 26 },
+  "abstand": { "min": 7, "max": 100, "start": 26 },
   "startDrehung": 20,
   "schwenkGeschwindigkeit": 0.9,
   "drehGeschwindigkeit": 90,

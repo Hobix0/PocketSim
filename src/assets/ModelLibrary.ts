@@ -8,6 +8,8 @@ import type { VoxelGrid } from '../voxel/VoxelGrid';
 
 /** Farben, die in selbst gebauten Voxel-Modellen Glas bedeuten (Skripte: GLAS = #cfe6ec, Kühlschranktür #bcd8df) */
 const GLASFARBEN = new Set([0xcfe6ec, 0xbcd8df]);
+/** Fensterscheiben der Wohnhäuser (scripts/make-wohn-models.mjs): leuchten abends warm */
+const FENSTERFARBEN = new Set([0x9fb7c0, 0xc0d3d9]);
 
 // Lädt die Blender-Modelle aus data/3d und gibt fertige Exemplare heraus.
 //
@@ -77,6 +79,8 @@ export class ModelLibrary implements ModelProvider {
   private readonly labelMaterial: THREE.MeshStandardMaterial;
   private readonly glassMaterial: THREE.MeshStandardMaterial;
   private readonly voxelMaterial = new THREE.MeshStandardMaterial({ name: 'Voxel', vertexColors: true, roughness: 0.85, metalness: 0 });
+  /** Wohnungsfenster: tagsüber wie Glas, abends warmes Licht (setWindowGlow) */
+  private readonly windowMaterial = new THREE.MeshStandardMaterial({ name: 'Fenster', vertexColors: true, roughness: 0.3, metalness: 0, emissive: '#ffc062', emissiveIntensity: 0 });
   private readonly palettePixels: Promise<Pixels | null>;
   private readonly labelPixels: Promise<Pixels | null>;
 
@@ -108,6 +112,11 @@ export class ModelLibrary implements ModelProvider {
     const useVoxel = !!voxel?.aktiv;
     this.palettePixels = useVoxel && paletteUrl ? loadPixels(paletteUrl) : Promise.resolve(null);
     this.labelPixels = useVoxel && labelUrl ? loadPixels(labelUrl) : Promise.resolve(null);
+  }
+
+  /** Wie hell die Wohnungsfenster leuchten (0 = Tag, 1 = Nacht) */
+  setWindowGlow(f: number): void {
+    this.windowMaterial.emissiveIntensity = Math.max(0, Math.min(1, f)) * 0.9;
   }
 
   get voxelStyle(): boolean {
@@ -251,15 +260,16 @@ export class ModelLibrary implements ModelProvider {
     // Würfel in Glasfarbe (Vitrinen, Kühlschranktüren, Truhendeckel) werden durchsichtig gezeichnet
     // (der Editor bekommt weiter das ganze Gitter)
     const Grid = grid.constructor as typeof VoxelGrid;
-    let solid = grid, glass: VoxelGrid | null = null;
+    let solid = grid, glass: VoxelGrid | null = null, fenster: VoxelGrid | null = null;
+    const split = () => { if (solid === grid) { solid = new Grid(grid.size, grid.min, grid.dims); solid.data.set(grid.data); } };
     for (let i = 0; i < grid.data.length; i++) {
       const v = grid.data[i];
-      if (!v || !GLASFARBEN.has(v & 0xffffff)) continue;
-      if (!glass) { glass = new Grid(grid.size, grid.min, grid.dims); solid = new Grid(grid.size, grid.min, grid.dims); solid.data.set(grid.data); }
-      glass.data[i] = v;
-      solid.data[i] = 0;
+      if (!v) continue;
+      const c = v & 0xffffff;
+      if (GLASFARBEN.has(c)) { split(); glass ??= new Grid(grid.size, grid.min, grid.dims); glass.data[i] = v; solid.data[i] = 0; }
+      else if (FENSTERFARBEN.has(c)) { split(); fenster ??= new Grid(grid.size, grid.min, grid.dims); fenster.data[i] = v; solid.data[i] = 0; }
     }
-    const obj = this.voxelObject(solid, glass, stufen);
+    const obj = this.voxelObject(solid, glass, stufen, fenster);
     obj.userData.voxelGrid = grid;
     this.templates.set(path, Promise.resolve(obj));
   }
@@ -271,7 +281,7 @@ export class ModelLibrary implements ModelProvider {
   }
 
   /** Gitter → Objekt mit Detailstufen (LOD); merkt sich das feinste Gitter für den Editor. */
-  private voxelObject(solid: VoxelGrid | null, glass: VoxelGrid | null, stufen: VoxelStufe[]): THREE.Object3D {
+  private voxelObject(solid: VoxelGrid | null, glass: VoxelGrid | null, stufen: VoxelStufe[], fenster: VoxelGrid | null = null): THREE.Object3D {
     // Eine Gruppe je Detailstufe; three.js wählt beim Zeichnen die passende (LOD)
     const level = (faktor: number) => {
       const g = new THREE.Group();
@@ -286,6 +296,7 @@ export class ModelLibrary implements ModelProvider {
         mesh.receiveShadow = true;
         g.add(mesh);
       }
+      if (fenster) g.add(new THREE.Mesh(greedyMesh(fenster.downsample(faktor)), this.windowMaterial));
       return g;
     };
     let out: THREE.Object3D;
