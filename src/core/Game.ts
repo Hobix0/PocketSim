@@ -737,6 +737,11 @@ export class Game {
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
     this.hud.setToolActive('forschung', this.researchWindow.isOpen);
     this.hud.setToolActive('immobilien', this.realEstate.isOpen);
+    // Bereiche erscheinen, sobald sie gebraucht werden (nicht alles schon am ersten Tag)
+    const lv = this.player.level;
+    this.hud.setToolVisible('versorgung', lv >= 2 || this.world.query(MachineComponent).next().done === false);
+    this.hud.setToolVisible('immobilien', lv >= 3 || this.plots.list.some((p) => p.angebot && this.plots.isOwned(p.id)));
+    this.hud.setToolVisible('zentrallager', lv >= 4 || this.warehouse.active());
     this.hud.setToolActive('zentrallager', this.warehouseWindow.isOpen);
     this.hud.setToolBadge('forschung', this.research.bereit > 0);
     this.hud.setToolActive('dach', !!this.roof && !this.roof.hidden);
@@ -772,6 +777,8 @@ export class Game {
     (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5);
     (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
+    // Abends gehen in den Wohnungen die Lichter an
+    this.models.setWindowGlow((1 - d.tag) * 1.4 - 0.2);
     this.look.nacht = 1 - d.tag;
     this.nacht = 1 - d.tag;
     this.audio.nacht = 1 - d.tag;

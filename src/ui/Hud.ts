@@ -163,6 +163,12 @@ export class Hud {
     this.toolsEl.querySelector(`[data-tool="${tool}"]`)?.classList.toggle('active', active);
   }
 
+  /** Knopf zeigen oder verstecken (Bereiche erscheinen erst, wenn sie gebraucht werden) */
+  setToolVisible(tool: string, visible: boolean): void {
+    const b = this.toolsEl.querySelector<HTMLElement>(`[data-tool="${tool}"]`);
+    if (b && b.hidden === visible) b.hidden = !visible;
+  }
+
   /** Punkt am Knopf: es gibt etwas Neues (z. B. Forschung bereit) */
   setToolBadge(tool: string, on: boolean): void {
     this.toolsEl.querySelector(`[data-tool="${tool}"]`)?.classList.toggle('has-new', on);

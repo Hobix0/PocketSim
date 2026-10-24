@@ -27,8 +27,8 @@
     "bodenLicht": "#7d6a55",
     "sonne": "#ffe7c8",
     "nebel": {
-      "nah": 32,
-      "fern": 90
+      "nah": 70,
+      "fern": 190
     },
     "belichtung": 1.05,
     "schattenWeich": 3

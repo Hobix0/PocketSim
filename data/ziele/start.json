@@ -1,6 +1,6 @@
 [
   {"id": "ware_kaufen", "text": "Kaufe Ware am Einkaufsterminal", "belohnung": {"xp": 10}},
-  {"id": "lieferung", "text": "Lade den LKW ab: Karton anklicken, dann eine Palette", "belohnung": {"xp": 15}},
+  {"id": "lieferung", "text": "Lade den LKW ab: Karton anklicken, dann im Lager abstellen", "belohnung": {"xp": 15}},
   {"id": "regal_bauen", "text": "Baue ein Regal (Baumenü)", "belohnung": {"xp": 10}},
   {"id": "einraeumen", "text": "Räume Ware ins Regal", "belohnung": {"xp": 15}},
   {"id": "kasse_bauen", "text": "Baue eine Kasse", "belohnung": {"xp": 15}},

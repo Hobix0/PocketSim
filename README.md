@@ -228,6 +228,14 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 18a – Aufräumen: alles passt zusammen** ✅
+
+- **Forschung ohne Widersprüche:** Die alten „kommt bald“-Knoten Modeladen, Zentrallager und Produktionshalle im Supermarkt-Tab sind weg (gibt es längst im Mode- und Produktions-Tab bzw. über Immobilien). Backstube = frisch im Laden, Lebensmittelwerk = große Mengen fürs Zentrallager – beide Beschreibungen sagen das jetzt
+- **Die Leiste wächst mit:** Versorgung erscheint ab Level 2 (oder mit der ersten Maschine), Immobilien ab Level 3, Zentrallager ab Level 4 (oder wenn du eines hast)
+- **Ziel korrigiert:** „Lade den LKW ab: Karton anklicken, dann im Lager abstellen“
+- **Kamera und Nebel für die ganze Stadt:** herauszoomen bis 100 m, der Dunst setzt erst weit hinten ein
+- **Abends gehen in den Wohnungen die Lichter an** (Fensterscheiben der Wohnhäuser leuchten warm, `ModelLibrary.setWindowGlow`)
+
 **Etappe 17 – Produktion und Zentrallager** ✅
 
 - **Industriegebiet** hinter der Einkaufsstraße (Karte jetzt 120 × 90 m) an der Industriestraße: **Zentrallager** (32 × 20 m, ab Level 4), **Produktionshalle Nord** (26 × 18 m, Level 4), **Große Produktionshalle** (30 × 20 m, Level 6) und ein Gewerbegrundstück – kaufen oder mieten im Immobilien-Fenster (Filter „Industrie“)
