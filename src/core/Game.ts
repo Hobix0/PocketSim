@@ -128,6 +128,10 @@ export class Game {
   readonly clock: GameClock;
   readonly hud: Hud;
   readonly debug: DebugPanel;
+  /** Licht-Vorschau aus der Debug-Anzeige: Minute des Tages nur für die Darstellung (null = echte Uhrzeit) */
+  private lichtVorschau: number | null = null;
+  /** Millisekunden vom Seitenaufruf bis zum ersten Bild (Debug-Anzeige) */
+  private ladezeit: number | null = null;
   readonly contextHint: ContextHint;
   readonly info: InfoPanel;
   /** Was die Fabriken zum Bauen von Entities brauchen. */
@@ -335,7 +339,13 @@ export class Game {
 
     // Oberfläche
     this.hud = new Hud(this.input, this.content, this.player, this.clock, this.level.data.name);
-    this.debug = new DebugPanel(this.hud.root, this.content, this.world, this.player);
+    this.debug = new DebugPanel(this.hud.root, this.content, this.world, this.player, {
+      renderer: this.renderer,
+      hovered: () => this.interactor.hovered,
+      kunden: () => this.store.kundenImLaden,
+      setLicht: (minute) => { this.lichtVorschau = minute; },
+      ladezeit: () => this.ladezeit,
+    });
     this.contextHint = new ContextHint(this.interactor, this.input, this.pointer, this.content);
     this.info = new InfoPanel(this.selection, this.input, this.content, this.world);
 
@@ -760,6 +770,7 @@ export class Game {
 
   private tick(time: number): void {
     this.timer.update(time);
+    this.ladezeit ??= performance.now();
     // Echte Zeit seit dem letzten Bild. Höchstens 1 s, damit ein Tab im Hintergrund
     // keinen Riesensprung erzeugt – aber auch auf langsamen Rechnern geht keine Spielzeit verloren.
     const realDt = Math.min(this.timer.getDelta(), 1);
@@ -843,6 +854,7 @@ export class Game {
     const { min, max } = this.view.settings.abstand;
     this.look.zoom = THREE.MathUtils.clamp((this.view.abstand - min) / (max - min), 0, 1);
     this.look.render(this.scene, this.view.camera);
+    this.debug.update(realDt);
     this.input.endFrame();
   }
 
@@ -862,7 +874,7 @@ export class Game {
   /** Tag und Nacht: Sonne, Umgebungslicht und Himmel folgen der Uhrzeit; Lampen leuchten nachts stärker. */
   private updateDaylight(realDt: number): void {
     const l = this.content.licht;
-    const d = daylight(l, this.clock.totalMinutes % (24 * 60));
+    const d = daylight(l, this.lichtVorschau ?? this.clock.totalMinutes % (24 * 60));
     this.sun.intensity = d.sonne;
     this.ambient.intensity = d.umgebung;
     this.sun.color.copy(this.sky.sonneNacht).lerp(this.sky.sonne, d.tag).lerp(this.sky.sonneDaemmerung, d.daemmerung * 0.6);
