@@ -23,7 +23,7 @@ import { Staff, type Employee } from '../economy/Staff';
 import { stockFromCarton } from '../economy/Stocking';
 import { StoreLoop } from './StoreLoop';
 import { Goals } from '../state/Goals';
-import type { GoalDef } from '../content/definitions';
+import type { GoalDef, ProductDef } from '../content/definitions';
 import { CartonStorage } from '../world/CartonStorage';
 import { BuildController } from '../building/BuildController';
 import { CartonComponent } from '../components/CartonComponent';
@@ -53,6 +53,7 @@ import { Renovations, type RenovationSettings } from '../world/Renovations';
 import { RealEstateWindow } from '../ui/RealEstateWindow';
 import { WarehouseWindow } from '../ui/WarehouseWindow';
 import { SitesWindow } from '../ui/SitesWindow';
+import { IndustryTraffic } from '../world/IndustryTraffic';
 import { Locations, type LocationSettings } from '../world/Locations';
 import { Sites, HAUPTLADEN } from '../world/Sites';
 import { Utilities } from '../economy/Utilities';
@@ -170,10 +171,22 @@ export class Game {
   /** Eigene Läden in der Stadt (Standorte) */
   readonly sites: Sites;
   readonly sitesWindow: SitesWindow;
+  /** LKW im Industriegebiet (nur zum Anschauen) */
+  private industryTraffic: IndustryTraffic | null = null;
   private realEstateTick = 0;
   /** Ziele, die sich nur durch Nachsehen prüfen lassen (etwa jede Sekunde) */
   private zielCheck: () => void = () => {};
   private zielTick = 0;
+  private nachschubUhr = 0;
+
+  /** Stück einer Ware im Laden: in Regalen, in Kartons (auch auf dem LKW) und schon bestellt */
+  private imLaden(p: ProductDef): number {
+    let n = 0;
+    for (const [, s] of this.world.query(ShelfComponent)) n += s.menge(p.id);
+    for (const [, c] of this.world.query(CartonComponent)) if (c.produkt.id === p.id) n += c.menge;
+    for (const s of this.deliveries?.unterwegs ?? []) for (const l of s.kartons) if (l.produkt === p.id) n += l.menge * Math.max(1, l.palette ?? 1);
+    return n;
+  }
   /** Strom und Wasser */
   readonly utilities: Utilities;
   /** Maschinen, Rezepte, Rohstoffe */
@@ -373,12 +386,19 @@ export class Game {
     this.factory.machine = {
       production: this.production,
       minutesPerSecond: readData<ClockSettings>('zeit/standard').spielminutenProSekunde,
+      // Linien im Industriegebiet: ein Werksmitarbeiter schafft drei Linien im vollen Tempo, ohne geht es halb so schnell
+      tempo: (def) => {
+        if (def.lager !== 'zentral') return 1;
+        const werker = this.staff.team.filter((e) => e.rolle === 'werker').length;
+        const linien = [...this.world.query(MachineComponent)].filter(([, m]) => m.def.lager === 'zentral' && m.laeuft).length;
+        return Math.min(1, 0.5 + 0.5 * (werker * 3) / Math.max(1, linien));
+      },
       started: (byHand) => {
         if (byHand) this.player.addXp(this.content.arbeit.xpProProduktionVonHand ?? 3);
         this.goals.complete('maschine_starten');
       },
       finished: (r) => {
-        this.goals.complete('produziert');
+        if (!r.id.startsWith('herstellen_')) this.goals.complete('produziert');
         this.hud.toasts.show(this.content.text('produziert_fertig', { menge: r.ausgang.menge, ware: this.content.waren.get(r.ausgang.ware).name }), 'gut');
       },
     };
@@ -554,6 +574,14 @@ export class Game {
       arrival: (art) => this.clock.totalMinutes + (art === 'express' ? zl.expressMinuten : zl.minuten) };
     this.warehouse.events.on('arrived', ({ kartons }) => { this.hud.toasts.show(this.content.text('zentrallager_angekommen', { kartons }), 'gut'); this.warehouseWindow.refresh(); });
     this.warehouse.events.on('produced', () => this.warehouseWindow.refresh());
+    // LKW am Zentrallager: vorfahren, wenn Ware ankommt; losfahren, wenn Ware in einen Laden geht
+    const zlPlot = this.plots.list.find((p) => p.id === 'zentrallager');
+    if (zlPlot) {
+      const tor = zlPlot.rect.minX + 7;
+      this.industryTraffic = new IndustryTraffic(this.scene, this.models, this.content.logistik.lkw.model, { z: -19.6, von: -64, bis: 64, tempo: 9 });
+      this.warehouse.events.on('arrived', () => this.industryTraffic?.anliefern(tor));
+      this.warehouse.events.on('sent', () => this.industryTraffic?.abholen(tor));
+    }
     this.plots.events.on('rented', (p) => { this.hud.toasts.show(this.content.text('miete_gemietet', { name: p.name }), 'gut'); this.audio.play('kasse'); });
     this.plots.events.on('unpaid', ({ plot, tage }) => this.hud.toasts.show(this.content.text('miete_offen', { name: plot.name, tage }), 'warnung'));
     this.plots.events.on('ended', ({ plot }) => this.hud.toasts.show(this.content.text('miete_beendet', { name: plot.name }), 'warnung'));
@@ -750,7 +778,14 @@ export class Game {
     this.buyers.update(this.clock.totalMinutes);
     this.fleet?.update(minutes);
     this.renovations.update(minutes);
+    this.industryTraffic?.update(simDt);
     this.warehouse.update();
+    // Automatischer Nachschub aus dem Zentrallager (alle paar Spielstunden)
+    if ((this.nachschubUhr += minutes) >= this.warehouse.settings.nachschubMinuten) {
+      this.nachschubUhr = 0;
+      const n = this.warehouse.restock((p) => this.imLaden(p), this.deliveries ?? this.storage);
+      if (n) this.hud.toasts.show(this.content.text('zentrallager_nachschub', { kartons: n }), 'info');
+    }
     this.world.update(simDt);
     this.updateDaylight(realDt);
     this.effects.update(realDt);
@@ -1034,7 +1069,19 @@ export class Game {
 
   private spawnWorker(e: Employee, silent = false): void {
     // Was der Spieler gerade trägt, rührt das Personal nicht an
-    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried, this.storage, () => e.standort), this.factory);
+    const services = this.store.staffServices((carton) => carton !== this.hand.carried, this.storage, () => e.standort);
+    // Werksmitarbeiter: Rundgang über die laufenden Linien, sonst Warten im Zentrallager
+    services.werk = {
+      findPath: services.kassieren.findPath,
+      gehgeschwindigkeit: this.content.personal.gehgeschwindigkeit,
+      linien: () => [...this.world.query(MachineComponent)].filter(([, m]) => m.def.lager === 'zentral' && m.laeuft).map(([x]) => x),
+      warteplatz: () => {
+        const z = this.plots.list.find((p) => p.id === 'zentrallager');
+        return z ? new THREE.Vector3((z.rect.minX + z.rect.maxX) / 2, 0.05, z.rect.maxZ - 2) : new THREE.Vector3(...this.content.personal.startPunkt);
+      },
+      name: (linie) => this.content.bau.find(linie.typeId)?.name ?? 'Linie',
+    };
+    const entity = createWorkerEntity(e, services, this.factory);
     this.workers.set(e.id, entity);
     this.world.add(entity);
     if (!silent) this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');

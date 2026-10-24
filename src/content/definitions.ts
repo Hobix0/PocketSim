@@ -380,7 +380,7 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen' | 'paletten';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen' | 'paletten' | 'werk';
   /** Bewirbt sich erst, wenn diese Forschung erledigt ist (z. B. Barista → Café-Ecke) */
   forschung?: string;
 }

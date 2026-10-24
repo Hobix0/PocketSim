@@ -5,6 +5,7 @@ import { WorkerComponent, type WorkerServices } from '../components/WorkerCompon
 import { CashierComponent, type CashierServices } from '../components/CashierComponent';
 import { BuyerComponent, type BuyerServices } from '../components/BuyerComponent';
 import { PalletDriverComponent, type PalletDriverServices } from '../components/PalletDriverComponent';
+import { PlantWorkerComponent, type PlantWorkerServices } from '../components/PlantWorkerComponent';
 import type { Employee } from '../economy/Staff';
 import type { FactoryContext } from './FactoryContext';
 import { lookFromSeed } from '../voxel/figure';
@@ -29,6 +30,8 @@ export interface StaffServices {
   auffuellenFahrzeuge?: Omit<PalletDriverServices, Common>;
   /** Einkäufer: zum Einkaufsterminal gehen, dort nachbestellen */
   einkaufen: Omit<BuyerServices, Common>;
+  /** Werksmitarbeiter: Produktionslinien betreuen */
+  werk?: Omit<PlantWorkerServices, Common>;
 }
 
 export function createWorkerEntity(employee: Employee, services: StaffServices, ctx: FactoryContext): Entity {
@@ -44,6 +47,7 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
   else if (rolle.verhalten === 'bedienen') entity.add(new CashierComponent(employee, { ...(services.bedienen ?? services.kassieren), ...common }));
   else if (rolle.verhalten === 'einkaufen') entity.add(new BuyerComponent(employee, { ...services.einkaufen, ...common }));
   else if (rolle.verhalten === 'paletten' && services.paletten) entity.add(new PalletDriverComponent(employee, { ...services.paletten, ...common }));
+  else if (rolle.verhalten === 'werk' && services.werk) entity.add(new PlantWorkerComponent(employee, { ...services.werk, ...common }));
   else {
     // Lagerist und Auffüller: tragen einzelne Kartons oder nehmen ein Fahrzeug – immer nur eins zur Zeit
     const lagerist = rolle.verhalten === 'abladen';
@@ -63,5 +67,5 @@ export function createWorkerEntity(employee: Employee, services: StaffServices, 
 export function staffStatus(entity: Entity | undefined): string | undefined {
   const fahrer = entity?.get(PalletDriverComponent);
   if (fahrer?.busy) return fahrer.statusText();
-  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent) ?? fahrer)?.statusText();
+  return (entity?.get(WorkerComponent) ?? entity?.get(CashierComponent) ?? entity?.get(BuyerComponent) ?? entity?.get(PlantWorkerComponent) ?? fahrer)?.statusText();
 }
