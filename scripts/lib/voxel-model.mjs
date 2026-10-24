@@ -47,7 +47,7 @@ const FONT = {
  * @param {{ id: string, name: string, dims: [number, number, number], size?: number, ebene?: string, menue?: string,
  *           ursprung?: [number, number, number], draw: (api: object) => void }} opts
  */
-export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 'lager', ursprung, draw }) {
+export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 'lager', ursprung, objekt, draw }) {
   const [nx, ny, nz] = dims;
   const data = new Array(nx * ny * nz).fill(0);
   const idx = (x, y, z) => (x * ny + y) * nz + z;
@@ -55,6 +55,16 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   const set = (x, y, z, c) => { if (inside(x, y, z)) data[idx(x, y, z)] = c; };
   const get = (x, y, z) => (inside(x, y, z) ? data[idx(x, y, z)] : 0);
   const clear = (x, y, z) => set(x, y, z, 0);
+  // Funktionsteile (wie im Editor): part(rolle, extra) legt ein Teil an, mark(teil, …Quader, filter?) zählt die
+  // belegten Würfel darin dazu – z. B. Räder, Scheinwerfer, eine Ladebordwand (data/editor/objekttypen.json)
+  const teile = [];
+  const partOf = new Array(nx * ny * nz).fill(0);
+  const part = (rolle, extra = {}) => { teile.push({ rolle, ...extra }); return teile.length; };
+  const mark = (p, x0, x1, y0, y1, z0, z1, filter) => {
+    for (const x of range(x0, x1)) for (const y of range(y0, y1)) for (const z of range(z0, z1)) {
+      if (get(x, y, z) && (!filter || filter(x, y, z))) partOf[idx(x, y, z)] = p;
+    }
+  };
   const range = (a, b) => { const out = []; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) out.push(i); return out; };
   // Farbe als Funktion: `undefined` lässt die Zelle, wie sie ist; 0 macht sie leer
   const paint = (x, y, z, col) => { if (col !== undefined && col !== null) set(x, y, z, col); };
@@ -108,7 +118,7 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   /** Breite eines Textes in Würfeln */
   const textWidth = (str, scale = 1) => [...str.toUpperCase()].reduce((n, ch) => n + ((FONT[ch] ?? FONT[' '])[0].length + 1) * scale, 0) - scale;
 
-  draw({ nx, ny, nz, set, get, clear, box, hole, rough, cyl, frame, text, textWidth, shade, hash, range });
+  draw({ nx, ny, nz, set, get, clear, box, hole, rough, cyl, frame, text, textWidth, shade, hash, range, part, mark });
 
   // Lauflängen-Code wie im Editor (VoxelModel.encodeGrid): Anzahl*Farbe, Farbe 0 = leer
   const palette = [];
@@ -126,6 +136,21 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   }
   if (count) runs.push(`${count}*${last}`);
   const file = { id, name, typ: 'modell', menue, preis: 0, ebene, kantenlaenge: size, groesse: dims, palette, voxel: runs.join(',') };
+  if (objekt) file.objekt = objekt;
+  // Teile aus dem Skript: je Teil die Würfel als Lauflängen-Code (1 = gehört dazu), wie VoxelModel.encodeGrid
+  if (teile.length) {
+    file.teile = teile.map((t, i) => {
+      const mask = [];
+      let bit = -1, n = 0;
+      for (let k = 0; k < data.length; k++) {
+        const b = data[k] && partOf[k] === i + 1 ? 1 : 0;
+        if (b === bit) n++;
+        else { if (n) mask.push(`${n}*${bit}`); bit = b; n = 1; }
+      }
+      if (n) mask.push(`${n}*${bit}`);
+      return { ...t, zellen: mask.join(',') };
+    });
+  }
   // Eigene Lage zum Ursprung (Ecke in Würfeln), z. B. für Teile, die außen an der Wand hängen
   if (ursprung) file.ursprung = ursprung;
   fs.mkdirSync(OUT, { recursive: true });
@@ -136,8 +161,10 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
     if (old.vorschau) file.vorschau = old.vorschau;
     // Im Editor markierte Funktionsteile (Räder, Leuchten, Regalböden …) bleiben erhalten, solange die Größe gleich ist
     const gleich = JSON.stringify(old.groesse) === JSON.stringify(dims);
-    if (old.objekt) file.objekt = old.objekt;
-    if (old.teile && gleich) file.teile = old.teile;
+    // Markiert das Skript selbst Teile, gelten seine; sonst bleiben die aus dem Editor
+    if (old.objekt && !file.objekt) file.objekt = old.objekt;
+    if (file.teile) { /* aus dem Skript */ }
+    else if (old.teile && gleich) file.teile = old.teile;
     else if (old.teile) console.warn(`${id}: Größe geändert – die markierten Funktionsteile müssen im Editor neu markiert werden`);
   }
   fs.writeFileSync(target, JSON.stringify(file, null, 2) + '\n');
