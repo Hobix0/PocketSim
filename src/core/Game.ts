@@ -171,6 +171,9 @@ export class Game {
   readonly sites: Sites;
   readonly sitesWindow: SitesWindow;
   private realEstateTick = 0;
+  /** Ziele, die sich nur durch Nachsehen prüfen lassen (etwa jede Sekunde) */
+  private zielCheck: () => void = () => {};
+  private zielTick = 0;
   /** Strom und Wasser */
   readonly utilities: Utilities;
   /** Maschinen, Rezepte, Rohstoffe */
@@ -514,6 +517,30 @@ export class Game {
       this.view.flyTo(c.x, c.z, 18);
     });
     this.store.events.on('sale', () => this.sitesWindow.refresh());
+    // Kapitel-Ziele: was in Stadt, Café, Mode und Industrie passiert
+    this.store.events.on('sale', ({ kategorien }) => { if (kategorien.includes('cafe')) this.goals.complete('kaffee_verkauft'); });
+    this.research.events.on('researched', () => this.goals.complete('forschung'));
+    const neuerLaden = (p: { id: string; angebot?: { art?: string } }) => {
+      if (p.id === 'zentrallager') this.goals.complete('zentrallager');
+      else if (p.angebot && !p.angebot.art) this.goals.complete('laden_gemietet');
+    };
+    this.plots.events.on('bought', neuerLaden);
+    this.plots.events.on('rented', neuerLaden);
+    this.renovations.events.on('done', () => this.goals.complete('renoviert'));
+    this.warehouse.events.on('produced', () => this.goals.complete('linie'));
+    this.warehouse.events.on('sent', () => this.goals.complete('abholen'));
+    this.store.events.on('thought', ({ art }) => { if (art === 'anprobiert') this.goals.complete('anprobiert'); });
+    this.zielCheck = () => {
+      if (sites.list().some((s) => s.plot && locations.active(s.plot))) this.goals.complete('laden_laeuft');
+      if (this.staff.team.some((e) => e.standort)) this.goals.complete('zuteilen');
+    };
+    // Kapitel geschafft: kleine Feier
+    this.goals.events.on('completed', (g) => {
+      if (!g.kapitel || this.goals.list.some((x) => x.kapitel === g.kapitel && !this.goals.isDone(x.id))) return;
+      this.hud.toasts.show(this.content.text('kapitel_geschafft', { kapitel: g.kapitel }), 'gut');
+      this.effects.sparkle(this.view.focus.clone().setY(2), 50);
+      this.audio.play('levelup');
+    });
     this.realEstate = new RealEstateWindow(this.hud.root, this.plots, this.renovations, () => this.player.level,
       (p) => this.view.flyTo((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2, Math.max(12, (p.rect.maxX - p.rect.minX) * 1.3)),
       // Leer: innen steht nichts mehr außer dem Gebäude selbst (und Gerümpel)
@@ -759,6 +786,7 @@ export class Game {
     this.machineWindow.update();
     this.shelfWindow.update();
     this.utilityWindow.update();
+    if ((this.zielTick += realDt) > 1) { this.zielTick = 0; this.zielCheck(); }
     if (this.realEstate.isOpen && this.renovations.state().length && (this.realEstateTick += realDt) > 2) { this.realEstateTick = 0; this.realEstate.refresh(); }
     this.logisticsWindow.update();
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);

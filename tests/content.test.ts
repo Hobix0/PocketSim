@@ -110,3 +110,17 @@ describe('Voxel-Modelle', () => {
     }
   });
 });
+
+describe('Ziele', () => {
+  it('jedes Ziel hat einen Auslöser im Spiel und gehört zu einem Kapitel; Kapitel stehen am Stück', async () => {
+    const fs = await import('node:fs');
+    const code = fs.readFileSync('src/core/Game.ts', 'utf8');
+    const ziele = readData<{ id: string; kapitel?: string }[]>('ziele/start');
+    for (const z of ziele) {
+      expect(code.includes(`complete('${z.id}')`), z.id).toBe(true);
+      expect(z.kapitel, z.id).toBeTruthy();
+    }
+    const folge = ziele.map((z) => z.kapitel).filter((k, i, a) => k !== a[i - 1]);
+    expect(new Set(folge).size).toBe(folge.length);
+  });
+});

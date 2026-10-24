@@ -476,6 +476,8 @@ export interface NavSettings {
 /** Ein Ziel für den Einstieg (data/ziele/start.json); wann es erfüllt ist, steht im Code. */
 export interface GoalDef {
   id: string;
+  /** Kapitel (Überschrift in der Zielliste); Ziele eines Kapitels stehen in der Datei hintereinander */
+  kapitel?: string;
   text: string;
   belohnung: { geld?: number; xp?: number };
 }
