@@ -5,6 +5,24 @@
 /** Markiert eine belegte Zelle; so ist auch Schwarz (0x000000) von "leer" unterscheidbar. */
 export const FILLED = 1 << 24;
 
+/**
+ * Funktionsteil einer Zelle (im Editor markiert: Regalboden, Rad, Leuchte …): Nummer 1–63 in den Bits 25–30,
+ * 0 = keins. Die Nummer fährt im Zellwert mit – Drehen, Spiegeln, Zuschneiden und Rückgängig nehmen sie mit.
+ */
+export const PART_SHIFT = 25;
+export const MAX_PARTS = 63;
+/** Farbe + belegt (ohne Teil) */
+export const CELL_MASK = 0x1ffffff;
+
+export function partOf(v: number): number {
+  return (v >>> PART_SHIFT) & MAX_PARTS;
+}
+
+/** Zellwert mit anderem Teil (leere Zellen bleiben leer) */
+export function withPart(v: number, part: number): number {
+  return v === 0 ? 0 : (v & CELL_MASK) | (part << PART_SHIFT);
+}
+
 /** Bereich für Zellkoordinaten beim Sammeln: −2048 … 2047 je Achse. */
 const OFF = 2048;
 const SPAN = 4096;

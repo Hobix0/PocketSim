@@ -134,6 +134,11 @@ export function model({ id, name, dims, size = 0.025, ebene = 'objekt', menue = 
   if (fs.existsSync(target)) {
     const old = JSON.parse(fs.readFileSync(target, 'utf8'));
     if (old.vorschau) file.vorschau = old.vorschau;
+    // Im Editor markierte Funktionsteile (Räder, Leuchten, Regalböden …) bleiben erhalten, solange die Größe gleich ist
+    const gleich = JSON.stringify(old.groesse) === JSON.stringify(dims);
+    if (old.objekt) file.objekt = old.objekt;
+    if (old.teile && gleich) file.teile = old.teile;
+    else if (old.teile) console.warn(`${id}: Größe geändert – die markierten Funktionsteile müssen im Editor neu markiert werden`);
   }
   fs.writeFileSync(target, JSON.stringify(file, null, 2) + '\n');
   const filled = data.reduce((n, v) => n + (v ? 1 : 0), 0);

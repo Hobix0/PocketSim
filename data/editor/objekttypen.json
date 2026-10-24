@@ -1,0 +1,27 @@
+{
+  "_info": "Voxel-Editor: Was für ein Objekt ein Modell ist und welche Funktionsteile man darin markieren kann. typ = wie es ins Spiel kommt (deko/regal: eigenes Bauteil im Baumenü, modell: nur das Modell für data/bau). wirkung = was das Spiel mit dem Teil macht.",
+  "typen": [
+    { "id": "deko", "name": "Dekoration", "typ": "deko", "rollen": ["leuchte"] },
+    { "id": "regal", "name": "Regal (mit Ware)", "typ": "regal", "rollen": ["boden", "leuchte"] },
+    { "id": "lampe", "name": "Lampe", "typ": "deko", "rollen": ["leuchte"] },
+    { "id": "fahrzeug", "name": "Fahrzeug (LKW, Auto)", "typ": "modell", "rollen": ["scheinwerfer", "ruecklicht", "rad", "beweglich"] },
+    { "id": "maschine", "name": "Maschine / Anlage", "typ": "modell", "rollen": ["statuslampe", "leuchte", "beweglich"] },
+    { "id": "modell", "name": "Nur Modell (für data/bau)", "typ": "modell", "rollen": ["leuchte", "statuslampe", "rad", "beweglich"] }
+  ],
+  "rollen": [
+    { "id": "boden", "name": "Regalboden", "farbe": "#5fd08a", "wirkung": "regalboden",
+      "hilfe": "Darauf steht im Spiel die Ware. Jeder markierte Boden wird ein Fach; die Ware steht auf seiner Oberkante." },
+    { "id": "leuchte", "name": "Leuchte", "farbe": "#ffc062", "wirkung": "licht",
+      "hilfe": "Leuchtet abends und nachts in ihrer eigenen Farbe (Lampenschirm, Leuchtschild, Fensterlicht)." },
+    { "id": "scheinwerfer", "name": "Scheinwerfer", "farbe": "#fff1b8", "wirkung": "licht",
+      "hilfe": "Vorne am Fahrzeug (+X). Leuchtet abends und nachts." },
+    { "id": "ruecklicht", "name": "Rücklicht", "farbe": "#ff5a4f", "wirkung": "licht",
+      "hilfe": "Hinten am Fahrzeug. Leuchtet abends und nachts rot." },
+    { "id": "statuslampe", "name": "Statuslampe", "farbe": "#7ee081", "wirkung": "signal",
+      "hilfe": "Leuchtet immer – z. B. die Betriebslampe einer Anlage oder ein Display." },
+    { "id": "rad", "name": "Rad mit Achse", "farbe": "#6ab0ff", "wirkung": "rad",
+      "hilfe": "Je Rad (oder Achse mit zwei Rädern) ein eigenes Teil. Dreht sich beim Fahren um seine Mitte (Querachse Z)." },
+    { "id": "beweglich", "name": "Bewegliches Teil", "farbe": "#c58cff", "wirkung": "beweglich",
+      "hilfe": "Klappe, Tür, Ladebordwand oder Arm: bewegt sich im Spiel um eine Kante (Drehpunkt und Winkel stellst du am Teil ein)." }
+  ]
+}

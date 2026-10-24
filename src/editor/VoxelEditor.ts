@@ -3,14 +3,14 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { readData } from '../core/Data';
 import { Content } from '../content/Content';
 import { ModelLibrary, type VoxelSettings } from '../assets/ModelLibrary';
-import { VoxelGrid, FILLED } from '../voxel/VoxelGrid';
+import { VoxelGrid, FILLED, CELL_MASK, MAX_PARTS, partOf, withPart } from '../voxel/VoxelGrid';
 import { greedyMesh } from '../voxel/greedyMesh';
 import { loadPixels } from '../voxel/pixels';
 import { buildFigureGrid, lookFromSeed } from '../voxel/figure';
 import { raycastGrid, type GridHit } from './raycastGrid';
 import {
-  CUSTOM_PREFIX, centeredGrid, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, originalId, placeInMenu, validateVoxelModel,
-  type ModelType, type VoxelModelData,
+  CUSTOM_PREFIX, PART_EDGES, centeredGrid, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, objectCatalog, objectTypeOf, originalId,
+  partInfos, placeInMenu, shelfFromParts, validateVoxelModel, type ModelType, type ObjectRole, type PartInfo, type VoxelModelData,
 } from './VoxelModel';
 import { deleteFromProject, loadDraft, projectModels, saveDraft, saveToProject } from './ModelStore';
 import {
@@ -26,11 +26,12 @@ import { renderThumbnail } from '../assets/thumbnail';
 // Mausrad = zoomen. Bearbeitet wird in Blöcken zu 16³ Würfeln (nur betroffene Blöcke werden neu gebaut).
 // Die Bearbeitungs-Operationen selbst stehen ohne Grafik in gridOps.ts.
 
-type Tool = 'setzen' | 'entfernen' | 'malen' | 'fuellen' | 'ersetzen' | 'pipette';
+type Tool = 'setzen' | 'entfernen' | 'malen' | 'fuellen' | 'ersetzen' | 'pipette' | 'markieren' | 'entmarkieren';
 type Form = 'punkt' | 'linie' | 'rechteck';
 type Change = { i: number; before: number; after: number };
 type Origin = Cell | null;
-type Step = { kind: 'zellen'; changes: Change[] } | { kind: 'gitter'; before: VoxelGrid; after: VoxelGrid; uBefore: Origin; uAfter: Origin };
+type Parts = (PartInfo | null)[];
+type Step = { kind: 'zellen'; changes: Change[] } | { kind: 'gitter'; before: VoxelGrid; after: VoxelGrid; uBefore: Origin; uAfter: Origin; tBefore?: Parts; tAfter?: Parts };
 
 const CHUNK = 16;
 const MAX_DIM = 160;
@@ -44,19 +45,26 @@ const TOOLS: { id: Tool; name: string; taste: string; hilfe: string }[] = [
   { id: 'fuellen', name: 'Füllen', taste: '4', hilfe: 'Zusammenhängende gleiche Farbe umfärben' },
   { id: 'ersetzen', name: 'Farbe ersetzen', taste: '5', hilfe: 'Diese Farbe überall im Modell ersetzen' },
   { id: 'pipette', name: 'Pipette', taste: '6', hilfe: 'Farbe aufnehmen (auch Alt + Klick)' },
+  { id: 'markieren', name: 'Teil markieren', taste: '7', hilfe: 'Würfel zum gewählten Funktionsteil zählen (Regalboden, Rad, Leuchte …) – Shift+Klick: ganze Fläche gleicher Farbe, Strg+Klick: Markierung entfernen' },
 ];
 const FORMS: { id: Form; name: string; taste: string }[] = [
   { id: 'punkt', name: 'Punkt', taste: 'P' },
   { id: 'linie', name: 'Linie', taste: 'L' },
   { id: 'rechteck', name: 'Rechteck', taste: 'R' },
 ];
-const SHAPE_TOOLS: Tool[] = ['setzen', 'entfernen', 'malen'];
+const SHAPE_TOOLS: Tool[] = ['setzen', 'entfernen', 'malen', 'markieren', 'entmarkieren'];
+/** Shift+Klick beim Markieren: so ähnliche Farben (je Kanal) gehören noch zur Fläche */
+const MARK_TOLERANCE = 28;
 const MOVE_FAIL = 'Verschieben geht nicht: Würfel würden aus dem Bauraum fallen.';
 
 interface Meta {
   id: string | null;
   name: string;
   typ: ModelType;
+  /** Objekttyp (data/editor/objekttypen.json) – bestimmt typ und die markierbaren Teile */
+  objekt: string;
+  /** Funktionsteile; Index = Teilnummer − 1, null = gelöscht */
+  teile: Parts;
   menue: string;
   preis: number;
   kapazitaet: number;
@@ -104,7 +112,15 @@ export class VoxelEditor {
   private pointerInside = false;
   private hoverCell: Cell | null = null;
   private draftTimer = 0;
-  private meta: Meta = { id: null, name: 'Neues Modell', typ: 'deko', menue: 'deko', preis: 150, kapazitaet: 20, kuehlung: false, ersetzt: null, ursprung: null };
+  private meta: Meta = { id: null, name: 'Neues Modell', typ: 'deko', objekt: 'deko', teile: [], menue: 'deko', preis: 150, kapazitaet: 20, kuehlung: false, ersetzt: null, ursprung: null };
+  /** Gewähltes Funktionsteil (Nummer ab 1, 0 = keins) */
+  private activePart = 0;
+  private showParts = true;
+  /** Markierte Teile als farbige Schicht über dem Modell */
+  private partsOverlay: THREE.Mesh | null = null;
+  private partsDirty = false;
+  private partsBuilt = 0;
+  private readonly partsMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.6, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
 
   constructor(container: HTMLElement) {
     const voxel = readData<VoxelSettings>('voxel/standard');
@@ -169,6 +185,7 @@ export class VoxelEditor {
   start(): void {
     this.renderer.setAnimationLoop(() => {
       this.rebuildDirty();
+      if (this.partsDirty && performance.now() - this.partsBuilt > 150) this.rebuildParts();
       this.controls.update();
       this.renderer.render(this.scene, this.camera);
     });
@@ -185,6 +202,8 @@ export class VoxelEditor {
     this.layoutHelpers();
     this.renderForm();
     this.renderUndo();
+    this.partsDirty = true;
+    this.renderParts();
   }
 
   /** Anzeige-Gitter (mit Schnitt) neu aufbauen und alle Blöcke neu zeichnen. */
@@ -327,7 +346,8 @@ export class VoxelEditor {
     }
 
     const hit = this.pick();
-    const tool: Tool = e.altKey ? 'pipette' : this.tool;
+    const tool: Tool = e.altKey ? 'pipette' : this.tool === 'markieren' && (e.ctrlKey || e.metaKey) ? 'entmarkieren' : this.tool;
+    if (kind === 'down' && e.button === 0 && tool === 'markieren' && !this.activePart) { this.status('Erst ein Funktionsteil wählen oder anlegen (rechts unter „Funktionsteile“).'); return; }
     const target = hit ? this.targetCell(hit, tool) : null;
     this.hoverCell = hit && !hit.ground ? hit.cell : target;
     const axis = hit ? Math.max(0, hit.normal.findIndex((v) => v !== 0)) : 1;
@@ -338,11 +358,12 @@ export class VoxelEditor {
     }
     if (e.button !== 0 || !hit) return;
     if (tool === 'pipette') { if (!hit.ground) this.setColor(this.grid.get(...hit.cell), true); return; }
-    if (tool === 'fuellen' || tool === 'ersetzen') {
+    if (tool === 'fuellen' || tool === 'ersetzen' || ((tool === 'markieren' || tool === 'entmarkieren') && e.shiftKey)) {
       if (hit.ground) return;
-      const cells = tool === 'fuellen' ? floodCells(this.grid, hit.cell) : cellsOfColor(this.grid, this.grid.get(...hit.cell));
-      this.stroke = { start: hit.cell, axis, layer: 0, tool: 'malen', changes: new Map(), shape: [] };
-      this.paint(cells, 'malen');
+      const cells = tool === 'ersetzen' ? cellsOfColor(this.grid, this.grid.get(...hit.cell)) : floodCells(this.grid, hit.cell, tool === 'fuellen' ? 0 : MARK_TOLERANCE);
+      const apply: Tool = tool === 'fuellen' || tool === 'ersetzen' ? 'malen' : tool;
+      this.stroke = { start: hit.cell, axis, layer: 0, tool: apply, changes: new Map(), shape: [] };
+      this.paint(cells, apply);
       this.finishStroke();
       return;
     }
@@ -408,7 +429,7 @@ export class VoxelEditor {
     }
     this.preview.count = this.pointerInside ? n : 0;
     this.preview.instanceMatrix.needsUpdate = true;
-    this.previewMat.color.set(tool === 'entfernen' ? '#f08a7a' : tool === 'pipette' ? '#ffffff' : hex(this.color));
+    this.previewMat.color.set(tool === 'entfernen' || tool === 'entmarkieren' ? '#f08a7a' : tool === 'pipette' ? '#ffffff' : tool === 'markieren' ? this.partColor(this.activePart) : hex(this.color));
   }
 
   /** Werkzeug auf Zellen anwenden (Spiegelung ist schon enthalten). */
@@ -421,13 +442,17 @@ export class VoxelEditor {
       let after = before;
       if (tool === 'setzen' && before === 0) after = value;
       else if (tool === 'entfernen') after = 0;
-      else if (tool === 'malen' && before !== 0) after = value;
+      // Umfärben behält das Funktionsteil
+      else if (tool === 'malen' && before !== 0) after = value | (before & ~CELL_MASK);
+      else if (tool === 'markieren') after = withPart(before, this.activePart);
+      else if (tool === 'entmarkieren') after = withPart(before, 0);
       if (after !== before) this.write(c, i, before, after);
     }
   }
 
   private write(c: Cell, i: number, before: number, after: number): void {
     this.grid.data[i] = after;
+    if (partOf(before) !== partOf(after)) this.partsDirty = true;
     if (this.view !== this.grid && c[1] < this.clip) this.view.data[i] = after;
     const ch = this.stroke?.changes.get(i);
     if (ch) ch.after = after;
@@ -443,8 +468,9 @@ export class VoxelEditor {
     this.showPreview([]);
     const changes = [...st.changes.values()].filter((c) => c.before !== c.after);
     if (!changes.length) return;
-    if (st.tool !== 'entfernen') this.useColor(this.color);
+    if (st.tool === 'setzen' || st.tool === 'malen') this.useColor(this.color);
     this.pushStep({ kind: 'zellen', changes });
+    if (st.tool === 'markieren' || st.tool === 'entmarkieren' || st.tool === 'entfernen') this.renderParts();
   }
 
   private pushStep(step: Step): void {
@@ -455,13 +481,15 @@ export class VoxelEditor {
   }
 
   /** Ganzes Gitter ersetzen (Drehen, Spiegeln, Zuschneiden …) – rückgängig machbar. */
-  private replaceGrid(next: VoxelGrid | null, label: string, failMsg?: string, ursprung: Origin = this.meta.ursprung): void {
+  private replaceGrid(next: VoxelGrid | null, label: string, failMsg?: string, ursprung: Origin = this.meta.ursprung, teile?: Parts): void {
     if (!next) { if (failMsg) this.status(failMsg); return; }
     const before = this.grid;
     const uBefore = this.meta.ursprung;
+    const tBefore = this.meta.teile;
     this.meta.ursprung = uBefore ? ursprung : null;
+    if (teile) this.meta.teile = teile;
     this.setGrid(next, false);
-    this.pushStep({ kind: 'gitter', before, after: next, uBefore, uAfter: this.meta.ursprung });
+    this.pushStep({ kind: 'gitter', before, after: next, uBefore, uAfter: this.meta.ursprung, ...(teile ? { tBefore, tAfter: teile } : {}) });
     this.status(label);
   }
 
@@ -493,6 +521,8 @@ export class VoxelEditor {
     (redo ? this.undoStack : this.redoStack).push(step);
     if (step.kind === 'gitter') {
       this.meta.ursprung = redo ? step.uAfter : step.uBefore;
+      const t = redo ? step.tAfter : step.tBefore;
+      if (t) this.meta.teile = t;
       this.setGrid(redo ? step.after : step.before, false);
     }
     else {
@@ -504,6 +534,8 @@ export class VoxelEditor {
         if (this.view !== this.grid && y < this.clip) this.view.data[c.i] = v;
         this.markDirty(x, y, z);
       }
+      this.partsDirty = true;
+      this.renderParts();
     }
     this.changed();
   }
@@ -543,7 +575,8 @@ export class VoxelEditor {
   // ── Modelle: neu, öffnen, Vorlage, speichern ────────────────────
 
   private newModel(dims: [number, number, number], size: number): void {
-    this.meta = { ...this.meta, id: null, name: 'Neues Modell', ersetzt: null, ursprung: null };
+    this.meta = { ...this.meta, id: null, name: 'Neues Modell', ersetzt: null, ursprung: null, teile: [] };
+    this.activePart = 0;
     this.clip = Infinity;
     this.setGrid(new VoxelGrid(size, [0, 0, 0], dims), true);
     this.status(`Neues Modell: ${dims.join(' × ')} Würfel zu ${cm(size)}.`);
@@ -568,9 +601,14 @@ export class VoxelEditor {
     while (Math.max(...g.dims) > MAX_DIM) { g = g.downsample(2); f *= 2; }
     const out = new VoxelGrid(g.size, [0, 0, 0], [...g.dims]);
     out.data.set(g.data);
+    // Eine Vorlage aus einem eigenen Modell bringt ihre Funktionsteile mit
+    const teile = eigen && f === 1 ? partInfos(eigen) : [];
+    const objekt = eigen ? objectTypeOf(eigen) : null;
     this.meta = original
-      ? { ...this.meta, id: originalId(baseId), name, typ: 'modell', ersetzt: path, ursprung: src.min.map((v) => Math.floor(v / f)) as Cell }
-      : { ...this.meta, id: null, name: `${name} (Variante)`, ersetzt: null, ursprung: null };
+      ? { ...this.meta, id: originalId(baseId), name, typ: 'modell', objekt: 'modell', teile: [], ersetzt: path, ursprung: src.min.map((v) => Math.floor(v / f)) as Cell }
+      : { ...this.meta, id: null, name: `${name} (Variante)`, ersetzt: null, ursprung: null, teile, ...(objekt ? { objekt: objekt.id, typ: objekt.typ } : {}) };
+    this.activePart = 0;
+    if (!teile.length) for (let i = 0; i < out.data.length; i++) out.data[i] = withPart(out.data[i], 0);
     this.clip = Infinity;
     this.setGrid(out, true);
     this.status(original
@@ -581,9 +619,11 @@ export class VoxelEditor {
 
   private openModel(m: VoxelModelData, msg?: string): void {
     this.meta = {
-      id: m.id, name: m.name, typ: m.typ, menue: m.menue, preis: m.preis, kapazitaet: m.regal?.kapazitaet ?? 20, kuehlung: m.regal?.kuehlung ?? false,
+      id: m.id, name: m.name, typ: m.typ, objekt: objectTypeOf(m).id, teile: partInfos(m),
+      menue: m.menue, preis: m.preis, kapazitaet: m.regal?.kapazitaet ?? 20, kuehlung: m.regal?.kuehlung ?? false,
       ersetzt: m.ersetzt ?? null, ursprung: m.ursprung ? [...m.ursprung] : null,
     };
+    this.activePart = 0;
     this.clip = Infinity;
     this.setGrid(decodeGrid(m), true);
     this.status(msg ?? `„${m.name}“ geöffnet.`);
@@ -597,7 +637,7 @@ export class VoxelEditor {
     const u = this.meta.ursprung;
     const lo = u ? bounds(this.grid)?.lo : undefined;
     const g = crop(this.grid, !u && ebene !== 'decke') ?? this.grid;
-    const { palette, voxel } = encodeGrid(g);
+    const { palette, voxel, teile } = encodeGrid(g, this.meta.teile);
     const original = this.meta.ersetzt && u ? { ersetzt: this.meta.ersetzt, ursprung: (lo ? [u[0] + lo[0], u[1] + lo[1], u[2] + lo[2]] : u) as Cell } : {};
     return {
       ...original,
@@ -605,6 +645,8 @@ export class VoxelEditor {
       preis: this.meta.preis, ebene, kantenlaenge: g.size, groesse: [...g.dims], palette, voxel,
       regal: this.meta.typ === 'regal' ? { kapazitaet: this.meta.kapazitaet, kuehlung: this.meta.kuehlung } : undefined,
       vorschau: withPreview ? this.thumbnail() : undefined,
+      ...(this.meta.objekt !== this.meta.typ ? { objekt: this.meta.objekt } : {}),
+      ...(teile ? { teile } : {}),
     };
   }
 
@@ -735,7 +777,7 @@ export class VoxelEditor {
       <aside class="editor-right panel">
         <details open><summary>Im Spiel</summary>
           <div class="dims">
-            <label>Art<select class="typ"><option value="deko">Dekoration</option><option value="regal">Regal (mit Ware)</option><option value="modell">Nur Modell (für data/bau)</option></select></label>
+            <label>Art<select class="typ">${objectCatalog().typen.map((t) => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join('')}</select></label>
             <label class="not-model">Reiter im Baumenü<select class="menue">${menus}</select></label>
             <label class="not-model">Preis (€)<input type="number" class="preis" min="0" step="10"></label>
             <label class="regal-only">Stück pro Fach<input type="number" class="kapazitaet" min="1" max="200"></label>
@@ -744,6 +786,7 @@ export class VoxelEditor {
           <p class="hint place-info"></p>
           <p class="hint regal-only shelf-info"></p>
         </details>
+        <details open class="parts-box"><summary>Funktionsteile</summary><div class="parts"></div></details>
         <details open><summary>Modell</summary>
           <div class="dims">
             <label>Breite X<input type="number" class="nx" min="1" max="${MAX_DIM}"></label>
@@ -791,10 +834,16 @@ export class VoxelEditor {
     this.ui.addEventListener('change', (e) => {
       const t = e.target as HTMLInputElement;
       if (t.classList.contains('typ')) {
-        this.meta.typ = t.value as ModelType;
+        const o = objectCatalog().typen.find((x) => x.id === t.value);
+        if (!o) return;
+        this.meta.objekt = o.id;
+        this.meta.typ = o.typ;
         if (this.meta.typ === 'regal' && this.meta.menue === defaultMenu('deko')) this.meta.menue = defaultMenu('regal');
         this.renderForm();
-      } else if (t.classList.contains('menue')) { this.meta.menue = t.value; this.renderForm(); }
+        this.renderParts();
+      }
+      else if (t.dataset.partField) this.setPartField(Number(t.dataset.part), t.dataset.partField, t.value);
+      else if (t.classList.contains('show-parts')) { this.showParts = t.checked; this.partsDirty = true; } else if (t.classList.contains('menue')) { this.meta.menue = t.value; this.renderForm(); }
       else if (t.classList.contains('kuehlung')) this.meta.kuehlung = t.checked;
       else if (t.classList.contains('figure')) this.updateFigure();
       else if (t.classList.contains('size')) this.renderMeters();
@@ -819,6 +868,9 @@ export class VoxelEditor {
     else if (d.color) this.setColor(parseInt(d.color, 16));
     else if (d.open) { const m = projectModels().find((x) => x.id === d.open); if (m) this.openModel(m); }
     else if (d.delete) void this.deleteModel(d.delete);
+    else if (d.addPart) this.addPart(d.addPart);
+    else if (d.delPart) this.deletePart(Number(d.delPart));
+    else if (d.part) { this.activePart = Number(d.part); this.partsDirty = true; this.setTool('markieren'); this.renderParts(); }
     else if (d.move) this.replaceGrid(shift(this.grid, d.move.split(',').map(Number) as Cell), 'Modell verschoben', MOVE_FAIL);
     else if (d.preset) { const p = PRESETS[Number(d.preset)]; this.closeDialog(); this.newModel(presetDims(p), p.size); }
     else if (b.classList.contains('undo')) this.undo();
@@ -901,7 +953,9 @@ export class VoxelEditor {
   private renderForm(): void {
     const q = this.q.bind(this);
     q<HTMLInputElement>('.name').value = this.meta.name;
-    q<HTMLSelectElement>('.typ').value = this.meta.typ;
+    q<HTMLSelectElement>('.typ').value = this.meta.objekt;
+    // Bearbeitete Originale bleiben „nur Modell“ – Leuchten, Räder & Co. lassen sich trotzdem markieren
+    q<HTMLSelectElement>('.typ').querySelectorAll('option').forEach((o) => { o.disabled = !!this.meta.ersetzt && objectCatalog().typen.find((t) => t.id === o.value)?.typ !== 'modell'; });
     q<HTMLSelectElement>('.menue').value = this.meta.menue;
     q<HTMLInputElement>('.preis').value = String(this.meta.preis);
     q<HTMLInputElement>('.kapazitaet').value = String(this.meta.kapazitaet);
@@ -921,8 +975,10 @@ export class VoxelEditor {
     const ebene = placeInMenu(this.meta.menue, this.content.baumenue.kategorien, 'objekt').ebene;
     const wie: Record<string, string> = { objekt: 'steht auf dem Boden', decke: 'hängt von der Decke (Ursprung oben)', wand: 'ist ein Wandmodul', anbau: 'hängt an einer Wand', boden: 'ist ein Bodenbelag' };
     const tab = this.content.baumenue.kategorien.find((k) => k.id === this.meta.menue)?.name ?? this.meta.menue;
-    q<HTMLSelectElement>('.typ').disabled = !!this.meta.ersetzt;
-    q('.place-info').textContent = this.meta.ersetzt
+    const nutzer = this.meta.id ? this.content.bau.all().filter((d) => d.model === CUSTOM_PREFIX + this.meta.id) : [];
+    q('.place-info').textContent = nutzer.length
+      ? `Wird in data/bau von ${nutzer.map((d) => `„${d.name}“`).join(', ')} benutzt – markierte Funktionsteile (z. B. Regalböden) gelten dort.`
+      : this.meta.ersetzt
       ? `Bearbeitetes Original: ersetzt das Modell überall im Spiel (Bauteile bzw. Ware). Löschen in „Modelle im Projekt“ stellt das Original wieder her.`
       : this.meta.typ === 'modell'
       ? `Erscheint nicht selbst im Baumenü. In data/bau als "model": "${CUSTOM_PREFIX}${this.meta.id ?? '<id>'}" verwenden.`
@@ -943,7 +999,7 @@ export class VoxelEditor {
     const tabName = (id: string) => this.content.baumenue.kategorien.find((k) => k.id === id)?.name ?? id;
     this.q('.library').innerHTML = list.length ? list.map((m) => `
       <div class="lib-item${m.id === this.meta.id ? ' current' : ''}">${m.vorschau ? `<img src="${m.vorschau}" alt="">` : '<span class="noicon"></span>'}
-        <span>${esc(m.name)}<small>${m.ersetzt ? 'Original bearbeitet' : `${label[m.typ]}${m.typ === 'modell' ? '' : ` · ${esc(tabName(m.menue))}`}`} · ${m.groesse.join('×')}</small></span>
+        <span>${esc(m.name)}<small>${m.ersetzt ? 'Original bearbeitet' : `${m.objekt ? esc(objectTypeOf(m).name) : label[m.typ]}${m.typ === 'modell' ? '' : ` · ${esc(tabName(m.menue))}`}`} · ${m.groesse.join('×')}${m.teile?.length ? ` · ${m.teile.length} Teile` : ''}</small></span>
         <button type="button" data-open="${esc(m.id)}">Öffnen</button>
         ${import.meta.env.DEV ? `<button type="button" data-delete="${esc(m.id)}" title="${m.ersetzt ? 'Löschen – das Original kommt zurück' : 'Aus dem Projekt löschen'}" aria-label="Löschen">✕</button>` : ''}</div>`).join('')
       : '<p class="hint">Noch keine Modelle in data/modelle.</p>';
@@ -962,14 +1018,137 @@ export class VoxelEditor {
       `${nx} × ${ny} × ${nz} Würfel (${meters(nx * s)} × ${meters(ny * s)} × ${meters(nz * s)} m) · ${this.grid.count.toLocaleString('de-DE')} Würfel · ${flaechen.toLocaleString('de-DE')} Flächen`;
     const c = this.hoverCell;
     const v = c && this.inside(c) ? this.grid.get(...c) : 0;
+    const teil = partOf(v) ? this.partLabel(partOf(v)) : '';
     this.q('.cursor').innerHTML = c
-      ? `x ${c[0]} · y ${c[1]} · z ${c[2]}${v ? ` · <i style="background:${hex(v)}"></i>${hex(v)}` : ''}` : '';
+      ? `x ${c[0]} · y ${c[1]} · z ${c[2]}${v ? ` · <i style="background:${hex(v)}"></i>${hex(v)}` : ''}${teil ? ` · ${esc(teil)}` : ''}` : '';
     if (this.meta.typ === 'regal') {
+      const marked = shelfFromParts({ ...this.modelBase(), teile: this.meta.teile.map((t) => (t ? { ...t, zellen: '' } : { rolle: '', zellen: '' })) }, this.grid);
+      if (marked) {
+        this.q('.shelf-info').textContent = `Markierte Regalböden: ${marked.faecher} (Höhen ${marked.ebenen!.map(meters).join(' / ')} m) – dort steht später die Ware.`;
+        return;
+      }
       const levels = detectShelfLevels(this.grid);
       this.q('.shelf-info').textContent = levels.length
         ? `Erkannte Regalböden: ${levels.length} (Höhen ${levels.map(meters).join(' / ')} m) – dort steht später die Ware.`
-        : 'Noch keine Regalböden erkannt: Böden sind waagerechte Flächen mit mindestens 12 cm Platz darüber.';
+        : 'Noch keine Regalböden erkannt: Böden sind waagerechte Flächen mit mindestens 12 cm Platz darüber – oder markiere sie unter „Funktionsteile“.';
     }
+  }
+
+  // ── Funktionsteile ──────────────────────────────────────────────
+
+  private role(id: string | undefined): ObjectRole | undefined {
+    return objectCatalog().rollen.find((r) => r.id === id);
+  }
+
+  private partColor(p: number): string {
+    return this.role(this.meta.teile[p - 1]?.rolle)?.farbe ?? '#ffffff';
+  }
+
+  /** „Rad mit Achse 2“ – Nummer nur, wenn es mehrere Teile dieser Rolle gibt */
+  private partLabel(p: number): string {
+    const t = this.meta.teile[p - 1];
+    if (!t) return '';
+    const same = this.meta.teile.map((x, i) => (x?.rolle === t.rolle ? i + 1 : 0)).filter(Boolean);
+    const name = this.role(t.rolle)?.name ?? t.rolle;
+    return same.length > 1 ? `${name} ${same.indexOf(p) + 1}` : name;
+  }
+
+  /** Grunddaten für Berechnungen aus dem aktuellen Stand (ohne Zuschneiden) */
+  private modelBase(): VoxelModelData {
+    return {
+      id: this.meta.id ?? 'neu', name: this.meta.name, typ: this.meta.typ, menue: this.meta.menue, preis: this.meta.preis, ebene: 'objekt',
+      kantenlaenge: this.grid.size, groesse: [...this.grid.dims], palette: [], voxel: '', ursprung: this.meta.ursprung ?? undefined,
+    };
+  }
+
+  private addPart(rolle: string): void {
+    let slot = this.meta.teile.findIndex((t) => !t);
+    if (slot < 0) slot = this.meta.teile.length;
+    if (slot >= MAX_PARTS) { this.status(`Höchstens ${MAX_PARTS} Funktionsteile je Modell.`); return; }
+    const teile = [...this.meta.teile];
+    teile[slot] = this.role(rolle)?.wirkung === 'beweglich' ? { rolle, achse: 'z', kante: 'unten', winkel: -90 } : { rolle };
+    this.meta.teile = teile;
+    this.activePart = slot + 1;
+    this.partsDirty = true;
+    this.setTool('markieren');
+    this.renderParts();
+    this.status(`${this.partLabel(slot + 1)} angelegt – jetzt die Würfel anklicken, die dazugehören (Shift+Klick: ganze Fläche gleicher Farbe).`);
+  }
+
+  /** Teil löschen: Markierung aus allen Würfeln nehmen (rückgängig machbar) */
+  private deletePart(p: number): void {
+    const label = this.partLabel(p);
+    const next = new VoxelGrid(this.grid.size, [...this.grid.min], [...this.grid.dims]);
+    for (let i = 0; i < next.data.length; i++) { const v = this.grid.data[i]; next.data[i] = partOf(v) === p ? withPart(v, 0) : v; }
+    const teile = [...this.meta.teile];
+    teile[p - 1] = null;
+    if (this.activePart === p) this.activePart = 0;
+    this.replaceGrid(next, `${label} gelöscht`, undefined, this.meta.ursprung, teile);
+  }
+
+  private setPartField(p: number, field: string, value: string): void {
+    const t = this.meta.teile[p - 1];
+    if (!t) return;
+    const teile = [...this.meta.teile];
+    if (field === 'achse') teile[p - 1] = { ...t, achse: value as 'x' | 'y' | 'z' };
+    else if (field === 'kante') teile[p - 1] = { ...t, kante: value as PartInfo['kante'] };
+    else if (field === 'winkel') teile[p - 1] = { ...t, winkel: Math.max(-180, Math.min(180, Math.round(Number(value) || 0))) };
+    this.meta.teile = teile;
+    this.changed();
+  }
+
+  /** Liste der Teile und Knöpfe zum Anlegen (je Rolle des Objekttyps) */
+  private renderParts(): void {
+    const el = this.ui.querySelector('.parts');
+    if (!el) return;
+    const typ = objectCatalog().typen.find((t) => t.id === this.meta.objekt);
+    const rollen = (typ?.rollen ?? []).map((id) => this.role(id)).filter((r) => r !== undefined);
+    const counts = new Map<number, number>();
+    for (const v of this.grid.data) { const p = partOf(v); if (p) counts.set(p, (counts.get(p) ?? 0) + 1); }
+    const swatch = (c: string) => `<i class="part-color" style="background:${esc(c)}"></i>`;
+    const rows = this.meta.teile.map((t, i) => {
+      if (!t) return '';
+      const p = i + 1, r = this.role(t.rolle);
+      const fremd = !typ?.rollen.includes(t.rolle) ? ' <small class="warn">passt nicht zu diesem Objekt</small>' : '';
+      const fields = r?.wirkung === 'beweglich' ? `<div class="part-fields">
+          <label>Kante<select data-part="${p}" data-part-field="kante">${PART_EDGES.map((k) => `<option ${t.kante === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+          <label>Achse<select data-part="${p}" data-part-field="achse">${['x', 'y', 'z'].map((a) => `<option ${t.achse === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+          <label>Winkel°<input type="number" step="5" min="-180" max="180" value="${t.winkel ?? 0}" data-part="${p}" data-part-field="winkel"></label></div>` : '';
+      return `<div class="part-row${p === this.activePart ? ' active' : ''}">
+        <button type="button" data-part="${p}" title="Auswählen und markieren">${swatch(r?.farbe ?? '#fff')}${esc(this.partLabel(p))}</button>
+        <small>${counts.get(p) ?? 0} Würfel</small>${fremd}
+        <button type="button" data-del-part="${p}" aria-label="Teil löschen" title="Teil löschen (die Würfel bleiben)">✕</button>${fields}</div>`;
+    }).join('');
+    const active = this.role(this.meta.teile[this.activePart - 1]?.rolle);
+    el.innerHTML = rollen.length || rows ? `
+      <div class="part-add">${rollen.map((r) => `<button type="button" data-add-part="${esc(r.id)}" title="${esc(r.hilfe)}">${swatch(r.farbe)}+ ${esc(r.name)}</button>`).join('')}</div>
+      ${rows || '<p class="hint">Noch keine Teile markiert. Lege oben ein Teil an und klicke dann die Würfel an, die dazugehören.</p>'}
+      ${active ? `<p class="hint">${esc(active.hilfe)}</p>` : ''}
+      <label class="check"><input type="checkbox" class="show-parts" ${this.showParts ? 'checked' : ''}> Teile farbig zeigen</label>`
+      : '<p class="hint">Dieser Objekttyp hat keine Funktionsteile.</p>';
+  }
+
+  /** Farbige Schicht über den markierten Würfeln (das gewählte Teil kräftig, die anderen blasser) */
+  private rebuildParts(): void {
+    this.partsDirty = false;
+    this.partsBuilt = performance.now();
+    if (this.partsOverlay) { this.modelGroup.remove(this.partsOverlay); this.partsOverlay.geometry.dispose(); this.partsOverlay = null; }
+    if (!this.showParts) return;
+    const colors = this.meta.teile.map((t, i) => {
+      const c = new THREE.Color(this.role(t?.rolle)?.farbe ?? '#ffffff');
+      if (i + 1 !== this.activePart) c.lerp(new THREE.Color('#2a3138'), 0.35);
+      return c.getHex();
+    });
+    const g = new VoxelGrid(this.view.size, [0, 0, 0], [...this.view.dims]);
+    let any = false;
+    for (let i = 0; i < g.data.length; i++) {
+      const p = partOf(this.view.data[i]);
+      if (p && this.meta.teile[p - 1]) { g.data[i] = colors[p - 1] | FILLED; any = true; }
+    }
+    if (!any) return;
+    this.partsOverlay = new THREE.Mesh(greedyMesh(g), this.partsMat);
+    this.partsOverlay.renderOrder = 5;
+    this.modelGroup.add(this.partsOverlay);
   }
 
   private openNewDialog(): void {
@@ -1004,6 +1183,7 @@ export class VoxelEditor {
           ${row(key('[') + key(']'), 'Pinsel kleiner · größer (1–5)')}
           ${row(key('M') + key('N'), 'Beim Zeichnen spiegeln: links/rechts · vorne/hinten')}
           ${row(`${key('Alt')} + Klick`, 'Farbe aufnehmen')}
+          ${row(`${key('7')} ${key('Shift')}/${key('Strg')} + Klick`, 'Teil markieren: Fläche gleicher Farbe · Markierung entfernen')}
           ${row(key('D'), 'Modell um 90° drehen')}
           ${row(`${key('Pfeile')} ${key('Bild ↑↓')}`, 'Modell verschieben (X/Z · Y)')}
           ${row(key('F'), 'Kamera einpassen')}

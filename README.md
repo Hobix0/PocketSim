@@ -98,6 +98,13 @@ Der Editor gehört zur Entwicklung, nicht zum Spielen: Mit ihm entstehen neue Sp
 - **Farben:** Palette der Spielmodelle, freie Farbwahl und die zuletzt benutzten Farben
 - **Modelle aus dem Spiel:** jedes Bauteil und Produkt laden – entweder **„Als neues Modell“** (Kopie, ein eigenes neues Teil) oder **„Original bearbeiten“**: Die Änderung ersetzt das Modell überall im Spiel (alle Exemplare, auch Ware im Regal). Die Datei heißt `data/modelle/original_<id>.json` und merkt sich mit `ersetzt` und `ursprung`, welches Modell sie ersetzt und wo es liegt – Drehen, Zuschneiden und Größe ändern verschieben nichts. Löschen stellt das Original wieder her; die Blender-Datei bleibt unangetastet. Glasflächen werden dabei nicht übernommen
 - **Im Spiel:** Art (Dekoration, Regal oder „Nur Modell“), **Reiter im Baumenü** (alle Reiter aus `data/baumenue`, z. B. Einrichtung, Licht, Deko), Preis. Der Reiter bestimmt auch, wie das Teil gebaut wird – im Reiter „Licht“ hängt es an der Decke. Bei Regalen erkennt der Editor die Regalböden selbst; vorne ist +X (grüner Pfeil)
+- **Funktionsteile markieren** (Werkzeug `7` „Teil markieren“): Die **Art** ist jetzt ein Objekttyp aus `data/editor/objekttypen.json` – Dekoration, Regal, Lampe, Fahrzeug, Maschine, Nur Modell. Je Typ legst du unter „Funktionsteile“ Teile an und klickst die Würfel an, die dazugehören:
+  - Regal: **Regalboden** (je Boden ein Fach, die Ware steht auf seiner Oberkante – geht vor der automatischen Erkennung), Leuchte
+  - Fahrzeug: **Scheinwerfer**, **Rücklicht**, **Rad mit Achse**, **bewegliches Teil** (Kante, Achse, Winkel einstellbar)
+  - Maschine: **Statuslampe** (leuchtet immer), Leuchte, bewegliches Teil
+  - Klick, Pinsel, Linie, Rechteck wie beim Malen; `Shift`+Klick nimmt die ganze zusammenhängende Fläche ähnlicher Farbe (auch Holz mit Farbrauschen), `Strg`+Klick entfernt die Markierung. Markierte Würfel sind farbig hinterlegt, das gewählte Teil kräftig
+  - Die Teil-Nummer steckt im Würfel selbst: Drehen, Spiegeln, Zuschneiden, Umfärben und Rückgängig nehmen die Markierung mit
+  - Im Spiel: Leuchten, Scheinwerfer und Rücklichter leuchten abends in ihrer eigenen Farbe, Statuslampen immer; Räder und bewegliche Teile sind eigene Gruppen mit Drehpunkt (die Bewegung kommt im nächsten Schritt). Benutzt ein Bauteil aus `data/bau` das Modell (z. B. das Holzregal), gelten markierte Regalböden dort
 - **„Nur Modell“** erscheint nicht selbst im Baumenü – ein Bauteil in `data/bau` verweist mit `"model": "eigen/<id>"` darauf (so sind Backstation, Saftpresse und Aufschnittmaschine gebaut)
 - **Speichern** (`Strg+S`): schreibt `data/modelle/<id>.json` ins Projekt (nur mit `npm run dev`). Sonst „Exportieren“ und die Datei von Hand nach `data/modelle/` legen. Die offene Arbeit wird zusätzlich als Entwurf im Browser gesichert und nach dem Neuladen wiederhergestellt
 - **Modelle im Projekt:** Liste aller Dateien in `data/modelle` mit Art und Reiter – öffnen, weiterbearbeiten, löschen
@@ -701,6 +708,13 @@ flowchart LR
 - `menue`: Reiter im Baumenü (`id` aus `data/baumenue/standard.json`). Fehlt es, gilt Einrichtung für Regale und Deko für alles andere. Der Reiter legt Kategorie und Bau-Ebene fest
 - `voxel` zählt alle Zellen (x außen, dann y, dann z innen) als `Anzahl*Farbe` auf; Farbe 0 = leer, sonst Nummer in `palette` (ab 1)
 - Neue ids aus dem Editor beginnen mit `modell_` (aus dem Namen gebildet)
+- `objekt`: Objekttyp aus `data/editor/objekttypen.json` (fehlt er, gilt `typ`). `teile`: markierte Funktionsteile, je Teil `rolle` und `zellen` (Lauflängen-Code über alle Zellen wie `voxel`, `1` = gehört dazu); bewegliche Teile zusätzlich `kante`, `achse`, `winkel`. Die Modell-Skripte (`scripts/lib/voxel-model.mjs`) behalten `objekt` und `teile` beim Neuerzeugen, solange die Größe gleich bleibt
+
+```json
+"objekt": "fahrzeug",
+"teile": [{ "rolle": "scheinwerfer", "zellen": "6912*0,4*1,…" }, { "rolle": "rad", "zellen": "…" },
+          { "rolle": "beweglich", "zellen": "…", "kante": "unten", "achse": "z", "winkel": -90 }]
+```
 
 ### Datenformate
 
