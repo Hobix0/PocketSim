@@ -9,7 +9,7 @@ import { loadPixels } from '../voxel/pixels';
 import { buildFigureGrid, lookFromSeed } from '../voxel/figure';
 import { raycastGrid, type GridHit } from './raycastGrid';
 import {
-  CUSTOM_PREFIX, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, originalId, placeInMenu, validateVoxelModel,
+  CUSTOM_PREFIX, centeredGrid, decodeGrid, defaultMenu, detectShelfLevels, encodeGrid, idFromName, originalId, placeInMenu, validateVoxelModel,
   type ModelType, type VoxelModelData,
 } from './VoxelModel';
 import { deleteFromProject, loadDraft, projectModels, saveDraft, saveToProject } from './ModelStore';
@@ -559,7 +559,10 @@ export class VoxelEditor {
     const saved = original ? projectModels().find((m) => m.ersetzt === path) : undefined;
     if (saved) { this.openModel(saved, `„${saved.name}“ – deine bearbeitete Fassung des Originals.`); return; }
     this.status(`Lade ${name} …`);
-    const src = await this.models.voxelGridOf(path).catch(() => null);
+    // Eigene Modelle liegen als Datei im Projekt (die Modell-Bibliothek des Editors kennt nur die Originale)
+    const eigen = path.startsWith(CUSTOM_PREFIX) ? projectModels().find((m) => CUSTOM_PREFIX + m.id === path) : undefined;
+    if (eigen && original) { this.openModel(eigen, `„${eigen.name}“ – dein eigenes Modell.`); return; }
+    const src = eigen ? centeredGrid(eigen) : await this.models.voxelGridOf(path).catch(() => null);
     if (!src) { this.status('Dieses Modell hat keine Würfel-Fassung.'); return; }
     let g = src, f = 1;
     while (Math.max(...g.dims) > MAX_DIM) { g = g.downsample(2); f *= 2; }
