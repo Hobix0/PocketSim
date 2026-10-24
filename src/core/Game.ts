@@ -495,7 +495,7 @@ export class Game {
     const locations = new Locations(this.world, this.plots, readData<{ lage: LocationSettings }>('stadt/standard').lage);
     this.store.lageFaktor = () => locations.factor();
     // Standorte: Kunden gehen gezielt in einen Laden – nach Lage und Größe verteilt (Hauptladen zählt 1)
-    this.sites = new Sites(this.plots, this.world);
+    this.sites = new Sites(this.plots, this.world, (id) => this.content.bau.find(id)?.gruppe?.split('/')[0]);
     const sites = this.sites;
     this.store.standorte = {
       at: (x, z) => sites.at(x, z),

@@ -67,6 +67,7 @@ export class SitesWindow {
       const hinweise: string[] = [];
       if (s.plot) {
         if (this.sites.kind(s.id) === 'leer') hinweise.push('Stell Regale mit Ware hinein – erst dann kommt Kundschaft.');
+        else if (this.sites.soldOut(s.id)) hinweise.push('Alles ausverkauft – Ware nachfüllen (Auffüller mit 📍 hier oder vom Zentrallager).');
         if (!kassen) hinweise.push('Noch keine Kasse: Kunden kommen erst, wenn sie hier bezahlen können.');
         else if (!leute.some((x) => x.includes('Kassierer') || x.includes('Barista'))) hinweise.push('Niemand fest an der Kasse – teile im Personal jemanden zu (📍).');
         if (this.locations.active(s.plot)) hinweise.unshift(`Läuft: bringt +${Math.round(this.locations.potential(s.plot) * 100)} % Kundschaft in die Stadt.`);

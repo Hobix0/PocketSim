@@ -77,6 +77,11 @@ export class Hud {
     this.speedEl = q('.speed');
     this.helpEl = q('.hud-help');
     this.toolsEl = q('.tools');
+    // Ziele & Co. sitzen unter der Top-Bar – auch wenn ihre Knöpfe in eine zweite Zeile umbrechen
+    const bar = q('.topbar');
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(() => this.root.style.setProperty('--topbar-unten', `${Math.round(bar.getBoundingClientRect().bottom)}px`)).observe(bar);
+    }
     this.handEl = q('.hand');
     this.toasts = new Toasts(this.root);
     this.toolsEl.addEventListener('click', (e) => {

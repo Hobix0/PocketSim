@@ -228,6 +228,15 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 18b – Standorte: jeder Laden ist ein eigener Laden** ✅
+
+- **Kunden gehen gezielt in einen Laden** – verteilt nach Lage und Größe (Hauptladen zählt 1). Dort suchen sie Ware, Kasse, Umkleide und Sitzplatz; Wagenbox und Terrasse auf dem Gehweg gehören zum Laden direkt davor. Sie kommen aus der Nähe (Haustüren und Straßenenden um den Laden) und gehen auch dorthin zurück
+- Ein Laden zieht erst Kundschaft an, wenn **Ware im Regal und eine Kasse** (oder ein Bedientresen) darin stehen – so verliert niemand Ruf, weil Kunden nicht bezahlen können
+- **Personal zuteilen:** Kassierer, Auffüller und Baristas bekommen im Personal-Fenster einen Knopf 📍 (überall → Hauptladen → weitere Läden). Wer fest in einem Laden ist, kassiert, bedient und füllt nur dort auf; Lagerist, Staplerfahrer und Einkäufer bleiben im Hauptlager
+- **Meine Läden** (Knopf oder Taste `H`, ab dem zweiten Laden): je Laden die Art (🛒 Supermarkt, ☕ Café, 👗 Mode – erkannt an der Einrichtung), heute Kunden und Umsatz, Kassen, festes Personal und was noch fehlt
+- Die Knopfleiste bricht bei vielen Bereichen in eine zweite Zeile um; die Ziele rutschen mit
+- Code: `src/world/Sites.ts`, `src/ui/SitesWindow.ts`, Filter in `StoreLoop.ts` (`standorte`), `Stocking.ts`/`PalletLogistics.ts` (`regalOk`)
+
 **Etappe 18a – Aufräumen: alles passt zusammen** ✅
 
 - **Forschung ohne Widersprüche:** Die alten „kommt bald“-Knoten Modeladen, Zentrallager und Produktionshalle im Supermarkt-Tab sind weg (gibt es längst im Mode- und Produktions-Tab bzw. über Immobilien). Backstube = frisch im Laden, Lebensmittelwerk = große Mengen fürs Zentrallager – beide Beschreibungen sagen das jetzt

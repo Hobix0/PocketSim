@@ -27,7 +27,12 @@ export class Sites {
   /** Heute: Umsatz und Kunden je Standort */
   private readonly heute = new Map<string, { umsatz: number; kunden: number }>();
 
-  constructor(private readonly plots: Plots, private readonly world: World) {}
+  constructor(
+    private readonly plots: Plots,
+    private readonly world: World,
+    /** Bereich im Baumenü eines Bauteils ("mode", "cafe", "laden" …) – daran erkennt man die Art des Ladens */
+    private readonly bereichOf: (typeId: string) => string | undefined = () => undefined,
+  ) {}
 
   /** Eigene Läden: der Hauptladen und jedes eigene Ladenlokal (ohne Industrie) */
   list(): Site[] {
@@ -72,6 +77,9 @@ export class Sites {
     const n: Record<string, number> = { cafe: 0, mode: 0, supermarkt: 0 };
     for (const [e, s] of this.world.query(ShelfComponent)) {
       if (this.at(e.object.position.x, e.object.position.z) !== id) continue;
+      // Die Einrichtung zählt (auch wenn gerade ausverkauft), die Ware darin entscheidet bei gemischten Läden
+      const b = this.bereichOf(e.typeId);
+      if (b === 'mode') n.mode += 20; else if (b === 'cafe') n.cafe += 20; else if (b === 'laden') n.supermarkt += 20;
       for (const f of s.faecher) {
         if (!f.produkt || f.menge <= 0) continue;
         const k = f.produkt.kategorie;
@@ -81,6 +89,17 @@ export class Sites {
     for (const [e] of this.world.query(SeatComponent)) if (this.at(e.object.position.x, e.object.position.z) === id) n.cafe += 5;
     const best = (Object.entries(n) as [SiteKind, number][]).sort((a, b) => b[1] - a[1])[0];
     return best[1] > 0 ? best[0] : 'leer';
+  }
+
+  /** Steht im Standort ein Regal, aber alles ist leer? */
+  soldOut(id: string): boolean {
+    let regale = 0, ware = 0;
+    for (const [e, s] of this.world.query(ShelfComponent)) {
+      if (this.at(e.object.position.x, e.object.position.z) !== id) continue;
+      regale++;
+      ware += s.bestand;
+    }
+    return regale > 0 && ware === 0;
   }
 
   /** Kassen und Bedientresen eines Standorts */

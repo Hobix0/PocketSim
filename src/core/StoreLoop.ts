@@ -236,8 +236,14 @@ export class StoreLoop {
     const s = this.settings;
     const site = this.standorte?.pick(this.random) ?? null;
     const sortiment = this.sortiment(site);
-    // Öffentliche Plätze (Gehweg: Wagenbox, Terrasse) gehören zu jedem Laden in der Nähe
-    const nah = (e: Entity) => !site || !this.standorte || [site, null].includes(this.standorte.at(e.object.position.x, e.object.position.z));
+    // Öffentliche Plätze (Gehweg: Wagenbox, Terrasse) gehören zum Laden direkt davor (höchstens 9 m von seiner Mitte)
+    const nah = (e: Entity) => {
+      if (!site || !this.standorte) return true;
+      const p = e.object.position, at = this.standorte.at(p.x, p.z);
+      if (at === site) return true;
+      const c = this.standorte.center(site);
+      return at === null && Math.hypot(p.x - c.x, p.z - c.z) < 9;
+    };
     const alle = this.content.produkte.all().filter((p) => this.unlocks.ok(p));
     const wishes = planWishes(s, sortiment, alle, this.random);
     const start = this.pointNear(site);
