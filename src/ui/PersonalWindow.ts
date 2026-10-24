@@ -5,6 +5,9 @@ import { formatMoney } from './format';
 
 // Personal-Fenster: das eigene Team (mit aktuellem Status) und die heutigen Bewerbungen.
 
+/** Diese Rollen arbeiten an einem Ort (Kasse, Tresen, Regale); Lager und Einkauf bleiben im Hauptlager */
+const ORTSGEBUNDEN = ['kassierer', 'auffueller', 'barista'];
+
 export class PersonalWindow {
   private readonly el: HTMLElement;
   private readonly teamEl: HTMLElement;
@@ -40,6 +43,15 @@ export class PersonalWindow {
       if (b.classList.contains('close')) this.close();
       else if (b.dataset.hire) staff.hire(Number(b.dataset.hire));
       else if (b.dataset.fire) staff.fire(Number(b.dataset.fire));
+      else if (b.dataset.standort) {
+        // Nächster Laden: überall → Hauptladen → weitere Läden → überall
+        const e = staff.team.find((x) => x.id === Number(b.dataset.standort));
+        const list = this.standorte?.() ?? [];
+        if (!e || !list.length) return;
+        const ids: (string | undefined)[] = [undefined, ...list.map((s) => s.id)];
+        e.standort = ids[(ids.indexOf(e.standort) + 1) % ids.length];
+        this.renderTeam();
+      }
     });
     staff.events.on('hired', () => this.isOpen && this.render());
     staff.events.on('left', () => this.isOpen && this.render());
@@ -78,9 +90,20 @@ export class PersonalWindow {
       || `<p class="empty">–</p>`;
   }
 
+  /** Eigene Läden (setzt das Spiel); ab zwei Läden lassen sich Kasse, Tresen und Auffüllen zuteilen */
+  standorte?: () => { id: string; name: string }[];
+
+  /** Knopf „Laden: …“ für Rollen, die an einem Ort arbeiten */
+  private standortKnopf(e: Employee): string {
+    const list = this.standorte?.() ?? [];
+    if (list.length < 2 || !ORTSGEBUNDEN.includes(e.rolle)) return '';
+    const name = e.standort ? list.find((s) => s.id === e.standort)?.name ?? 'Hauptladen' : 'überall';
+    return `<button type="button" class="small" data-standort="${e.id}" title="Wo arbeitet ${esc(e.name)}?">📍 ${esc(name)}</button>`;
+  }
+
   private renderTeam(): void {
     this.lastStatus = this.staff.team.map((e) => this.workerOf(e)?.statusText() ?? '').join('|');
-    this.teamEl.innerHTML = this.staff.team.map((e) => this.row(e, `
+    this.teamEl.innerHTML = this.staff.team.map((e) => this.row(e, `${this.standortKnopf(e)}
       <button type="button" data-fire="${e.id}">${esc(this.content.text('personal_entlassen'))}</button>`, this.workerOf(e)?.statusText()))
       .join('') || `<p class="empty">${esc(this.content.text('personal_team_leer'))}</p>`;
   }

@@ -52,7 +52,9 @@ import { CentralWarehouse, type WarehouseSettings } from '../economy/CentralWare
 import { Renovations, type RenovationSettings } from '../world/Renovations';
 import { RealEstateWindow } from '../ui/RealEstateWindow';
 import { WarehouseWindow } from '../ui/WarehouseWindow';
+import { SitesWindow } from '../ui/SitesWindow';
 import { Locations, type LocationSettings } from '../world/Locations';
+import { Sites, HAUPTLADEN } from '../world/Sites';
 import { Utilities } from '../economy/Utilities';
 import { Production } from '../economy/Production';
 import { MachineComponent } from '../components/MachineComponent';
@@ -165,6 +167,9 @@ export class Game {
   readonly renovations: Renovations;
   readonly realEstate: RealEstateWindow;
   readonly warehouseWindow: WarehouseWindow;
+  /** Eigene Läden in der Stadt (Standorte) */
+  readonly sites: Sites;
+  readonly sitesWindow: SitesWindow;
   private realEstateTick = 0;
   /** Strom und Wasser */
   readonly utilities: Utilities;
@@ -422,6 +427,7 @@ export class Game {
       // Strom und Wasser des abgelaufenen Tages bezahlen, dann den Tag abschließen
       this.utilities.bill();
       this.plots.payRent();
+      this.sites.newDay();
       const report = this.store.stats.closeDay(tag);
       this.staff.payDay();
       this.goals.complete('tag_beenden');
@@ -488,6 +494,26 @@ export class Game {
     });
     const locations = new Locations(this.world, this.plots, readData<{ lage: LocationSettings }>('stadt/standard').lage);
     this.store.lageFaktor = () => locations.factor();
+    // Standorte: Kunden gehen gezielt in einen Laden – nach Lage und Größe verteilt (Hauptladen zählt 1)
+    this.sites = new Sites(this.plots, this.world);
+    const sites = this.sites;
+    this.store.standorte = {
+      at: (x, z) => sites.at(x, z),
+      center: (id) => sites.center(id),
+      pick: (random) => {
+        const w: [string, number][] = [[HAUPTLADEN, 1], ...sites.list().filter((s) => s.plot && locations.active(s.plot)).map((s) => [s.id, locations.potential(s.plot!)] as [string, number])];
+        let r = random() * w.reduce((n, [, x]) => n + x, 0);
+        for (const [id, x] of w) { r -= x; if (r <= 0) return id; }
+        return HAUPTLADEN;
+      },
+    };
+    this.store.events.on('sale', ({ betrag, kasse }) => sites.recordSale(sites.at(kasse.x, kasse.z) ?? HAUPTLADEN, betrag));
+    this.personalWindow.standorte = () => sites.list();
+    this.sitesWindow = new SitesWindow(this.hud.root, this.content, sites, locations, this.staff, (id) => {
+      const c = sites.center(id);
+      this.view.flyTo(c.x, c.z, 18);
+    });
+    this.store.events.on('sale', () => this.sitesWindow.refresh());
     this.realEstate = new RealEstateWindow(this.hud.root, this.plots, this.renovations, () => this.player.level,
       (p) => this.view.flyTo((p.rect.minX + p.rect.maxX) / 2, (p.rect.minZ + p.rect.maxZ) / 2, Math.max(12, (p.rect.maxX - p.rect.minX) * 1.3)),
       // Leer: innen steht nichts mehr außer dem Gebäude selbst (und Gerümpel)
@@ -589,6 +615,7 @@ export class Game {
     this.researchWindow = new ResearchWindow(this.hud.root, this.content, this.research);
     this.hud.onTool('forschung', () => this.researchWindow.toggleOpen());
     this.hud.onTool('immobilien', () => this.realEstate.toggleOpen());
+    this.hud.onTool('laeden', () => this.sitesWindow.toggleOpen());
     this.hud.onTool('zentrallager', () => this.warehouseWindow.toggleOpen());
     this.build.erforscht = (id) => this.research.isDone(id);
     this.build.forschungName = (id) => this.research.node(id)?.name ?? id;
@@ -737,6 +764,8 @@ export class Game {
     this.hud.setToolActive('lager', this.logisticsWindow.isOpen);
     this.hud.setToolActive('forschung', this.researchWindow.isOpen);
     this.hud.setToolActive('immobilien', this.realEstate.isOpen);
+    this.hud.setToolActive('laeden', this.sitesWindow.isOpen);
+    this.hud.setToolVisible('laeden', this.sites.list().length > 1);
     // Bereiche erscheinen, sobald sie gebraucht werden (nicht alles schon am ersten Tag)
     const lv = this.player.level;
     this.hud.setToolVisible('versorgung', lv >= 2 || this.world.query(MachineComponent).next().done === false);
@@ -803,6 +832,7 @@ export class Game {
     if (i.wasPressed('lager_menue')) this.logisticsWindow.toggleOpen();
     if (i.wasPressed('forschung_menue')) this.researchWindow.toggleOpen();
     if (i.wasPressed('immobilien_menue')) this.realEstate.toggleOpen();
+    if (i.wasPressed('laeden_menue')) this.sitesWindow.toggleOpen();
     if (i.wasPressed('zentrallager_menue')) this.warehouseWindow.toggleOpen();
     if (i.wasPressed('dach_umschalten')) this.toggleRoof();
     if (i.wasPressed('waende_umschalten')) this.cycleWalls();
@@ -822,6 +852,7 @@ export class Game {
       else if (this.logisticsWindow.isOpen) this.logisticsWindow.close();
       else if (this.researchWindow.isOpen) this.researchWindow.close();
       else if (this.realEstate.isOpen) this.realEstate.close();
+      else if (this.sitesWindow.isOpen) this.sitesWindow.close();
       else if (this.warehouseWindow.isOpen) this.warehouseWindow.close();
       else if (this.buildMenu.isOpen) this.buildMenu.close();
       else if (this.hand.carried) this.hand.clear();
@@ -975,7 +1006,7 @@ export class Game {
 
   private spawnWorker(e: Employee, silent = false): void {
     // Was der Spieler gerade trägt, rührt das Personal nicht an
-    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried, this.storage), this.factory);
+    const entity = createWorkerEntity(e, this.store.staffServices((carton) => carton !== this.hand.carried, this.storage, () => e.standort), this.factory);
     this.workers.set(e.id, entity);
     this.world.add(entity);
     if (!silent) this.hud.toasts.show(this.content.text('personal_eingestellt', { name: e.name, rolle: this.content.rollen[e.rolle].name }), 'gut');

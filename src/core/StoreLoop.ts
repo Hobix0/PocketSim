@@ -103,6 +103,26 @@ export class StoreLoop {
     for (let i = 0; i < n; i++) this.spawnCustomer();
   }
 
+  /**
+   * Standorte (setzt das Spiel, siehe src/world/Sites.ts): Jeder Kunde geht gezielt in einen Laden und sucht
+   * nur dort Ware, Kasse, Sitzplatz und Umkleide. Ohne: die ganze Welt ist ein Laden.
+   */
+  standorte: { at(x: number, z: number): string | null; pick(random: () => number): string; center(id: string): { x: number; z: number } } | null = null;
+
+  /** Liegt das Bauteil im Standort (ohne Standort: überall)? */
+  private inSite(e: Entity, site: string | null): boolean {
+    return !site || !this.standorte || this.standorte.at(e.object.position.x, e.object.position.z) === site;
+  }
+
+  /** Kundenpunkte nahe am Standort (Haustüren, Straßenenden), zufällig unter den drei nächsten */
+  private pointNear(site: string | null): [number, number, number] {
+    const pts = this.kundenPunkte;
+    if (!site || !this.standorte) return pts[Math.floor(this.random() * pts.length)];
+    const c = this.standorte.center(site);
+    const near = [...pts].sort((a, b) => Math.hypot(a[0] - c.x, a[2] - c.z) - Math.hypot(b[0] - c.x, b[2] - c.z)).slice(0, 3);
+    return near[Math.floor(this.random() * near.length)];
+  }
+
   /** Mehr Kundschaft durch weitere Läden in der Stadt (setzt das Spiel, siehe src/world/Locations.ts) */
   lageFaktor: () => number = () => 1;
 
@@ -140,11 +160,14 @@ export class StoreLoop {
   staffServices(
     isCartonFree: (carton: Entity) => boolean,
     storage: { nearestFree(near: THREE.Vector3): StorageSurfaceComponent | null; store?(carton: Entity): boolean } = { nearestFree: () => null },
+    /** Standort, dem die Person zugeteilt ist (Kasse, Tresen, Regale); ohne: überall */
+    standort: () => string | undefined = () => undefined,
   ): StaffServices {
     const personal = this.content.personal;
+    const hier = (e: Entity) => this.inSite(e, standort() ?? null);
     return {
       auffuellen: {
-        findTask: () => findStockingTask(this.world, isCartonFree),
+        findTask: () => findStockingTask(this.world, isCartonFree, undefined, hier),
         findPath: this.findPath,
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
         sekundenProStueck: personal.sekundenProStueck,
@@ -161,7 +184,7 @@ export class StoreLoop {
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
       },
       kassieren: {
-        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && !k.def.bedienung)?.[0] ?? null,
+        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([e, k]) => !k.cashier && !k.def.bedienung && hier(e))?.[0] ?? null,
         findPath: this.findPath,
         serve: (checkout) => this.serve(checkout, false),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
@@ -188,7 +211,7 @@ export class StoreLoop {
         store: (c) => storage.store?.(c) ?? false,
       },
       auffuellenFahrzeuge: {
-        findJob: () => findPalletJob(this.world, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'] }),
+        findJob: () => findPalletJob(this.world, { arten: ['auffuellen', 'kommissionieren'], fahrzeuge: ['hubwagen', 'rollwagen'], regalOk: hier }),
         findPath: this.findPath,
         walkable: (x, z) => this.nav.isWalkable(x, z),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
@@ -198,7 +221,7 @@ export class StoreLoop {
         store: (c) => storage.store?.(c) ?? false,
       },
       bedienen: {
-        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([, k]) => !k.cashier && k.def.bedienung)?.[0] ?? null,
+        findCheckout: () => [...this.world.query(CheckoutComponent)].find(([e, k]) => !k.cashier && k.def.bedienung && hier(e))?.[0] ?? null,
         findPath: this.findPath,
         serve: (checkout) => this.serve(checkout, false),
         gehgeschwindigkeit: personal.gehgeschwindigkeit,
@@ -211,10 +234,13 @@ export class StoreLoop {
 
   private spawnCustomer(): void {
     const s = this.settings;
-    const sortiment = this.sortiment();
+    const site = this.standorte?.pick(this.random) ?? null;
+    const sortiment = this.sortiment(site);
+    // Öffentliche Plätze (Gehweg: Wagenbox, Terrasse) gehören zu jedem Laden in der Nähe
+    const nah = (e: Entity) => !site || !this.standorte || [site, null].includes(this.standorte.at(e.object.position.x, e.object.position.z));
     const alle = this.content.produkte.all().filter((p) => this.unlocks.ok(p));
     const wishes = planWishes(s, sortiment, alle, this.random);
-    const start = this.kundenPunkte[Math.floor(this.random() * this.kundenPunkte.length)];
+    const start = this.pointNear(site);
     const names = this.content.namen;
     const name = names[Math.floor(this.random() * names.length)];
     const speed = s.gehgeschwindigkeit.min + this.random() * (s.gehgeschwindigkeit.max - s.gehgeschwindigkeit.min);
@@ -222,16 +248,17 @@ export class StoreLoop {
     const entity = createCustomerEntity(this.nummer++, name, start, wishes, {
       denkt: (art, p) => { if (figur) this.events.emit('thought', { art, produkt: p, preis: p ? this.prices.get(p) : undefined, kunde: figur }); },
       findPath: this.findPath,
-      findShelf: (p, from, exclude) => this.findShelf(p, from, exclude),
-      findCheckout: () => this.findCheckout(),
-      findCounter: (p, from) => this.findShelf(p, from, undefined, true),
-      exitPoint: () => new THREE.Vector3(...this.kundenPunkte[Math.floor(this.random() * this.kundenPunkte.length)]),
+      findShelf: (p, from, exclude) => this.findShelf(p, from, exclude, false, site),
+      findCheckout: () => this.findCheckout(site),
+      findCounter: (p, from) => this.findShelf(p, from, undefined, true, site),
+      exitPoint: () => new THREE.Vector3(...this.pointNear(site)),
       settings: s,
       speed,
       text: (k, v) => this.content.text(k, v),
       findCartStation: (from) => {
         let best: Entity | null = null, bestD = Infinity;
         for (const [e, st] of this.world.query(CartStationComponent)) {
+          if (!nah(e)) continue;
           const d = e.object.position.distanceToSquared(from);
           if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
         }
@@ -240,6 +267,7 @@ export class StoreLoop {
       findSeat: (from) => {
         let best: Entity | null = null, bestD = Infinity;
         for (const [e, st] of this.world.query(SeatComponent)) {
+          if (!nah(e)) continue;
           const d = e.object.position.distanceToSquared(from);
           if (st.frei > 0 && d < bestD) { best = e; bestD = d; }
         }
@@ -248,6 +276,7 @@ export class StoreLoop {
       findFittingRoom: (from) => {
         let best: Entity | null = null, bestD = Infinity;
         for (const [e, fr] of this.world.query(FittingRoomComponent)) {
+          if (!this.inSite(e, site)) continue;
           const d = e.object.position.distanceToSquared(from);
           if (fr.frei && d < bestD) { best = e; bestD = d; }
         }
@@ -268,18 +297,18 @@ export class StoreLoop {
     this.world.add(entity);
   }
 
-  /** Produkte, die gerade in irgendeinem Regal liegen. */
-  private sortiment(): ProductDef[] {
+  /** Produkte, die gerade in irgendeinem Regal liegen (eines Standorts, ohne: überall). */
+  private sortiment(site: string | null = null): ProductDef[] {
     const map = new Map<string, ProductDef>();
-    for (const [, s] of this.world.query(ShelfComponent)) for (const f of s.faecher) if (f.produkt && f.menge > 0) map.set(f.produkt.id, f.produkt);
+    for (const [e, s] of this.world.query(ShelfComponent)) if (this.inSite(e, site)) for (const f of s.faecher) if (f.produkt && f.menge > 0) map.set(f.produkt.id, f.produkt);
     return [...map.values()];
   }
 
   /** Nächstes Regal mit dem Produkt; `tresen`: nur Bedientheken (Café-Tresen), sonst nur Regale zum Selbstnehmen */
-  private findShelf(p: ProductDef, from: THREE.Vector3, exclude?: Entity, tresen = false): Entity | null {
+  private findShelf(p: ProductDef, from: THREE.Vector3, exclude?: Entity, tresen = false, site: string | null = null): Entity | null {
     let best: Entity | null = null, bestD = Infinity;
     for (const [e, s] of this.world.query(ShelfComponent)) {
-      if (e === exclude || !s.faecher.some((f) => f.produkt?.id === p.id && f.menge > 0)) continue;
+      if (e === exclude || !this.inSite(e, site) || !s.faecher.some((f) => f.produkt?.id === p.id && f.menge > 0)) continue;
       if (!!e.get(CheckoutComponent)?.def.bedienung !== tresen) continue;
       const d = e.object.position.distanceToSquared(from);
       if (d < bestD) { best = e; bestD = d; }
@@ -288,10 +317,10 @@ export class StoreLoop {
   }
 
   /** Kasse mit der kürzesten Schlange; besetzte Kassen bevorzugt. */
-  private findCheckout(): Entity | null {
+  private findCheckout(site: string | null = null): Entity | null {
     let best: Entity | null = null, bestScore = Infinity;
     for (const [e, c] of this.world.query(CheckoutComponent)) {
-      if (c.def.bedienung) continue;
+      if (c.def.bedienung || !this.inSite(e, site)) continue;
       const score = c.queue.length + (c.cashier ? 0 : 0.5);
       if (score < bestScore) { best = e; bestScore = score; }
     }

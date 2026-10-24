@@ -2369,3 +2369,50 @@ html, body {
 .warehouse .stock-row small {
   color: var(--text-dim);
 }
+
+/* ── Meine Läden ── */
+.sites .site-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.sites .site {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.sites .site-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sites .site-head > div {
+  display: grid;
+  flex: 1;
+}
+
+.sites .site-head .icon {
+  font-size: 26px;
+}
+
+.sites .site small {
+  color: var(--text-dim);
+}
+
+.sites .site-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sites .site .hint-line {
+  color: var(--accent);
+}

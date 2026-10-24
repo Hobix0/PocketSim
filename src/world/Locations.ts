@@ -1,5 +1,6 @@
 import type { World } from '../ecs/World';
 import { ShelfComponent } from '../components/ShelfComponent';
+import { CheckoutComponent } from '../components/CheckoutComponent';
 import type { Plots, PlotDef } from './Plots';
 
 // Lage (Stadt): Jeder weitere eigene Laden – gekauft oder gemietet, mit Ware im Regal – bringt mehr Kundschaft.
@@ -28,14 +29,15 @@ export class Locations {
     return p.angebot ? this.settings.lagen[p.angebot.lage]?.text ?? '' : '';
   }
 
-  /** Läuft dort ein Laden? (dir gehört es und ein Regal mit Ware steht darin) */
+  /** Läuft dort ein Laden? (dir gehört es, ein Regal mit Ware und eine Kasse oder ein Bedientresen stehen darin) */
   active(p: PlotDef): boolean {
-    if (!p.angebot || !this.plots.isOwned(p.id)) return false;
+    if (!p.angebot || p.angebot.art || !this.plots.isOwned(p.id)) return false;
     const r = p.rect;
-    for (const [e, s] of this.world.query(ShelfComponent)) {
-      const q = e.object.position;
-      if (s.bestand > 0 && q.x > r.minX && q.x < r.maxX && q.z > r.minZ && q.z < r.maxZ) return true;
-    }
+    const drin = (x: number, z: number) => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ;
+    let ware = false;
+    for (const [e, s] of this.world.query(ShelfComponent)) if (s.bestand > 0 && drin(e.object.position.x, e.object.position.z)) { ware = true; break; }
+    if (!ware) return false;
+    for (const [e] of this.world.query(CheckoutComponent)) if (drin(e.object.position.x, e.object.position.z)) return true;
     return false;
   }
 

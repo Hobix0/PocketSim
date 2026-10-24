@@ -186,6 +186,8 @@ describe('Lage', () => {
     const regal = world.add(createBuildEntity(content.bau.get('vr_wand_holz'), { position: [33, 0.05, -1], drehung: 0 }, { content }));
     expect(loc.factor()).toBe(1); // leeres Regal zählt nicht
     regal.require(ShelfComponent).add(content.produkte.all().find((x) => !x.kuehlung && !x.rohstoff)!, 5);
+    expect(loc.factor()).toBe(1); // ohne Kasse kommt niemand
+    world.add(createBuildEntity(content.bau.get('boutique_tresen'), { position: [30, 0.05, -3], drehung: 0 }, { content }));
     expect(loc.factor()).toBeCloseTo(1 + 0.55 * 1.3);
   });
 
@@ -209,5 +211,46 @@ describe('Wand an Wand', () => {
     expect(ren.needs('laden_mittel_ost')).toBe(false);
     expect(ren.needs('laden_gross_ost')).toBe(true);
     expect(ren.parts('laden_gross_ost').filter((e) => e.typeId === 'altbau_wand').length).toBe(8 + 2 * 5); // hinten 8, Seiten je 5
+  });
+});
+
+describe('Standorte', () => {
+  it('Hauptladen mit Anbauten, jedes eigene Ladenlokal ein eigener Laden; die Art ergibt sich aus der Ware', async () => {
+    const { Sites, HAUPTLADEN } = await import('../src/world/Sites');
+    const { ShelfComponent } = await import('../src/components/ShelfComponent');
+    const world = new World(new THREE.Group());
+    const player = new PlayerState('t', { geld: 100000, xp: 900 }, { xpFuerLevel: [0, 100, 250, 500, 900] });
+    const plots = new Plots(level.grundstuecke ?? [], player);
+    const sites = new Sites(plots, world);
+    expect(sites.list().map((s) => s.id)).toEqual([HAUPTLADEN]);
+    expect(sites.at(0, 0)).toBe(HAUPTLADEN);
+    expect(sites.at(6, 0)).toBeNull(); // Anbau Ost gehört noch nicht dazu
+    plots.buy('ost');
+    expect(sites.at(6, 0)).toBe(HAUPTLADEN);
+    expect(sites.at(25, 0)).toBeNull();
+    plots.rent('laden_klein_ost');
+    expect(sites.at(25, 0)).toBe('laden_klein_ost');
+    expect(sites.at(0, 5)).toBeNull(); // Gehweg
+    expect(sites.at(-40, -30)).toBeNull(); // Industrie
+    expect(sites.kind('laden_klein_ost')).toBe('leer');
+    const staender = world.add(createBuildEntity(content.bau.get('kleiderstaender'), { position: [25, 0.05, 0], drehung: 0 }, { content }));
+    staender.require(ShelfComponent).add(content.produkte.get('tshirt'), 6);
+    expect(sites.kind('laden_klein_ost')).toBe('mode');
+    sites.recordSale('laden_klein_ost', 29.8);
+    expect(sites.today('laden_klein_ost')).toEqual({ umsatz: 29.8, kunden: 1 });
+    sites.newDay();
+    expect(sites.today('laden_klein_ost').kunden).toBe(0);
+  });
+
+  it('ein Auffüller mit festem Laden füllt nur dort Regale auf', async () => {
+    const { findStockingTask } = await import('../src/economy/Stocking');
+    const { createCartonEntity } = await import('../src/factory/createProductEntity');
+    const world = new World(new THREE.Group());
+    const hier = world.add(createBuildEntity(content.bau.get('vr_wand_holz'), { position: [0, 0.05, 0], drehung: 0 }, { content }));
+    const dort = world.add(createBuildEntity(content.bau.get('vr_wand_holz'), { position: [25, 0.05, 0], drehung: 0 }, { content }));
+    const p = content.produkte.all().find((x) => !x.kuehlung && !x.rohstoff)!;
+    world.add(createCartonEntity(p, p.gebinde, { content })).object.position.set(1, 0, 3);
+    expect(findStockingTask(world, () => true, undefined, (s) => s === dort)?.shelf).toBe(dort);
+    expect(findStockingTask(world, () => true, undefined, (s) => s === hier)?.shelf).toBe(hier);
   });
 });

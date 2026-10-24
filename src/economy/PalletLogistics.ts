@@ -38,6 +38,8 @@ export type PalletJob =
 export interface PalletJobFilter {
   arten?: PalletJob['art'][];
   fahrzeuge?: VehicleKind[];
+  /** Nur in diese Verkaufsregale auffüllen (Standort des Auffüllers) */
+  regalOk?: (shelf: Entity) => boolean;
 }
 
 /** Aufgaben, die eine Palette betreffen */
@@ -83,8 +85,8 @@ function freeSlot(world: World, v: Entity, near: THREE.Vector3, art: 'boden' | '
 }
 
 /** Wer was braucht: Regale mit Platz für einen Karton dieses Produkts (bevorzugt, wo es schon steht) */
-function shelfFor(world: World, produkt: ProductDef, menge: number): Entity | null {
-  const shelves = [...world.query(ShelfComponent)];
+function shelfFor(world: World, produkt: ProductDef, menge: number, regalOk: (shelf: Entity) => boolean = () => true): Entity | null {
+  const shelves = [...world.query(ShelfComponent)].filter(([e]) => regalOk(e));
   const nurFest = shelves.some(([, s]) => s.faecher.some((f) => f.fest?.id === produkt.id));
   let best: Entity | null = null;
   for (const [e, s] of shelves) {
@@ -133,7 +135,7 @@ export function findPalletJob(world: World, filter: PalletJobFilter = {}): Palle
     const produkt = pc.produkt;
     const menge = pc.cartons()[0]?.require(CartonComponent).menge ?? 0;
     if (!produkt || produkt.rohstoff) continue;
-    const regal = shelfFor(world, produkt, menge);
+    const regal = shelfFor(world, produkt, menge, filter.regalOk);
     if (!regal) continue;
     const v = fv(true).find((x) => reicht(x, pc.platz!.places, pc.platz!.slot));
     if (v) return { art: 'auffuellen', pallet: p, fahrzeug: v, regal };
@@ -145,7 +147,7 @@ export function findPalletJob(world: World, filter: PalletJobFilter = {}): Palle
     const produkt = pc.produkt;
     const menge = pc.cartons()[0]?.require(CartonComponent).menge ?? 0;
     if (!produkt || produkt.rohstoff) continue;
-    const regal = shelfFor(world, produkt, menge);
+    const regal = shelfFor(world, produkt, menge, filter.regalOk);
     if (!regal || reachableStock(world, produkt)) continue;
     const v = fv().find((x) => x.require(VehicleComponent).art === 'gabelstapler' && reicht(x, pc.platz!.places, pc.platz!.slot));
     if (!v) continue;
@@ -162,7 +164,7 @@ export function findPalletJob(world: World, filter: PalletJobFilter = {}): Palle
       // Platz in den Regalen merken, damit nicht zu viel für dasselbe Fach geladen wird
       const geplant = new Map<string, number>();
       while (auftraege.length < plaetze) {
-        const t = findStockingTask(world, (c) => !schon.has(c), (shelf, produkt) => geplant.get(`${shelf.id}:${produkt}`) ?? 0);
+        const t = findStockingTask(world, (c) => !schon.has(c), (shelf, produkt) => geplant.get(`${shelf.id}:${produkt}`) ?? 0, filter.regalOk);
         if (!t) break;
         schon.add(t.carton);
         const c = t.carton.require(CartonComponent);
