@@ -55,6 +55,7 @@ export class Hud {
           <button type="button" data-tool="versorgung"></button>
           <button type="button" data-tool="lager"></button>
           <button type="button" data-tool="forschung"></button>
+          <button type="button" data-tool="laeden"></button>
           <button type="button" data-tool="immobilien"></button>
           <button type="button" data-tool="zentrallager"></button>
           <button type="button" data-tool="dach"></button>
@@ -76,6 +77,11 @@ export class Hud {
     this.speedEl = q('.speed');
     this.helpEl = q('.hud-help');
     this.toolsEl = q('.tools');
+    // Ziele & Co. sitzen unter der Top-Bar – auch wenn ihre Knöpfe in eine zweite Zeile umbrechen
+    const bar = q('.topbar');
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(() => this.root.style.setProperty('--topbar-unten', `${Math.round(bar.getBoundingClientRect().bottom)}px`)).observe(bar);
+    }
     this.handEl = q('.hand');
     this.toasts = new Toasts(this.root);
     this.toolsEl.addEventListener('click', (e) => {
@@ -191,6 +197,7 @@ export class Hud {
     this.toolsEl.querySelector('[data-tool="forschung"]')!.innerHTML = `${esc(this.texts('forschung'))} ${key('forschung_menue')}`;
     this.toolsEl.querySelector('[data-tool="immobilien"]')!.innerHTML = `${esc(this.texts('immobilien'))} ${key('immobilien_menue')}`;
     this.toolsEl.querySelector('[data-tool="zentrallager"]')!.innerHTML = `${esc(this.texts('zentrallager'))} ${key('zentrallager_menue')}`;
+    this.toolsEl.querySelector('[data-tool="laeden"]')!.innerHTML = `${esc(this.texts('laeden'))} ${key('laeden_menue')}`;
     this.toolsEl.querySelector('[data-tool="dach"]')!.innerHTML = `${esc(this.texts('dach'))} ${key('dach_umschalten')}`;
     this.toolsEl.querySelector('[data-tool="waende"]')!.innerHTML = `${esc(this.texts('waende'))} ${key('waende_umschalten')}`;
   }

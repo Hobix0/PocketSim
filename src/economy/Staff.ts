@@ -14,6 +14,8 @@ export interface Employee {
   lohn: number;
   /** Arbeitstempo, 1 = normal */
   tempo: number;
+  /** Zugeteilter Laden (Kasse, Tresen, Regale); ohne: überall */
+  standort?: string;
 }
 
 export interface StaffEvents extends Record<string, unknown> {

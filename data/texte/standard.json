@@ -134,6 +134,7 @@
   "versorgung": "Versorgung",
   "immobilien": "Immobilien",
   "zentrallager": "Zentrallager",
+  "laeden": "Läden",
   "zentrallager_angekommen": "Im Zentrallager angekommen: {kartons} Kartons",
   "miete_gemietet": "Gemietet: {name} – die Miete kommt jeden Morgen",
   "miete_offen": "Miete für {name} nicht bezahlt ({tage}. Tag)",

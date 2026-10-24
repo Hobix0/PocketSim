@@ -45,8 +45,10 @@ export function findStockingTask(
   isFree: (carton: Entity) => boolean,
   /** Schon für dieses Regal und Produkt eingeplante Stück (Rollwagen: mehrere Kartons in einer Runde) */
   geplant: (shelf: Entity, produkt: string) => number = () => 0,
+  /** Nur diese Regale (z. B. Auffüller, die einem Standort zugeteilt sind) */
+  regalOk: (shelf: Entity) => boolean = () => true,
 ): StockingTask | null {
-  const shelves = [...world.query(ShelfComponent)];
+  const shelves = [...world.query(ShelfComponent)].filter(([e]) => regalOk(e));
   // Produkte mit festen Fächern kommen nur in diese Fächer
   const fest = new Set(shelves.flatMap(([, s]) => s.faecher.map((f) => f.fest?.id).filter((id): id is string => !!id)));
   for (const [carton, c] of world.query(CartonComponent)) {
