@@ -75,6 +75,11 @@ export class ModelLibrary implements ModelProvider {
   readonly hasLabels: boolean;
   private readonly loader: FBXLoader;
   private readonly templates = new Map<string, Promise<THREE.Object3D>>();
+  /** Fertige Voxel-Gitter, die erst beim ersten Gebrauch zu Meshes werden (eigene Modelle) */
+  private readonly lazyGrids = new Map<string, VoxelGrid>();
+  /** Würfelgitter je Vorlage – bewusst nicht in userData: Object3D.clone kopiert userData per JSON,
+   *  ein großes Gitter würde sonst bei jedem Exemplar komplett umgewandelt (sehr lange Ladezeiten). */
+  private readonly grids = new WeakMap<THREE.Object3D, VoxelGrid>();
   private readonly paletteMaterial: THREE.MeshStandardMaterial;
   private readonly labelMaterial: THREE.MeshStandardMaterial;
   private readonly glassMaterial: THREE.MeshStandardMaterial;
@@ -125,7 +130,7 @@ export class ModelLibrary implements ModelProvider {
 
   /** Gibt es zu diesem Pfad (relativ zu data/) ein Modell? */
   has(path: string): boolean {
-    return `/data/${path}` in modelSources || this.templates.has(path);
+    return `/data/${path}` in modelSources || this.templates.has(path) || this.lazyGrids.has(path);
   }
 
   /** Neues Exemplar eines Modells, z. B. instance('3d/Baubar/…/SM_Build_Wand_Weiss.fbx'). */
@@ -161,6 +166,12 @@ export class ModelLibrary implements ModelProvider {
 
   private template(path: string): Promise<THREE.Object3D> {
     let t = this.templates.get(path);
+    const lazy = t ? undefined : this.lazyGrids.get(path);
+    if (lazy) {
+      t = Promise.resolve(this.buildVoxelModel(lazy));
+      this.templates.set(path, t);
+      this.lazyGrids.delete(path);
+    }
     if (!t) {
       const source = modelSources[`/data/${path}`];
       if (!source) return Promise.reject(new Error(`Modell fehlt: data/${path}`));
@@ -256,6 +267,12 @@ export class ModelLibrary implements ModelProvider {
    * Es lässt sich danach wie jedes andere Modell mit instance(path) verwenden.
    */
   registerVoxelModel(path: string, grid: VoxelGrid): void {
+    // Erst beim ersten Gebrauch bauen: beim Start liegen über 300 Modelle bereit
+    this.templates.delete(path);
+    this.lazyGrids.set(path, grid);
+  }
+
+  private buildVoxelModel(grid: VoxelGrid): THREE.Object3D {
     const stufen = this.voxel?.stufen ?? [{ ab: 0, faktor: 1 }];
     // Würfel in Glasfarbe (Vitrinen, Kühlschranktüren, Truhendeckel) werden durchsichtig gezeichnet
     // (der Editor bekommt weiter das ganze Gitter)
@@ -270,14 +287,16 @@ export class ModelLibrary implements ModelProvider {
       else if (FENSTERFARBEN.has(c)) { split(); fenster ??= new Grid(grid.size, grid.min, grid.dims); fenster.data[i] = v; solid.data[i] = 0; }
     }
     const obj = this.voxelObject(solid, glass, stufen, fenster);
-    obj.userData.voxelGrid = grid;
-    this.templates.set(path, Promise.resolve(obj));
+    this.grids.set(obj, grid);
+    return obj;
   }
 
   /** Würfelgitter eines Modells (für den Editor als Vorlage); null, wenn es keins gibt. */
   async voxelGridOf(path: string): Promise<VoxelGrid | null> {
+    const lazy = this.lazyGrids.get(path);
+    if (lazy) return lazy;
     const t = await this.template(path);
-    return (t.userData.voxelGrid as VoxelGrid | undefined) ?? null;
+    return this.grids.get(t) ?? null;
   }
 
   /** Gitter → Objekt mit Detailstufen (LOD); merkt sich das feinste Gitter für den Editor. */
@@ -306,7 +325,7 @@ export class ModelLibrary implements ModelProvider {
       for (const st of stufen) lod.addLevel(level(st.faktor), st.ab);
       out = lod;
     }
-    out.userData.voxelGrid = solid;
+    if (solid) this.grids.set(out, solid);
     return out;
   }
 }
