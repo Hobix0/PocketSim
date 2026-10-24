@@ -1069,6 +1069,57 @@ html, body {
   font-size: 11px;
 }
 
+/* Funktionsteile (Regalböden, Räder, Leuchten …) */
+.editor .part-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.editor .part-color {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+
+.editor .part-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.editor .part-row.active {
+  background: var(--key-bg);
+}
+
+.editor .part-row > button:first-child {
+  text-align: left;
+}
+
+.editor .part-row small {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.editor .part-row .warn {
+  grid-column: 1 / -1;
+  color: #e0b23c;
+}
+
+.editor .part-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
 .editor-status {
   grid-area: status;
   display: flex;

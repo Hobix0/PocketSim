@@ -1,4 +1,4 @@
-import { VoxelGrid, FILLED } from '../voxel/VoxelGrid';
+import { VoxelGrid, FILLED, CELL_MASK } from '../voxel/VoxelGrid';
 
 // Bearbeitungs-Operationen für den Voxel-Editor – ohne Grafik, damit sie testbar sind.
 // Zellen sind [x, y, z] im Gitter (Ecke bei 0, 0, 0). Gitter-Operationen geben ein neues Gitter zurück.
@@ -130,10 +130,20 @@ export function resize(g: VoxelGrid, dims: [number, number, number], size = g.si
   return out;
 }
 
-/** Zusammenhängende Würfel gleicher Farbe (6er-Nachbarschaft) */
-export function floodCells(g: VoxelGrid, start: Cell): Cell[] {
-  const from = g.get(...start);
+/**
+ * Zusammenhängende Würfel gleicher Farbe (6er-Nachbarschaft). `toleranz` (0–255 je Kanal) lässt auch ähnliche
+ * Farben zu – beim Markieren von Teilen mit Farbrauschen (Holz, Beton) markiert ein Klick so die ganze Fläche.
+ */
+export function floodCells(g: VoxelGrid, start: Cell, toleranz = 0): Cell[] {
+  // Gleiche Farbe zählt – egal, zu welchem Funktionsteil die Würfel gehören
+  const from = g.get(...start) & CELL_MASK;
   if (!from) return [];
+  const near = (v: number) => {
+    if ((v & CELL_MASK) === from) return true;
+    if (!toleranz || !v) return false;
+    for (const sh of [16, 8, 0]) if (Math.abs(((v >> sh) & 255) - ((from >> sh) & 255)) > toleranz) return false;
+    return true;
+  };
   const out: Cell[] = [];
   const seen = new Set<number>();
   const stack: Cell[] = [start];
@@ -141,7 +151,7 @@ export function floodCells(g: VoxelGrid, start: Cell): Cell[] {
     const c = stack.pop()!;
     if (!inside(g, c)) continue;
     const i = g.index(...c);
-    if (seen.has(i) || g.data[i] !== from) continue;
+    if (seen.has(i) || !near(g.data[i])) continue;
     seen.add(i);
     out.push(c);
     for (const [dx, dy, dz] of [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]) stack.push([c[0] + dx, c[1] + dy, c[2] + dz]);
@@ -154,7 +164,7 @@ export function cellsOfColor(g: VoxelGrid, rgb: number): Cell[] {
   const target = (rgb & 0xffffff) | FILLED;
   const out: Cell[] = [];
   const [nx, ny, nz] = g.dims;
-  for (let x = 0; x < nx; x++) for (let y = 0; y < ny; y++) for (let z = 0; z < nz; z++) if (g.data[g.index(x, y, z)] === target) out.push([x, y, z]);
+  for (let x = 0; x < nx; x++) for (let y = 0; y < ny; y++) for (let z = 0; z < nz; z++) if ((g.data[g.index(x, y, z)] & CELL_MASK) === target) out.push([x, y, z]);
   return out;
 }
 

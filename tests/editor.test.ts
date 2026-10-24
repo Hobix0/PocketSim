@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { VoxelGrid } from '../src/voxel/VoxelGrid';
+import { VoxelGrid, partOf, withPart } from '../src/voxel/VoxelGrid';
 import { greedyMesh } from '../src/voxel/greedyMesh';
 import { raycastGrid } from '../src/editor/raycastGrid';
 import {
-  centeredGrid, decodeGrid, detectShelfLevels, encodeGrid, idFromName, toBuildDef, validateVoxelModel, type VoxelModelData,
+  centeredGrid, decodeGrid, detectShelfLevels, encodeGrid, idFromName, objectCatalog, objectTypeOf, partEffects, shelfFromParts, toBuildDef,
+  validateVoxelModel, type PartInfo, type VoxelModelData,
 } from '../src/editor/VoxelModel';
 import { Content } from '../src/content/Content';
 import { registerCustomModels } from '../src/editor/ModelStore';
@@ -220,5 +221,71 @@ describe('Bearbeitete Originale', () => {
     expect(back.ersetzt).toBe('3d/Baubar/Test.fbx');
     expect(back.ursprung).toEqual([-3, 0, 5]);
     expect(() => validateVoxelModel({ ...m, ursprung: [1, 2] }, 'modelle/x.json')).toThrow('ursprung');
+  });
+});
+
+describe('Funktionsteile (markieren im Editor)', () => {
+  /** Regal wie oben; die Böden auf y = 8 und 16 sind als Teile markiert (Nummer 1 und 2) */
+  function marked(): VoxelGrid {
+    const g = shelfGrid();
+    for (const [p, y] of [[1, 8], [2, 16]]) for (let x = 0; x < 4; x++) for (let z = 0; z < 8; z++) g.data[g.index(x, y, z)] = withPart(g.data[g.index(x, y, z)], p);
+    return g;
+  }
+  const teile: PartInfo[] = [{ rolle: 'boden' }, { rolle: 'boden' }];
+
+  it('Teile stehen in der Datei und kommen beim Öffnen wieder; die Farben bleiben unberührt', () => {
+    const g = marked();
+    const m = model(g, encodeGrid(g, teile));
+    expect(m.teile?.map((t) => t.rolle)).toEqual(['boden', 'boden']);
+    expect(m.palette).not.toContain('#000000');
+    const back = decodeGrid(validateVoxelModel(JSON.parse(JSON.stringify(m)), 'test'));
+    expect([...back.data]).toEqual([...g.data]);
+    expect(partOf(back.get(2, 8, 3))).toBe(1);
+    expect(partOf(back.get(2, 0, 3))).toBe(0);
+    // Ohne Teile bleibt die Datei wie bisher
+    expect('teile' in encodeGrid(shelfGrid())).toBe(false);
+  });
+
+  it('gelöschte oder leere Teile fallen beim Speichern weg, der Rest wird neu durchnummeriert', () => {
+    const g = marked();
+    const { teile: out } = encodeGrid(g, [null, { rolle: 'boden' }, { rolle: 'leuchte' }]);
+    expect(out?.length).toBe(1);
+    const back = decodeGrid({ ...model(g), teile: out });
+    expect(partOf(back.get(2, 16, 3))).toBe(1);
+    expect(partOf(back.get(2, 8, 3))).toBe(0);
+  });
+
+  it('markierte Regalböden ersetzen die Erkennung: je Boden ein Fach auf seiner Oberkante', () => {
+    const g = marked();
+    const m = model(g, { typ: 'regal', ...encodeGrid(g, teile) });
+    expect(detectShelfLevels(g)).toEqual([0.1, 0.9, 1.7]);
+    const def = toBuildDef(m, new Content().baumenue.kategorien, decodeGrid(m));
+    expect(def.regal?.ebenen).toEqual([0.9, 1.7]);
+    expect(def.regal?.faecher).toBe(2);
+    expect(def.regal?.laenge).toBeCloseTo(0.72);
+    expect(shelfFromParts(model(shelfGrid()))).toBeNull();
+  });
+
+  it('Füllen und Farbe ersetzen achten nur auf die Farbe, nicht auf das Teil', () => {
+    const g = marked();
+    expect(floodCells(g, [2, 0, 3]).length).toBe(32);
+    expect(cellsOfColor(g, 0xdddddd).length).toBe(3 * 32);
+  });
+
+  it('Teile wandern beim Drehen, Spiegeln und Zuschneiden mit', () => {
+    const g = rotateY(mirror(marked(), 0));
+    let n = 0;
+    for (const v of g.data) if (partOf(v) === 2) n++;
+    expect(n).toBe(32);
+  });
+
+  it('Katalog: jeder Objekttyp kennt seine Rollen; ältere Dateien ohne "objekt" gelten nach ihrem typ', () => {
+    const c = objectCatalog();
+    expect(c.typen.find((t) => t.id === 'regal')?.rollen).toContain('boden');
+    expect(c.typen.find((t) => t.id === 'fahrzeug')?.rollen).toEqual(expect.arrayContaining(['scheinwerfer', 'rad', 'beweglich']));
+    expect(objectTypeOf({ typ: 'regal' }).id).toBe('regal');
+    expect(objectTypeOf({ typ: 'modell', objekt: 'fahrzeug' }).typ).toBe('modell');
+    expect(partEffects([{ rolle: 'rad' }, { rolle: 'scheinwerfer' }, { rolle: 'gibtsnicht' }])).toEqual(['rad', 'licht', undefined]);
+    expect(() => validateVoxelModel({ ...model(shelfGrid()), teile: [{ rolle: 'beweglich', zellen: '1*0', kante: 'quer' }] }, 'x')).toThrow(/kante/);
   });
 });

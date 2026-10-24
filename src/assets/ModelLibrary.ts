@@ -4,7 +4,7 @@ import { LabelMaterial } from './LabelMaterial';
 import { voxelize, type VoxelSource } from '../voxel/voxelize';
 import { greedyMesh } from '../voxel/greedyMesh';
 import { loadPixels, pixelAt, type Pixels } from '../voxel/pixels';
-import type { VoxelGrid } from '../voxel/VoxelGrid';
+import { CELL_MASK, partOf, type VoxelGrid } from '../voxel/VoxelGrid';
 
 /** Farben, die in selbst gebauten Voxel-Modellen Glas bedeuten (Skripte: GLAS = #cfe6ec, Kühlschranktür #bcd8df) */
 const GLASFARBEN = new Set([0xcfe6ec, 0xbcd8df]);
@@ -80,12 +80,18 @@ export class ModelLibrary implements ModelProvider {
   /** Würfelgitter je Vorlage – bewusst nicht in userData: Object3D.clone kopiert userData per JSON,
    *  ein großes Gitter würde sonst bei jedem Exemplar komplett umgewandelt (sehr lange Ladezeiten). */
   private readonly grids = new WeakMap<THREE.Object3D, VoxelGrid>();
+  /** Funktionsteile der wartenden Gitter (Wirkung je Teilnummer − 1) */
+  private readonly lazyParts = new Map<string, VoxelPartBehavior[]>();
   private readonly paletteMaterial: THREE.MeshStandardMaterial;
   private readonly labelMaterial: THREE.MeshStandardMaterial;
   private readonly glassMaterial: THREE.MeshStandardMaterial;
   private readonly voxelMaterial = new THREE.MeshStandardMaterial({ name: 'Voxel', vertexColors: true, roughness: 0.85, metalness: 0 });
   /** Wohnungsfenster: tagsüber wie Glas, abends warmes Licht (setWindowGlow) */
   private readonly windowMaterial = new THREE.MeshStandardMaterial({ name: 'Fenster', vertexColors: true, roughness: 0.3, metalness: 0, emissive: '#ffc062', emissiveIntensity: 0 });
+  /** Markierte Leuchten (Editor): leuchten abends in ihrer eigenen Farbe */
+  private readonly lampMaterial = glowMaterial('Leuchte', 0);
+  /** Markierte Statuslampen: leuchten immer */
+  private readonly signalMaterial = glowMaterial('Statuslampe', 0.9);
   private readonly palettePixels: Promise<Pixels | null>;
   private readonly labelPixels: Promise<Pixels | null>;
 
@@ -122,6 +128,7 @@ export class ModelLibrary implements ModelProvider {
   /** Wie hell die Wohnungsfenster leuchten (0 = Tag, 1 = Nacht) */
   setWindowGlow(f: number): void {
     this.windowMaterial.emissiveIntensity = Math.max(0, Math.min(1, f)) * 0.9;
+    this.lampMaterial.emissiveIntensity = Math.max(0, Math.min(1, f)) * 1.1;
   }
 
   get voxelStyle(): boolean {
@@ -168,9 +175,10 @@ export class ModelLibrary implements ModelProvider {
     let t = this.templates.get(path);
     const lazy = t ? undefined : this.lazyGrids.get(path);
     if (lazy) {
-      t = Promise.resolve(this.buildVoxelModel(lazy));
+      t = Promise.resolve(this.buildVoxelModel(lazy, this.lazyParts.get(path)));
       this.templates.set(path, t);
       this.lazyGrids.delete(path);
+      this.lazyParts.delete(path);
     }
     if (!t) {
       const source = modelSources[`/data/${path}`];
@@ -266,27 +274,47 @@ export class ModelLibrary implements ModelProvider {
    * Fertiges Voxel-Modell (z. B. aus dem Editor) unter einem Pfad bereitstellen.
    * Es lässt sich danach wie jedes andere Modell mit instance(path) verwenden.
    */
-  registerVoxelModel(path: string, grid: VoxelGrid): void {
+  registerVoxelModel(path: string, grid: VoxelGrid, parts: VoxelPartBehavior[] = []): void {
     // Erst beim ersten Gebrauch bauen: beim Start liegen über 300 Modelle bereit
     this.templates.delete(path);
     this.lazyGrids.set(path, grid);
+    if (parts.some((p) => p.wirkung)) this.lazyParts.set(path, parts); else this.lazyParts.delete(path);
   }
 
-  private buildVoxelModel(grid: VoxelGrid): THREE.Object3D {
+  private buildVoxelModel(grid: VoxelGrid, parts: VoxelPartBehavior[] = []): THREE.Object3D {
     const stufen = this.voxel?.stufen ?? [{ ab: 0, faktor: 1 }];
     // Würfel in Glasfarbe (Vitrinen, Kühlschranktüren, Truhendeckel) werden durchsichtig gezeichnet
     // (der Editor bekommt weiter das ganze Gitter)
     const Grid = grid.constructor as typeof VoxelGrid;
     let solid = grid, glass: VoxelGrid | null = null, fenster: VoxelGrid | null = null;
+    // Markierte Funktionsteile: Leuchten bekommen leuchtendes Material, Räder und Klappen eine eigene Gruppe
+    const lights = new Map<'licht' | 'signal', VoxelGrid>();
+    const moving = new Map<number, VoxelGrid>();
     const split = () => { if (solid === grid) { solid = new Grid(grid.size, grid.min, grid.dims); solid.data.set(grid.data); } };
     for (let i = 0; i < grid.data.length; i++) {
       const v = grid.data[i];
       if (!v) continue;
       const c = v & 0xffffff;
-      if (GLASFARBEN.has(c)) { split(); glass ??= new Grid(grid.size, grid.min, grid.dims); glass.data[i] = v; solid.data[i] = 0; }
-      else if (FENSTERFARBEN.has(c)) { split(); fenster ??= new Grid(grid.size, grid.min, grid.dims); fenster.data[i] = v; solid.data[i] = 0; }
+      const p = partOf(v);
+      const teil = p ? parts[p - 1] : undefined;
+      if (p) { split(); solid.data[i] = v & CELL_MASK; }
+      if (teil?.wirkung === 'licht' || teil?.wirkung === 'signal') {
+        const key = teil.wirkung;
+        let g = lights.get(key);
+        if (!g) { g = new Grid(grid.size, grid.min, grid.dims); lights.set(key, g); }
+        g.data[i] = v & CELL_MASK; solid.data[i] = 0;
+      } else if (teil?.wirkung === 'rad' || teil?.wirkung === 'beweglich') {
+        let g = moving.get(p);
+        if (!g) { g = new Grid(grid.size, grid.min, grid.dims); moving.set(p, g); }
+        g.data[i] = v & CELL_MASK; solid.data[i] = 0;
+      } else if (GLASFARBEN.has(c)) { split(); glass ??= new Grid(grid.size, grid.min, grid.dims); glass.data[i] = v & CELL_MASK; solid.data[i] = 0; }
+      else if (FENSTERFARBEN.has(c)) { split(); fenster ??= new Grid(grid.size, grid.min, grid.dims); fenster.data[i] = v & CELL_MASK; solid.data[i] = 0; }
     }
-    const obj = this.voxelObject(solid, glass, stufen, fenster);
+    const extras: VoxelExtra[] = [];
+    if (lights.has('licht')) extras.push({ grid: lights.get('licht')!, material: this.lampMaterial });
+    if (lights.has('signal')) extras.push({ grid: lights.get('signal')!, material: this.signalMaterial });
+    for (const [p, g] of moving) extras.push({ grid: g, material: this.voxelMaterial, teil: parts[p - 1], pivot: partPivot(g, parts[p - 1]) });
+    const obj = this.voxelObject(solid, glass, stufen, fenster, extras);
     this.grids.set(obj, grid);
     return obj;
   }
@@ -300,7 +328,7 @@ export class ModelLibrary implements ModelProvider {
   }
 
   /** Gitter → Objekt mit Detailstufen (LOD); merkt sich das feinste Gitter für den Editor. */
-  private voxelObject(solid: VoxelGrid | null, glass: VoxelGrid | null, stufen: VoxelStufe[], fenster: VoxelGrid | null = null): THREE.Object3D {
+  private voxelObject(solid: VoxelGrid | null, glass: VoxelGrid | null, stufen: VoxelStufe[], fenster: VoxelGrid | null = null, extras: VoxelExtra[] = []): THREE.Object3D {
     // Eine Gruppe je Detailstufe; three.js wählt beim Zeichnen die passende (LOD)
     const level = (faktor: number) => {
       const g = new THREE.Group();
@@ -316,6 +344,20 @@ export class ModelLibrary implements ModelProvider {
         g.add(mesh);
       }
       if (fenster) g.add(new THREE.Mesh(greedyMesh(fenster.downsample(faktor)), this.windowMaterial));
+      for (const x of extras) {
+        const mesh = new THREE.Mesh(greedyMesh(x.grid.downsample(faktor)), x.material);
+        mesh.castShadow = x.material === this.voxelMaterial;
+        mesh.receiveShadow = true;
+        if (!x.pivot || !x.teil) { g.add(mesh); continue; }
+        // Bewegliches Teil: Gruppe im Drehpunkt, das Mesh darin zurückversetzt (siehe PartMotion)
+        const pivot = new THREE.Group();
+        pivot.name = `teil:${x.teil.wirkung}`;
+        pivot.position.copy(x.pivot);
+        pivot.userData.teil = { wirkung: x.teil.wirkung, achse: x.teil.achse ?? 'z', winkel: x.teil.winkel ?? 0 };
+        mesh.position.copy(x.pivot).negate();
+        pivot.add(mesh);
+        g.add(pivot);
+      }
       return g;
     };
     let out: THREE.Object3D;
@@ -360,4 +402,51 @@ function loadTexture(url: string, mag: THREE.MagnificationTextureFilter, min: TH
 function disposeMaterial(m: THREE.Material): void {
   for (const value of Object.values(m)) if (value instanceof THREE.Texture) value.dispose();
   m.dispose();
+}
+
+/** Was ein markiertes Funktionsteil im Spiel tut (aus data/editor/objekttypen.json) */
+export interface VoxelPartBehavior {
+  wirkung?: string;
+  achse?: 'x' | 'y' | 'z';
+  kante?: string;
+  winkel?: number;
+}
+
+interface VoxelExtra {
+  grid: VoxelGrid;
+  material: THREE.Material;
+  teil?: VoxelPartBehavior;
+  pivot?: THREE.Vector3;
+}
+
+/**
+ * Drehpunkt eines beweglichen Teils in Modellkoordinaten: Räder drehen um ihre Mitte, Klappen um eine Kante
+ * (vorne = +X, links = +Z von vorne gesehen).
+ */
+function partPivot(g: VoxelGrid, teil: VoxelPartBehavior | undefined): THREE.Vector3 {
+  const [nx, ny, nz] = g.dims;
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let x = 0; x < nx; x++) for (let y = 0; y < ny; y++) for (let z = 0; z < nz; z++) {
+    if (!g.data[(x * ny + y) * nz + z]) continue;
+    lo[0] = Math.min(lo[0], x); lo[1] = Math.min(lo[1], y); lo[2] = Math.min(lo[2], z);
+    hi[0] = Math.max(hi[0], x + 1); hi[1] = Math.max(hi[1], y + 1); hi[2] = Math.max(hi[2], z + 1);
+  }
+  const c = [0, 1, 2].map((i) => (lo[i] + hi[i]) / 2);
+  if (teil?.wirkung === 'beweglich') {
+    const k = teil.kante ?? 'unten';
+    if (k === 'unten') c[1] = lo[1]; else if (k === 'oben') c[1] = hi[1];
+    else if (k === 'vorne') c[0] = hi[0]; else if (k === 'hinten') c[0] = lo[0];
+    else if (k === 'links') c[2] = hi[2]; else if (k === 'rechts') c[2] = lo[2];
+  }
+  return new THREE.Vector3((g.min[0] + c[0]) * g.size, (g.min[1] + c[1]) * g.size, (g.min[2] + c[2]) * g.size);
+}
+
+/** Material, das in der Farbe seiner Würfel leuchtet (emissiveIntensity = Stärke) */
+function glowMaterial(name: string, intensity: number): THREE.MeshStandardMaterial {
+  const m = new THREE.MeshStandardMaterial({ name, vertexColors: true, roughness: 0.4, metalness: 0, emissive: '#ffffff', emissiveIntensity: intensity });
+  m.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n\ttotalEmissiveRadiance *= vColor.rgb;');
+  };
+  m.customProgramCacheKey = () => 'leuchtet-in-eigener-farbe';
+  return m;
 }
