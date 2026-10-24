@@ -41,5 +41,13 @@
     "lohnProTag": 100,
     "farbe": "#e6b929",
     "verhalten": "paletten"
+  },
+  "werker": {
+    "name": "Werksmitarbeiter",
+    "beschreibung": "Arbeitet im Industriegebiet: geht von Produktionslinie zu Produktionslinie und prüft die Anlagen. Ein Werksmitarbeiter schafft drei Linien im vollen Tempo – ohne laufen sie mit halbem Tempo.",
+    "lohnProTag": 95,
+    "farbe": "#5b6f80",
+    "verhalten": "werk",
+    "forschung": "p_fabrik"
   }
 }

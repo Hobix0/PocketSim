@@ -2418,3 +2418,23 @@ html, body {
 .sites .site .hint-line {
   color: var(--accent);
 }
+
+/* Kapitel in der Zielliste */
+.goals .chapter {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: -2px 0 2px;
+  font-size: 13px;
+}
+
+.goals .chapter small {
+  color: var(--text-dim);
+}
+
+.warehouse .stock-row .halten {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: 6px;
+}

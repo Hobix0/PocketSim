@@ -34,7 +34,7 @@ import { findPalletJob } from '../economy/PalletLogistics';
 
 export interface StoreLoopEvents extends Record<string, unknown> {
   /** `kasse`, `kunde`: wo es passiert ist (für Effekte) */
-  sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3 };
+  sale: { betrag: number; artikel: number; byHand: boolean; kasse: THREE.Vector3; kunde: THREE.Vector3; kategorien: string[] };
   visit: { outcome: VisitOutcome };
   /** Ein Kunde denkt etwas (Gedankenblase): `kunde` ist seine Figur */
   thought: { art: 'fehlt' | 'zu_teuer' | 'schnaeppchen' | 'gluecklich' | 'gemuetlich' | 'anprobiert' | 'passt_nicht'; produkt?: ProductDef; preis?: number; kunde: THREE.Object3D };
@@ -152,8 +152,9 @@ export class StoreLoop {
     this.stats.recordSale(betrag, artikel, customer.basket);
     const work = this.content.arbeit;
     this.player.addXp(work.xpProKunde + (byHand ? work.xpProKundeVonHand : 0));
+    const kategorien = [...new Set(customer.basket.map((l) => l.produkt.kategorie))];
     customer.paid();
-    this.events.emit('sale', { betrag, artikel, byHand, kasse: checkout.object.position.clone(), kunde: front.object.position.clone() });
+    this.events.emit('sale', { betrag, artikel, byHand, kasse: checkout.object.position.clone(), kunde: front.object.position.clone(), kategorien });
   }
 
   /** Was das Personal braucht (Auffüller und Kassierer). */

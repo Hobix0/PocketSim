@@ -20,6 +20,8 @@ export interface MachineServices {
   /** Von Hand gestartet (bringt XP) bzw. ein Durchgang fertig */
   started(byHand: boolean): void;
   finished(r: RecipeDef): void;
+  /** Tempo dieser Maschine (Linien: voll mit Werksmitarbeitern, sonst halb); ohne: 1 */
+  tempo?(def: MachineDef): number;
 }
 
 export class MachineComponent extends InteractableComponent implements Describable, PersistentComponent {
@@ -79,7 +81,7 @@ export class MachineComponent extends InteractableComponent implements Describab
 
   override update(dt: number): void {
     if (!this.services || dt <= 0) return;
-    const minutes = dt * this.services.minutesPerSecond;
+    const minutes = dt * this.services.minutesPerSecond * (this.services.tempo?.(this.def) ?? 1);
     if (this.laeuft && this.rezept) {
       this.fortschritt += minutes;
       if (this.fortschritt < this.rezept.dauer) return;
@@ -108,6 +110,7 @@ export class MachineComponent extends InteractableComponent implements Describab
       { label: 'Rezept', value: this.rezept?.name ?? '–' },
       { label: 'Zustand', value: STATUS_TEXT[this.status] + (this.laeuft ? ` (${Math.round(this.anteil * 100)} %)` : '') },
       { label: 'Verbrauch beim Laufen', value: `${this.def.strom} kW${this.def.wasser ? ` · ${this.def.wasser} l/h` : ''}` },
+      ...(this.def.lager === 'zentral' ? [{ label: 'Tempo', value: `${Math.round((this.services?.tempo?.(this.def) ?? 1) * 100)} %${(this.services?.tempo?.(this.def) ?? 1) < 1 ? ' – mehr Werksmitarbeiter (Personal) bringen volles Tempo' : ''}` }] : []),
       { label: 'Durchgänge', value: String(this.durchgaenge) },
     ];
   }

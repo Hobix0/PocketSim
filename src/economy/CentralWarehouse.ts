@@ -19,6 +19,8 @@ export interface WarehouseSettings {
   anlieferung: { minuten: number; expressMinuten: number; grund: number; proKarton: number; expressAufschlag: number };
   /** Abholen in den Laden: Kosten je Fahrt und Karton */
   abholung: { grund: number; proKarton: number };
+  /** Automatischer Nachschub: alle so viele Spielminuten nachsehen */
+  nachschubMinuten: number;
 }
 
 interface Incoming {
@@ -45,6 +47,8 @@ export class CentralWarehouse implements StoragePort, CentralStock {
   private readonly bestand = new Map<string, number>();
   private readonly incoming: Incoming[] = [];
   private draft: { produkt: string; menge: number }[] = [];
+  /** Automatischer Nachschub: so viele Kartons je Ware sollen im Laden sein */
+  private readonly halten = new Map<string, number>();
 
   constructor(
     readonly settings: WarehouseSettings,
@@ -168,16 +172,47 @@ export class CentralWarehouse implements StoragePort, CentralStock {
     return ankunft === undefined ? { ok: true, kosten } : { ok: true, kosten, ankunft };
   }
 
+  // ── Automatischer Nachschub ──────────────────────────────
+
+  /** Wie viele Kartons dieser Ware im Laden gehalten werden (0: kein Nachschub) */
+  keep(ware: string): number {
+    return this.halten.get(ware) ?? 0;
+  }
+
+  setKeep(ware: string, kartons: number): void {
+    if (kartons > 0) this.halten.set(ware, Math.min(99, Math.round(kartons))); else this.halten.delete(ware);
+  }
+
+  /**
+   * Nachschub schicken, wo im Laden weniger Kartons sind als eingestellt.
+   * `imLaden`: Stück im Laden (Regale, Kartons, schon unterwegs). Gibt die geschickten Kartons zurück.
+   */
+  restock(imLaden: (p: ProductDef) => number, laden: ShopDelivery): number {
+    if (!this.active()) return 0;
+    let n = 0;
+    for (const [id, k] of this.halten) {
+      const p = this.waren.find(id);
+      if (!p) continue;
+      const fehlt = k - Math.floor(imLaden(p) / Math.max(1, p.gebinde));
+      const da = Math.floor(this.available(id) / Math.max(1, p.gebinde));
+      const schicken = Math.min(fehlt, da, laden.freeSlots());
+      if (schicken > 0 && this.send(p, schicken, laden).ok) n += schicken;
+    }
+    return n;
+  }
+
   // ── Spielstand ───────────────────────────────────────────
 
-  state(): { bestand: [string, number][]; unterwegs: Incoming[] } {
-    return { bestand: [...this.bestand], unterwegs: this.incoming.map((i) => ({ ankunft: i.ankunft, waren: i.waren.map((w) => ({ ...w })) })) };
+  state(): { bestand: [string, number][]; unterwegs: Incoming[]; halten: [string, number][] } {
+    return { halten: [...this.halten], bestand: [...this.bestand], unterwegs: this.incoming.map((i) => ({ ankunft: i.ankunft, waren: i.waren.map((w) => ({ ...w })) })) };
   }
 
   restore(raw: unknown): void {
     this.bestand.clear();
     this.incoming.length = 0;
-    const d = raw as { bestand?: unknown; unterwegs?: unknown } | undefined;
+    this.halten.clear();
+    const d = raw as { bestand?: unknown; unterwegs?: unknown; halten?: unknown } | undefined;
+    if (Array.isArray(d?.halten)) for (const x of d.halten) if (Array.isArray(x) && this.waren.has(String(x[0]))) this.setKeep(String(x[0]), Number(x[1]) || 0);
     if (Array.isArray(d?.bestand)) {
       for (const x of d.bestand) if (Array.isArray(x) && this.waren.has(String(x[0])) && Number(x[1]) > 0) this.bestand.set(String(x[0]), Number(x[1]));
     }

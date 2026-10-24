@@ -228,6 +228,18 @@ flowchart LR
 - **Balancing** mit Messung statt Gefühl: `npm run sim` lässt einen Laden ohne Grafik mehrere Tage laufen (`scripts/sim/balancing.sim.ts`). Neu: Mehr verschiedene Produkte bringen mehr Kunden und größere Einkäufe, mehr Kassen erlauben mehr Andrang, der Ruf wächst über rund eine Woche statt an einem Tag, Grundstücke sind günstiger. Zahlen und Begründung: [docs/balancing.md](docs/balancing.md)
 - **Großer Testmarkt:** Hauptmenü → **Testmarkt** (oder Adresse `…/#testmarkt`): Laden 20 × 6 m mit allen Regaltypen, Kühlung, 3 Kassen, Lichtschienen, Hängeschildern und Bodenmarkierungen; Lager 20 × 6 m mit Palettenregalen und Ladetor zum Gewerbehof; 7 Angestellte, Level 10, alles freigeschaltet. Neu erzeugen: Entwicklungsserver starten, dann `node scripts/make-testmarkt.mjs`
 
+**Etappe 18c – Roter Faden: Kapitel-Ziele** ✅
+
+- Die Ziele sind jetzt **sechs Kapitel**: *Der kleine Laden* → *Wachsen* → *Frisch & gemütlich* (Backstation, Café) → *Ein zweiter Laden* (Immobilien, Ware + Kasse, Personal zuteilen) → *Mode & Altbau* (Anprobieren, Renovieren) → *Eigene Herstellung* (Zentrallager, Produktionslinie, Nachschub)
+- Die Zielliste zeigt das aktuelle Kapitel mit Fortschritt („Kapitel 2 · Wachsen 2/3“); ist ein Kapitel geschafft, gibt es eine kleine Feier
+- Ein Test prüft, dass jedes Ziel in `data/ziele/start.json` einen Auslöser im Spiel hat
+
+**Etappe 18d – Leben in der Industrie** ✅
+
+- **Werksmitarbeiter** (neue Rolle, mit der Forschung „Erste Produktion“): gehen von laufender Linie zu Linie und prüfen die Anlagen. Einer schafft drei Linien im vollen Tempo – ohne Werksmitarbeiter laufen die Linien gemütlich mit halbem Tempo weiter (steht im Info-Fenster der Linie)
+- **LKW im Industriegebiet:** Kommt Ware im Zentrallager an, fährt ein LKW über die Industriestraße ans Tor; geht Ware in einen Laden, fährt einer vom Tor los (`src/world/IndustryTraffic.ts`)
+- **Automatischer Nachschub:** im Zentrallager je Ware „im Laden halten: n Kartons“ – alle 2 Spielstunden schickt das Zentrallager nach, was im Laden (Regale, Kartons, schon unterwegs) fehlt (`data/produktion/zentrallager.json` → `nachschubMinuten`)
+
 **Etappe 18b – Standorte: jeder Laden ist ein eigener Laden** ✅
 
 - **Kunden gehen gezielt in einen Laden** – verteilt nach Lage und Größe (Hauptladen zählt 1). Dort suchen sie Ware, Kasse, Umkleide und Sitzplatz; Wagenbox und Terrasse auf dem Gehweg gehören zum Laden direkt davor. Sie kommen aus der Nähe (Haustüren und Straßenenden um den Laden) und gehen auch dorthin zurück

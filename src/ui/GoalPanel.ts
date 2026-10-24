@@ -16,11 +16,19 @@ export class GoalPanel {
   }
 
   private render(): void {
-    const open = this.goals.open.slice(0, this.sichtbar);
+    // Aktuelles Kapitel: das des ersten offenen Ziels; gezeigt werden dessen offene Ziele
+    const first = this.goals.open[0];
+    const kapitel = first?.kapitel;
+    const imKapitel = this.goals.list.filter((g) => g.kapitel === kapitel);
+    const nr = [...new Set(this.goals.list.map((g) => g.kapitel))].indexOf(kapitel) + 1;
+    const open = this.goals.open.filter((g) => g.kapitel === kapitel).slice(0, this.sichtbar);
     this.el.hidden = open.length === 0;
     const reward = (g: (typeof open)[number]) =>
       [g.belohnung.xp ? `+${g.belohnung.xp} XP` : '', g.belohnung.geld ? `+${g.belohnung.geld} €` : ''].filter(Boolean).join(' · ');
-    this.el.innerHTML = `<h4>${esc(this.content.text('ziele_titel'))}</h4>` + open.map((g, i) =>
+    const kopf = kapitel
+      ? `<h4>${esc(this.content.text('ziele_titel'))} · Kapitel ${nr}</h4><div class="chapter"><b>${esc(kapitel)}</b><small>${imKapitel.filter((g) => this.goals.isDone(g.id)).length} / ${imKapitel.length}</small></div>`
+      : `<h4>${esc(this.content.text('ziele_titel'))}</h4>`;
+    this.el.innerHTML = kopf + open.map((g, i) =>
       `<div class="goal ${i === 0 ? 'next' : ''}"><span class="box"></span><span>${esc(g.text)}<small>${esc(reward(g))}</small></span></div>`).join('');
   }
 }

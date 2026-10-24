@@ -1,6 +1,7 @@
 {
-  "_hinweis": "Zentrallager im Industriegebiet (src/economy/CentralWarehouse.ts). kapazitaet: Kartonplätze. anlieferung: Großhandel → Zentrallager (Spielminuten normal/express, Kosten). abholung: Zentrallager → Laden mit dem LKW (Kosten je Fahrt und je Karton; kommt wie eine normale Lieferung zum nächsten Termin, express sofort).",
+  "_hinweis": "Zentrallager im Industriegebiet (src/economy/CentralWarehouse.ts). kapazitaet: Kartonplätze. anlieferung: Großhandel → Zentrallager (Spielminuten normal/express, Kosten). abholung: Zentrallager → Laden mit dem LKW (Kosten je Fahrt und je Karton; kommt wie eine normale Lieferung zum nächsten Termin, express sofort). nachschubMinuten: so oft schaut das Zentrallager, ob im Laden etwas unter „im Laden halten“ fällt, und schickt es nach.",
   "kapazitaet": 1200,
   "anlieferung": { "minuten": 180, "expressMinuten": 60, "grund": 15, "proKarton": 0.4, "expressAufschlag": 25 },
-  "abholung": { "grund": 8, "proKarton": 0.25 }
+  "abholung": { "grund": 8, "proKarton": 0.25 },
+  "nachschubMinuten": 120
 }

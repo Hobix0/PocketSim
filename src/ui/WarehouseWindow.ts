@@ -23,6 +23,11 @@ export class WarehouseWindow {
       b.blur();
       if (b.classList.contains('close')) this.close();
       else if (b.dataset.versand) { this.versand = b.dataset.versand as ShippingKind; this.render(); }
+      else if (b.dataset.halten) {
+        const id = b.dataset.halten;
+        lager.setKeep(id, lager.keep(id) + Number(b.dataset.d));
+        this.renderList();
+      }
       else if (b.dataset.send) {
         const item = lager.list().find((x) => x.produkt.id === b.dataset.send);
         if (!item) return;
@@ -76,7 +81,7 @@ export class WarehouseWindow {
     this.el.innerHTML = `
       <header><h2>Zentrallager</h2><button type="button" class="close" aria-label="Schließen">✕</button></header>
       <p class="lead">Belegt <b>${l.belegt} / ${l.settings.kapazitaet}</b> Kartons${l.unterwegs ? ` · unterwegs vom Großhandel: <b>${l.unterwegs}</b>` : ''}.
-        In den Laden bringen: ${formatMoney(l.settings.abholung.grund)} je Fahrt + ${formatMoney(l.settings.abholung.proKarton)} je Karton.</p>
+        In den Laden bringen: ${formatMoney(l.settings.abholung.grund)} je Fahrt + ${formatMoney(l.settings.abholung.proKarton)} je Karton. Mit <b>„im Laden halten“</b> schickt das Zentrallager alle ${l.settings.nachschubMinuten / 60} Stunden von selbst nach.</p>
       <span class="meter"><span class="${share > 0.9 ? 'high' : ''}" style="width:${Math.round(share * 100)}%"></span></span>
       <div class="row-tools"><input class="suche" type="search" placeholder="Suchen …" value="${esc(this.suche)}">
         <span class="versand">${opt('normal', 'Zum nächsten Liefertermin')}${opt('express', 'Express')}</span></div>
@@ -93,7 +98,9 @@ export class WarehouseWindow {
     const row = (x: (typeof items)[number]) => {
       const btn = (n: number) => `<button type="button" data-send="${esc(x.produkt.id)}" data-n="${n}" ${x.kartons >= n ? '' : 'disabled'}>${n === 99 ? 'alle' : `${n}`}</button>`;
       return `<div class="stock-row"><span class="name">${esc(x.produkt.name)}</span><span class="n">${x.kartons} Kartons</span>
-        ${x.produkt.rohstoff ? `<small>${x.menge} Einheiten</small>` : `<span class="send">in den Laden: ${btn(1)}${btn(5)}${btn(99)}</span>`}</div>`;
+        ${x.produkt.rohstoff ? `<small>${x.menge} Einheiten</small>` : `<span class="send">in den Laden: ${btn(1)}${btn(5)}${btn(99)}
+          <span class="halten" title="Automatischer Nachschub: so viele Kartons sollen immer im Laden sein">· im Laden halten:
+          <button type="button" data-halten="${esc(x.produkt.id)}" data-d="-1" ${this.lager.keep(x.produkt.id) ? '' : 'disabled'}>−</button><b>${this.lager.keep(x.produkt.id) || 'aus'}</b><button type="button" data-halten="${esc(x.produkt.id)}" data-d="1">+</button></span></span>`}</div>`;
     };
     el.innerHTML = `
       <h4>Ware</h4>${ware.map(row).join('') || '<p class="empty-cat">Noch keine Ware hier. Kaufe beim Großhandel mit Ziel „Zentrallager“ ein oder produziere selbst.</p>'}

@@ -380,7 +380,7 @@ export interface RoleDef {
   lohnProTag: number;
   farbe: string;
   /** Was die Person tut: "auffuellen" oder "kassieren" (je Verhalten eine Komponente) */
-  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen' | 'paletten';
+  verhalten: 'auffuellen' | 'kassieren' | 'abladen' | 'einkaufen' | 'bedienen' | 'paletten' | 'werk';
   /** Bewirbt sich erst, wenn diese Forschung erledigt ist (z. B. Barista → Café-Ecke) */
   forschung?: string;
 }
@@ -476,6 +476,8 @@ export interface NavSettings {
 /** Ein Ziel für den Einstieg (data/ziele/start.json); wann es erfüllt ist, steht im Code. */
 export interface GoalDef {
   id: string;
+  /** Kapitel (Überschrift in der Zielliste); Ziele eines Kapitels stehen in der Datei hintereinander */
+  kapitel?: string;
   text: string;
   belohnung: { geld?: number; xp?: number };
 }

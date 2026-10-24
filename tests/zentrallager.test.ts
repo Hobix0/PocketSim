@@ -109,3 +109,24 @@ describe('Zentrallager', () => {
     expect(m.start()).toEqual({ ok: false, grund: 'zentrallager' });
   });
 });
+
+describe('Automatischer Nachschub', () => {
+  it('schickt nach, was im Laden unter „im Laden halten“ fällt – höchstens so viel, wie da ist; steht im Spielstand', () => {
+    const { lager } = setup();
+    const cola = content.produkte.get('cola_0_5l');
+    lager.put('cola_0_5l', cola.gebinde * 3);
+    lager.setKeep('cola_0_5l', 5);
+    const geliefert: ProductDef[] = [];
+    const laden = { freeSlots: () => 20, deliver: (x: ProductDef) => geliefert.push(x), ship: () => 600 };
+    // Im Laden ist 1 Karton: es fehlen 4, da sind nur 3
+    expect(lager.restock(() => cola.gebinde, laden)).toBe(3);
+    expect(geliefert.length).toBe(3);
+    expect(lager.available('cola_0_5l')).toBe(0);
+    // Schon genug im Laden: nichts
+    lager.put('cola_0_5l', cola.gebinde * 2);
+    expect(lager.restock(() => cola.gebinde * 5, laden)).toBe(0);
+    const b = setup();
+    b.lager.restore(JSON.parse(JSON.stringify(lager.state())));
+    expect(b.lager.keep('cola_0_5l')).toBe(5);
+  });
+});
