@@ -31,6 +31,8 @@ import { ShelfComponent } from '../components/ShelfComponent';
 import { CheckoutComponent } from '../components/CheckoutComponent';
 import { Hud } from '../ui/Hud';
 import { DebugPanel } from '../ui/DebugPanel';
+import { isRestDay } from '../state/Week';
+import { Weather, type WeatherSettings } from '../world/Weather';
 import { ContextHint } from '../ui/ContextHint';
 import { InfoPanel } from '../ui/InfoPanel';
 import { PurchaseWindow } from '../ui/PurchaseWindow';
@@ -89,6 +91,16 @@ import { PaintLayer } from '../world/PaintLayer';
 import { PaintTool } from '../building/PaintTool';
 import { FootprintComponent, type Rect } from '../components/FootprintComponent';
 
+/** Himmel an grauen Tagen (Wolken, Regen) */
+const GRAUER_HIMMEL = new THREE.Color('#9aa5ae');
+
+/** Frische Ware (data/sortiment/frische.json) */
+interface FreshSettings {
+  haltbarTage: Record<string, number>;
+  rabatt: number;
+  tafel: { rufJeStueck: number; rufMax: number };
+}
+
 /** Wie das Spiel startet */
 export interface GameOptions {
   stil?: 'voxel' | 'lowpoly';
@@ -128,6 +140,10 @@ export class Game {
   readonly clock: GameClock;
   readonly hud: Hud;
   readonly debug: DebugPanel;
+  private frische!: FreshSettings;
+  readonly weather: Weather;
+  /** Nach dem Tagesbericht melden, dass heute Ruhetag ist */
+  private ruhetagHinweis = false;
   /** Licht-Vorschau aus der Debug-Anzeige: Minute des Tages nur für die Darstellung (null = echte Uhrzeit) */
   private lichtVorschau: number | null = null;
   /** Millisekunden vom Seitenaufruf bis zum ersten Bild (Debug-Anzeige) */
@@ -381,6 +397,21 @@ export class Game {
     this.deliveries = this.fleet
       ? new Deliveries(this.content.logistik, this.storage, () => this.clock.totalMinutes, () => this.fleet!.onTrucks(), () => this.fleet!.palletsOnTrucks())
       : null;
+    // Frische Ware: Haltbarkeit je Kategorie, ältestes zuerst, am letzten Tag reduziert (data/sortiment/frische.json)
+    const frische = readData<FreshSettings>('sortiment/frische');
+    ShelfComponent.frische = {
+      heute: () => this.clock.tag,
+      haltbar: (p) => (p.frisch ? frische.haltbarTage[p.kategorie] ?? null : null),
+      rabatt: frische.rabatt,
+    };
+    this.frische = frische;
+    // Wetter: sonnig, bewölkt oder Regen – weniger Kunden bei Regen, Vorhersage im Tagesbericht
+    this.weather = new Weather(readData<WeatherSettings>('wetter/standard'));
+    this.store.wetterFaktor = () => this.weather.kundenFaktor;
+    this.hud.wetter = this.weather.heute;
+    // Wochenrhythmus: sonntags Ruhetag – Laden zu, kein LKW (data/kunden → woche)
+    if (this.deliveries) this.deliveries.woche = this.content.kunden.woche;
+    this.store.uhr = () => this.clock.totalMinutes;
     this.purchasing = new Purchasing(this.content.waren, this.player, this.deliveries ?? this.storage, this.research,
       { kartons: cartonsPerPallet({ content: this.content }), rabatt: this.content.lager.palette.rabatt });
     this.buyers = new BuyerSystem(this.world, this.content.produkte, this.purchasing, this.player, this.content.personal.einkauf, this.deliveries ?? undefined);
@@ -461,14 +492,28 @@ export class Game {
       this.utilities.bill();
       this.plots.payRent();
       this.sites.newDay();
+      // Abgelaufene frische Ware geht an die Tafel (zählt noch in den Bericht des abgelaufenen Tages)
+      const abgelaufen = [...this.world.query(ShelfComponent)].flatMap(([, s]) => s.expire());
+      this.store.stats.recordDonation(abgelaufen, this.frische.tafel.rufJeStueck, this.frische.tafel.rufMax);
       const report = this.store.stats.closeDay(tag);
-      this.staff.payDay();
+      // Das Wetter des abgelaufenen Tages und die Vorhersage für den neuen
+      const war = this.weather.heute;
+      this.weather.newDay();
+      this.hud.wetter = this.weather.heute;
+      report.wetter = { heute: `${war.symbol} ${war.name}`, morgen: `${this.weather.heute.symbol} ${this.weather.heute.name}` };
+      // Ruhetag: das Team hat frei, es gibt keinen Lohn
+      const ruhetag = isRestDay(this.content.kunden.woche, this.clock.totalMinutes);
+      this.staff.payDay(!ruhetag);
+      if (ruhetag) this.ruhetagHinweis = true;
       this.goals.complete('tag_beenden');
       // Automatisch speichern, damit kein Tag verloren geht
       writeSlot('auto', this.toSave());
       const wasPaused = this.clock.paused;
       this.clock.setPaused(true);
-      this.report.open(report, () => { if (!wasPaused) this.clock.setPaused(false); });
+      this.report.open(report, () => {
+        if (!wasPaused) this.clock.setPaused(false);
+        if (this.ruhetagHinweis) { this.ruhetagHinweis = false; this.hud.toasts.show(this.content.text('ruhetag_heute', { tag: this.clock.wochentag }), 'info'); }
+      });
     });
     this.store.events.on('opened', () => this.hud.toasts.show(this.content.text('laden_oeffnet'), 'gut'));
     this.store.events.on('closed', () => this.hud.toasts.show(this.content.text('laden_schliesst')));
@@ -800,6 +845,8 @@ export class Game {
     this.world.update(simDt);
     this.updateDaylight(realDt);
     this.effects.update(realDt);
+    this.weather.update(realDt, this.scene, this.view.focus);
+    this.audio.setRegen(this.weather.regen);
     this.truckSmoke(simDt);
     this.ambience.update(simDt, this.clock.totalMinutes % (24 * 60), this.nacht, realDt);
     this.roof?.update(realDt, this.view.abstand, this.toolActive);
@@ -875,10 +922,13 @@ export class Game {
   private updateDaylight(realDt: number): void {
     const l = this.content.licht;
     const d = daylight(l, this.lichtVorschau ?? this.clock.totalMinutes % (24 * 60));
-    this.sun.intensity = d.sonne;
-    this.ambient.intensity = d.umgebung;
+    // Wolken und Regen dämpfen das Licht
+    const w = this.weather.lichtFaktor;
+    this.sun.intensity = d.sonne * w;
+    this.ambient.intensity = d.umgebung * (0.55 + 0.45 * w);
     this.sun.color.copy(this.sky.sonneNacht).lerp(this.sky.sonne, d.tag).lerp(this.sky.sonneDaemmerung, d.daemmerung * 0.6);
-    (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5);
+    (this.scene.background as THREE.Color).copy(this.sky.nacht).lerp(this.sky.tag, d.tag).lerp(this.sky.daemmerung, d.daemmerung * 0.5)
+      .lerp(GRAUER_HIMMEL, (1 - w) * 0.7 * d.tag);
     (this.scene.fog as THREE.Fog | null)?.color.copy(this.scene.background as THREE.Color);
     this.lampLights.update(realDt, this.view.focus, 1 + (1 - d.tag) * (l.lampen.nachtVerstaerkung - 1));
     // Abends gehen in den Wohnungen die Lichter an
@@ -1012,6 +1062,7 @@ export class Game {
       systeme: {
         grundstuecke: this.plots.state(),
         renovierungen: this.renovations.state(),
+        wetter: this.weather.state(),
         gemietet: this.plots.rentState(),
         zentrallager: this.warehouse.state(),
         versorgung: this.utilities.state(),
@@ -1058,6 +1109,8 @@ export class Game {
     this.plots.restoreRent(d.systeme?.gemietet);
     this.warehouse.restore(d.systeme?.zentrallager);
     this.renovations.restore(d.systeme?.renovierungen);
+    this.weather.restore(d.systeme?.wetter);
+    this.hud.wetter = this.weather.heute;
     const vers = d.systeme?.versorgung;
     if (vers && typeof vers === 'object') this.utilities.restore(vers as Parameters<Utilities['restore']>[0]);
     if (d.systeme?.gelaende) {
@@ -1112,7 +1165,9 @@ export class Game {
   /** Ladenstatus im HUD: geöffnet/geschlossen, Kunden, Ruf. */
   private renderStore(): void {
     const offen = this.store.offen;
-    const status = offen ? this.content.text('laden_offen') : this.content.text('laden_zu', { zeit: this.content.kunden.oeffnung });
+    const status = offen ? this.content.text('laden_offen')
+      : this.store.ruhetag ? this.content.text('laden_ruhetag', { tag: this.clock.wochentag })
+      : this.content.text('laden_zu', { zeit: this.content.kunden.oeffnung });
     this.hud.setStore(offen, status, this.store.kundenImLaden, this.store.stats.ruf);
   }
 

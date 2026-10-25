@@ -1,0 +1,13 @@
+{
+  "_hinweis": "Frische Ware (Produkte mit \"frisch\": true) hält im Regal so viele Spieltage, je Kategorie. Verkauft wird die älteste Ware zuerst. Am letzten Tag ist sie um 'rabatt' reduziert (gelbes Schild am Fach); was danach noch da ist, geht morgens an die Tafel – das bringt etwas Ruf (rufJeStueck, höchstens rufMax am Tag). Kategorien ohne Eintrag halten unbegrenzt.",
+  "haltbarTage": {
+    "backwaren": 2,
+    "kuchen": 2,
+    "fleisch_wurst": 3,
+    "obst_gemuese": 4,
+    "molkerei_eier": 6,
+    "tiefkuehl": 60
+  },
+  "rabatt": 0.3,
+  "tafel": { "rufJeStueck": 0.02, "rufMax": 1.5 }
+}

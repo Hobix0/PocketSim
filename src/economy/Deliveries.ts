@@ -1,4 +1,5 @@
 import { Emitter } from '../core/Emitter';
+import { isRestDay, nextWorkday, type WeekSettings } from '../state/Week';
 import type { LogisticsSettings, ProductDef } from '../content/definitions';
 import type { ShippingKind, StoragePort } from './Purchasing';
 import { parseTime } from './Customers';
@@ -76,12 +77,16 @@ export class Deliveries implements StoragePort {
     return k.grund + k.proKarton * kartons + (k.proPalette ?? 4) * paletten + (art === 'express' ? this.settings.express.aufschlag : 0);
   }
 
+  /** Ruhetage (setzt das Spiel aus data/kunden → woche): dann kommt kein LKW, auch kein Express */
+  woche?: WeekSettings;
+
   /** Wann eine Lieferung ankäme, wenn jetzt bestellt wird */
   arrival(art: ShippingKind, now = this.now()): number {
+    if (isRestDay(this.woche, now)) return nextWorkday(this.woche, now) + this.termine[0];
     if (art === 'express') return now + this.settings.express.minuten;
     const day = Math.floor(now / DAY) * DAY;
     const today = this.termine.find((t) => day + t > now);
-    return today !== undefined ? day + today : day + DAY + this.termine[0];
+    return today !== undefined ? day + today : nextWorkday(this.woche, day + DAY) + this.termine[0];
   }
 
   deliver(produkt: ProductDef, menge: number): void {

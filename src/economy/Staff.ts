@@ -74,9 +74,9 @@ export class Staff {
     this.leave(employeeId, 'entlassen');
   }
 
-  /** Tageswechsel: Löhne zahlen (wer nicht bezahlt werden kann, kündigt), neue Bewerbungen. */
-  payDay(): void {
-    for (const e of [...this.team]) {
+  /** Tageswechsel: Löhne zahlen (wer nicht bezahlt werden kann, kündigt), neue Bewerbungen. Ruhetag: `zahlen` = false. */
+  payDay(zahlen = true): void {
+    if (zahlen) for (const e of [...this.team]) {
       if (!this.player.spend(e.lohn, 'lohn')) this.leave(e.id, 'kein_lohn');
     }
     this.refreshCandidates();

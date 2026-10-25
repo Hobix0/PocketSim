@@ -1,6 +1,7 @@
 {
   "_hinweis": "Kunden. Zeiten als Spieluhrzeit; Sekundenangaben sind Simulationssekunden (bei Tempo 1 = echte Sekunden). kundenProStunde: je Stunde des Tages (0–23), bei Ruf 50. Auswahl: mehr verschiedene Produkte im Regal → mehr Kunden (Faktor min…max, 1 bei referenz Produkten) und größere Einkäufe. maxImLadenProKasse: mehr Kunden gleichzeitig je weiterer Kasse. rufSaettigung: Ruf-Gewinne werden nach oben kleiner.",
   "oeffnung": "08:00",
+  "woche": { "_hinweis": "Kundenfaktor je Wochentag (Mo … So); Ruhetage: 0 = Montag … 6 = Sonntag – Laden zu, keine Lieferungen, kein Lohn", "faktor": [0.9, 1, 1, 1.05, 1.15, 1.35, 0], "ruhetage": [6] },
   "schluss": "20:00",
   "kundenProStunde": [0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 10, 12, 16, 14, 10, 10, 12, 16, 18, 14, 0, 0, 0, 0],
   "maxImLaden": 14,

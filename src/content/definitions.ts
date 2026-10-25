@@ -1,3 +1,4 @@
+import type { WeekSettings } from '../state/Week';
 import { asObject, bool, num, numList, numberMap, optStr, str, strList, vec3, type Raw } from './validate';
 
 // Datenformate der Inhalte und ihre Prüfung.
@@ -422,6 +423,8 @@ export interface WorkSettings {
 export interface CustomerSettings {
   oeffnung: string;
   schluss: string;
+  /** Wochenrhythmus: Kundenfaktor je Wochentag, Ruhetage (src/state/Week.ts) */
+  woche?: WeekSettings;
   /** Neue Kunden pro Spielstunde, je Stunde des Tages (24 Werte), bei mittlerem Ruf */
   kundenProStunde: number[];
   maxImLaden: number;

@@ -51,6 +51,8 @@ export class ReportWindow {
           ${row(t('bericht_ergebnis'), formatMoney(ergebnis), ergebnis < 0 ? 'minus total' : 'plus total')}
         </section>
       </div>
+      ${r.wetter ? `<p class="report-weather">${t('bericht_wetter', { heute: r.wetter.heute, morgen: r.wetter.morgen })}</p>` : ''}
+      ${r.tafel?.stueck ? `<p class="report-tafel">${t('bericht_tafel', { stueck: r.tafel.stueck, wert: formatMoney(r.tafel.wert) })}</p>` : ''}
       <h4>${t('bericht_fehlt')}</h4>
       <p class="missing">${r.fehlt.length ? r.fehlt.map((f) => `${esc(f.produkt.name)} <small>${f.anzahl}×</small>`).join(' · ') : t('bericht_nichts_fehlt')}</p>
       ${r.zuTeuer.length ? `<h4>Zu teuer (im Sortiment ändern)</h4><p class="missing">${r.zuTeuer.map((f) => `${esc(f.produkt.name)} <small>${f.anzahl}×</small>`).join(' · ')}</p>` : ''}

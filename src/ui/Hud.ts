@@ -145,9 +145,13 @@ export class Hud {
     this.deltaTimer = window.setTimeout(() => this.deltaEl.classList.remove('show'), 1600);
   }
 
+  /** Wetter neben der Uhr (Symbol und Name, setzt das Spiel) */
+  wetter: { symbol: string; name: string } | null = null;
+
   private renderTime(): void {
     const c = this.clock;
-    this.timeEl.textContent = `${c.wochentag}, Tag ${c.tag} · ${c.uhrzeit}`;
+    this.timeEl.textContent = `${c.wochentag}, Tag ${c.tag} · ${c.uhrzeit}${this.wetter ? ` ${this.wetter.symbol}` : ''}`;
+    this.timeEl.title = this.wetter ? `Wetter heute: ${this.wetter.name}` : '';
   }
 
   private renderSpeed(): void {

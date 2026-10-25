@@ -415,19 +415,24 @@ export class CustomerComponent extends Component implements Describable {
   private take(): void {
     const w = this.current!;
     const shelf = this.shelf;
-    // Steht da, aber zu teuer: nicht kaufen
-    if (shelf?.world && !this.services.willBuy(w.produkt)) {
+    // Steht da, aber zu teuer: nicht kaufen (reduzierte Ware vom letzten Tag nimmt man gern mit)
+    const regal = shelf?.world ? shelf.get(ShelfComponent) : undefined;
+    const reduziertDa = !!regal?.hatReduziert(w.produkt.id);
+    if (shelf?.world && !reduziertDa && !this.services.willBuy(w.produkt)) {
       w.status = 'zu_teuer';
       this.services.denkt?.('zu_teuer', w.produkt);
       this.nextWish();
       return;
     }
-    const n = shelf?.world ? shelf.get(ShelfComponent)?.take(w.produkt.id, w.menge) ?? 0 : 0;
+    const { n, reduziert } = regal?.takeFresh(w.produkt.id, w.menge) ?? { n: 0, reduziert: 0 };
     if (n > 0 && shelf) {
       w.genommen = n;
       w.status = 'gefunden';
-      if (this.services.isBargain(w.produkt)) this.services.denkt?.('schnaeppchen', w.produkt);
-      this.basket.push({ produkt: w.produkt, menge: n, regal: shelf, preis: this.services.priceOf(w.produkt) });
+      if (reduziert > 0 || this.services.isBargain(w.produkt)) this.services.denkt?.('schnaeppchen', w.produkt);
+      const preis = this.services.priceOf(w.produkt);
+      if (n > reduziert) this.basket.push({ produkt: w.produkt, menge: n - reduziert, regal: shelf, preis });
+      // Reduziert: an der Kasse günstiger
+      if (reduziert > 0) this.basket.push({ produkt: w.produkt, menge: reduziert, regal: shelf, preis: Math.round(preis * (1 - ShelfComponent.frische.rabatt) * 100) / 100 });
       this.renderBasket();
       this.nextWish();
     } else {

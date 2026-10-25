@@ -1,0 +1,9 @@
+{
+  "_hinweis": "Tageswetter: jeden Morgen wird das Wetter für den nächsten Tag ausgewürfelt (Vorhersage im Tagesbericht). chance = Anteil der Tage; kunden = Faktor auf den Kundenstrom; licht = Faktor auf Sonne und Umgebungslicht; regen = Stärke 0–1 (Tropfen und Rauschen).",
+  "arten": [
+    { "id": "sonnig", "name": "Sonnig", "symbol": "☀️", "chance": 0.45, "kunden": 1.05, "licht": 1.0, "regen": 0 },
+    { "id": "bewoelkt", "name": "Bewölkt", "symbol": "⛅", "chance": 0.35, "kunden": 1.0, "licht": 0.82, "regen": 0 },
+    { "id": "regen", "name": "Regen", "symbol": "🌧️", "chance": 0.2, "kunden": 0.82, "licht": 0.5, "regen": 1 }
+  ],
+  "tropfen": { "anzahl": 2200, "bereich": 40, "hoehe": 18, "tempo": 12, "laenge": 0.5, "farbe": "#a9bccb" }
+}
