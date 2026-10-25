@@ -191,6 +191,10 @@
         {
           "id": "zaeune",
           "name": "Zäune"
+        },
+        {
+          "id": "park",
+          "name": "Park & Spielplatz"
         }
       ]
     },

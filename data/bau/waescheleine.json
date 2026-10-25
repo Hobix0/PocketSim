@@ -1,0 +1,19 @@
+{
+  "id": "waescheleine",
+  "name": "Wäscheleine",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 50,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/waescheleine",
+  "platzhalter": {
+    "groesse": [
+      0.8,
+      1.9,
+      3
+    ],
+    "farbe": "#d8d4c8"
+  },
+  "gruppe": "aussen/park"
+}

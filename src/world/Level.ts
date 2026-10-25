@@ -175,6 +175,10 @@ export interface LevelLife {
   /** Punkte vor den Schaufenstern (x, z), an denen Passanten stehen bleiben */
   schaufenster: [number, number][];
   tauben: [number, number, number][];
+  /** Weitere Wege für Passanten (Park, Gehweg gegenüber): Punkte (x, z), abgelaufen in einer der beiden Richtungen */
+  spazierwege?: { punkte: [number, number][]; y: number }[];
+  /** Anteil der Passanten, die einen Spazierweg nehmen (Standard 0,45) */
+  spazierAnteil?: number;
 }
 
 export interface LevelData {

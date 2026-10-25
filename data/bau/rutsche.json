@@ -1,0 +1,19 @@
+{
+  "id": "rutsche",
+  "name": "Rutsche",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 520,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/rutsche",
+  "platzhalter": {
+    "groesse": [
+      3.5,
+      2,
+      1
+    ],
+    "farbe": "#e6b929"
+  },
+  "gruppe": "aussen/park"
+}

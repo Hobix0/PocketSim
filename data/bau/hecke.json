@@ -1,0 +1,19 @@
+{
+  "id": "hecke",
+  "name": "Hecke",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 60,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/hecke",
+  "platzhalter": {
+    "groesse": [
+      0.6,
+      1,
+      2
+    ],
+    "farbe": "#4b8340"
+  },
+  "gruppe": "aussen/zaeune"
+}

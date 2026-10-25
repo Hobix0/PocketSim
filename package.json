@@ -23,7 +23,8 @@
     "modelle:altbau": "node scripts/make-altbau-models.mjs",
     "modelle:wohn": "node scripts/make-wohn-models.mjs",
     "modelle:produktion": "node scripts/make-produktion-models.mjs",
-    "modelle:fahrzeuge": "node scripts/make-fahrzeug-models.mjs"
+    "modelle:fahrzeuge": "node scripts/make-fahrzeug-models.mjs",
+    "modelle:stadt": "node scripts/make-stadt-models.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

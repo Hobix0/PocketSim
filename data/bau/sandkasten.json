@@ -1,0 +1,19 @@
+{
+  "id": "sandkasten",
+  "name": "Sandkasten",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 160,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/sandkasten",
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.4,
+      2
+    ],
+    "farbe": "#e3cf9b"
+  },
+  "gruppe": "aussen/park"
+}

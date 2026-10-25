@@ -1,0 +1,19 @@
+{
+  "id": "parkbaum",
+  "name": "Parkbaum (Linde)",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 180,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/parkbaum",
+  "platzhalter": {
+    "groesse": [
+      1.2,
+      7,
+      1.2
+    ],
+    "farbe": "#5f9e4a"
+  },
+  "gruppe": "aussen/pflanzen"
+}

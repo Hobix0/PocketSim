@@ -1,0 +1,19 @@
+{
+  "id": "schaukel",
+  "name": "Schaukel",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 450,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/schaukel",
+  "platzhalter": {
+    "groesse": [
+      1.7,
+      2.3,
+      2.5
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "aussen/park"
+}

@@ -1,0 +1,19 @@
+{
+  "id": "blumenbeet",
+  "name": "Blumenbeet",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 90,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/blumenbeet",
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.5,
+      2
+    ],
+    "farbe": "#e86a8a"
+  },
+  "gruppe": "aussen/pflanzen"
+}

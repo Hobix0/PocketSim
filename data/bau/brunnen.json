@@ -1,0 +1,19 @@
+{
+  "id": "brunnen",
+  "name": "Brunnen",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 1400,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/brunnen",
+  "platzhalter": {
+    "groesse": [
+      2.8,
+      2,
+      2.8
+    ],
+    "farbe": "#b9b3a7"
+  },
+  "gruppe": "aussen/park"
+}
