@@ -1,0 +1,19 @@
+{
+  "id": "picknicktisch",
+  "name": "Picknicktisch",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 140,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/picknicktisch",
+  "platzhalter": {
+    "groesse": [
+      1.8,
+      0.8,
+      1.9
+    ],
+    "farbe": "#c9a26b"
+  },
+  "gruppe": "aussen/park"
+}

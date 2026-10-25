@@ -1,0 +1,19 @@
+{
+  "id": "bushaltestelle",
+  "name": "Bushaltestelle",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 900,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/bushaltestelle",
+  "platzhalter": {
+    "groesse": [
+      1,
+      3,
+      3.2
+    ],
+    "farbe": "#3f8f5a"
+  },
+  "gruppe": "aussen/strasse"
+}

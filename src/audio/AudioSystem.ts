@@ -103,6 +103,31 @@ export class AudioSystem {
 
   // ── Aufbau ──────────────────────────────────────────────────────
 
+  /** Regenrauschen (Rauschen in Schleife durch einen Tiefpass), 0 = aus … 1 = kräftiger Regen */
+  private regen: GainNode | null = null;
+
+  setRegen(staerke: number): void {
+    const ctx = this.ctx;
+    if (!ctx || ctx.state !== 'running') return;
+    if (!this.regen) {
+      if (staerke <= 0) return;
+      const src = ctx.createBufferSource();
+      src.buffer = this.noise;
+      src.loop = true;
+      const tief = ctx.createBiquadFilter();
+      tief.type = 'lowpass';
+      tief.frequency.value = 1300;
+      const hoch = ctx.createBiquadFilter();
+      hoch.type = 'highpass';
+      hoch.frequency.value = 250;
+      this.regen = ctx.createGain();
+      this.regen.gain.value = 0;
+      src.connect(tief).connect(hoch).connect(this.regen).connect(this.sfxGain);
+      src.start();
+    }
+    this.regen.gain.setTargetAtTime(Math.max(0, Math.min(1, staerke)) * 0.16, ctx.currentTime, 1.5);
+  }
+
   private unlock(): void {
     if (this.ctx) { if (this.ctx instanceof AudioContext) void this.ctx.resume(); return; }
     let ctx: AudioContext;

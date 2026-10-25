@@ -134,3 +134,20 @@ describe('Baumenü', () => {
     expect(c.baumenue.familien.vr_wand).toBe('Wandregal');
   });
 });
+
+describe('Laderampen nebeneinander', () => {
+  const opts = { geld: 100000, level: 9 };
+  const rampe = content.bau.get('rampenabfahrt');
+
+  it('4 m breit (jedes zweite Wandfeld ein Tor): zwei Rampen passen Wand an Wand, Hof-Asphalt steht nicht im Weg', () => {
+    const w = new World(new THREE.Group());
+    for (let x = 0; x < 14; x += 2) for (let z = -4; z < 4; z += 2) w.add(createBuildEntity(content.bau.get('asphalt_hof'), { position: [x + 1, 0, z + 1], drehung: 0 }, ctx));
+    expect(rampe.platzhalter.groesse[2]).toBe(4);
+    expect(rampe.absenkung?.breite).toBe(4);
+    expect(checkPlacement(w, rampe, 6, -2, 0, s, opts).ok).toBe(true);
+    w.add(createBuildEntity(rampe, { position: [6, 0, -2], drehung: 0 }, ctx));
+    // Direkt daneben (4 m weiter) geht, halb überlappend nicht
+    expect(checkPlacement(w, rampe, 6, 2, 0, s, opts).ok).toBe(true);
+    expect(checkPlacement(w, rampe, 6, 0, 0, s, opts).grund).toBe('belegt');
+  });
+});

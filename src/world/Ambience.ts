@@ -44,7 +44,14 @@ class PasserComponent extends Component {
   hund: THREE.Object3D | null = null;
   private hundPhase = Math.random() * 6;
 
-  constructor(private readonly ziel: THREE.Vector3, private readonly tempo: number, private readonly fenster: THREE.Vector3 | null, private readonly schauen: number) {
+  constructor(
+    private ziel: THREE.Vector3,
+    private readonly tempo: number,
+    private readonly fenster: THREE.Vector3 | null,
+    private readonly schauen: number,
+    /** Weitere Wegpunkte nach dem Ziel (Spazierwege) */
+    private readonly weiter: THREE.Vector3[] = [],
+  ) {
     super();
   }
 
@@ -56,7 +63,7 @@ class PasserComponent extends Component {
     // Am Gehwegende auftauchen bzw. verschwinden: kurz wachsen und schrumpfen
     this.einblenden = Math.min(1, this.einblenden + dt * 2.5);
     const rest = Math.hypot(this.ziel.x - o.position.x, this.ziel.z - o.position.z);
-    const k = Math.min(this.einblenden, this.fenster && !this.geschaut ? 1 : Math.min(1, rest / 0.6));
+    const k = Math.min(this.einblenden, (this.fenster && !this.geschaut) || this.weiter.length ? 1 : Math.min(1, rest / 0.6));
     o.scale.setScalar(Math.max(0.01, k));
     if (this.hund) this.hund.scale.setScalar(Math.max(0.01, k));
     if (this.stehen > 0) {
@@ -71,6 +78,9 @@ class PasserComponent extends Component {
     const len = d.length();
     if (len < 0.08) {
       if (target === this.fenster) { this.geschaut = true; this.stehen = this.schauen; return; }
+      // Spazierweg: zum nächsten Wegpunkt
+      const next = this.weiter.shift();
+      if (next) { this.ziel = next; return; }
       this.entity.world?.remove(this.entity);
       return;
     }
@@ -209,27 +219,41 @@ export class Ambience {
       this.passantAcc -= 1;
       if (this.passanten >= p.max) { this.passantAcc = 0; break; }
       const links = Math.random() < 0.5;
+      // Manche nehmen einen Spazierweg (Park, Gehweg gegenüber) statt am Laden vorbei
+      const wege = w.spazierwege ?? [];
+      if (wege.length && Math.random() < (w.spazierAnteil ?? 0.45)) {
+        const weg = wege[Math.floor(Math.random() * wege.length)];
+        const versatz = (Math.random() - 0.5) * 0.8;
+        const punkte = (links ? weg.punkte : [...weg.punkte].reverse()).map(([x, z]) => new THREE.Vector3(x + versatz, weg.y, z + versatz));
+        this.addPasser(punkte[0], punkte[1], null, punkte.slice(2));
+        continue;
+      }
       const z = w.gehweg.z[0] + Math.random() * (w.gehweg.z[1] - w.gehweg.z[0]);
       const start = new THREE.Vector3(links ? w.gehweg.x[0] : w.gehweg.x[1], w.gehweg.y, z);
       const ziel = new THREE.Vector3(links ? w.gehweg.x[1] : w.gehweg.x[0], w.gehweg.y, z);
       const schaut = Math.random() < p.schauen && w.schaufenster.length;
       const f = schaut ? w.schaufenster[Math.floor(Math.random() * w.schaufenster.length)] : null;
       const fenster = f ? new THREE.Vector3(f[0] + (Math.random() - 0.5) * 0.8, w.gehweg.y, f[1] + Math.random() * 0.3) : null;
-      const e = new Entity('passant');
-      e.object.position.copy(start);
-      e.object.rotation.y = links ? Math.PI / 2 : -Math.PI / 2;
-      e.add(new FigureComponent(lookFromSeed(this.figuren, this.seed++), this.figuren.kantenlaenge));
-      const passer = e.add(new PasserComponent(ziel, rand(p.tempo), fenster, rand(p.schauenSekunden)));
-      this.world.add(e);
-      this.passanten++;
-      if (Math.random() < p.hund) {
-        void this.models!.instance('eigen/hund').then((h) => {
-          if (!e.world) return;
-          h.position.copy(start);
-          this.root.add(h);
-          passer.hund = h;
-        });
-      }
+      this.addPasser(start, ziel, fenster);
+    }
+  }
+
+  private addPasser(start: THREE.Vector3, ziel: THREE.Vector3, fenster: THREE.Vector3 | null, weiter: THREE.Vector3[] = []): void {
+    const p = this.settings.passanten;
+    const e = new Entity('passant');
+    e.object.position.copy(start);
+    e.object.rotation.y = Math.atan2(ziel.x - start.x, ziel.z - start.z);
+    e.add(new FigureComponent(lookFromSeed(this.figuren, this.seed++), this.figuren.kantenlaenge));
+    const passer = e.add(new PasserComponent(ziel, rand(p.tempo), fenster, rand(p.schauenSekunden), weiter));
+    this.world.add(e);
+    this.passanten++;
+    if (Math.random() < p.hund) {
+      void this.models!.instance('eigen/hund').then((h) => {
+        if (!e.world) return;
+        h.position.copy(start);
+        this.root.add(h);
+        passer.hund = h;
+      });
     }
   }
 

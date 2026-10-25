@@ -1,0 +1,19 @@
+{
+  "id": "gartenzaun",
+  "name": "Gartenzaun",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "objekt",
+  "preis": 40,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/gartenzaun",
+  "platzhalter": {
+    "groesse": [
+      0.2,
+      0.95,
+      2
+    ],
+    "farbe": "#eeeae0"
+  },
+  "gruppe": "aussen/zaeune"
+}

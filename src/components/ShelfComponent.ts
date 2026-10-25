@@ -11,12 +11,22 @@ import type { Describable, InfoRow } from '../ui/describe';
 // Mit einem Karton in der Hand bietet das Regal "Einräumen" an, sonst "Belegen" (Fenster für feste Plätze).
 // Feste Zuordnung: Ein Fach kann einem Produkt fest gehören – dann kommt nur dieses Produkt hinein,
 // auch wenn das Fach gerade leer ist. Auffüller räumen so ein Produkt nur noch in seine festen Fächer.
+// Frische Ware (data/sortiment/frische.json): Jedes Fach merkt sich Chargen (Menge + Tag des Einräumens).
+// Kunden nehmen die älteste zuerst; am letzten Tag ist sie reduziert (gelbes Schild), danach läuft sie ab.
+
+/** Ware, die am selben Spieltag eingeräumt wurde */
+export interface Charge {
+  tag: number;
+  menge: number;
+}
 
 export interface Fach {
   produkt: ProductDef | null;
   menge: number;
   /** Festes Produkt dieses Fachs (oder frei) */
   fest: ProductDef | null;
+  /** Chargen, die älteste zuerst (Summe = menge) */
+  chargen: Charge[];
 }
 
 /** Gespeicherter Inhalt eines Fachs */
@@ -24,10 +34,26 @@ export interface FachState {
   produkt: string | null;
   menge: number;
   fest?: string | null;
+  chargen?: Charge[];
 }
+
+/** Frische: Spieltag und Haltbarkeit je Produkt (setzt das Spiel; ohne: alles hält unbegrenzt) */
+export interface FreshnessClock {
+  heute(): number;
+  /** Tage, die das Produkt im Regal hält – null: unbegrenzt */
+  haltbar(p: ProductDef): number | null;
+  /** Nachlass am letzten Tag (0,3 = 30 %) */
+  rabatt: number;
+}
+
+const NIE: FreshnessClock = { heute: () => 1, haltbar: () => null, rabatt: 0 };
+const SCHILD = new THREE.MeshStandardMaterial({ color: '#ffd23f', roughness: 0.6, emissive: '#5a4300', emissiveIntensity: 0.25 });
+const SCHILD_STREIFEN = new THREE.MeshStandardMaterial({ color: '#d23a2f', roughness: 0.6 });
 
 export class ShelfComponent extends InteractableComponent implements Describable {
   override readonly kontext = 'regal';
+  /** Spieltag und Haltbarkeit (setzt Game einmal für alle Regale) */
+  static frische: FreshnessClock = NIE;
   readonly faecher: Fach[];
   private readonly visuals: (THREE.Group | null)[];
 
@@ -37,7 +63,7 @@ export class ShelfComponent extends InteractableComponent implements Describable
     private readonly actions?: GameActions,
   ) {
     super();
-    this.faecher = Array.from({ length: def.faecher }, () => ({ produkt: null, menge: 0, fest: null }));
+    this.faecher = Array.from({ length: def.faecher }, () => ({ produkt: null, menge: 0, fest: null, chargen: [] }));
     this.visuals = this.faecher.map(() => null);
   }
 
@@ -107,6 +133,7 @@ export class ShelfComponent extends InteractableComponent implements Describable
       if (take <= 0) continue;
       f.produkt = p;
       f.menge += take;
+      addCharge(f, ShelfComponent.frische.heute(), take);
       rest -= take;
       this.renderFach(i);
     }
@@ -117,22 +144,82 @@ export class ShelfComponent extends InteractableComponent implements Describable
 
   /** Bis zu `menge` Stück eines Produkts entnehmen (für Kunden, Meilenstein 9). */
   take(produktId: string, menge: number): number {
-    let rest = menge;
-    this.faecher.forEach((f, i) => {
-      if (rest === 0 || f.produkt?.id !== produktId) return;
+    return this.takeFresh(produktId, menge).n;
+  }
+
+  /**
+   * Entnehmen, die älteste Ware zuerst (aus dem Fach mit der ältesten Charge). `reduziert`: wie viele davon am
+   * letzten Tag waren (die kosten an der Kasse weniger).
+   */
+  takeFresh(produktId: string, menge: number): { n: number; reduziert: number } {
+    let rest = menge, reduziert = 0;
+    const order = [...this.faecher.keys()].filter((i) => this.faecher[i].produkt?.id === produktId)
+      .sort((a, b) => (this.faecher[a].chargen[0]?.tag ?? 0) - (this.faecher[b].chargen[0]?.tag ?? 0));
+    for (const i of order) {
+      const f = this.faecher[i];
+      if (rest === 0) break;
       const n = Math.min(rest, f.menge);
+      // Älteste Chargen zuerst
+      let k = n;
+      while (k > 0 && f.chargen.length) {
+        const c = f.chargen[0];
+        const m = Math.min(k, c.menge);
+        if (this.lastDay(f.produkt!, c)) reduziert += m;
+        c.menge -= m;
+        k -= m;
+        if (c.menge === 0) f.chargen.shift();
+      }
       f.menge -= n;
       rest -= n;
-      if (f.menge === 0) f.produkt = null;
+      if (f.menge === 0) { f.produkt = null; f.chargen = []; }
+      this.renderFach(i);
+    }
+    if (rest !== menge) this.notifyChanged();
+    return { n: menge - rest, reduziert };
+  }
+
+  /** Ist diese Charge am letzten Verkaufstag (reduziert)? */
+  private lastDay(p: ProductDef, c: Charge): boolean {
+    const h = ShelfComponent.frische.haltbar(p);
+    return h !== null && ShelfComponent.frische.heute() - c.tag >= h - 1;
+  }
+
+  /** Liegt in diesem Fach reduzierte Ware (die älteste Charge ist am letzten Tag)? */
+  reduziert(i: number): boolean {
+    const f = this.faecher[i];
+    return !!f.produkt && !!f.chargen[0] && this.lastDay(f.produkt, f.chargen[0]);
+  }
+
+  /** Gibt es reduzierte Ware dieses Produkts? */
+  hatReduziert(produktId: string): boolean {
+    return this.faecher.some((f, i) => f.produkt?.id === produktId && this.reduziert(i));
+  }
+
+  /** Neuer Tag: abgelaufene Ware herausnehmen (geht an die Tafel). Gibt zurück, was abgelaufen ist. */
+  expire(): { produkt: ProductDef; menge: number }[] {
+    const out: { produkt: ProductDef; menge: number }[] = [];
+    const heute = ShelfComponent.frische.heute();
+    this.faecher.forEach((f, i) => {
+      if (!f.produkt) return;
+      const h = ShelfComponent.frische.haltbar(f.produkt);
+      if (h === null) return;
+      const ab = f.chargen.filter((c) => heute - c.tag >= h);
+      if (ab.length) {
+        const menge = ab.reduce((n, c) => n + c.menge, 0);
+        out.push({ produkt: f.produkt, menge });
+        f.chargen = f.chargen.filter((c) => heute - c.tag < h);
+        f.menge -= menge;
+        if (f.menge <= 0) { f.menge = 0; f.produkt = null; f.chargen = []; }
+      }
       this.renderFach(i);
     });
-    if (rest !== menge) this.notifyChanged();
-    return menge - rest;
+    if (out.length) this.notifyChanged();
+    return out;
   }
 
   /** Inhalt für den Spielstand: je Fach Produkt-id und Menge */
   saveState(): FachState[] {
-    return this.faecher.map((f) => ({ produkt: f.produkt?.id ?? null, menge: f.menge, fest: f.fest?.id ?? null }));
+    return this.faecher.map((f) => ({ produkt: f.produkt?.id ?? null, menge: f.menge, fest: f.fest?.id ?? null, chargen: f.chargen.map((c) => ({ ...c })) }));
   }
 
   /** Inhalt aus dem Spielstand übernehmen (unbekannte Produkte fallen weg). */
@@ -142,7 +229,18 @@ export class ShelfComponent extends InteractableComponent implements Describable
       if (fest && !fest.rohstoff && (!fest.kuehlung || this.def.kuehlung)) this.faecher[i].fest = fest;
       const p = saved.produkt ? produkt(saved.produkt) : undefined;
       if (!p || saved.menge <= 0 || (p.kuehlung && !this.def.kuehlung)) return;
-      this.faecher[i] = { produkt: p, menge: Math.min(saved.menge, this.def.kapazitaet), fest: this.faecher[i].fest };
+      const menge = Math.min(saved.menge, this.def.kapazitaet);
+      // Chargen übernehmen und an die Menge anpassen (ältere Spielstände: alles von heute)
+      const chargen: Charge[] = [];
+      let rest = menge;
+      for (const c of saved.chargen ?? []) {
+        if (rest <= 0 || !(c.menge > 0) || !Number.isFinite(c.tag)) continue;
+        const m = Math.min(rest, c.menge);
+        chargen.push({ tag: c.tag, menge: m });
+        rest -= m;
+      }
+      if (rest > 0) addCharge({ chargen } as Fach, ShelfComponent.frische.heute(), rest);
+      this.faecher[i] = { produkt: p, menge, fest: this.faecher[i].fest, chargen };
       this.renderFach(i);
     });
     this.notifyChanged();
@@ -157,8 +255,18 @@ export class ShelfComponent extends InteractableComponent implements Describable
   describe(): InfoRow[] {
     return this.faecher.map((f, i) => ({
       label: `Fach ${i + 1}${this.def.kuehlung ? ' (gekühlt)' : ''}`,
-      value: (f.produkt ? `${f.produkt.name} ${f.menge}/${this.def.kapazitaet}` : 'leer') + (f.fest ? ` · fest: ${f.fest.name}` : ''),
+      value: (f.produkt ? `${f.produkt.name} ${f.menge}/${this.def.kapazitaet}${this.frischText(i)}` : 'leer') + (f.fest ? ` · fest: ${f.fest.name}` : ''),
     }));
+  }
+
+  /** „ · reduziert“ oder „ · frisch noch 2 Tage“ */
+  private frischText(i: number): string {
+    const f = this.faecher[i];
+    const h = f.produkt ? ShelfComponent.frische.haltbar(f.produkt) : null;
+    if (h === null || !f.chargen[0] || h > 14) return '';
+    if (this.reduziert(i)) return ' · heute reduziert';
+    const rest = h - (ShelfComponent.frische.heute() - f.chargen[0].tag);
+    return ` · frisch noch ${rest} Tage`;
   }
 
   override onDetach(): void {
@@ -192,6 +300,14 @@ export class ShelfComponent extends InteractableComponent implements Describable
       const col = k % perRow;
       spots.push(new THREE.Vector3(this.def.mitte + 0.12 - row * deep, ebenen[i] + 0.01, (col - (perRow - 1) / 2) * along));
     }
+    // Reduziert: gelbes Preisschild mit rotem Streifen vorne am Fach
+    if (this.reduziert(i)) {
+      const schild = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.05, 0.09), SCHILD);
+      schild.position.set(this.def.mitte + 0.2, ebenen[i] - 0.015, -this.def.laenge / 2 + 0.12);
+      const streifen = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.012, 0.09), SCHILD_STREIFEN);
+      streifen.position.copy(schild.position).setY(schild.position.y + 0.012);
+      group.add(schild, streifen);
+    }
     const models = this.models;
     if (models.instances) {
       // Alle Packungen eines Fachs in einem Zeichenaufruf
@@ -208,4 +324,11 @@ export class ShelfComponent extends InteractableComponent implements Describable
       });
     }
   }
+}
+
+/** Menge als Charge eines Tages anhängen (gleicher Tag: zusammenlegen) */
+function addCharge(f: Pick<Fach, 'chargen'>, tag: number, menge: number): void {
+  const last = f.chargen[f.chargen.length - 1];
+  if (last && last.tag === tag) last.menge += menge;
+  else f.chargen.push({ tag, menge });
 }

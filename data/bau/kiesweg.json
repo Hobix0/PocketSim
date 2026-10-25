@@ -1,0 +1,20 @@
+{
+  "id": "kiesweg",
+  "name": "Kiesweg",
+  "kategorie": "gebaeude_erweiterung",
+  "ebene": "boden",
+  "aussen": true,
+  "preis": 20,
+  "freischaltLevel": 1,
+  "werte": {},
+  "model": "eigen/kiesweg",
+  "platzhalter": {
+    "groesse": [
+      2,
+      0.1,
+      2
+    ],
+    "farbe": "#c9bea5"
+  },
+  "gruppe": "aussen/strasse"
+}

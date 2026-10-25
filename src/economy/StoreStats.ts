@@ -25,6 +25,10 @@ export interface DayReport {
   zuTeuer: { produkt: ProductDef; anzahl: number }[];
   /** Meistverkaufte Produkte (Stück) */
   verkauft: { produkt: ProductDef; anzahl: number }[];
+  /** Abgelaufene frische Ware, die an die Tafel ging (Stück und Einkaufswert) */
+  tafel?: { stueck: number; wert: number };
+  /** Wetter des Tages und Vorhersage für morgen (src/world/Weather.ts) */
+  wetter?: { heute: string; morgen: string };
 }
 
 /** Bericht im Spielstand: Produkte nur als id */
@@ -97,6 +101,16 @@ export class StoreStats {
   /** Günstige Preise sprechen sich herum (kleiner Ruf-Bonus je Kunde). */
   recordBargain(anzahl: number): void {
     if (anzahl > 0) this.setRuf(this.rufWert + anzahl * this.settings.preis.rufJeSchnaeppchen);
+  }
+
+  /** Abgelaufene Ware ging an die Tafel: zählt in den Bericht und bringt etwas Ruf (höchstens `rufMax`). */
+  recordDonation(lines: { produkt: ProductDef; menge: number }[], rufJeStueck: number, rufMax: number): void {
+    const stueck = lines.reduce((n, l) => n + l.menge, 0);
+    if (!stueck) return;
+    const wert = lines.reduce((s, l) => s + l.produkt.ek * l.menge, 0);
+    const t = this.day.tafel ?? { stueck: 0, wert: 0 };
+    this.day.tafel = { stueck: t.stueck + stueck, wert: Math.round((t.wert + wert) * 100) / 100 };
+    this.setRuf(this.rufWert + Math.min(rufMax, stueck * rufJeStueck));
   }
 
   /** Tag abschließen: Bericht senden und neu zählen. */

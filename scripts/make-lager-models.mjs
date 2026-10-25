@@ -362,9 +362,11 @@ model({
 
 // Rampenabfahrt (5-cm-Würfel): abgesenkte Laderampe vor einem Ladetor. Das Gelände wird darunter abgesenkt,
 // der LKW fährt rückwärts hinunter und steht so tief, dass seine Ladefläche bündig mit dem Hallenboden ist.
-// Lokal −X ist die Torseite (Index 0), dann 8 m flach in 1,1 m Tiefe, dann 6 m Schräge hinauf. Innen 2,6 m breit.
+// Lokal −X ist die Torseite (Index 0), dann 7,5 m flach in 1,1 m Tiefe, dann 4,5 m Schräge hinauf.
+// 4 m breit (passend zum 2-m-Wandraster: an jedem zweiten Wandfeld ein Tor), innen 3,2 m – zwei Rampen
+// nebeneinander stehen Wand an Wand und teilen sich eine 0,8 m starke Trennwand mit Geländer.
 model({
-  id: 'rampenabfahrt', name: 'Rampenabfahrt', dims: [240, 37, 72], size: 0.05, menue: 'lager', ursprung: [-120, -22, -36],
+  id: 'rampenabfahrt', name: 'Rampenabfahrt', dims: [240, 37, 80], size: 0.05, menue: 'lager', ursprung: [-120, -22, -40],
   draw: ({ box, rough, nx, nz }) => {
     const BETON_D = '#8f8a80', BETON_H = '#b7b1a5';
     const F = 150; // flacher Teil 7,5 m, dann 4,5 m Schräge
@@ -372,19 +374,19 @@ model({
     // Sohle und Schräge (gefüllt bis zur Oberfläche), Rillen auf der Schräge, Ablaufrinne vorne
     for (let x = 0; x < nx; x++) {
       const top = boden(x);
-      box(x, x, 0, top, 10, nz - 11, (xx, y) => (y === top ? (x >= F && x % 6 === 0 ? BETON_D : BETON_H) : BETON_D));
+      box(x, x, 0, top, 8, nz - 9, (xx, y) => (y === top ? (x >= F && x % 6 === 0 ? BETON_D : BETON_H) : BETON_D));
     }
-    box(F - 10, F - 3, 1, 1, 12, nz - 13, (x, y, z) => (z % 2 ? '#3a3d40' : '#55595d'));
+    box(F - 10, F - 3, 1, 1, 10, nz - 11, (x, y, z) => (z % 2 ? '#3a3d40' : '#55595d'));
     // Spurlinien gelb auf der Sohle
-    box(6, F - 12, 1, 1, 15, 15, GELB); box(6, F - 12, 1, 1, nz - 16, nz - 16, GELB);
+    box(6, F - 12, 1, 1, 14, 14, GELB); box(6, F - 12, 1, 1, nz - 15, nz - 15, GELB);
     // Seitenwände bis Geländehöhe, Kante gelb-schwarz
-    for (const [z0, z1] of [[0, 9], [nz - 10, nz - 1]]) {
+    for (const [z0, z1] of [[0, 7], [nz - 8, nz - 1]]) {
       rough(0, nx - 1, 0, 22, z0, z1, BETON, 0.04);
       box(0, nx - 1, 23, 23, z0, z1, (x) => (Math.floor(x / 6) % 2 ? GELB : SCHWARZ));
     }
     // Torseite: Betonwand mit Gummipuffern
-    rough(0, 4, 0, 22, 10, nz - 11, BETON, 0.04);
-    for (const z of [16, nz - 22]) box(5, 6, 9, 15, z, z + 5, GUMMI);
+    rough(0, 4, 0, 22, 8, nz - 9, BETON, 0.04);
+    for (const z of [18, nz - 24]) box(5, 6, 9, 15, z, z + 5, GUMMI);
     // Geländer oben auf den Wänden (nur am tiefen Teil)
     for (const z of [2, nz - 3]) {
       for (let x = 10; x <= F + 10; x += 30) box(x, x, 24, 35, z, z, GELB_D);

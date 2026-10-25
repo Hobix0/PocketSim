@@ -27,6 +27,7 @@ import { CartStationComponent } from '../components/CartStationComponent';
 import { SeatComponent } from '../components/SeatComponent';
 import { FittingRoomComponent } from '../components/FittingRoomComponent';
 import { findPalletJob } from '../economy/PalletLogistics';
+import { dayFactor, isRestDay } from '../state/Week';
 
 // Ladenbetrieb: Kunden kommen, kaufen ein, bezahlen an der Kasse, gehen wieder.
 // Verbindet Wegfindung, Kundenzustrom, Kassen und Kennzahlen. Die Darstellung (HUD, Fenster)
@@ -92,14 +93,16 @@ export class StoreLoop {
 
   /** Einmal pro Frame mit den vergangenen Spielminuten und der Uhrzeit (Minuten seit Mitternacht). */
   update(minutes: number, minuteOfDay: number): void {
-    const open = this.spawner.isOpen(minuteOfDay);
+    const open = this.isOpen(minuteOfDay);
     if (open !== this.wasOpen) {
       this.wasOpen = open;
       this.events.emit(open ? 'opened' : 'closed', undefined);
     }
     if (!this.kundenPunkte.length || minutes <= 0) return;
     const kassen = [...this.world.query(CheckoutComponent)].length;
-    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen), this.lageFaktor());
+    if (!open) return;
+    const tag = dayFactor(this.settings.woche, this.uhr()) * this.wetterFaktor();
+    const n = this.spawner.spawns(minutes, minuteOfDay, this.stats.ruf, this.kundenImLaden, this.sortiment().length, Math.max(1, kassen), this.lageFaktor() * tag);
     for (let i = 0; i < n; i++) this.spawnCustomer();
   }
 
@@ -130,9 +133,23 @@ export class StoreLoop {
     return this.wasOpen;
   }
 
+  /** Spielzeit in Minuten seit Tag 1 (setzt das Spiel) – für Wochentag und Ruhetag */
+  uhr: () => number = () => 0;
+  /** Weniger Kunden bei Regen (setzt das Spiel, siehe src/world/Weather.ts) */
+  wetterFaktor: () => number = () => 1;
+
+  /** Heute Ruhetag (Sonntag)? Dann bleibt der Laden zu. */
+  get ruhetag(): boolean {
+    return isRestDay(this.settings.woche, this.uhr());
+  }
+
+  private isOpen(minuteOfDay: number): boolean {
+    return this.spawner.isOpen(minuteOfDay) && !this.ruhetag;
+  }
+
   /** Öffnungsstatus zur Uhrzeit übernehmen, ohne „hat geöffnet“ zu melden (z. B. nach dem Laden). */
   sync(minuteOfDay: number): void {
-    this.wasOpen = this.spawner.isOpen(minuteOfDay);
+    this.wasOpen = this.isOpen(minuteOfDay);
   }
 
   /** Den vordersten Kunden an einer Kasse abrechnen. */
