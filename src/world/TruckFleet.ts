@@ -218,8 +218,11 @@ export class TruckFleet {
   }
 
   private freeDock(): Entity | null | undefined {
-    for (const [e, r] of this.world.query(RampComponent)) {
+    const ramps = [...this.world.query(RampComponent)];
+    for (const [e, r] of ramps) {
       if (r.belegt) continue;
+      // Tore direkt nebeneinander (näher als 3 m): nur eins zur Zeit, sonst stünden die LKW ineinander
+      if (ramps.some(([o, x]) => o !== e && x.belegt && o.object.position.distanceTo(e.object.position) < 3)) continue;
       if (this.paths(e)) return e;
       if (!this.unreachable.has(e)) { this.unreachable.add(e); this.events.emit('unreachable', { dock: e }); }
     }

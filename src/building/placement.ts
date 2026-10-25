@@ -1,6 +1,7 @@
 import type { BuildDef, BuildLayer, BuildSettings } from '../content/definitions';
 import type { Entity } from '../ecs/Entity';
 import type { World } from '../ecs/World';
+import { TerrainCutComponent } from '../components/TerrainCutComponent';
 import { FootprintComponent, containsPoint, footprintRect, overlaps, type Rect } from '../components/FootprintComponent';
 
 // Regeln fürs Platzieren beim Bauen – ohne Grafik, damit sie testbar sind.
@@ -100,6 +101,8 @@ export function checkPlacement(
       continue;
     }
     if (!COLLIDES[def.ebene].includes(f.ebene)) continue;
+    // Eine abgesenkte Rampe wird in den Hof gegraben: Außenbeläge (Asphalt, Gehweg) stehen ihr nicht im Weg
+    if (def.absenkung && f.ebene === 'boden' && f.aussen && !e.get(TerrainCutComponent)) continue;
     // Leuchte und Schiene gehören zusammen
     if ((def.anSchiene && f.schiene) || (def.schiene && f.anSchiene)) continue;
     const other = f.rect();

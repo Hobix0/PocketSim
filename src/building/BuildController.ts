@@ -13,6 +13,7 @@ import { type Rect, FootprintComponent } from '../components/FootprintComponent'
 import { ShelfComponent } from '../components/ShelfComponent';
 import { StorageSurfaceComponent } from '../components/StorageSurfaceComponent';
 import { setHighlight } from '../interaction/highlight';
+import { TerrainCutComponent } from '../components/TerrainCutComponent';
 import { checkPlacement, railAt, type PlacementError } from './placement';
 import { snapPlacement } from './snapping';
 import { buildGroupOf } from '../content/definitions';
@@ -199,7 +200,17 @@ export class BuildController {
       this.events.emit('placed', { entity: moved, moved: true });
     } else if (this.player.spend(tool.def.preis, 'bau')) {
       const entity = this.world.add(createBuildEntity(tool.def, { position: [x, check.y, z], drehung: snapped.drehung }, this.ctx));
+      if (tool.def.absenkung) this.digOut(entity);
       this.events.emit('placed', { entity, moved: false });
+    }
+  }
+
+  /** Abgesenkte Rampe: Außenbeläge, deren Mitte in der Grube liegt, verschwinden (sie würden die Grube zudecken) */
+  private digOut(rampe: Entity): void {
+    const r = rampe.require(FootprintComponent).rect();
+    for (const [e, f] of [...this.world.query(FootprintComponent)]) {
+      const p = e.object.position;
+      if (e !== rampe && f.ebene === 'boden' && f.aussen && !e.get(TerrainCutComponent) && p.x > r.minX && p.x < r.maxX && p.z > r.minZ && p.z < r.maxZ) this.world.remove(e);
     }
   }
 

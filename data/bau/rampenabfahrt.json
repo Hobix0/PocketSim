@@ -12,14 +12,14 @@
     "tiefe": 1.1,
     "flach": 7.5,
     "schraege": 4.5,
-    "breite": 3.6
+    "breite": 4.0
   },
   "model": "eigen/rampenabfahrt",
   "platzhalter": {
     "groesse": [
       12,
       0.05,
-      3.6
+      4
     ],
     "farbe": "#a3a39e"
   },
